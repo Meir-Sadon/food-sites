@@ -1,7 +1,8 @@
 # Local development stack: `docker compose up --build`, then open http://localhost:8080
 # Admin area: http://localhost:8080/admin  (dev password: "admin")
 #
-# The defaults below are for local use only. Override them in a .env file next to this one.
+# The defaults below are for local use only. Override them in a .env file next to this one
+# (POSTGRES_PASSWORD, JWT_SECRET, ADMIN_PASSWORD_HASH, CLOUDINARY_URL).
 name: kuskus-shel-ima
 
 services:
@@ -35,6 +36,8 @@ services:
       ForwardedHeaders__Enabled: "true"
       # The local stack is plain HTTP.
       AuthCookie__Secure: "false"
+      # cloudinary://<api_key>:<api_secret>@<cloud_name>. Without it, picture uploads are switched off.
+      Cloudinary__Url: ${CLOUDINARY_URL:-}
     ports:
       - "5000:8080"
 

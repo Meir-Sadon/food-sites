@@ -48,7 +48,9 @@ docker compose up --build
 - Admin area: http://localhost:8080/admin (local password: `admin`)
 - API: http://localhost:5000, PostgreSQL: localhost:5432 (user, password and database `kuskus`)
 
-The API applies database migrations on startup. The defaults in `docker-compose.yml` are for local use only; override them in a `.env` file (`POSTGRES_PASSWORD`, `JWT_SECRET`, `ADMIN_PASSWORD_HASH`).
+The API applies database migrations on startup. The defaults in `docker-compose.yml` are for local use only; override them in a `.env` file (`POSTGRES_PASSWORD`, `JWT_SECRET`, `ADMIN_PASSWORD_HASH`, `CLOUDINARY_URL`).
+
+Picture uploads need a Cloudinary account: put its `CLOUDINARY_URL` (from the Cloudinary dashboard) in `.env`. Without it the admin area works, but uploading a picture shows a message that uploads are not configured.
 
 ### Prerequisites for running parts separately
 - Node.js (LTS)
@@ -106,7 +108,12 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 | `Database__MigrateOnStartup` | Apply migrations when the API starts |
 | `ForwardedHeaders__Enabled` | Trust `X-Forwarded-For` from one reverse proxy in front of the API |
 | `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | WhatsApp Cloud API credentials |
-| `Cloudinary__Url` | Image storage credentials |
+| `Cloudinary__Url` | `cloudinary://<api_key>:<api_secret>@<cloud_name>`. Without it, picture uploads are switched off |
+
+## API notes
+
+- Every `POST`, `PUT` and `DELETE` to `/api` must send the header `X-Kuskus-Request: 1`. Browsers can't add it from another site's page, so other sites can't act with the admin's cookie. The frontend sends it on every request.
+- Admin endpoints live under `/api/admin` and need the admin session cookie. Validation errors come back as codes per field (for example `{"errors": {"name": ["required"]}}`), which the admin screens translate.
 
 ## Tests
 

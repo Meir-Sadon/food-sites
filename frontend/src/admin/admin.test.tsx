@@ -1,19 +1,14 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { settings, supplyDays } from '../test/catalogData'
+import { fakeApi } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 
-type Route = { method: string; path: string; status: number }
-
-/** Replaces fetch with fixed responses per method and path, and records the calls. */
-function mockApi(routes: Route[]) {
-  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
-    const url = String(input)
-    const method = init?.method ?? 'GET'
-    const route = routes.find((r) => r.method === method && url.endsWith(r.path))
-    if (!route) throw new Error(`Unexpected request: ${method} ${url}`)
-    return new Response(route.status === 204 ? null : '{}', { status: route.status })
-  })
+const settingsRoutes = {
+  'GET /api/admin/settings': () => settings(),
+  'GET /api/admin/supply-days': () => supplyDays(),
+  'GET /api/admin/closed-dates': () => [],
 }
 
 async function submitPassword(password: string) {
@@ -22,7 +17,7 @@ async function submitPassword(password: string) {
   await user.click(screen.getByRole('button', { name: 'כניסה' }))
 }
 
-describe('admin area', () => {
+describe('admin login', () => {
   it('shows a login form without the client top bar', () => {
     renderAt('/admin/login')
     expect(screen.getByRole('heading', { name: 'כניסת מנהל' })).toBeInTheDocument()
@@ -35,23 +30,24 @@ describe('admin area', () => {
     expect(screen.getByRole('button', { name: 'כניסה' })).toBeDisabled()
   })
 
-  it('logs in and opens the admin area', async () => {
-    const fetch = mockApi([
-      { method: 'POST', path: '/api/admin/login', status: 204 },
-      { method: 'GET', path: '/api/admin/me', status: 200 },
-    ])
+  it('logs in and opens General settings', async () => {
+    const api = fakeApi({
+      'POST /api/admin/login': () => undefined,
+      'GET /api/admin/me': () => ({}),
+      ...settingsRoutes,
+    })
     renderAt('/admin/login')
 
     await submitPassword('secret')
 
-    expect(await screen.findByRole('heading', { name: 'ניהול' })).toBeInTheDocument()
-    const [, init] = fetch.mock.calls[0]
-    expect(init?.credentials).toBe('include')
-    expect(JSON.parse(String(init?.body))).toEqual({ password: 'secret' })
+    expect(await screen.findByRole('heading', { level: 1, name: 'הגדרות כלליות' })).toBeInTheDocument()
+    const [login] = api.sent('POST', '/api/admin/login')
+    expect(login.body).toEqual({ password: 'secret' })
+    expect(login.headers['X-Kuskus-Request']).toBe('1')
   })
 
   it('shows an error for a wrong password', async () => {
-    mockApi([{ method: 'POST', path: '/api/admin/login', status: 401 }])
+    fakeApi({ 'POST /api/admin/login': () => ({ status: 401 }) })
     renderAt('/admin/login')
 
     await submitPassword('wrong')
@@ -61,7 +57,7 @@ describe('admin area', () => {
   })
 
   it('tells the admin to wait after too many attempts', async () => {
-    mockApi([{ method: 'POST', path: '/api/admin/login', status: 429 }])
+    fakeApi({ 'POST /api/admin/login': () => ({ status: 429 }) })
     renderAt('/admin/login')
 
     await submitPassword('again')
@@ -70,24 +66,30 @@ describe('admin area', () => {
   })
 
   it('sends visitors without a session to the login page', async () => {
-    mockApi([{ method: 'GET', path: '/api/admin/me', status: 401 }])
-    renderAt('/admin')
+    fakeApi({ 'GET /api/admin/me': () => ({ status: 401 }) })
+    renderAt('/admin/dishes')
 
     expect(await screen.findByRole('heading', { name: 'כניסת מנהל' })).toBeInTheDocument()
   })
+})
+
+describe('admin layout', () => {
+  it('has tabs for settings, categories and dishes', async () => {
+    fakeApi({ 'GET /api/admin/me': () => ({}), ...settingsRoutes })
+    renderAt('/admin')
+
+    const nav = await screen.findByRole('navigation', { name: 'תפריט ניהול' })
+    expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(['הגדרות כלליות', 'קטגוריות', 'מנות'])
+    expect(await within(nav).findByRole('link', { current: 'page' })).toHaveTextContent('הגדרות כלליות')
+  })
 
   it('logs out back to the login page', async () => {
-    const fetch = mockApi([
-      { method: 'GET', path: '/api/admin/me', status: 200 },
-      { method: 'POST', path: '/api/admin/logout', status: 204 },
-    ])
-    renderAt('/admin')
+    const api = fakeApi({ 'GET /api/admin/me': () => ({}), 'POST /api/admin/logout': () => undefined, ...settingsRoutes })
+    renderAt('/admin/settings')
 
     await userEvent.setup().click(await screen.findByRole('button', { name: 'יציאה' }))
 
     expect(await screen.findByRole('heading', { name: 'כניסת מנהל' })).toBeInTheDocument()
-    await waitFor(() =>
-      expect(fetch.mock.calls.some(([url]) => String(url).endsWith('/api/admin/logout'))).toBe(true),
-    )
+    await waitFor(() => expect(api.sent('POST', '/api/admin/logout')).toHaveLength(1))
   })
 })

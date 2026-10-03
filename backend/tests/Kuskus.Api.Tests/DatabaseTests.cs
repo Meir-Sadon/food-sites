@@ -80,7 +80,7 @@ public sealed class DatabaseTests : IDisposable
                 SellBy = SellBy.Units,
                 ChoiceMode = ChoiceMode.Fixed,
                 Options = [new DishOption { Label = "חצי עוף", Amount = 0.5m, Price = 45m, IsDefault = true }],
-                Images = [new DishImage { Url = "https://example.com/a.jpg", DisplayOrder = 0 }],
+                Images = [new DishImage { Url = "https://example.com/a.jpg", PublicId = "kuskus/dishes/a", DisplayOrder = 0 }],
             };
             var leg = new Dish
             {

@@ -8,6 +8,7 @@ public class Settings
     public int Id { get; set; } = SingletonId;
 
     public string? BackgroundImageUrl { get; set; }
+    public string? BackgroundImagePublicId { get; set; }
 
     public bool DeliveryEnabled { get; set; } = true;
     public bool PickupEnabled { get; set; } = true;

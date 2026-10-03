@@ -166,7 +166,7 @@ The work runs in six phases, each ending with something you can try. WhatsApp se
 
 1. **Foundation.** Project setup, database and migrations, admin login. Start the Meta business account and template approval in parallel.
 2. **Admin catalog.** General settings, categories, dishes with pictures, options and add-on links.
-3. **Order page.** Categories, dish selection, add-ons, supply day, total bar, reset, draft saving, guest ordering and the success popup. Messages are simulated until WhatsApp is approved.
+3. **Order page.** Categories, dish selection, add-ons, supply day, total bar, reset, draft saving, guest ordering and the success popup. The admin Contacts tab (main contact and the WhatsApp notification list), so the contact phone is on the site before clients order. Messages are simulated until WhatsApp is approved.
 4. **Accounts.** WhatsApp code login, registration, profile, order history, last order, favorites and recommendations.
 5. **Operations.** Admin Orders tab, cooking summary, dish-change warning, real WhatsApp messages, statistics and reports.
 6. **Launch.** Accessibility review, privacy policy and accessibility statement, testing on phones, deployment, domain connection, and a walkthrough for your mam.
