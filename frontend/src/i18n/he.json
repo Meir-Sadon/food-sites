@@ -1,0 +1,32 @@
+{
+  "app": {
+    "name": "הקוסקוס של אמא"
+  },
+  "nav": {
+    "label": "תפריט ראשי",
+    "order": "הזמנה",
+    "login": "התחברות / הרשמה",
+    "recommendations": "המלצות",
+    "profile": "פרופיל"
+  },
+  "pages": {
+    "order": { "title": "הזמנה" },
+    "login": { "title": "התחברות / הרשמה" },
+    "recommendations": { "title": "המלצות" },
+    "profile": { "title": "פרופיל" },
+    "comingSoon": "העמוד בבנייה."
+  },
+  "admin": {
+    "title": "ניהול",
+    "loginTitle": "כניסת מנהל",
+    "password": "סיסמה",
+    "submit": "כניסה",
+    "submitting": "מתחבר…",
+    "wrongPassword": "הסיסמה שגויה.",
+    "tooManyAttempts": "יותר מדי ניסיונות. נסו שוב בעוד דקה.",
+    "error": "משהו השתבש. נסו שוב.",
+    "loading": "טוען…",
+    "welcome": "נכנסת לאזור הניהול.",
+    "logout": "יציאה"
+  }
+}
