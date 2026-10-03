@@ -2,6 +2,8 @@ using System.Threading.RateLimiting;
 using Kuskus.Api.Auth;
 using Kuskus.Api.Controllers;
 using Kuskus.Api.Data;
+using Kuskus.Api.Http;
+using Kuskus.Api.Images;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -91,13 +93,27 @@ if (config.GetValue<bool>("ForwardedHeaders:Enabled"))
     });
 }
 
-builder.Services.AddControllers();
+// Pictures go to Cloudinary when Cloudinary__Url is set; otherwise uploads answer 503.
+var cloudinaryUrl = config["Cloudinary:Url"];
+if (string.IsNullOrWhiteSpace(cloudinaryUrl))
+{
+    builder.Services.AddSingleton<IImageStore, NotConfiguredImageStore>();
+}
+else
+{
+    builder.Services.AddSingleton(new CloudinaryDotNet.Cloudinary(cloudinaryUrl) { Api = { Secure = true } });
+    builder.Services.AddSingleton<IImageStore, CloudinaryImageStore>();
+}
+
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 var app = builder.Build();
 
 if (config.GetValue<bool>("ForwardedHeaders:Enabled"))
     app.UseForwardedHeaders();
 
+app.UseMiddleware<RequireRequestHeaderMiddleware>();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

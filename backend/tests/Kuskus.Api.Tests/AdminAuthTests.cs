@@ -16,8 +16,7 @@ public sealed class AdminAuthTests(PostgresFixture postgres) : IDisposable
 
     public void Dispose() => _factory.Dispose();
 
-    private HttpClient Client() =>
-        _factory.CreateClient(new() { HandleCookies = false, AllowAutoRedirect = false });
+    private HttpClient Client() => _factory.CreateApiClient();
 
     private static Task<HttpResponseMessage> Login(HttpClient client, string password) =>
         client.PostAsJsonAsync("/api/admin/login", new { password });
@@ -64,6 +63,17 @@ public sealed class AdminAuthTests(PostgresFixture postgres) : IDisposable
         var response = await Login(Client(), password);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.False(response.Headers.Contains("Set-Cookie"));
+    }
+
+    [Fact]
+    public async Task Changes_without_the_request_header_are_refused()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/admin/login", new { password = ApiFactory.AdminPassword });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("missingRequestHeader", await response.Content.ReadAsStringAsync());
         Assert.False(response.Headers.Contains("Set-Cookie"));
     }
 
@@ -165,7 +175,7 @@ public sealed class AdminLoginRateLimitTests(PostgresFixture postgres) : IDispos
     [Fact]
     public async Task Too_many_login_attempts_are_throttled()
     {
-        var client = _factory.CreateClient();
+        var client = _factory.CreateApiClient();
         for (var i = 0; i < 3; i++)
         {
             var attempt = await client.PostAsJsonAsync("/api/admin/login", new { password = "guess" + i });

@@ -62,6 +62,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(d => d.Description).HasMaxLength(Dish.DescriptionMaxLength);
             e.Property(d => d.MinAmount).HasPrecision(10, 3);
             e.Property(d => d.MaxAmount).HasPrecision(10, 3);
+            e.Property(d => d.AmountStep).HasPrecision(10, 3);
+            e.Property(d => d.Name).HasMaxLength(Dish.NameMaxLength);
             e.HasOne(d => d.Category).WithMany(c => c.Dishes)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);

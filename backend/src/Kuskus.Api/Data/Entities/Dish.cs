@@ -2,7 +2,9 @@ namespace Kuskus.Api.Data.Entities;
 
 public class Dish
 {
+    public const int NameMaxLength = 100;
     public const int DescriptionMaxLength = 254;
+    public const int MaxImages = 6;
 
     public int Id { get; set; }
     public required string Name { get; set; }
@@ -20,6 +22,9 @@ public class Dish
     public decimal? MinAmount { get; set; }
     public decimal? MaxAmount { get; set; }
     public decimal? UnitPrice { get; set; }
+
+    /// <summary>Free choice: the amount moves in steps of this size, e.g. 0.25 kg.</summary>
+    public decimal? AmountStep { get; set; }
 
     public bool IsAddOnOnly { get; set; }
     public bool IsSoldOut { get; set; }
