@@ -38,26 +38,57 @@ A small Hebrew ordering website for a home food business. Clients order admin-co
 
 ## Getting started
 
-### Prerequisites
+### Everything at once (Docker)
+
+```bash
+docker compose up --build
+```
+
+- Site: http://localhost:8080
+- Admin area: http://localhost:8080/admin (local password: `admin`)
+- API: http://localhost:5000, PostgreSQL: localhost:5432 (user, password and database `kuskus`)
+
+The API applies database migrations on startup. The defaults in `docker-compose.yml` are for local use only; override them in a `.env` file (`POSTGRES_PASSWORD`, `JWT_SECRET`, `ADMIN_PASSWORD_HASH`).
+
+### Prerequisites for running parts separately
 - Node.js (LTS)
-- .NET SDK
-- PostgreSQL (local or Docker)
+- .NET 10 SDK, plus `dotnet tool install --global dotnet-ef` for migrations
+- PostgreSQL (local, or `docker compose up db`)
+- Docker, for the backend tests
 
 ### Backend
 ```bash
 cd backend
-cp appsettings.Example.json appsettings.Development.json   # fill in your values
-dotnet ef database update
-dotnet run
+cp appsettings.Example.json src/Kuskus.Api/appsettings.Development.json   # fill in your values
+dotnet run --project src/Kuskus.Api        # http://localhost:5000
+```
+
+With `Database:MigrateOnStartup` set to `true` the API migrates the database itself. To do it by hand:
+```bash
+dotnet ef database update --project src/Kuskus.Api
+```
+
+Add a migration after changing the model:
+```bash
+dotnet ef migrations add <Name> --project src/Kuskus.Api --output-dir Data/Migrations
 ```
 
 ### Frontend
 ```bash
 cd frontend
-cp .env.example .env.local   # set VITE_API_URL
+cp .env.example .env.local   # leave VITE_API_URL empty to use the dev proxy
 npm install
-npm run dev
+npm run dev                  # http://localhost:5173, proxies /api to localhost:5000
 ```
+
+### Admin password
+
+There is one admin password. Only its hash is stored, in the `Settings` table. Create a hash with:
+```bash
+cd backend
+dotnet run --project src/Kuskus.Api -- hash-password '<password>'
+```
+Put the output in `Admin__PasswordHash`. On startup it is copied into `Settings` if no admin password is set there yet; after that the value in the database wins. To replace a password that is already set, clear `Settings.AdminPasswordHash` and restart with the new hash.
 
 ## Configuration
 
@@ -66,15 +97,21 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 | Setting | Purpose |
 | --- | --- |
 | `ConnectionStrings__Default` | PostgreSQL connection string |
-| `Jwt__Secret` | Signing key for session tokens |
-| `Admin__PasswordHash` | Hashed admin password |
+| `Jwt__Secret` | Signing key for session tokens, at least 32 characters |
+| `Admin__PasswordHash` | Hashed admin password, seeded into `Settings` on first start |
+| `Admin__SessionHours` | Admin session length (default 12) |
+| `Admin__LoginAttemptsPerMinute` | Admin login attempts allowed per IP per minute (default 5) |
+| `AuthCookie__Secure` | Send the session cookie over HTTPS only (default `true`) |
+| `AuthCookie__SameSite` | `Lax` when site and API share a domain, `None` when they don't |
+| `Database__MigrateOnStartup` | Apply migrations when the API starts |
+| `ForwardedHeaders__Enabled` | Trust `X-Forwarded-For` from one reverse proxy in front of the API |
 | `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | WhatsApp Cloud API credentials |
 | `Cloudinary__Url` | Image storage credentials |
 
 ## Tests
 
 ```bash
-cd backend && dotnet test
+cd backend && dotnet test     # needs Docker: runs against a real PostgreSQL container
 cd frontend && npm test
 ```
 

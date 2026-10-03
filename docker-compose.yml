@@ -1,0 +1,50 @@
+# Local development stack: `docker compose up --build`, then open http://localhost:8080
+# Admin area: http://localhost:8080/admin  (dev password: "admin")
+#
+# The defaults below are for local use only. Override them in a .env file next to this one.
+name: kuskus-shel-ima
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: kuskus
+      POSTGRES_USER: kuskus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kuskus}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kuskus -d kuskus"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: Host=db;Port=5432;Database=kuskus;Username=kuskus;Password=${POSTGRES_PASSWORD:-kuskus}
+      Jwt__Secret: ${JWT_SECRET:-local-development-secret-change-me-0123456789}
+      # Hash of "admin". Only copied into Settings when the database has no admin password yet.
+      Admin__PasswordHash: ${ADMIN_PASSWORD_HASH:-AQAAAAIAAYagAAAAECliO1aVr/omJHp1yMHPeanrqq/pzJemPc8qU8AbIJI77Ic4Lf8NWIbyv+Eu5UVwBQ==}
+      Database__MigrateOnStartup: "true"
+      ForwardedHeaders__Enabled: "true"
+      # The local stack is plain HTTP.
+      AuthCookie__Secure: "false"
+    ports:
+      - "5000:8080"
+
+  web:
+    build: ./frontend
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
