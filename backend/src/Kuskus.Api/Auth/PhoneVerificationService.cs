@@ -64,7 +64,7 @@ public class PhoneVerificationService(
         });
         await db.SaveChangesAsync(ct);
 
-        await whatsApp.SendAsync(phone, OrderMessages.LoginCode(code), ct);
+        await whatsApp.SendAsync(phone, WhatsAppTemplate.LoginCode, OrderMessages.LoginCode(code), ct);
         return SendCodeResult.Sent;
     }
 

@@ -10,7 +10,7 @@ public class CapturingWhatsAppSender : IWhatsAppSender
     /// <summary>Phones whose messages fail, to test that orders survive a WhatsApp outage.</summary>
     public HashSet<string> FailFor { get; } = [];
 
-    public Task SendAsync(string phone, string message, CancellationToken ct = default)
+    public Task SendAsync(string phone, WhatsAppTemplate template, string message, CancellationToken ct = default)
     {
         if (FailFor.Contains(phone))
             throw new InvalidOperationException("WhatsApp is down");

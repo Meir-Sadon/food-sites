@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { adminLogout } from '../api/admin'
 
 const tabs = [
+  { to: '/admin/orders', key: 'admin.nav.orders' },
   { to: '/admin/settings', key: 'admin.nav.settings' },
   { to: '/admin/categories', key: 'admin.nav.categories' },
   { to: '/admin/dishes', key: 'admin.nav.dishes' },
   { to: '/admin/contacts', key: 'admin.nav.contacts' },
+  { to: '/admin/reports', key: 'admin.nav.reports' },
 ] as const
 
 export function AdminLayout() {

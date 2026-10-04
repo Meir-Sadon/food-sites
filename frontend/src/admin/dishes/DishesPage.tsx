@@ -97,6 +97,10 @@ export function DishesPage() {
                     </Link>
                     <ConfirmRemove
                       name={dish.name}
+                      warn={async () => {
+                        const { count } = await dishesApi.affectedOrders(dish.id)
+                        return count > 0 ? t('admin.dishes.removeWarning', { name: dish.name, count }) : null
+                      }}
                       onConfirm={() =>
                         act(async () => {
                           await dishesApi.remove(dish.id)

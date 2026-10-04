@@ -145,6 +145,8 @@ export const dishesApi = {
   setSoldOut: (id: number, isSoldOut: boolean) =>
     apiJson<void>(`${admin}/dishes/${id}/sold-out`, send('PUT', { isSoldOut })),
   remove: (id: number) => apiJson<void>(`${admin}/dishes/${id}`, send('DELETE')),
+  /** Orders not yet supplied that contain this dish. */
+  affectedOrders: (id: number) => apiJson<{ count: number }>(`${admin}/dishes/${id}/affected-orders`),
   restore: (id: number) => apiJson<Dish>(`${admin}/dishes/${id}/restore`, send('POST')),
   addImage: (id: number, file: File) => apiJson<Dish>(`${admin}/dishes/${id}/images`, upload(file)),
   removeImage: (id: number, imageId: number) => apiJson<Dish>(`${admin}/dishes/${id}/images/${imageId}`, send('DELETE')),
