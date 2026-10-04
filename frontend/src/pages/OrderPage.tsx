@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ordersApi, siteApi, type Confirmation, type Menu, type MenuDish, type Fulfillment, type Payment } from '../api/site'
 import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
+import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useSite, useSiteFailed } from '../site/useSite'
 import { DishCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { formatMoney, formatSupplyDate } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
+import { QuickFill } from '../order/QuickFill'
 import {
   dishMap,
   emptyOrder,
@@ -21,6 +23,7 @@ import {
   standaloneDishes,
   toLines,
   type OrderState,
+  type Restored,
   type Selection,
 } from '../order/model'
 import { normalizePhone } from '../order/phone'
@@ -36,6 +39,8 @@ function formatCutoff(iso: string) {
 export function OrderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { user } = useAccount()
   const site = useSite()
   const siteFailed = useSiteFailed()
   const errorMessage = useErrorMessage()
@@ -50,11 +55,27 @@ export function OrderPage() {
   const [submitting, setSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [leaveTo, setLeaveTo] = useState<string | null>(null)
+  const [prefilledFor, setPrefilledFor] = useState<number | null>(null)
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const total = orderTotal(state.selections, dishes)
   const count = itemCount(state.selections)
   const dirty = count > 0 && !confirmation
+  // Set when the profile page's "Reorder" put a past order in the draft.
+  const filledSkipped = (location.state as { filled?: { skipped: number } } | null)?.filled?.skipped
+
+  // A logged-in client's details are prefilled once the menu (and any draft) is in, and the login
+  // already confirmed their phone. Adjusting state during render is React's way to derive it from props.
+  if (user && menu && prefilledFor !== user.id) {
+    setPrefilledFor(user.id)
+    setState((current) => ({
+      ...current,
+      name: current.name || user.fullName,
+      phone: current.phone || user.phone,
+      address: current.address || user.address,
+    }))
+    setVerified((current) => current ?? { phone: user.phone, token: '' })
+  }
 
   // Load the menu, then bring back a draft saved in this browser: the menu is needed first so
   // dishes that have vanished since can be skipped.
@@ -68,7 +89,9 @@ export function OrderPage() {
         if (draft) {
           const { selections, skipped } = restoreSelections(draft.selections, loaded)
           setState({ ...draft, selections })
-          setNotice(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
+          if (filledSkipped !== undefined)
+            setNotice(filledSkipped > 0 ? t('order.filledSkipped', { count: filledSkipped }) : t('order.filled'))
+          else setNotice(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
         }
         setMenu(loaded)
       })
@@ -76,7 +99,7 @@ export function OrderPage() {
     return () => {
       active = false
     }
-  }, [t])
+  }, [t, filledSkipped])
 
   // Ask about saving when leaving by the top bar, and warn when closing the tab.
   useRegisterLeaveGuard((to) => {
@@ -133,6 +156,13 @@ export function OrderPage() {
     setErrors({})
     setSubmitError(null)
     clearDraft()
+  }
+
+  function applyQuickFill({ selections, skipped }: Restored) {
+    setState((current) => ({ ...current, selections }))
+    setNotice(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
+    setErrors({})
+    setSubmitError(null)
   }
 
   function leave(save: boolean) {
@@ -192,6 +222,8 @@ export function OrderPage() {
           </button>
         </p>
       )}
+
+      {user && <QuickFill menu={menu} onApply={applyQuickFill} />}
 
       {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
       {categories.map(({ category, dishes: list }) => (

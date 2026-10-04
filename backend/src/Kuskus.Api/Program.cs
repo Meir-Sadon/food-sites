@@ -34,7 +34,9 @@ builder.Services.Configure<JwtOptions>(config.GetSection(JwtOptions.Section));
 builder.Services.Configure<AdminOptions>(config.GetSection(AdminOptions.Section));
 builder.Services.Configure<Kuskus.Api.Auth.CookieOptions>(config.GetSection(Kuskus.Api.Auth.CookieOptions.Section));
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.Configure<AccountOptions>(config.GetSection(AccountOptions.Section));
 builder.Services.AddSingleton<AdminTokenService>();
+builder.Services.AddSingleton<UserTokenService>();
 builder.Services.AddSingleton<SiteClock>();
 // Messages are only logged until Meta approves the WhatsApp templates (phase 5).
 builder.Services.AddSingleton<IWhatsAppSender, SimulatedWhatsAppSender>();
@@ -43,8 +45,10 @@ builder.Services.AddScoped<PhoneVerificationService>();
 var jwt = config.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (System.Text.Encoding.UTF8.GetByteCount(jwt.Secret) < 32)
     throw new InvalidOperationException("Jwt:Secret must be set and at least 32 bytes long.");
-var cookieName = config.GetSection(Kuskus.Api.Auth.CookieOptions.Section).Get<Kuskus.Api.Auth.CookieOptions>()?.Name
-    ?? new Kuskus.Api.Auth.CookieOptions().Name;
+var cookies = config.GetSection(Kuskus.Api.Auth.CookieOptions.Section).Get<Kuskus.Api.Auth.CookieOptions>()
+    ?? new Kuskus.Api.Auth.CookieOptions();
+var cookieName = cookies.Name;
+var userCookieName = cookies.UserName;
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -65,6 +69,26 @@ builder.Services
             OnMessageReceived = context =>
             {
                 context.Token = context.Request.Cookies[cookieName];
+                return Task.CompletedTask;
+            },
+        };
+    })
+    // A logged-in client: its own cookie and audience, so it never works as an admin session.
+    .AddJwtBearer(UserTokenService.Scheme, options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = UserTokenService.Audience(jwt.Issuer),
+            IssuerSigningKey = AdminTokenService.SigningKey(jwt.Secret),
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies[userCookieName];
                 return Task.CompletedTask;
             },
         };

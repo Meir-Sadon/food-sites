@@ -60,6 +60,10 @@ Picture uploads need a Cloudinary account: put its `CLOUDINARY_URL` (from the Cl
 - PostgreSQL (local, or `docker compose up db`)
 - Docker, for the backend tests
 
+### Cloud sessions (Claude Code on the web)
+
+Each cloud session starts in a fresh container, so a .NET SDK installed in one session is not there in the next, and only Node.js is pre-installed. Without the SDK the backend can't be built or tested (`dotnet: command not found`) and only the frontend checks (`npm test`, `npm run build`) can run. To have .NET in every session, add its install command to the environment's setup script (environment menu in the session title bar, then Edit). The container's network policy must also allow the .NET download hosts (`dot.net`, `builds.dotnet.microsoft.com`).
+
 ### Backend
 ```bash
 cd backend
@@ -109,6 +113,8 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 | `Admin__PasswordHash` | Hashed admin password, seeded into `Settings` on first start |
 | `Admin__SessionHours` | Admin session length (default 12) |
 | `Admin__LoginAttemptsPerMinute` | Admin login attempts allowed per IP per minute (default 5) |
+| `Account__SessionDays` | How long a logged-in client stays logged in (default 30) |
+| `AuthCookie__UserName` | Name of the client session cookie (default `kuskus_user`; the admin cookie is `kuskus_admin`) |
 | `AuthCookie__Secure` | Send the session cookie over HTTPS only (default `true`) |
 | `AuthCookie__SameSite` | `Lax` when site and API share a domain, `None` when they don't |
 | `Database__MigrateOnStartup` | Apply migrations when the API starts |
@@ -126,6 +132,7 @@ Until Meta approves the message templates (phase 5), nothing is sent: login code
 
 - Every `POST`, `PUT` and `DELETE` to `/api` must send the header `X-Kuskus-Request: 1`. Browsers can't add it from another site's page, so other sites can't act with the admin's cookie. The frontend sends it on every request.
 - Public endpoints: `GET /api/site` (contact, delivery text, background), `GET /api/menu` (categories, dishes, open supply dates), `POST /api/phone-verification/send|confirm` and `POST /api/orders`. Orders carry the proof of a confirmed phone and are priced and validated on the server.
+- Client account endpoints live under `/api/account`: `login` and `register` (both need the proof of a confirmed phone), `logout`, `me`, `orders`, `favorites` and `recommendations`. They use the client's own session cookie, which never works as an admin session.
 - Admin endpoints live under `/api/admin` and need the admin session cookie. Validation errors come back as codes per field (for example `{"errors": {"name": ["required"]}}`), which the admin screens translate.
 
 ## Tests

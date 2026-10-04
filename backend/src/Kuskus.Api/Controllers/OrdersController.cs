@@ -83,8 +83,16 @@ public class OrdersController(
         if (!SupplyCalendar.IsOpen(input.SupplyDate, clock.NowLocal(), days, closed))
             errors.Add(nameof(input.SupplyDate), "supplyDateUnavailable");
 
-        if (phone is not null && !await verification.IsVerifiedAsync(input.VerificationToken, phone))
-            errors.Add(nameof(input.Phone), "phoneNotVerified");
+        // A logged-in client already proved this phone at login; a guest proves it with a code.
+        if (phone is not null)
+        {
+            var sessionUserId = await SessionUserIdAsync();
+            var sessionPhone = sessionUserId is { } id
+                ? await db.Users.AsNoTracking().Where(u => u.Id == id).Select(u => u.Phone).FirstOrDefaultAsync(ct)
+                : null;
+            if (sessionPhone != phone && !await verification.IsVerifiedAsync(input.VerificationToken, phone))
+                errors.Add(nameof(input.Phone), "phoneNotVerified");
+        }
 
         var ids = (input.Items ?? [])
             .SelectMany(i => (i.AddOns ?? []).Select(a => a.DishId).Append(i.DishId))
@@ -101,8 +109,12 @@ public class OrdersController(
         if (errors.Any)
             return Invalid(errors);
 
+        // The phone is confirmed, so the order is added to that phone's account, if there is one.
+        var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);
+
         var order = new Order
         {
+            UserId = userId,
             Phone = phone!,
             Name = input.Name!.Trim(),
             Address = Clean(input.Address) ?? "",

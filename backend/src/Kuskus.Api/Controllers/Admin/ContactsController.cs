@@ -85,7 +85,7 @@ public class ContactsController(AppDbContext db) : AdminControllerBase
         return deleted == 0 ? NotFound() : NoContent();
     }
 
-    private static bool LooksLikeEmail(string value)
+    internal static bool LooksLikeEmail(string value)
     {
         var at = value.IndexOf('@');
         return at > 0 && at == value.LastIndexOf('@') && value.IndexOf('.', at) > at + 1

@@ -30,9 +30,20 @@ public class CookieOptions
 
     public string Name { get; set; } = "kuskus_admin";
 
+    /// <summary>Cookie of a logged-in client (the admin session uses <see cref="Name"/>).</summary>
+    public string UserName { get; set; } = "kuskus_user";
+
     /// <summary>Send only over HTTPS. Turn off for plain-HTTP local runs.</summary>
     public bool Secure { get; set; } = true;
 
     /// <summary>Lax when site and API share a domain; None when they are on different domains.</summary>
     public SameSiteMode SameSite { get; set; } = SameSiteMode.Lax;
+}
+
+public class AccountOptions
+{
+    public const string Section = "Account";
+
+    /// <summary>How long a client stays logged in after confirming the phone.</summary>
+    public int SessionDays { get; set; } = 30;
 }
