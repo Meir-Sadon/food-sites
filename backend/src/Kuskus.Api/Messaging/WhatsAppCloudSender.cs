@@ -16,6 +16,9 @@ public class WhatsAppOptions
     public string ApiVersion { get; set; } = "v21.0";
     public string BaseUrl { get; set; } = "https://graph.facebook.com";
 
+    /// <summary>For trying the site before WhatsApp is set up: login codes are shown on screen. Ignored once WhatsApp is configured.</summary>
+    public bool ShowCodeOnScreen { get; set; }
+
     public string LanguageCode { get; set; } = "he";
 
     // Template names as approved by Meta. Each has one body variable, {{1}}, that carries the message text.

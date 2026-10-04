@@ -112,7 +112,8 @@ export const siteApi = {
 }
 
 export const verificationApi = {
-  send: (phone: string) => apiJson<void>('/api/phone-verification/send', send('POST', { phone })),
+  /** Answers with the code only when the server shows codes on screen (WhatsApp not set up yet). */
+  send: (phone: string) => apiJson<{ code: string } | undefined>('/api/phone-verification/send', send('POST', { phone })),
   confirm: (phone: string, code: string) =>
     apiJson<{ token: string }>('/api/phone-verification/confirm', send('POST', { phone, code })),
 }

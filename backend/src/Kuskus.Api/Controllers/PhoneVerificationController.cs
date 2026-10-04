@@ -24,9 +24,10 @@ public class PhoneVerificationController(PhoneVerificationService verification, 
 
         try
         {
-            return await verification.SendCodeAsync(phone, ct) == SendCodeResult.TooManyCodes
-                ? StatusCode(StatusCodes.Status429TooManyRequests, new { code = "tooManyCodes" })
-                : NoContent();
+            var (result, displayCode) = await verification.SendCodeAsync(phone, ct);
+            if (result == SendCodeResult.TooManyCodes)
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { code = "tooManyCodes" });
+            return displayCode is null ? NoContent() : Ok(new { code = displayCode });
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

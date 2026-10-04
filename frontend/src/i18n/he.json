@@ -392,7 +392,8 @@
       "appliedSkipped_two": "ההזמנה מולאה. 2 פריטים כבר לא זמינים והוסרו.",
       "appliedSkipped_other": "ההזמנה מולאה. {{count}} פריטים כבר לא זמינים והוסרו.",
       "appliedSkipped_many": "ההזמנה מולאה. {{count}} פריטים כבר לא זמינים והוסרו."
-    }
+    },
+    "codeShown": "מצב בדיקה: הקוד שלך הוא {{code}}"
   },
   "account": {
     "loginTitle": "התחברות",

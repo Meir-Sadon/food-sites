@@ -130,7 +130,7 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 
 With `WhatsApp__PhoneNumberId` and `WhatsApp__Token` set, login codes, order confirmations and the new-order messages to the admin's phones go out through the WhatsApp Cloud API as template messages. Create three templates in Meta's WhatsApp Manager (language Hebrew), each with a single body variable `{{1}}` that carries the message text (the API joins the lines with ` | `, since template variables cannot hold line breaks), and give them the names above. A failed message never fails an order; it still shows in the admin Orders tab.
 
-Without those two settings nothing is sent: messages are written to the API log instead (`WhatsApp (simulated, ...) to ...`). To try the order flow locally, read the code from the log (`docker compose logs api`).
+Without those two settings nothing is sent: messages are written to the API log instead (`WhatsApp (simulated, ...) to ...`). To try the order flow without reading the log, set `WhatsApp__ShowCodeOnScreen=true`: the site then shows each login code on screen. It only works while WhatsApp is not configured, so it switches itself off once the two credentials are set. Don't leave it on for a public site before WhatsApp is set up: anyone could log in as any phone.
 
 ## API notes
 
