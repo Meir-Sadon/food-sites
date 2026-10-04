@@ -232,7 +232,15 @@ export function OrderPage() {
 
   return (
     <div className="order-page">
-      <h1>{t('pages.order.title')}</h1>
+      <header className="order-hero">
+        <h1>{t('pages.order.title')}</h1>
+        <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
+        <ul className="order-hero__chips">
+          <li>{t('order.hero.fresh')}</li>
+          <li>{t('order.hero.homemade')}</li>
+          <li>{t('order.hero.kosher')}</li>
+        </ul>
+      </header>
       {notice && (
         <p role="status" className="notice">
           {notice}{' '}
