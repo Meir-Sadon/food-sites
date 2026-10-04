@@ -1218,3 +1218,8 @@ label {
   box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
   cursor: pointer;
 }
+
+/* On the order page the fixed total bar sits at the bottom: keep the button above it. */
+.client-shell:has(.total-bar) .whatsapp-fab {
+  inset-block-end: 4.75rem;
+}
