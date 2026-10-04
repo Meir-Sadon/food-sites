@@ -39,6 +39,7 @@ export const dish = (id: number, name: string, categoryId: number, patch: Partia
   isAddOnOnly: false,
   isSoldOut: false,
   openByDefault: false,
+  isSideDish: false,
   maxPerSupplyDate: null,
   isHidden: false,
   options: [{ id: id * 10, label: 'מנה', amount: 1, price: 40, isDefault: true }],

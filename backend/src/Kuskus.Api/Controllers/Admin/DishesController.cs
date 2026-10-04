@@ -38,7 +38,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         IReadOnlyList<int> ParentDishIds,
         IReadOnlyList<int> AddOnDishIds,
         decimal? MaxPerSupplyDate = null,
-        bool OpenByDefault = false);
+        bool OpenByDefault = false,
+        bool IsSideDish = false);
 
     /// <summary>An option to keep (with Id) or add (without).</summary>
     public record OptionInput(int? Id, string? Label, decimal Amount, decimal Price, bool IsDefault);
@@ -63,7 +64,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         List<OptionInput>? Options,
         List<int>? ParentDishIds,
         decimal? MaxPerSupplyDate = null,
-        bool OpenByDefault = false);
+        bool OpenByDefault = false,
+        bool IsSideDish = false);
 
     public record SoldOutInput(bool IsSoldOut);
 
@@ -314,6 +316,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         dish.IsSoldOut = input.IsSoldOut;
         dish.MaxPerSupplyDate = input.MaxPerSupplyDate;
         dish.OpenByDefault = input.OpenByDefault;
+        dish.IsSideDish = input.IsSideDish;
 
         if (input.ChoiceMode == ChoiceMode.Fixed)
         {
@@ -375,5 +378,6 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.AddOnOf.Select(a => a.ParentDishId).Order().ToList(),
         d.AddOns.Select(a => a.AddOnDishId).Order().ToList(),
         d.MaxPerSupplyDate,
-        d.OpenByDefault);
+        d.OpenByDefault,
+        d.IsSideDish);
 }

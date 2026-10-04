@@ -99,6 +99,9 @@ namespace Kuskus.Api.Data.Migrations
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsSideDish")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsSoldOut")
                         .HasColumnType("boolean");
 

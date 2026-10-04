@@ -156,6 +156,7 @@ describe('Dish form', () => {
       isAddOnOnly: true,
       isSoldOut: false,
       openByDefault: false,
+      isSideDish: false,
       maxPerSupplyDate: null,
       options: [
         { id: null, label: 'קטן', amount: 1, price: 5, isDefault: false },

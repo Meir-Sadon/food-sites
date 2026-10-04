@@ -21,6 +21,12 @@ export function CookingSummary({ date }: { date: string }) {
           pickup: summary.pickupCount,
         })}
       </p>
+      <p className="muted">
+        {t('admin.orders.summaryDishes', {
+          main: formatNumber(summary.mainDishCount),
+          side: formatNumber(summary.sideDishCount),
+        })}
+      </p>
       {summary.rows.length === 0 ? (
         <p>{t('admin.orders.summaryEmpty')}</p>
       ) : (

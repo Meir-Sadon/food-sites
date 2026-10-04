@@ -198,6 +198,38 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Cooking_summary_counts_main_dishes_and_standalone_side_dishes_but_not_side_dishes_added_to_a_dish()
+    {
+        var pita = await CreateDish("כפיתה", 5, false, [_chicken]);
+        await using (var setup = _factory.CreateDbContext())
+        {
+            (await setup.Dishes.FindAsync(pita))!.IsSideDish = true;
+            await setup.SaveChangesAsync();
+        }
+
+        await using var db = _factory.CreateDbContext();
+        var main = new OrderItem { DishId = _chicken, DishName = "עוף בתנור", OptionLabel = "יחידה", Quantity = 2, UnitPrice = 70, LineTotal = 140 };
+        var withPita = new OrderItem { DishId = pita, DishName = "כפיתה", OptionLabel = "יחידה", Quantity = 3, UnitPrice = 5, LineTotal = 15, ParentItem = main };
+        main.AddOnItems.Add(withPita);
+        db.Orders.Add(new Order
+        {
+            Phone = "0501234567", Name = "דנה", Address = "חיפה", SupplyDate = Sunday, Total = 155,
+            CreatedAt = DateTimeOffset.UtcNow, Items = [main, withPita],
+        });
+        db.Orders.Add(new Order
+        {
+            Phone = "0507654321", Name = "רן", Address = "חיפה", SupplyDate = Sunday, Total = 10, CreatedAt = DateTimeOffset.UtcNow,
+            Items = [new OrderItem { DishId = pita, DishName = "כפיתה", OptionLabel = "יחידה", Quantity = 2, UnitPrice = 5, LineTotal = 10 }],
+        });
+        await db.SaveChangesAsync();
+
+        var summary = await _admin.GetAsync("/api/admin/orders/summary?date=2030-01-06").Read<SummaryDto>();
+
+        Assert.Equal(2m, summary.MainDishCount);
+        Assert.Equal(2m, summary.SideDishCount);
+    }
+
+    [Fact]
     public async Task Affected_orders_counts_only_orders_not_yet_supplied()
     {
         await SeedOrder(new DateOnly(2030, 1, 6));
