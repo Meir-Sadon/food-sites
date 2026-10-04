@@ -21,7 +21,8 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
         string? KashrutText,
         string? PaymentPhone,
         decimal? MinimumOrderAmount,
-        ContactDto Contact);
+        ContactDto Contact,
+        IReadOnlyList<string> WhatsAppPhones);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -60,10 +61,12 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
     public async Task<SiteDto> GetSite()
     {
         var s = await db.Settings.AsNoTracking().SingleAsync();
+        var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Phone).ToListAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
             s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
-            new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours));
+            new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
+            whatsAppPhones);
     }
 
     [HttpGet("menu")]

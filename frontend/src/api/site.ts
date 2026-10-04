@@ -20,6 +20,8 @@ export interface Site {
   /** The smallest order total in ₪; null when there is none. */
   minimumOrderAmount: number | null
   contact: Contact
+  /** The phones that can be chatted with on WhatsApp (the admin's notify list). */
+  whatsAppPhones: string[]
 }
 
 export interface MenuOption {
