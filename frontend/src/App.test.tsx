@@ -1,8 +1,14 @@
 import { screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { publicApi } from './test/catalogData'
+import { fakeApi } from './test/fakeApi'
 import { renderAt } from './test/render'
 
 describe('client site', () => {
+  beforeEach(() => {
+    fakeApi(publicApi)
+  })
+
   it('shows the top bar with the four buttons in order', () => {
     renderAt('/')
     const nav = screen.getByRole('navigation', { name: 'תפריט ראשי' })

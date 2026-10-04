@@ -3,6 +3,7 @@ import { AdminLayout } from './admin/AdminLayout'
 import { AdminLoginPage } from './admin/AdminLoginPage'
 import { RequireAdmin } from './admin/RequireAdmin'
 import { CategoriesPage } from './admin/categories/CategoriesPage'
+import { ContactsPage } from './admin/contacts/ContactsPage'
 import { DishFormPage } from './admin/dishes/DishFormPage'
 import { DishesPage } from './admin/dishes/DishesPage'
 import { SettingsPage } from './admin/settings/SettingsPage'
@@ -38,6 +39,7 @@ export function App() {
         <Route path="dishes" element={<DishesPage />} />
         <Route path="dishes/new" element={<DishFormPage key="new" />} />
         <Route path="dishes/:id" element={<DishFormPage key="edit" />} />
+        <Route path="contacts" element={<ContactsPage />} />
         <Route path="*" element={<Navigate to="settings" replace />} />
       </Route>
 

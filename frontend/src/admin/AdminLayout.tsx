@@ -6,6 +6,7 @@ const tabs = [
   { to: '/admin/settings', key: 'admin.nav.settings' },
   { to: '/admin/categories', key: 'admin.nav.categories' },
   { to: '/admin/dishes', key: 'admin.nav.dishes' },
+  { to: '/admin/contacts', key: 'admin.nav.contacts' },
 ] as const
 
 export function AdminLayout() {
