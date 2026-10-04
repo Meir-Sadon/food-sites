@@ -53,17 +53,20 @@ export function DishCard({ dish, dishes, selection, onChange }: Props) {
             {dish.choiceMode === 'Fixed' && dish.options.length > 1 && (
               <fieldset>
                 <legend>{t('order.optionFor', { name: dish.name })}</legend>
-                {dish.options.map((option) => (
-                  <label key={option.id} className="checkbox">
-                    <input
-                      type="radio"
-                      name={`${id}-option`}
-                      checked={selection.optionId === option.id}
-                      onChange={() => onChange({ ...selection, optionId: option.id })}
-                    />
-                    {option.label} · {formatMoney(option.price)}
-                  </label>
-                ))}
+                <div className="option-cards">
+                  {dish.options.map((option) => (
+                    <label key={option.id} className="option-card">
+                      <input
+                        type="radio"
+                        name={`${id}-option`}
+                        checked={selection.optionId === option.id}
+                        onChange={() => onChange({ ...selection, optionId: option.id })}
+                      />
+                      <span className="option-card__label">{option.label}</span>
+                      <span className="option-card__price numeric">{formatMoney(option.price)}</span>
+                    </label>
+                  ))}
+                </div>
               </fieldset>
             )}
 
