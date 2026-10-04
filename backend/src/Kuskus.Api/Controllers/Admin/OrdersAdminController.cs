@@ -56,7 +56,13 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     public record SummaryRowDto(int DishId, string DishName, string? OptionLabel, decimal Quantity, int Orders);
 
-    public record SummaryDto(DateOnly Date, int OrderCount, int DeliveryCount, int PickupCount, IReadOnlyList<SummaryRowDto> Rows);
+    /// <summary>
+    /// MainDishCount and SideDishCount count the dishes ordered on their own: add-on lines belong to the dish they
+    /// were ordered under and add nothing, so a pita ordered with a couscous is part of it and not a side dish.
+    /// </summary>
+    public record SummaryDto(
+        DateOnly Date, int OrderCount, int DeliveryCount, int PickupCount, IReadOnlyList<SummaryRowDto> Rows,
+        decimal MainDishCount = 0, decimal SideDishCount = 0);
 
     /// <summary>Orders with a supply date in [from, to], newest supply day last. Both bounds and the status are optional.</summary>
     [HttpGet]
@@ -87,7 +93,13 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             .ToListAsync();
         var lines = await db.OrderItems.AsNoTracking()
             .Where(i => i.Order!.SupplyDate == date && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
-            .Select(i => new { i.DishId, i.DishName, i.OptionLabel, i.Quantity, i.OrderId })
+            .Select(i => new
+            {
+                i.DishId, i.DishName, i.OptionLabel, i.Quantity, i.OrderId,
+                Standalone = i.ParentItemId == null,
+                IsSideDish = i.Dish!.IsSideDish,
+                IsFree = i.Dish.ChoiceMode == ChoiceMode.Free,
+            })
             .ToListAsync();
 
         var rows = lines
@@ -100,8 +112,14 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             date, orders.Count,
             orders.Count(o => o.FulfillmentMethod == FulfillmentMethod.Delivery),
             orders.Count(o => o.FulfillmentMethod == FulfillmentMethod.Pickup),
-            rows);
+            rows,
+            DishesCount(lines.Where(i => i.Standalone && !i.IsSideDish).Select(i => (i.Quantity, i.IsFree))),
+            DishesCount(lines.Where(i => i.Standalone && i.IsSideDish).Select(i => (i.Quantity, i.IsFree))));
     }
+
+    /// <summary>Units for set-option dishes; a free-weight line (quantity in kilos) counts as one dish.</summary>
+    private static decimal DishesCount(IEnumerable<(decimal Quantity, bool IsFree)> lines) =>
+        lines.Sum(l => l.IsFree ? 1 : l.Quantity);
 
     [HttpPut("{id:int}/status")]
     public async Task<ActionResult> SetStatus(int id, StatusInput input)

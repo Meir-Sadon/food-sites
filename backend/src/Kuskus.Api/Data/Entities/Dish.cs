@@ -38,6 +38,12 @@ public class Dish
     /// <summary>The order page shows this dish's choices right away, without the client first clicking add.</summary>
     public bool OpenByDefault { get; set; }
 
+    /// <summary>
+    /// A side dish (e.g. pita): ordered on its own it counts in the side-dish total of the summary,
+    /// ordered under another dish as an add-on it counts as part of that dish and adds nothing.
+    /// </summary>
+    public bool IsSideDish { get; set; }
+
     /// <summary>Removed dishes are hidden, never deleted, so old orders still display.</summary>
     public bool IsHidden { get; set; }
 

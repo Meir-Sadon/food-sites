@@ -39,6 +39,7 @@ interface DishForm {
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
+  isSideDish: boolean
   maxPerSupplyDate: string
   options: OptionForm[]
   parentDishIds: number[]
@@ -66,6 +67,7 @@ function toForm(dish: Dish | null, categories: Category[]): DishForm {
       isAddOnOnly: false,
       isSoldOut: false,
       openByDefault: false,
+      isSideDish: false,
       maxPerSupplyDate: '',
       options: [emptyOption(true)],
       parentDishIds: [],
@@ -84,6 +86,7 @@ function toForm(dish: Dish | null, categories: Category[]): DishForm {
     isAddOnOnly: dish.isAddOnOnly,
     isSoldOut: dish.isSoldOut,
     openByDefault: dish.openByDefault,
+    isSideDish: dish.isSideDish,
     maxPerSupplyDate: str(dish.maxPerSupplyDate),
     options: dish.options.length
       ? dish.options.map((o) => ({ key: nextKey++, id: o.id, label: o.label, amount: String(o.amount), price: String(o.price), isDefault: o.isDefault }))
@@ -108,6 +111,7 @@ function toInput(form: DishForm): DishInput {
     isAddOnOnly: form.isAddOnOnly,
     isSoldOut: form.isSoldOut,
     openByDefault: form.openByDefault,
+    isSideDish: form.isSideDish,
     maxPerSupplyDate: num(form.maxPerSupplyDate),
     options: fixed
       ? form.options.map((o) => ({ id: o.id, label: o.label, amount: num(o.amount) ?? 0, price: num(o.price) ?? 0, isDefault: o.isDefault }))
@@ -360,6 +364,10 @@ export function DishFormPage() {
         <label className="checkbox">
           <input type="checkbox" checked={form.isSoldOut} onChange={(e) => set({ isSoldOut: e.target.checked })} />
           {t('admin.dishes.soldOutLabel')}
+        </label>
+        <label className="checkbox">
+          <input type="checkbox" checked={form.isSideDish} onChange={(e) => set({ isSideDish: e.target.checked })} />
+          {t('admin.dishes.sideDishLabel')}
         </label>
         <label className="checkbox">
           <input type="checkbox" checked={form.openByDefault} onChange={(e) => set({ openByDefault: e.target.checked })} />
