@@ -139,6 +139,18 @@ a {
   color: var(--color-accent);
 }
 
+/* The admin bar keeps text tabs: undo the fixed-size icon circle used by the client bar. */
+.admin-bar .top-bar__link {
+  display: block;
+  inline-size: auto;
+  block-size: auto;
+  padding: 0.5rem 0.875rem;
+}
+
+.admin-bar .top-bar__link.active {
+  box-shadow: none;
+}
+
 /* The way out: a quiet outlined pill, set apart from the page links. */
 .top-bar__link--logout {
   border: 1px solid var(--color-border);
