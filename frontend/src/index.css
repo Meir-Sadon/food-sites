@@ -1,18 +1,23 @@
 /* Mobile-first. Logical properties (inline-start/end) keep the layout correct in RTL. */
 :root {
-  --color-bg: #fffaf3;
+  --color-bg: #f7f4ef;
   --color-surface: #ffffff;
-  --color-text: #2b2118;
-  --color-muted: #6b5b4d;
-  --color-accent: #9a3412;
+  --color-text: #1f2a37;
+  --color-muted: #5b6676;
+  --color-accent: #0f5c4d;
+  --color-accent-hover: #0b4a3e;
   --color-accent-contrast: #ffffff;
-  --color-border: #e7dccf;
-  --color-error: #b91c1c;
+  --color-gold: #c8963e;
+  --color-border: #e3ded5;
+  --color-error: #b42318;
   --color-success: #166534;
-  --color-soft: #f6efe6;
+  --color-soft: #eef3f0;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-md: 0 4px 12px rgb(16 24 40 / 0.08), 0 2px 4px rgb(16 24 40 / 0.05);
+  --radius: 0.75rem;
 
   font-family: 'Assistant', 'Rubik', 'Segoe UI', Arial, sans-serif;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--color-text);
   background: var(--color-bg);
 }
@@ -44,33 +49,62 @@ a {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
-  background: var(--color-surface);
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgb(255 255 255 / 0.88);
+  backdrop-filter: saturate(180%) blur(12px);
   border-block-end: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .top-bar__brand {
-  font-weight: 700;
-  font-size: 1.125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  color: var(--color-accent);
+  font-weight: 800;
+  font-size: 1.25rem;
+  text-decoration: none;
+}
+
+.top-bar__logo {
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 50%;
+  background: var(--color-soft);
+  font-size: 1.25rem;
 }
 
 .top-bar__links {
   display: flex;
+  align-items: center;
   gap: 0.25rem;
   margin: 0;
   padding: 0;
   list-style: none;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .top-bar__link {
+  position: relative;
   display: block;
-  padding: 0.375rem 0.625rem;
+  padding: 0.5rem 0.875rem;
   border-radius: 999px;
+  background: transparent;
   color: var(--color-text);
+  font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.top-bar__link:hover {
+  background: var(--color-soft);
+  color: var(--color-accent);
 }
 
 .top-bar__link.active {
@@ -78,10 +112,29 @@ a {
   color: var(--color-accent-contrast);
 }
 
+.top-bar__brand.active {
+  background: none;
+  color: var(--color-accent);
+}
+
+/* The way out: a quiet outlined pill, set apart from the page links. */
+.top-bar__link--logout {
+  border: 1px solid var(--color-border);
+  margin-inline-start: 0.5rem;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.top-bar__link--logout:hover {
+  border-color: var(--color-error);
+  background: #fef3f2;
+  color: var(--color-error);
+}
+
 .page {
   max-inline-size: 48rem;
   margin-inline: auto;
-  padding: 1rem;
+  padding: 1.5rem 1.25rem;
 }
 
 .admin-login form {
@@ -95,19 +148,31 @@ input,
 select,
 textarea {
   font: inherit;
-  padding: 0.5rem;
-  border: 1px solid var(--color-muted);
-  border-radius: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #c9c3b8;
+  border-radius: var(--radius);
+  background: var(--color-surface);
 }
 
 button {
   font: inherit;
-  padding: 0.5rem 1rem;
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
   border: 0;
-  border-radius: 0.375rem;
+  border-radius: var(--radius);
+  transition: background-color 0.15s, box-shadow 0.15s;
   background: var(--color-accent);
   color: var(--color-accent-contrast);
   cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.button-quiet:hover:not(:disabled),
+.button-icon:hover:not(:disabled) {
+  background: var(--color-soft);
 }
 
 button:disabled {
@@ -125,6 +190,11 @@ button:disabled {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    padding-inline: 2rem;
+  }
+
+  .top-bar__links {
+    overflow: visible;
   }
 }
 
@@ -136,6 +206,7 @@ button:disabled {
 
 .admin-section,
 .account-section {
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -143,7 +214,7 @@ button:disabled {
   padding: 1rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 .admin-section h2,
@@ -447,7 +518,7 @@ label {
 }
 
 .site-footer {
-  padding: 1rem 1rem 5rem; /* room for the fixed total bar */
+  padding: 1.5rem 1.25rem 5rem; /* room for the fixed total bar */
   background: var(--color-surface);
   border-block-start: 1px solid var(--color-border);
 }
@@ -464,12 +535,14 @@ label {
 .order-page {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   padding-block-end: 4rem;
 }
 
 .order-page h1 {
   margin: 0;
+  font-size: 1.75rem;
+  letter-spacing: -0.01em;
 }
 
 .notice,
@@ -507,13 +580,14 @@ label {
 }
 
 .category {
+  box-shadow: var(--shadow-sm);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 .category > summary {
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   cursor: pointer;
 }
 
@@ -526,18 +600,18 @@ label {
 .category__dishes {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 0 1rem 1rem;
+  gap: 1.25rem;
+  padding: 0 1.25rem 1.25rem;
 }
 
 .dish {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem 1.25rem;
+  gap: 1rem 1.5rem;
   inline-size: 100%;
-  padding: 0.75rem;
+  padding: 1rem;
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 .dish--chosen {
@@ -560,6 +634,7 @@ label {
 }
 
 .dish__price {
+  color: var(--color-accent);
   font-weight: 700;
 }
 
@@ -587,7 +662,7 @@ label {
   padding: 0.75rem 1rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   font-weight: 400;
   cursor: pointer;
 }
@@ -635,7 +710,7 @@ label {
   padding: 0.5rem 1rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 .carousel {
@@ -672,10 +747,11 @@ label {
 }
 
 .order-form {
-  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 .order-form h2 {
@@ -696,6 +772,7 @@ label {
   background: var(--color-accent);
   color: var(--color-accent-contrast);
   font-size: 1.125rem;
+  box-shadow: 0 -4px 12px rgb(16 24 40 / 0.15);
 }
 
 .modal-backdrop {
@@ -719,7 +796,7 @@ label {
   overflow-y: auto;
   padding: 1.25rem;
   background: var(--color-surface);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 .modal h2,
@@ -801,7 +878,7 @@ label {
   gap: 0.5rem;
   padding: 0.75rem;
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 .history__order p {

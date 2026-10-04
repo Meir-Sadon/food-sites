@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, type RefObject } from 'react'
 
 /** Returns true when it takes over the navigation (for example to ask about saving a draft). */
-export type LeaveGuard = (to: string) => boolean
+/** `proceed` runs instead of a plain navigation once the user has decided (logout, for example). */
+export type LeaveGuard = (to: string, proceed?: () => void | Promise<void>) => boolean
 
 export const GuardContext = createContext<RefObject<LeaveGuard | null> | null>(null)
 
@@ -19,5 +20,5 @@ export function useRegisterLeaveGuard(guard: LeaveGuard) {
 
 export function useLeaveCheck(): LeaveGuard {
   const ref = useContext(GuardContext)
-  return (to) => ref?.current?.(to) ?? false
+  return (to, proceed) => ref?.current?.(to, proceed) ?? false
 }
