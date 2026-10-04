@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router'
 import { AccountProvider } from '../account/AccountContext'
 import { Footer } from './Footer'
+import { WhatsAppButton } from './WhatsAppButton'
 import { LeaveGuardProvider } from './LeaveGuardProvider'
 import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
@@ -15,6 +16,7 @@ function Shell() {
         <Outlet />
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   )
 }
