@@ -121,6 +121,16 @@ app.UseAuthorization();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
 
+// The production image (Dockerfile at the repo root) puts the built frontend in wwwroot,
+// so one service serves the site and the API on the same origin.
+if (Directory.Exists(app.Environment.WebRootPath))
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+    // Client-side routes (/login, /admin, ...) load the app; files and unknown /api paths stay 404.
+    app.MapFallbackToFile("{*path:nonfile:regex(^(?!api(/|$)).*$)}", "index.html");
+}
+
 await DatabaseInitializer.InitializeAsync(app.Services, migrate: config.GetValue<bool>("Database:MigrateOnStartup"));
 
 app.Run();
