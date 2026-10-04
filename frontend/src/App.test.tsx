@@ -9,12 +9,12 @@ describe('client site', () => {
     fakeApi(publicApi)
   })
 
-  it('shows the top bar with the four buttons in order', () => {
+  it('shows the top bar with its buttons in order', () => {
     renderAt('/')
     const nav = screen.getByRole('navigation', { name: 'תפריט ראשי' })
     const links = within(nav).getAllByRole('link')
-    expect(links.map((l) => l.textContent)).toEqual(['הזמנה', 'התחברות / הרשמה', 'המלצות', 'פרופיל'])
-    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/', '/login', '/recommendations', '/profile'])
+    expect(links.map((l) => l.textContent)).toEqual(['הזמנה', 'התחברות / הרשמה', 'המלצות', 'פרופיל', 'אודות'])
+    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/', '/login', '/recommendations', '/profile', '/about'])
   })
 
   it.each([
@@ -22,11 +22,24 @@ describe('client site', () => {
     ['/login', 'התחברות / הרשמה'],
     ['/recommendations', 'המלצות'],
     ['/profile', 'פרופיל'],
+    ['/about', 'אודות'],
   ])('renders %s with its title and marks its button active', (path, title) => {
     renderAt(path)
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
     const active = within(screen.getByRole('navigation')).getByRole('link', { current: 'page' })
     expect(active).toHaveTextContent(title)
+  })
+
+  it('shows the kashrut details on the About page', async () => {
+    renderAt('/about')
+    const section = await screen.findByRole('region', { name: 'כשרות' })
+    expect(section).toHaveTextContent('בהשגחת הרבנות')
+  })
+
+  it('keeps the kashrut details off the Order page', async () => {
+    renderAt('/')
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+    expect(screen.queryByText('בהשגחת הרבנות')).not.toBeInTheDocument()
   })
 
   it('opens on the Order page for unknown addresses', () => {

@@ -180,7 +180,6 @@ export function OrderPage() {
   return (
     <div className="order-page">
       <h1>{t('pages.order.title')}</h1>
-      {site.kashrutText && <p className="kashrut">{site.kashrutText}</p>}
       {notice && (
         <p role="status" className="notice">
           {notice}{' '}

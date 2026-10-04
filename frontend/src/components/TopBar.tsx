@@ -7,6 +7,7 @@ const links = [
   { to: '/login', key: 'nav.login', end: false },
   { to: '/recommendations', key: 'nav.recommendations', end: false },
   { to: '/profile', key: 'nav.profile', end: false },
+  { to: '/about', key: 'nav.about', end: false },
 ] as const
 
 export function TopBar() {
