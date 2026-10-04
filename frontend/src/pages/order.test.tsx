@@ -95,7 +95,33 @@ describe('Order page', () => {
     await user.click(within(meat).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.click(within(meat).getByRole('button', { name: 'הוספה: בשר טחון' }))
     expect(total().getByText('סה"כ: ₪171.5')).toBeInTheDocument()
+    expect(total().getByText('3 מנות')).toBeInTheDocument()
+    expect(total().getByText('0 מנות צדדיות')).toBeInTheDocument()
+  })
+
+  it('totals dishes by amount and side dishes by kind, leaving out side dishes added to a dish', async () => {
+    const sideOnly = [menuDish(1, 'קוסקוס', 1, { addOnDishIds: [3] }), menuDish(3, 'כפיתה', 1, { isSideDish: true }), menuDish(4, 'סלט', 1, { isSideDish: true })]
+    const { user } = await openOrderPage({ 'GET /api/menu': () => menu({ dishes: sideOnly }) })
+
+    // Two side dishes of one kind and three of another: no dishes, two kinds of side dish.
+    const pita = dishCard('כפיתה')
+    await user.click(within(pita).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.click(within(pita).getByRole('button', { name: 'הוספה: כפיתה' }))
+    const salad = dishCard('סלט')
+    await user.click(within(salad).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.click(within(salad).getByRole('button', { name: 'הוספה: סלט' }))
+    await user.click(within(salad).getByRole('button', { name: 'הוספה: סלט' }))
+    expect(total().getByText('0 מנות')).toBeInTheDocument()
+    expect(total().getByText('2 מנות צדדיות')).toBeInTheDocument()
+
+    // Remove the salad; two couscous with a pita added to them: pita as part of the dish counts nowhere.
+    await user.click(within(salad).getByRole('button', { name: 'הסרה מההזמנה: סלט' }))
+    const couscous = dishCard('קוסקוס')
+    await user.click(within(couscous).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.click(within(couscous).getByRole('button', { name: 'הוספה: קוסקוס' }))
+    await user.click(within(couscous).getByRole('button', { name: 'הוספה: כפיתה' }))
     expect(total().getByText('2 מנות')).toBeInTheDocument()
+    expect(total().getByText('מנה צדדית אחת')).toBeInTheDocument()
   })
 
   it('stops a free amount at the admin range', async () => {

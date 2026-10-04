@@ -57,12 +57,13 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     public record SummaryRowDto(int DishId, string DishName, string? OptionLabel, decimal Quantity, int Orders);
 
     /// <summary>
-    /// MainDishCount and SideDishCount count the dishes ordered on their own: add-on lines belong to the dish they
-    /// were ordered under and add nothing, so a pita ordered with a couscous is part of it and not a side dish.
+    /// MainDishCount is how many dishes were ordered on their own (units; a free-weight line counts one).
+    /// SideDishCount is how many kinds of side dish were ordered on their own, however many of each.
+    /// Add-on lines belong to the dish they were ordered under and count in neither.
     /// </summary>
     public record SummaryDto(
         DateOnly Date, int OrderCount, int DeliveryCount, int PickupCount, IReadOnlyList<SummaryRowDto> Rows,
-        decimal MainDishCount = 0, decimal SideDishCount = 0);
+        decimal MainDishCount = 0, int SideDishCount = 0);
 
     /// <summary>Orders with a supply date in [from, to], newest supply day last. Both bounds and the status are optional.</summary>
     [HttpGet]
@@ -114,7 +115,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             orders.Count(o => o.FulfillmentMethod == FulfillmentMethod.Pickup),
             rows,
             DishesCount(lines.Where(i => i.Standalone && !i.IsSideDish).Select(i => (i.Quantity, i.IsFree))),
-            DishesCount(lines.Where(i => i.Standalone && i.IsSideDish).Select(i => (i.Quantity, i.IsFree))));
+            lines.Where(i => i.Standalone && i.IsSideDish).Select(i => i.DishId).Distinct().Count());
     }
 
     /// <summary>Units for set-option dishes; a free-weight line (quantity in kilos) counts as one dish.</summary>

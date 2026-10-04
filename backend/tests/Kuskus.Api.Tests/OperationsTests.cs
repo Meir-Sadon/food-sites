@@ -198,7 +198,7 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Cooking_summary_counts_main_dishes_and_standalone_side_dishes_but_not_side_dishes_added_to_a_dish()
+    public async Task Cooking_summary_counts_main_dishes_and_kinds_of_standalone_side_dishes_but_not_side_dishes_added_to_a_dish()
     {
         var pita = await CreateDish("כפיתה", 5, false, [_chicken]);
         await using (var setup = _factory.CreateDbContext())
@@ -221,12 +221,17 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
             Phone = "0507654321", Name = "רן", Address = "חיפה", SupplyDate = Sunday, Total = 10, CreatedAt = DateTimeOffset.UtcNow,
             Items = [new OrderItem { DishId = pita, DishName = "כפיתה", OptionLabel = "יחידה", Quantity = 2, UnitPrice = 5, LineTotal = 10 }],
         });
+        db.Orders.Add(new Order
+        {
+            Phone = "0509999999", Name = "גל", Address = "חיפה", SupplyDate = Sunday, Total = 25, CreatedAt = DateTimeOffset.UtcNow,
+            Items = [new OrderItem { DishId = pita, DishName = "כפיתה", OptionLabel = "יחידה", Quantity = 5, UnitPrice = 5, LineTotal = 25 }],
+        });
         await db.SaveChangesAsync();
 
         var summary = await _admin.GetAsync("/api/admin/orders/summary?date=2030-01-06").Read<SummaryDto>();
 
         Assert.Equal(2m, summary.MainDishCount);
-        Assert.Equal(2m, summary.SideDishCount);
+        Assert.Equal(1, summary.SideDishCount);
     }
 
     [Fact]
