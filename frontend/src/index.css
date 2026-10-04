@@ -815,6 +815,10 @@ label {
   margin: 0;
 }
 
+.dish__description {
+  white-space: pre-line;
+}
+
 .dish__price {
   color: var(--color-accent);
   font-weight: 700;

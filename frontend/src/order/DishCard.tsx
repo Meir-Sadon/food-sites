@@ -49,7 +49,7 @@ export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
       <ImageCarousel images={dish.images} name={dish.name} />
       <div className="dish__body">
         <h3 id={`${id}-name`}>{dish.name}</h3>
-        {dish.description && <p>{dish.description}</p>}
+        {dish.description && <p className="dish__description">{dish.description}</p>}
         <p className="dish__price">{priceText(dish, t)}</p>
         {dish.allergenInfo && (
           <p className="muted">
