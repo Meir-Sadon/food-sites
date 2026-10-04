@@ -1,9 +1,8 @@
 namespace Kuskus.Api.Messaging;
 
-/// <summary>The three message templates Meta approves (see docs/PLAN.md).</summary>
+/// <summary>The two message templates Meta approves (see docs/PLAN.md).</summary>
 public enum WhatsAppTemplate
 {
-    LoginCode,
     OrderConfirmation,
     NewOrder,
 }

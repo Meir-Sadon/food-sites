@@ -6,8 +6,6 @@ namespace Kuskus.Api.Orders;
 /// <summary>The texts of the WhatsApp messages. They become Meta message templates once approved.</summary>
 public static class OrderMessages
 {
-    public static string LoginCode(string code) => $"קוד האימות שלך להקוסקוס של אמא: {code}\nהקוד תקף למספר דקות.";
-
     public static string ClientConfirmation(Order order, string? paymentPhone)
     {
         var text = $"תודה, ההזמנה שלך התקבלה!\n{Details(order)}";

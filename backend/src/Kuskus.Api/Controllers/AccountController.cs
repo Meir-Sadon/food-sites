@@ -14,7 +14,7 @@ using static Kuskus.Api.Controllers.Admin.Ordering;
 namespace Kuskus.Api.Controllers;
 
 /// <summary>
-/// Client accounts: login and registration by a phone confirmed with a WhatsApp code, the
+/// Client accounts: login and registration by phone number, the
 /// profile, order history, favorites and recommendations. Everything except login,
 /// registration and logout needs the client's session cookie.
 /// </summary>
@@ -22,7 +22,6 @@ namespace Kuskus.Api.Controllers;
 public class AccountController(
     AppDbContext db,
     UserTokenService tokens,
-    PhoneVerificationService verification,
     IOptions<Auth.CookieOptions> cookie,
     TimeProvider time) : PublicControllerBase
 {
@@ -37,7 +36,7 @@ public class AccountController(
 
     private static readonly DateOnly EarliestBirthday = new(1900, 1, 1);
 
-    public record LoginInput(string? Phone, string? VerificationToken);
+    public record LoginInput(string? Phone);
 
     public record ProfileInput(
         string? Phone,
@@ -48,8 +47,7 @@ public class AccountController(
         string? Apartment,
         string? Email,
         DateOnly? Birthday,
-        string? EthnicBackground,
-        string? VerificationToken);
+        string? EthnicBackground);
 
     public record ProfileDto(
         int Id, string Phone, string FullName, string City, string Street, string HouseNumber, string Apartment,
@@ -90,8 +88,6 @@ public class AccountController(
     {
         if (PhoneNumber.Normalize(input.Phone) is not { } phone)
             return Invalid(nameof(input.Phone), "phone");
-        if (!await verification.IsVerifiedAsync(input.VerificationToken, phone))
-            return Invalid(nameof(input.Phone), "phoneNotVerified");
 
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Phone == phone, ct);
         if (user is null)
@@ -109,8 +105,6 @@ public class AccountController(
         var phone = PhoneNumber.Normalize(input.Phone);
         if (phone is null)
             errors.Add(nameof(input.Phone), "phone");
-        else if (!await verification.IsVerifiedAsync(input.VerificationToken, phone))
-            errors.Add(nameof(input.Phone), "phoneNotVerified");
         if (errors.Any)
             return Invalid(errors);
 
@@ -168,14 +162,8 @@ public class AccountController(
         var phone = PhoneNumber.Normalize(input.Phone);
         if (phone is null)
             errors.Add(nameof(input.Phone), "phone");
-        else if (phone != user.Phone)
-        {
-            // A new number must be confirmed with a code, like at registration.
-            if (!await verification.IsVerifiedAsync(input.VerificationToken, phone))
-                errors.Add(nameof(input.Phone), "phoneNotVerified");
-            else if (await db.Users.AnyAsync(u => u.Phone == phone && u.Id != user.Id, ct))
-                return Conflict("phoneTaken");
-        }
+        else if (phone != user.Phone && await db.Users.AnyAsync(u => u.Phone == phone && u.Id != user.Id, ct))
+            return Conflict("phoneTaken");
         if (errors.Any)
             return Invalid(errors);
 

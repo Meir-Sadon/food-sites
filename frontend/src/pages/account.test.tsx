@@ -41,11 +41,6 @@ const favorite: Favorite = {
   items: [{ dishId: 2, optionId: null, quantity: 1.5, addOns: [] }],
 }
 
-const verification = {
-  'POST /api/phone-verification/send': () => ({ status: 204 }),
-  'POST /api/phone-verification/confirm': () => ({ token: 'proof' }),
-}
-
 const guest = { 'GET /api/account/me': () => ({ status: 401, body: {} }) }
 const loggedIn = {
   'GET /api/account/me': () => profile,
@@ -56,16 +51,14 @@ const loggedIn = {
 
 type Routes = Parameters<typeof fakeApi>[0]
 const open = (path: string, routes: Record<string, unknown>) => {
-  const api = fakeApi({ ...publicApi, ...verification, ...routes } as Routes)
+  const api = fakeApi({ ...publicApi, ...routes } as Routes)
   renderAt(path)
   return { api, user: userEvent.setup() }
 }
 
-async function confirmPhone(user: ReturnType<typeof userEvent.setup>) {
+async function submitPhone(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
-  await user.click(screen.getByRole('button', { name: /שליחת קוד אימות/ }))
-  await user.type(await screen.findByLabelText('קוד אימות'), '123456')
-  await user.click(screen.getByRole('button', { name: 'אימות הטלפון' }))
+  await user.click(screen.getByRole('button', { name: 'התחברות' }))
 }
 
 beforeEach(() => {
@@ -73,20 +66,20 @@ beforeEach(() => {
 })
 
 describe('Login', () => {
-  it('logs in an existing client once the phone is confirmed, then opens the order page', async () => {
+  it('logs in an existing client by phone, then opens the order page', async () => {
     const { api, user } = open('/login', { ...guest, 'POST /api/account/login': () => profile })
     await screen.findByRole('heading', { name: 'התחברות' })
     expect(screen.getByRole('button', { name: 'הרשמה' })).toBeInTheDocument()
     expect(screen.queryByLabelText('רחוב')).not.toBeInTheDocument()
 
-    await confirmPhone(user)
+    await submitPhone(user)
 
     await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
-    expect(api.sent('POST', '/api/account/login')[0].body).toEqual({ phone: '0501234567', verificationToken: 'proof' })
+    expect(api.sent('POST', '/api/account/login')[0].body).toEqual({ phone: '0501234567' })
     expect(screen.getByRole('button', { name: 'התנתקות' })).toBeInTheDocument()
   })
 
-  it('offers to register, without a second code, when the confirmed phone has no account', async () => {
+  it('offers to register when the phone has no account', async () => {
     const { api, user } = open('/login', {
       ...guest,
       'POST /api/account/login': () => ({ status: 404, body: { code: 'notRegistered' } }),
@@ -94,7 +87,7 @@ describe('Login', () => {
     })
     await screen.findByRole('heading', { name: 'התחברות' })
 
-    await confirmPhone(user)
+    await submitPhone(user)
 
     await screen.findByRole('heading', { name: 'הרשמה' })
     expect(screen.getByText(/עוד לא רשום/)).toBeInTheDocument()
@@ -110,7 +103,6 @@ describe('Login', () => {
       city: 'אשקלון',
       street: 'הרצל',
       houseNumber: '1',
-      verificationToken: 'proof',
     })
   })
 
@@ -120,7 +112,7 @@ describe('Login', () => {
       'POST /api/account/login': () => ({ status: 404, body: { code: 'notRegistered' } }),
     })
     await screen.findByRole('heading', { name: 'התחברות' })
-    await confirmPhone(user)
+    await submitPhone(user)
     await screen.findByRole('heading', { name: 'הרשמה' })
 
     const city = screen.getByLabelText('עיר')
@@ -131,8 +123,8 @@ describe('Login', () => {
     expect(screen.getByText(/אנחנו עובדים רק באשקלון/)).toBeInTheDocument()
   })
 
-  it('registers from the Register button, with the optional fields marked and the phone confirmed first', async () => {
-    const { api, user } = open('/login', { ...guest })
+  it('registers from the Register button, with the optional fields marked', async () => {
+    const { api, user } = open('/login', { ...guest, 'POST /api/account/register': () => profile })
     await screen.findByRole('heading', { name: 'התחברות' })
 
     await user.click(screen.getByRole('button', { name: 'הרשמה' }))
@@ -147,8 +139,8 @@ describe('Login', () => {
     await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
 
-    expect(await screen.findByText('צריך לאמת את הטלפון בקוד שנשלח ב־WhatsApp.')).toBeInTheDocument()
-    expect(api.sent('POST', '/api/account/register')).toHaveLength(0)
+    await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
+    expect(api.sent('POST', '/api/account/register')[0].body).toMatchObject({ phone: '0501234567', fullName: 'דנה' })
   })
 
   it('says so when the phone already has an account', async () => {
@@ -158,7 +150,7 @@ describe('Login', () => {
       'POST /api/account/register': () => ({ status: 409, body: { code: 'phoneTaken' } }),
     })
     await screen.findByRole('heading', { name: 'התחברות' })
-    await confirmPhone(user)
+    await submitPhone(user)
     await screen.findByRole('heading', { name: 'הרשמה' })
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
@@ -176,7 +168,7 @@ describe('Login', () => {
       'POST /api/account/register': () => invalid({ email: ['email'] }),
     })
     await screen.findByRole('heading', { name: 'התחברות' })
-    await confirmPhone(user)
+    await submitPhone(user)
     await screen.findByRole('heading', { name: 'הרשמה' })
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
@@ -215,13 +207,12 @@ describe('Order page for a logged-in client', () => {
     expect(screen.getByLabelText('עיר')).toHaveValue('חיפה')
     expect(screen.getByLabelText('רחוב')).toHaveValue('הרצל')
     expect(screen.getByLabelText('מספר בית')).toHaveValue('1')
-    expect(screen.getByText('✓ הטלפון אומת')).toBeInTheDocument()
 
     await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
 
     await screen.findByText('ההזמנה התקבלה')
-    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ phone: '0501234567', verificationToken: '', name: 'דנה כהן' })
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ phone: '0501234567', name: 'דנה כהן' })
   })
 
   it('logs out from the top bar even with an order in progress', async () => {
@@ -297,38 +288,29 @@ describe('Profile', () => {
     expect(screen.queryByLabelText('שם מלא')).not.toBeInTheDocument()
   })
 
-  it('saves edited details without a new code when the phone is unchanged', async () => {
+  it('saves edited details', async () => {
     const { api, user } = open('/profile', { ...loggedIn, 'PUT /api/account/me': (_m: unknown, body: object) => ({ ...profile, ...body }) })
 
     const name = await screen.findByLabelText('שם מלא')
     expect(name).toHaveValue('דנה כהן')
-    expect(screen.getByText('✓ הטלפון אומת')).toBeInTheDocument()
     await user.clear(name)
     await user.type(name, 'דנה לוי')
     await user.click(screen.getByRole('button', { name: 'שמירה' }))
 
     await screen.findByText('נשמר.')
-    expect(api.sent('PUT', '/api/account/me')[0].body).toMatchObject({ phone: '0501234567', fullName: 'דנה לוי', verificationToken: '' })
+    expect(api.sent('PUT', '/api/account/me')[0].body).toMatchObject({ phone: '0501234567', fullName: 'דנה לוי' })
   })
 
-  it('needs a code for a new phone number', async () => {
+  it('saves a new phone number', async () => {
     const { api, user } = open('/profile', { ...loggedIn, 'PUT /api/account/me': (_m: unknown, body: object) => ({ ...profile, ...body }) })
     const phone = await screen.findByLabelText('טלפון')
 
     await user.clear(phone)
     await user.type(phone, '052-765-4321')
     await user.click(screen.getByRole('button', { name: 'שמירה' }))
-    expect(await screen.findByText('צריך לאמת את הטלפון בקוד שנשלח ב־WhatsApp.')).toBeInTheDocument()
-    expect(api.sent('PUT', '/api/account/me')).toHaveLength(0)
-
-    await user.click(screen.getByRole('button', { name: /שליחת קוד אימות/ }))
-    await user.type(await screen.findByLabelText('קוד אימות'), '123456')
-    await user.click(screen.getByRole('button', { name: 'אימות הטלפון' }))
-    await screen.findByText('✓ הטלפון אומת')
-    await user.click(screen.getByRole('button', { name: 'שמירה' }))
 
     await screen.findByText('נשמר.')
-    expect(api.sent('PUT', '/api/account/me')[0].body).toMatchObject({ phone: '0527654321', verificationToken: 'proof' })
+    expect(api.sent('PUT', '/api/account/me')[0].body).toMatchObject({ phone: '0527654321' })
   })
 
   it('lists past orders with dates and statuses', async () => {

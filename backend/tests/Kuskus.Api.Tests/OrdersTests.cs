@@ -7,7 +7,6 @@ using static Kuskus.Api.Controllers.Admin.DishesController;
 using static Kuskus.Api.Controllers.Admin.OrdersAdminController;
 using static Kuskus.Api.Controllers.Admin.SupplyDaysController;
 using static Kuskus.Api.Controllers.OrdersController;
-using static Kuskus.Api.Controllers.PhoneVerificationController;
 using static Kuskus.Api.Controllers.PublicController;
 
 namespace Kuskus.Api.Tests;
@@ -24,7 +23,6 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     private int _chicken;
     private int _thigh;
     private int _meat;
-    private string? _token;
 
     public async Task InitializeAsync()
     {
@@ -59,14 +57,6 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
 
     private async Task<MenuDto> Menu() => await (await _client.GetAsync("/api/menu")).Read<MenuDto>();
 
-    private async Task<string> Verify(string phone = ClientPhone)
-    {
-        Assert.Equal(HttpStatusCode.NoContent, (await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone })).StatusCode);
-        var confirmed = await (await _client.PostAsJsonAsync(
-            "/api/phone-verification/confirm", new { phone, code = _factory.WhatsApp.LastCode(ClientPhone) })).Read<ConfirmedDto>();
-        return confirmed.Token;
-    }
-
     private async Task<object> ValidOrder(Action<Dictionary<string, object?>>? change = null)
     {
         var order = new Dictionary<string, object?>
@@ -81,8 +71,6 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
             ["fulfillmentMethod"] = "Delivery",
             ["paymentMethod"] = "OnDelivery",
             ["notes"] = "בלי חריף",
-            // One confirmed phone per test: codes are limited to three per phone.
-            ["verificationToken"] = _token ??= await Verify(),
             ["items"] = new object[]
             {
                 new { dishId = _chicken, optionId = (int?)null, quantity = 2m, addOns = new[] { new { dishId = _thigh, optionId = (int?)null, quantity = 3m } } },
@@ -120,63 +108,6 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         var menu = await Menu();
         Assert.DoesNotContain(menu.SupplyDates, d => d.Date == first);
         Assert.DoesNotContain(menu.Dishes, d => d.Id == _meat);
-    }
-
-    // ---------- Phone verification ----------
-
-    [Fact]
-    public async Task Login_code_is_sent_by_whatsapp_and_confirmed_once()
-    {
-        await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone = "050-123-4567" });
-        var code = _factory.WhatsApp.LastCode(ClientPhone);
-
-        var confirm = new { phone = ClientPhone, code };
-        Assert.False(string.IsNullOrEmpty((await (await _client.PostAsJsonAsync("/api/phone-verification/confirm", confirm)).Read<ConfirmedDto>()).Token));
-        // The code is used up.
-        await (await _client.PostAsJsonAsync("/api/phone-verification/confirm", confirm)).AssertInvalid("Code", "codeExpired");
-    }
-
-    [Fact]
-    public async Task Login_code_is_not_returned_to_the_client_by_default()
-    {
-        var response = await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone = ClientPhone });
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Wrong_code_is_rejected_and_guessing_is_limited()
-    {
-        await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone = ClientPhone });
-        var right = _factory.WhatsApp.LastCode(ClientPhone);
-        var wrong = right == "000000" ? "000001" : "000000";
-
-        for (var i = 0; i < 5; i++)
-            await (await _client.PostAsJsonAsync("/api/phone-verification/confirm", new { phone = ClientPhone, code = wrong }))
-                .AssertInvalid("Code", "codeWrong");
-
-        // After five wrong guesses even the right code no longer works.
-        await (await _client.PostAsJsonAsync("/api/phone-verification/confirm", new { phone = ClientPhone, code = right }))
-            .AssertInvalid("Code", "codeExpired");
-    }
-
-    [Fact]
-    public async Task Codes_are_limited_per_phone_and_stored_hashed()
-    {
-        for (var i = 0; i < 3; i++)
-            Assert.Equal(HttpStatusCode.NoContent, (await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone = ClientPhone })).StatusCode);
-        var fourth = await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone = ClientPhone });
-        Assert.Equal(HttpStatusCode.TooManyRequests, fourth.StatusCode);
-        Assert.Equal(3, _factory.WhatsApp.MessagesTo(ClientPhone).Count());
-
-        await using var db = _factory.CreateDbContext();
-        Assert.All(await db.LoginCodes.ToListAsync(), c => Assert.DoesNotContain(_factory.WhatsApp.LastCode(ClientPhone), c.CodeHash));
-    }
-
-    [Fact]
-    public async Task Invalid_phone_gets_no_code()
-    {
-        await (await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone = "12" })).AssertInvalid("Phone", "phone");
-        Assert.Empty(_factory.WhatsApp.Sent);
     }
 
     // ---------- Placing orders ----------
@@ -297,15 +228,6 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         })).EnsureSuccessStatusCode();
 
         await (await Place(await ValidOrder())).AssertInvalid("FulfillmentMethod", "fulfillmentUnavailable");
-    }
-
-    [Fact]
-    public async Task Phone_must_be_verified_for_the_order_phone()
-    {
-        await (await Place(await ValidOrder(o => o["verificationToken"] = null))).AssertInvalid("Phone", "phoneNotVerified");
-        await (await Place(await ValidOrder(o => o["verificationToken"] = "garbage"))).AssertInvalid("Phone", "phoneNotVerified");
-        // A token for one phone does not work for another.
-        await (await Place(await ValidOrder(o => o["phone"] = "0529999999"))).AssertInvalid("Phone", "phoneNotVerified");
     }
 
     [Fact]

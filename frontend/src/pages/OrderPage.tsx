@@ -31,7 +31,7 @@ import {
   type Selection,
 } from '../order/model'
 import { normalizePhone } from '../order/phone'
-import { PhoneVerification, type Verified } from '../order/PhoneVerification'
+import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
 import logo from '../assets/logo.jpg'
 
@@ -54,7 +54,6 @@ export function OrderPage() {
 
   const [state, setState] = useState<OrderState>(emptyOrder)
   const [notice, setNotice] = useState<string | null>(null)
-  const [verified, setVerified] = useState<Verified | null>(null)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -84,7 +83,6 @@ export function OrderPage() {
       houseNumber: current.houseNumber || user.houseNumber,
       apartment: current.apartment || user.apartment,
     }))
-    setVerified((current) => current ?? { phone: user.phone, token: '' })
   }
 
   // Load the menu, then bring back a draft saved in this browser: the menu is needed first so
@@ -144,7 +142,6 @@ export function OrderPage() {
   const belowMinimum = count > 0 && total < minimum
   const payment: Payment = state.payment === 'Transfer' && !site.paymentPhone ? 'OnDelivery' : state.payment
   const normalizedPhone = normalizePhone(state.phone)
-  const phoneVerified = normalizedPhone !== null && verified?.phone === normalizedPhone
 
   const change = (patch: Partial<OrderState>) => {
     setState((current) => {
@@ -199,8 +196,8 @@ export function OrderPage() {
     event.preventDefault()
     setErrors({})
     setSubmitError(null)
-    if (!phoneVerified || !verified) {
-      setErrors({ phone: [normalizedPhone ? 'phoneNotVerified' : 'phone'] })
+    if (!normalizedPhone) {
+      setErrors({ phone: ['phone'] })
       setSubmitError(t('errors.checkFields'))
       return
     }
@@ -209,14 +206,13 @@ export function OrderPage() {
     setSubmitting(true)
     try {
       const result = await ordersApi.create({
-        phone: verified.phone,
+        phone: normalizedPhone,
         name: state.name.trim(),
         ...(fulfillment === 'Delivery' ? addressOf(state) : noAddress()),
         supplyDate: supplyDate.date,
         fulfillmentMethod: fulfillment,
         paymentMethod: payment,
         notes: state.notes.trim(),
-        verificationToken: verified.token,
         items: toLines(state.selections),
       })
       clearDraft()
@@ -348,13 +344,7 @@ export function OrderPage() {
           <FieldError errors={errors} field="name" id="order-name-error" />
         </span>
 
-        <PhoneVerification
-          phone={state.phone}
-          onPhoneChange={(phone) => change({ phone })}
-          verified={verified}
-          onVerified={setVerified}
-          errors={errors}
-        />
+        <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
 
         {fulfillment === 'Delivery' && (
           <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" context="order" />

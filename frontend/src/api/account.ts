@@ -27,8 +27,6 @@ export interface ProfileInput {
   email: string
   birthday: string
   ethnicBackground: string
-  /** Proves a new phone. Not needed when the phone stays as it is. */
-  verificationToken: string
 }
 
 export type OrderStatus = 'New' | 'Confirmed' | 'Ready' | 'Delivered' | 'Cancelled'
@@ -77,8 +75,7 @@ const account = '/api/account'
 
 export const accountApi = {
   me: () => apiJson<Profile>(`${account}/me`),
-  login: (phone: string, verificationToken: string) =>
-    apiJson<Profile>(`${account}/login`, send('POST', { phone, verificationToken })),
+  login: (phone: string) => apiJson<Profile>(`${account}/login`, send('POST', { phone })),
   register: (input: ProfileInput) => apiJson<Profile>(`${account}/register`, send('POST', input)),
   logout: () => apiJson<void>(`${account}/logout`, send('POST')),
   update: (input: ProfileInput) => apiJson<Profile>(`${account}/me`, send('PUT', input)),

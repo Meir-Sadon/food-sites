@@ -1,4 +1,3 @@
-using Kuskus.Api.Auth;
 using Kuskus.Api.Controllers.Admin;
 using Kuskus.Api.Data;
 using Kuskus.Api.Data.Entities;
@@ -17,7 +16,6 @@ namespace Kuskus.Api.Controllers;
 public class OrdersController(
     AppDbContext db,
     SiteClock clock,
-    PhoneVerificationService verification,
     IWhatsAppSender whatsApp,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
@@ -35,7 +33,6 @@ public class OrdersController(
         FulfillmentMethod FulfillmentMethod,
         PaymentMethod PaymentMethod,
         string? Notes,
-        string? VerificationToken,
         List<OrderLineInput>? Items);
 
     public record ConfirmationItemDto(
@@ -92,17 +89,6 @@ public class OrdersController(
         if (!SupplyCalendar.IsOpen(input.SupplyDate, clock.NowLocal(), days, closed))
             errors.Add(nameof(input.SupplyDate), "supplyDateUnavailable");
 
-        // A logged-in client already proved this phone at login; a guest proves it with a code.
-        if (phone is not null)
-        {
-            var sessionUserId = await SessionUserIdAsync();
-            var sessionPhone = sessionUserId is { } id
-                ? await db.Users.AsNoTracking().Where(u => u.Id == id).Select(u => u.Phone).FirstOrDefaultAsync(ct)
-                : null;
-            if (sessionPhone != phone && !await verification.IsVerifiedAsync(input.VerificationToken, phone))
-                errors.Add(nameof(input.Phone), "phoneNotVerified");
-        }
-
         var ids = (input.Items ?? [])
             .SelectMany(i => (i.AddOns ?? []).Select(a => a.DishId).Append(i.DishId))
             .Distinct().ToList();
@@ -120,7 +106,7 @@ public class OrdersController(
         if (errors.Any)
             return Invalid(errors);
 
-        // The phone is confirmed, so the order is added to that phone's account, if there is one.
+        // The order is added to that phone's account, if there is one.
         var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);
 
         var order = new Order

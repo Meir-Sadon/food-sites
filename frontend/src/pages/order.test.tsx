@@ -20,13 +20,8 @@ const confirmation: Confirmation = {
   ],
 }
 
-const verification = {
-  'POST /api/phone-verification/send': () => ({ status: 204 }),
-  'POST /api/phone-verification/confirm': () => ({ token: 'proof' }),
-}
-
 async function openOrderPage(routes: Record<string, (...args: never[]) => unknown> = {}) {
-  const api = fakeApi({ ...publicApi, ...verification, ...routes } as Parameters<typeof fakeApi>[0])
+  const api = fakeApi({ ...publicApi, ...routes } as Parameters<typeof fakeApi>[0])
   renderAt('/')
   await screen.findByRole('heading', { level: 2, name: 'עופות' })
   return { api, user: userEvent.setup() }
@@ -35,20 +30,12 @@ async function openOrderPage(routes: Record<string, (...args: never[]) => unknow
 const dishCard = (name: string) => screen.getByRole('article', { name })
 const total = () => within(screen.getByRole('region', { name: 'סיכום הזמנה' }))
 
-async function verifyPhone(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
-  await user.click(screen.getByRole('button', { name: /שליחת קוד אימות/ }))
-  await user.type(await screen.findByLabelText('קוד אימות'), '123456')
-  await user.click(screen.getByRole('button', { name: 'אימות הטלפון' }))
-  await screen.findByText('✓ הטלפון אומת')
-}
-
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
   await user.type(screen.getByLabelText('שם מלא'), 'דנה')
   await user.type(screen.getByLabelText('רחוב'), 'הרצל')
   await user.type(screen.getByLabelText('מספר בית'), '1')
-  await verifyPhone(user)
+  await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
   await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
 }
 
@@ -191,36 +178,18 @@ describe('Order page', () => {
     expect(screen.queryByRole('radio', { name: /Bit/ })).not.toBeInTheDocument()
   })
 
-  it('needs a confirmed phone before the order is sent', async () => {
+  it('needs a valid phone before the order is sent', async () => {
     const { api, user } = await openOrderPage()
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
     await user.type(screen.getByLabelText('מספר בית'), '1')
-    await user.type(screen.getByLabelText('טלפון'), '0501234567')
+    await user.type(screen.getByLabelText('טלפון'), '12')
 
     await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
 
-    expect(await screen.findByLabelText('טלפון')).toHaveAccessibleDescription(/צריך לאמת את הטלפון בקוד שנשלח ב־WhatsApp\./)
+    expect(await screen.findByLabelText('טלפון')).toHaveAccessibleDescription(/מספר הטלפון לא תקין\./)
     expect(api.sent('POST', '/api/orders')).toHaveLength(0)
-  })
-
-  it('shows the login code on screen when the server hands it back', async () => {
-    const { user } = await openOrderPage({ 'POST /api/phone-verification/send': () => ({ body: { code: '482913' } }) })
-    await user.type(screen.getByLabelText('טלפון'), '0501234567')
-    await user.click(screen.getByRole('button', { name: /שליחת קוד אימות/ }))
-
-    expect(await screen.findByText('מצב בדיקה: הקוד שלך הוא 482913')).toBeInTheDocument()
-  })
-
-  it('shows the code error from the server', async () => {
-    const { user } = await openOrderPage({ 'POST /api/phone-verification/confirm': () => invalid({ Code: ['codeWrong'] }) })
-    await user.type(screen.getByLabelText('טלפון'), '0501234567')
-    await user.click(screen.getByRole('button', { name: /שליחת קוד אימות/ }))
-    await user.type(await screen.findByLabelText('קוד אימות'), '000000')
-    await user.click(screen.getByRole('button', { name: 'אימות הטלפון' }))
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('הקוד שגוי.')
   })
 
   it('sends the order, then shows the success popup with the summary', async () => {
@@ -244,7 +213,6 @@ describe('Order page', () => {
       fulfillmentMethod: 'Delivery',
       paymentMethod: 'OnDelivery',
       notes: '',
-      verificationToken: 'proof',
       items: [{ dishId: 1, optionId: 11, quantity: 1, addOns: [] }],
     })
 
