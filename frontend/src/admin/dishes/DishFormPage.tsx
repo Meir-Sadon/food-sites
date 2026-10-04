@@ -38,6 +38,7 @@ interface DishForm {
   unitPrice: string
   isAddOnOnly: boolean
   isSoldOut: boolean
+  maxPerSupplyDate: string
   options: OptionForm[]
   parentDishIds: number[]
 }
@@ -63,6 +64,7 @@ function toForm(dish: Dish | null, categories: Category[]): DishForm {
       unitPrice: '',
       isAddOnOnly: false,
       isSoldOut: false,
+      maxPerSupplyDate: '',
       options: [emptyOption(true)],
       parentDishIds: [],
     }
@@ -79,6 +81,7 @@ function toForm(dish: Dish | null, categories: Category[]): DishForm {
     unitPrice: str(dish.unitPrice),
     isAddOnOnly: dish.isAddOnOnly,
     isSoldOut: dish.isSoldOut,
+    maxPerSupplyDate: str(dish.maxPerSupplyDate),
     options: dish.options.length
       ? dish.options.map((o) => ({ key: nextKey++, id: o.id, label: o.label, amount: String(o.amount), price: String(o.price), isDefault: o.isDefault }))
       : [emptyOption(true)],
@@ -101,6 +104,7 @@ function toInput(form: DishForm): DishInput {
     unitPrice: fixed ? null : num(form.unitPrice),
     isAddOnOnly: form.isAddOnOnly,
     isSoldOut: form.isSoldOut,
+    maxPerSupplyDate: num(form.maxPerSupplyDate),
     options: fixed
       ? form.options.map((o) => ({ id: o.id, label: o.label, amount: num(o.amount) ?? 0, price: num(o.price) ?? 0, isDefault: o.isDefault }))
       : [],
@@ -337,6 +341,24 @@ export function DishFormPage() {
           <input type="checkbox" checked={form.isSoldOut} onChange={(e) => set({ isSoldOut: e.target.checked })} />
           {t('admin.dishes.soldOutLabel')}
         </label>
+
+        <span className="field field--narrow">
+          <label htmlFor="dish-maxPerSupplyDate">{t(weight ? 'admin.dishes.maxPerSupplyDateWeight' : 'admin.dishes.maxPerSupplyDate')}</label>
+          <input
+            id="dish-maxPerSupplyDate"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="any"
+            value={form.maxPerSupplyDate}
+            onChange={(e) => set({ maxPerSupplyDate: e.target.value })}
+            aria-describedby="dish-maxPerSupplyDate-hint dish-maxPerSupplyDate-error"
+          />
+          <span id="dish-maxPerSupplyDate-hint" className="hint">
+            {t('admin.dishes.maxPerSupplyDateHint')}
+          </span>
+          {fieldError('maxPerSupplyDate')}
+        </span>
 
         <fieldset className="stack" aria-describedby="dish-parents-hint dish-parentDishIds-error">
           <legend>{t('admin.dishes.parents')}</legend>

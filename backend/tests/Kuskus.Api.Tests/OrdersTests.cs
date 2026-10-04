@@ -304,6 +304,34 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_dish_cannot_be_ordered_past_its_limit_for_a_supply_date()
+    {
+        var dish = await (await _admin.GetAsync($"/api/admin/dishes/{_chicken}")).Read<DishDto>();
+        var input = new DishInput(
+            dish.Name, dish.CategoryId, null, null, dish.SellBy, dish.ChoiceMode, null, null, null, null, false, false,
+            dish.Options.Select(o => new OptionInput(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(), [_thigh],
+            MaxPerSupplyDate: 3);
+        (await _admin.PutAsJsonAsync($"/api/admin/dishes/{_chicken}", input, TestFiles.Json)).EnsureSuccessStatusCode();
+
+        // ValidOrder holds 2 chickens: the first fits, a second would make 4 of 3.
+        var first = await Place(await ValidOrder());
+        first.EnsureSuccessStatusCode();
+        await (await Place(await ValidOrder())).AssertInvalid("items", "dishLimitReached");
+
+        // The limit is per supply date, and cancelled orders free their share.
+        var otherDate = (await Menu()).SupplyDates[1].Date.ToString("yyyy-MM-dd");
+        (await Place(await ValidOrder(o => o["supplyDate"] = otherDate))).EnsureSuccessStatusCode();
+
+        await using (var db = _factory.CreateDbContext())
+        {
+            var placed = await db.Orders.OrderBy(o => o.Id).FirstAsync();
+            placed.Status = OrderStatus.Cancelled;
+            await db.SaveChangesAsync();
+        }
+        (await Place(await ValidOrder())).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
     public async Task Order_endpoints_are_open_to_guests_but_need_the_request_header()
     {
         var bare = _factory.CreateClient(new() { HandleCookies = false });

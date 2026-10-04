@@ -95,6 +95,8 @@ public class OrdersController(
             .Where(d => ids.Contains(d.Id))
             .ToDictionaryAsync(d => d.Id, ct);
         var items = OrderBuilder.Build(input.Items, dishes, errors);
+        if (!errors.Any)
+            await CheckDishLimitsAsync(input.SupplyDate, items, dishes, errors, ct);
 
         if (errors.Any)
             return Invalid(errors);
@@ -125,6 +127,35 @@ public class OrdersController(
             order.Items
                 .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null))
                 .ToList());
+    }
+
+    /// <summary>
+    /// A dish with a per-supply-date limit can only be ordered until the orders already placed
+    /// for that date (cancelled ones excluded) plus this one would pass it.
+    /// </summary>
+    private async Task CheckDishLimitsAsync(
+        DateOnly supplyDate, List<OrderItem> items, Dictionary<int, Dish> dishes, Errors errors, CancellationToken ct)
+    {
+        var limited = items.Select(i => i.DishId).Distinct()
+            .Where(id => dishes[id].MaxPerSupplyDate is not null).ToList();
+        if (limited.Count == 0)
+            return;
+
+        var taken = await db.OrderItems.AsNoTracking()
+            .Where(i => limited.Contains(i.DishId) && i.Order!.SupplyDate == supplyDate && i.Order.Status != OrderStatus.Cancelled)
+            .GroupBy(i => i.DishId)
+            .Select(g => new { DishId = g.Key, Quantity = g.Sum(i => i.Quantity) })
+            .ToDictionaryAsync(g => g.DishId, g => g.Quantity, ct);
+
+        foreach (var id in limited)
+        {
+            var requested = items.Where(i => i.DishId == id).Sum(i => i.Quantity);
+            if (taken.GetValueOrDefault(id) + requested > dishes[id].MaxPerSupplyDate)
+            {
+                errors.Add("items", "dishLimitReached");
+                return;
+            }
+        }
     }
 
     /// <summary>
