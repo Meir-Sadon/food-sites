@@ -2,14 +2,15 @@ import { NavLink, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../account/useAccount'
 import { useLeaveCheck } from './leaveGuard'
+import { NavIcon, type NavIconName } from './NavIcons'
 
-const links = [
-  { to: '/', key: 'nav.order', end: true },
-  { to: '/login', key: 'nav.login', end: false },
-  { to: '/recommendations', key: 'nav.recommendations', end: false },
-  { to: '/profile', key: 'nav.profile', end: false },
-  { to: '/about', key: 'nav.about', end: false },
-] as const
+const links: readonly { to: string; key: string; icon: NavIconName; end: boolean }[] = [
+  { to: '/', key: 'nav.order', icon: 'order', end: true },
+  { to: '/login', key: 'nav.login', icon: 'login', end: false },
+  { to: '/recommendations', key: 'nav.recommendations', icon: 'recommendations', end: false },
+  { to: '/profile', key: 'nav.profile', icon: 'profile', end: false },
+  { to: '/about', key: 'nav.about', icon: 'about', end: false },
+]
 
 export function TopBar() {
   const { t } = useTranslation()
@@ -35,23 +36,27 @@ export function TopBar() {
                 <button
                   type="button"
                   className="top-bar__link top-bar__link--logout"
+                  aria-label={t('account.logout')}
+                  title={t('account.logout')}
                   onClick={() => {
                     if (checkLeave('/', signOut)) return
                     void signOut()
                   }}
                 >
-                  {t('account.logout')}
+                  <NavIcon name="logout" />
                 </button>
               ) : (
                 <NavLink
                   to={link.to}
                   end={link.end}
                   className="top-bar__link"
+                  aria-label={t(link.key)}
+                  title={t(link.key)}
                   onClick={(event) => {
                     if (checkLeave(link.to)) event.preventDefault()
                   }}
                 >
-                  {t(link.key)}
+                  <NavIcon name={link.icon} />
                 </NavLink>
               )}
             </li>

@@ -14,7 +14,7 @@ describe('client site', () => {
     renderAt('/')
     const nav = screen.getByRole('navigation', { name: 'תפריט ראשי' })
     const links = within(nav).getAllByRole('link')
-    expect(links.map((l) => l.textContent)).toEqual(['הזמנה', 'התחברות / הרשמה', 'המלצות', 'פרופיל', 'אודות'])
+    expect(links.map((l) => l.getAttribute('aria-label'))).toEqual(['הזמנה', 'התחברות / הרשמה', 'המלצות', 'פרופיל', 'אודות'])
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/', '/login', '/recommendations', '/profile', '/about'])
   })
 
@@ -28,7 +28,7 @@ describe('client site', () => {
     renderAt(path)
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
     const active = within(screen.getByRole('navigation')).getByRole('link', { current: 'page' })
-    expect(active).toHaveTextContent(title)
+    expect(active).toHaveAccessibleName(title)
   })
 
   it('shows the kashrut details on the About page', async () => {
