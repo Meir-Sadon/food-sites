@@ -107,12 +107,19 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 | `AuthCookie__SameSite` | `Lax` when site and API share a domain, `None` when they don't |
 | `Database__MigrateOnStartup` | Apply migrations when the API starts |
 | `ForwardedHeaders__Enabled` | Trust `X-Forwarded-For` from one reverse proxy in front of the API |
-| `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | WhatsApp Cloud API credentials |
+| `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | WhatsApp Cloud API credentials (not used yet: messages are simulated, see below) |
+| `Site__TimeZone` | Time zone for supply-day cutoffs (default `Asia/Jerusalem`) |
+| `Public__RequestsPerMinute` | Rate limit per IP for login codes and orders (default 30) |
 | `Cloudinary__Url` | `cloudinary://<api_key>:<api_secret>@<cloud_name>`. Without it, picture uploads are switched off |
+
+## Simulated WhatsApp messages
+
+Until Meta approves the message templates (phase 5), nothing is sent: login codes, order confirmations and the new-order messages to the admin's phones are written to the API log instead (`WhatsApp (simulated) to ...`). To try the order flow locally, read the code from the log (`docker compose logs api`).
 
 ## API notes
 
 - Every `POST`, `PUT` and `DELETE` to `/api` must send the header `X-Kuskus-Request: 1`. Browsers can't add it from another site's page, so other sites can't act with the admin's cookie. The frontend sends it on every request.
+- Public endpoints: `GET /api/site` (contact, delivery text, background), `GET /api/menu` (categories, dishes, open supply dates), `POST /api/phone-verification/send|confirm` and `POST /api/orders`. Orders carry the proof of a confirmed phone and are priced and validated on the server.
 - Admin endpoints live under `/api/admin` and need the admin session cookie. Validation errors come back as codes per field (for example `{"errors": {"name": ["required"]}}`), which the admin screens translate.
 
 ## Tests

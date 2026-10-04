@@ -4,6 +4,8 @@ using Kuskus.Api.Controllers;
 using Kuskus.Api.Data;
 using Kuskus.Api.Http;
 using Kuskus.Api.Images;
+using Kuskus.Api.Messaging;
+using Kuskus.Api.Orders;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +35,10 @@ builder.Services.Configure<AdminOptions>(config.GetSection(AdminOptions.Section)
 builder.Services.Configure<Kuskus.Api.Auth.CookieOptions>(config.GetSection(Kuskus.Api.Auth.CookieOptions.Section));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<AdminTokenService>();
+builder.Services.AddSingleton<SiteClock>();
+// Messages are only logged until Meta approves the WhatsApp templates (phase 5).
+builder.Services.AddSingleton<IWhatsAppSender, SimulatedWhatsAppSender>();
+builder.Services.AddScoped<PhoneVerificationService>();
 
 var jwt = config.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (System.Text.Encoding.UTF8.GetByteCount(jwt.Secret) < 32)
@@ -67,9 +73,19 @@ builder.Services.AddAuthorization();
 
 var loginLimit = config.GetSection(AdminOptions.Section).Get<AdminOptions>()?.LoginAttemptsPerMinute
     ?? new AdminOptions().LoginAttemptsPerMinute;
+var publicLimit = config.GetValue<int?>("Public:RequestsPerMinute") ?? 30;
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // Phone codes and orders: per IP, to block abuse and keep message costs down.
+    options.AddPolicy(PublicControllerBase.WriteRateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = publicLimit,
+                Window = TimeSpan.FromMinutes(1),
+            }));
     options.AddPolicy(AdminAuthController.LoginRateLimitPolicy, context =>
         RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",

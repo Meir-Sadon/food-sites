@@ -79,7 +79,7 @@ describe('admin layout', () => {
     renderAt('/admin')
 
     const nav = await screen.findByRole('navigation', { name: 'תפריט ניהול' })
-    expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(['הגדרות כלליות', 'קטגוריות', 'מנות'])
+    expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(['הגדרות כלליות', 'קטגוריות', 'מנות', 'אנשי קשר'])
     expect(await within(nav).findByRole('link', { current: 'page' })).toHaveTextContent('הגדרות כלליות')
   })
 

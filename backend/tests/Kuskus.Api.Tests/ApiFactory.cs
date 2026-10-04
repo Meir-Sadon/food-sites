@@ -3,6 +3,7 @@ using Kuskus.Api.Auth;
 using Kuskus.Api.Data;
 using Kuskus.Api.Http;
 using Kuskus.Api.Images;
+using Kuskus.Api.Messaging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -27,6 +28,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["Jwt:Secret"] = JwtSecret,
             ["Admin:PasswordHash"] = AdminPasswordHasher.Hash(AdminPassword),
             ["Admin:LoginAttemptsPerMinute"] = "1000",
+            ["Public:RequestsPerMinute"] = "1000",
             ["Database:MigrateOnStartup"] = "true",
         };
         foreach (var (key, value) in overrides ?? [])
@@ -36,11 +38,18 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// <summary>Stands in for Cloudinary in every test.</summary>
     public FakeImageStore Images { get; } = new();
 
+    /// <summary>Records every WhatsApp message instead of sending it.</summary>
+    public CapturingWhatsAppSender WhatsApp { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         foreach (var (key, value) in _settings)
             builder.UseSetting(key, value);
-        builder.ConfigureTestServices(services => services.AddSingleton<IImageStore>(Images));
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<IImageStore>(Images);
+            services.AddSingleton<IWhatsAppSender>(WhatsApp);
+        });
     }
 
     /// <summary>A client that sends the request header the API requires, without cookies.</summary>
