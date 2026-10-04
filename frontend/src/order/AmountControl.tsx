@@ -12,7 +12,7 @@ interface Props {
   step: number
   /** Add-ons can go down to zero (not ordered); the stepper then jumps between 0 and min. */
   allowZero?: boolean
-  /** e.g. ק״ג for weight dishes; empty for plain units. */
+  /** e.g. ק״ג for free-weight dishes; empty when the amount counts units or set options. */
   unit?: string
   onChange: (value: number) => void
 }
