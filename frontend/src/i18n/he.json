@@ -229,6 +229,8 @@
     "remove": "הסרה",
     "removeDish": "הסרה מההזמנה: {{name}}",
     "soldOut": "אזל",
+    "soldOutForDate": "אזל ליום האספקה שנבחר",
+    "remaining": "נותרו {{amount}}",
     "allergens": "אלרגנים",
     "optionFor": "בחירה עבור {{name}}",
     "addOns": "תוספות",

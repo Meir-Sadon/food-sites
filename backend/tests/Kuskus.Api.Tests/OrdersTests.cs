@@ -316,6 +316,13 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         // ValidOrder holds 2 chickens: the first fits, a second would make 4 of 3.
         var first = await Place(await ValidOrder());
         first.EnsureSuccessStatusCode();
+
+        // The menu says how much is left on each open date; unlimited dishes carry nothing.
+        var menu = await Menu();
+        var left = menu.Dishes.Single(d => d.Id == _chicken).Remaining!;
+        Assert.Equal(1m, left[menu.SupplyDates[0].Date.ToString("yyyy-MM-dd")]);
+        Assert.Equal(3m, left[menu.SupplyDates[1].Date.ToString("yyyy-MM-dd")]);
+        Assert.Null(menu.Dishes.Single(d => d.Id == _meat).Remaining);
         await (await Place(await ValidOrder())).AssertInvalid("items", "dishLimitReached");
 
         // The limit is per supply date, and cancelled orders free their share.

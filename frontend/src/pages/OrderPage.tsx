@@ -15,6 +15,7 @@ import {
   dishMap,
   emptyOrder,
   itemCount,
+  clampToDate,
   orderTotal,
   restoreSelections,
   standaloneDishes,
@@ -111,7 +112,10 @@ export function OrderPage() {
   const phoneVerified = normalizedPhone !== null && verified?.phone === normalizedPhone
 
   const change = (patch: Partial<OrderState>) => {
-    setState((current) => ({ ...current, ...patch }))
+    setState((current) => {
+      const next = { ...current, ...patch }
+      return patch.supplyDate ? { ...next, selections: clampToDate(next.selections, dishes, patch.supplyDate) } : next
+    })
     setSubmitError(null)
   }
 
@@ -202,6 +206,7 @@ export function OrderPage() {
                 dish={dish}
                 dishes={dishes}
                 selection={state.selections[dish.id]}
+                date={supplyDate?.date}
                 onChange={(selection) => setSelection(dish.id, selection)}
               />
             ))}

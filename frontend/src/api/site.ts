@@ -45,6 +45,8 @@ export interface MenuDish {
   options: MenuOption[]
   images: string[]
   addOnDishIds: number[]
+  /** For a dish with a per-date limit: how much is left on each open supply date ("yyyy-MM-dd"). */
+  remaining?: Record<string, number> | null
 }
 
 export interface MenuCategory {
