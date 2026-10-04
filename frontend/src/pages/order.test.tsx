@@ -124,6 +124,20 @@ describe('Order page', () => {
     expect(total().getByText('מנה צדדית אחת')).toBeInTheDocument()
   })
 
+  it('counts the units ordered from the drinks category in their own total', async () => {
+    const drinks = [menuDish(1, 'קוסקוס', 1), menuDish(5, 'קולה', 9)]
+    const { user } = await openOrderPage({
+      'GET /api/menu': () => menu({ categories: [{ id: 1, name: 'עופות' }, { id: 9, name: 'שתיה' }], dishes: drinks }),
+    })
+
+    const cola = dishCard('קולה')
+    await user.click(within(cola).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.click(within(cola).getByRole('button', { name: 'הוספה: קולה' }))
+    await user.click(within(cola).getByRole('button', { name: 'הוספה: קולה' }))
+    expect(total().getByText('3 שתיה')).toBeInTheDocument()
+    expect(total().getByText('0 מנות')).toBeInTheDocument()
+  })
+
   it('stops a free amount at the admin range', async () => {
     const { user } = await openOrderPage()
     const meat = dishCard('בשר טחון')
