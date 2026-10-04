@@ -119,21 +119,25 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 | `AuthCookie__SameSite` | `Lax` when site and API share a domain, `None` when they don't |
 | `Database__MigrateOnStartup` | Apply migrations when the API starts |
 | `ForwardedHeaders__Enabled` | Trust `X-Forwarded-For` from one reverse proxy in front of the API |
-| `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | WhatsApp Cloud API credentials (not used yet: messages are simulated, see below) |
+| `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | WhatsApp Cloud API credentials. When both are set, messages are really sent; otherwise they are only logged (see below) |
+| `WhatsApp__LoginCodeTemplate`, `WhatsApp__OrderConfirmationTemplate`, `WhatsApp__NewOrderTemplate` | Names of the three approved message templates (defaults `kuskus_login_code`, `kuskus_order_confirmation`, `kuskus_new_order`) |
+| `WhatsApp__LanguageCode` | Template language (default `he`) |
 | `Site__TimeZone` | Time zone for supply-day cutoffs (default `Asia/Jerusalem`) |
 | `Public__RequestsPerMinute` | Rate limit per IP for login codes and orders (default 30) |
 | `Cloudinary__Url` | `cloudinary://<api_key>:<api_secret>@<cloud_name>`. Without it, picture uploads are switched off |
 
-## Simulated WhatsApp messages
+## WhatsApp messages
 
-Until Meta approves the message templates (phase 5), nothing is sent: login codes, order confirmations and the new-order messages to the admin's phones are written to the API log instead (`WhatsApp (simulated) to ...`). To try the order flow locally, read the code from the log (`docker compose logs api`).
+With `WhatsApp__PhoneNumberId` and `WhatsApp__Token` set, login codes, order confirmations and the new-order messages to the admin's phones go out through the WhatsApp Cloud API as template messages. Create three templates in Meta's WhatsApp Manager (language Hebrew), each with a single body variable `{{1}}` that carries the message text (the API joins the lines with ` | `, since template variables cannot hold line breaks), and give them the names above. A failed message never fails an order; it still shows in the admin Orders tab.
+
+Without those two settings nothing is sent: messages are written to the API log instead (`WhatsApp (simulated, ...) to ...`). To try the order flow without reading the log, set `WhatsApp__ShowCodeOnScreen=true`: the site then shows each login code on screen. It only works while WhatsApp is not configured, so it switches itself off once the two credentials are set. Don't leave it on for a public site before WhatsApp is set up: anyone could log in as any phone.
 
 ## API notes
 
 - Every `POST`, `PUT` and `DELETE` to `/api` must send the header `X-Kuskus-Request: 1`. Browsers can't add it from another site's page, so other sites can't act with the admin's cookie. The frontend sends it on every request.
 - Public endpoints: `GET /api/site` (contact, delivery text, background), `GET /api/menu` (categories, dishes, open supply dates), `POST /api/phone-verification/send|confirm` and `POST /api/orders`. Orders carry the proof of a confirmed phone and are priced and validated on the server.
 - Client account endpoints live under `/api/account`: `login` and `register` (both need the proof of a confirmed phone), `logout`, `me`, `orders`, `favorites` and `recommendations`. They use the client's own session cookie, which never works as an admin session.
-- Admin endpoints live under `/api/admin` and need the admin session cookie. Validation errors come back as codes per field (for example `{"errors": {"name": ["required"]}}`), which the admin screens translate.
+- Admin endpoints live under `/api/admin` and need the admin session cookie. Besides the catalog and settings, they include `orders` (list by supply date and status, `summary?date=` for the cooking summary, status, paid and edit), `dishes/{id}/affected-orders` (orders not yet supplied that contain a dish) and `reports` (sales per week and dish, with `reports/export` as an Excel file). Validation errors come back as codes per field (for example `{"errors": {"name": ["required"]}}`), which the admin screens translate.
 
 ## Tests
 

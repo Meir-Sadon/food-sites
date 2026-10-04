@@ -35,20 +35,45 @@ export function Status({ message, error }: { message: string | null; error?: boo
 }
 
 /** A remove button that asks "are you sure?" in place, since the viewer may block confirm(). */
-export function ConfirmRemove({ name, onConfirm }: { name: string; onConfirm: () => void | Promise<void> }) {
+export function ConfirmRemove({
+  name,
+  onConfirm,
+  warn,
+  label,
+  question,
+  confirmLabel,
+}: {
+  name: string
+  onConfirm: () => void | Promise<void>
+  /** Texts for something other than removing: the button, the question and the confirm button. */
+  label?: string
+  question?: string
+  confirmLabel?: string
+  /** Runs before asking. A returned text replaces the question, to warn about what the removal affects. */
+  warn?: () => Promise<string | null>
+}) {
   const { t } = useTranslation()
   const [asking, setAsking] = useState(false)
+  const [warning, setWarning] = useState<string | null>(null)
 
   if (!asking)
     return (
-      <button type="button" className="button-quiet" onClick={() => setAsking(true)}>
-        {t('admin.remove')}
+      <button
+        type="button"
+        className="button-quiet"
+        onClick={async () => {
+          setWarning(warn ? await warn().catch(() => null) : null)
+          setAsking(true)
+        }}
+      >
+        {label ?? t('admin.remove')}
       </button>
     )
 
+  const text = warning ?? question ?? t('admin.confirmRemove', { name })
   return (
-    <span className="confirm" role="group" aria-label={t('admin.confirmRemove', { name })}>
-      <span>{t('admin.confirmRemove', { name })}</span>
+    <span className="confirm" role="group" aria-label={text}>
+      <span>{text}</span>
       <button
         type="button"
         className="button-danger"
@@ -57,7 +82,7 @@ export function ConfirmRemove({ name, onConfirm }: { name: string; onConfirm: ()
           setAsking(false)
         }}
       >
-        {t('admin.yesRemove')}
+        {confirmLabel ?? t('admin.yesRemove')}
       </button>
       <button type="button" className="button-quiet" onClick={() => setAsking(false)}>
         {t('admin.cancel')}

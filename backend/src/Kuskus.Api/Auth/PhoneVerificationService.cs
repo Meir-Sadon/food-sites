@@ -31,7 +31,7 @@ public enum ConfirmCodeResult
 /// number of codes and guesses per phone is limited.
 /// </summary>
 public class PhoneVerificationService(
-    AppDbContext db, IWhatsAppSender whatsApp, IOptions<JwtOptions> jwt, TimeProvider time)
+    AppDbContext db, IWhatsAppSender whatsApp, IOptions<JwtOptions> jwt, IOptions<WhatsAppOptions> whatsAppOptions, TimeProvider time)
 {
     public static readonly TimeSpan CodeLifetime = TimeSpan.FromMinutes(5);
     public static readonly TimeSpan TokenLifetime = TimeSpan.FromMinutes(30);
@@ -43,7 +43,11 @@ public class PhoneVerificationService(
 
     private string Audience => jwt.Value.Issuer + "/phone";
 
-    public async Task<SendCodeResult> SendCodeAsync(string phone, CancellationToken ct)
+    /// <summary>
+    /// The code is also handed back, to be shown on screen, only while WhatsApp is not configured and
+    /// <c>WhatsApp:ShowCodeOnScreen</c> is on. Never the case in production with real WhatsApp.
+    /// </summary>
+    public async Task<(SendCodeResult Result, string? DisplayCode)> SendCodeAsync(string phone, CancellationToken ct)
     {
         var now = time.GetUtcNow();
 
@@ -52,7 +56,7 @@ public class PhoneVerificationService(
 
         var since = now - SendWindow;
         if (await db.LoginCodes.CountAsync(c => c.Phone == phone && c.CreatedAt > since, ct) >= MaxCodesPerWindow)
-            return SendCodeResult.TooManyCodes;
+            return (SendCodeResult.TooManyCodes, null);
 
         var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
         db.LoginCodes.Add(new LoginCode
@@ -64,8 +68,9 @@ public class PhoneVerificationService(
         });
         await db.SaveChangesAsync(ct);
 
-        await whatsApp.SendAsync(phone, OrderMessages.LoginCode(code), ct);
-        return SendCodeResult.Sent;
+        await whatsApp.SendAsync(phone, WhatsAppTemplate.LoginCode, OrderMessages.LoginCode(code), ct);
+        var options = whatsAppOptions.Value;
+        return (SendCodeResult.Sent, !options.IsConfigured && options.ShowCodeOnScreen ? code : null);
     }
 
     /// <summary>Checks the code. On success the code is used up and a short-lived token proves the phone.</summary>

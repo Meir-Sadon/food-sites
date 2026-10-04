@@ -6,6 +6,8 @@ import { CategoriesPage } from './admin/categories/CategoriesPage'
 import { ContactsPage } from './admin/contacts/ContactsPage'
 import { DishFormPage } from './admin/dishes/DishFormPage'
 import { DishesPage } from './admin/dishes/DishesPage'
+import { OrdersPage } from './admin/orders/OrdersPage'
+import { ReportsPage } from './admin/reports/ReportsPage'
 import { SettingsPage } from './admin/settings/SettingsPage'
 import { ClientLayout } from './components/ClientLayout'
 import { AboutPage } from './pages/AboutPage'
@@ -42,6 +44,8 @@ export function App() {
         <Route path="dishes/new" element={<DishFormPage key="new" />} />
         <Route path="dishes/:id" element={<DishFormPage key="edit" />} />
         <Route path="contacts" element={<ContactsPage />} />
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="reports" element={<ReportsPage />} />
         <Route path="*" element={<Navigate to="settings" replace />} />
       </Route>
 

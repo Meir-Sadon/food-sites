@@ -133,6 +133,13 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Login_code_is_not_returned_to_the_client_by_default()
+    {
+        var response = await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone = ClientPhone });
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Wrong_code_is_rejected_and_guessing_is_limited()
     {
         await _client.PostAsJsonAsync("/api/phone-verification/send", new { phone = ClientPhone });

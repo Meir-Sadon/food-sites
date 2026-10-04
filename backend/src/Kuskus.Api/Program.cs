@@ -38,8 +38,13 @@ builder.Services.Configure<AccountOptions>(config.GetSection(AccountOptions.Sect
 builder.Services.AddSingleton<AdminTokenService>();
 builder.Services.AddSingleton<UserTokenService>();
 builder.Services.AddSingleton<SiteClock>();
-// Messages are only logged until Meta approves the WhatsApp templates (phase 5).
-builder.Services.AddSingleton<IWhatsAppSender, SimulatedWhatsAppSender>();
+// Messages go out through the WhatsApp Cloud API once WhatsApp__PhoneNumberId and WhatsApp__Token are
+// set (after Meta approves the templates); until then they are only written to the log.
+builder.Services.Configure<WhatsAppOptions>(config.GetSection(WhatsAppOptions.Section));
+if (config.GetSection(WhatsAppOptions.Section).Get<WhatsAppOptions>()?.IsConfigured == true)
+    builder.Services.AddHttpClient<IWhatsAppSender, WhatsAppCloudSender>(c => c.Timeout = TimeSpan.FromSeconds(15));
+else
+    builder.Services.AddSingleton<IWhatsAppSender, SimulatedWhatsAppSender>();
 builder.Services.AddScoped<PhoneVerificationService>();
 
 var jwt = config.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();

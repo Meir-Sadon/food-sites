@@ -177,13 +177,14 @@ public class OrdersController(
     private async Task NotifyAsync(Order order, string? paymentPhone, CancellationToken ct)
     {
         var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
-        var messages = admins.Select(phone => (phone, text: OrderMessages.AdminNotification(order)))
-            .Prepend((order.Phone, OrderMessages.ClientConfirmation(order, paymentPhone)));
-        foreach (var (phone, text) in messages)
+        var messages = admins
+            .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order)))
+            .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone)));
+        foreach (var (phone, template, text) in messages)
         {
             try
             {
-                await whatsApp.SendAsync(phone, text, CancellationToken.None);
+                await whatsApp.SendAsync(phone, template, text, CancellationToken.None);
             }
             catch (Exception ex)
             {

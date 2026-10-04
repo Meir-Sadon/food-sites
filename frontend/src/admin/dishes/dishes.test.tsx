@@ -79,6 +79,24 @@ describe('Dishes list', () => {
     expect(await screen.findByText('מנות שהוסרו (1)')).toBeInTheDocument()
     expect(within(screen.getByRole('region', { name: 'סלטים' })).getByText('עוגה')).toBeInTheDocument()
   })
+
+  it('warns with the number of unsupplied orders before removing a dish', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/dishes/2/affected-orders': () => ({ count: 3 }),
+      'DELETE /api/admin/dishes/2': () => undefined,
+    })
+    renderAt('/admin/dishes')
+    const user = userEvent.setup()
+    const row = (await screen.findByText('חציל')).closest('li')!
+
+    await user.click(within(row).getByRole('button', { name: 'הסרה' }))
+
+    expect(await within(row).findByText(/יש הזמנות שעדיין לא סופקו \(3\)/)).toBeInTheDocument()
+    expect(api.sent('DELETE', '/api/admin/dishes/2')).toHaveLength(0)
+    await user.click(within(row).getByRole('button', { name: 'כן, להסיר' }))
+    await waitFor(() => expect(api.sent('DELETE', '/api/admin/dishes/2')).toHaveLength(1))
+  })
 })
 
 describe('Dish form', () => {
@@ -204,6 +222,23 @@ describe('Dish form', () => {
     expect(screen.getByText('למנה הזו יש תוספות, ולכן היא לא יכולה להיות תוספת בלבד.')).toBeInTheDocument()
     // The summary points to the fields instead of repeating their messages.
     expect(screen.getByRole('alert')).toHaveTextContent('יש שדות לתיקון')
+  })
+
+  it('asks before saving a dish that is in unsupplied orders', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/dishes/1/affected-orders': () => ({ count: 2 }),
+      'PUT /api/admin/dishes/1': () => chicken,
+    })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('נמצאת בהזמנות שעדיין לא סופקו (2)')
+    expect(api.sent('PUT', '/api/admin/dishes/1')).toHaveLength(0)
+    await user.click(screen.getByRole('button', { name: 'שמירה בכל זאת' }))
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/dishes/1')).toHaveLength(1))
   })
 
   it('asks to save a new dish before adding pictures', async () => {

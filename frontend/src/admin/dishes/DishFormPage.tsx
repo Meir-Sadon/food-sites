@@ -130,6 +130,8 @@ export function DishFormPage() {
     (location.state as { created?: boolean } | null)?.created ? { message: t('admin.dishes.createdSaved') } : null,
   )
   const [saving, setSaving] = useState(false)
+  /** Orders still to be supplied that this save would change; set while the admin decides. */
+  const [affected, setAffected] = useState<number | null>(null)
 
   useEffect(() => {
     Promise.all([categoriesApi.get(), dishesApi.getAll()])
@@ -157,6 +159,20 @@ export function DishFormPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!form) return
+    if (dishId !== null) {
+      // Changing a dish that is in orders not yet supplied needs the admin's go-ahead.
+      const count = await dishesApi.affectedOrders(dishId).then((r) => r.count, () => 0)
+      if (count > 0) {
+        setAffected(count)
+        return
+      }
+    }
+    await save()
+  }
+
+  async function save() {
+    if (!form) return
+    setAffected(null)
     setSaving(true)
     setErrors({})
     setStatus(null)
@@ -402,6 +418,20 @@ export function DishFormPage() {
           </button>
           {status && <Status message={status.message} error={status.error} />}
         </div>
+
+        {affected !== null && (
+          <div className="warning" role="alert">
+            <p>{t('admin.dishes.saveWarning', { count: affected })}</p>
+            <div className="row">
+              <button type="button" onClick={() => void save()}>
+                {t('admin.dishes.saveAnyway')}
+              </button>
+              <button type="button" className="button-quiet" onClick={() => setAffected(null)}>
+                {t('admin.cancel')}
+              </button>
+            </div>
+          </div>
+        )}
       </form>
 
       {dish ? <DishImagesSection dish={dish} onChange={setDish} /> : <p className="hint">{t('admin.dishes.imagesAfterSave')}</p>}

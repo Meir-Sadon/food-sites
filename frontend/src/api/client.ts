@@ -1,5 +1,8 @@
 const baseUrl = import.meta.env.VITE_API_URL ?? ''
 
+/** The full URL of an API path, for links the browser opens itself (a download). */
+export const apiUrl = (path: string) => `${baseUrl}${path}`
+
 /** Sent on every request; the API refuses changes without it (blocks cross-site forms). */
 export const requestHeader = { 'X-Kuskus-Request': '1' }
 

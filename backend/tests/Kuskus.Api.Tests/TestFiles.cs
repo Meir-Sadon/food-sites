@@ -26,6 +26,8 @@ public static class TestFiles
         return (await response.Content.ReadFromJsonAsync<T>(Json))!;
     }
 
+    public static async Task<T> Read<T>(this Task<HttpResponseMessage> response) => await (await response).Read<T>();
+
     /// <summary>Asserts a 400 whose validation errors include this code for this field.</summary>
     public static async Task AssertInvalid(this HttpResponseMessage response, string field, string code)
     {

@@ -1,6 +1,7 @@
 using Kuskus.Api.Data;
 using Kuskus.Api.Data.Entities;
 using Kuskus.Api.Images;
+using Kuskus.Api.Orders;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Kuskus.Api.Controllers.Admin.Ordering;
@@ -8,7 +9,7 @@ using static Kuskus.Api.Controllers.Admin.Ordering;
 namespace Kuskus.Api.Controllers.Admin;
 
 [Route("api/admin/dishes")]
-public class DishesController(AppDbContext db, IImageStore images) : AdminControllerBase
+public class DishesController(AppDbContext db, IImageStore images, SiteClock clock) : AdminControllerBase
 {
     public const int AllergenMaxLength = 500;
     public const int OptionLabelMaxLength = 50;
@@ -98,6 +99,26 @@ public class DishesController(AppDbContext db, IImageStore images) : AdminContro
         Apply(input, dish);
         await db.SaveChangesAsync();
         return ToDto(await LoadAsync(id));
+    }
+
+    public record AffectedOrdersDto(int Count);
+
+    /// <summary>
+    /// How many orders still to be supplied (today or later, not delivered or cancelled) contain this dish.
+    /// The admin screens warn with this number before a dish is removed or changed.
+    /// </summary>
+    [HttpGet("{id:int}/affected-orders")]
+    public async Task<ActionResult<AffectedOrdersDto>> AffectedOrders(int id)
+    {
+        if (!await db.Dishes.AnyAsync(d => d.Id == id))
+            return NotFound();
+
+        var today = DateOnly.FromDateTime(clock.NowLocal());
+        var count = await db.Orders.CountAsync(o =>
+            o.SupplyDate >= today
+            && o.Status != OrderStatus.Cancelled && o.Status != OrderStatus.Delivered
+            && o.Items.Any(i => i.DishId == id));
+        return new AffectedOrdersDto(count);
     }
 
     [HttpPut("{id:int}/sold-out")]
