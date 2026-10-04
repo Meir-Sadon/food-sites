@@ -116,21 +116,31 @@ export function orderTotal(selections: Record<number, Selection>, dishes: Map<nu
 }
 
 /**
- * The order's two totals. Dishes: how many dishes were ordered on their own (a free-weight line counts one).
+ * The order's totals. Dishes: how many dishes were ordered on their own (a free-weight line counts one).
  * Side dishes: how many kinds of side dish were ordered on their own, however many of each.
- * Add-ons belong to the dish they were added to and are in neither total.
+ * Drinks: units ordered from the drinks category, counted on their own and not as dishes.
+ * Add-ons belong to the dish they were added to and are in no total.
  */
-export function dishTotals(selections: Record<number, Selection>, dishes: Map<number, MenuDish>) {
+export function dishTotals(
+  selections: Record<number, Selection>,
+  dishes: Map<number, MenuDish>,
+  drinksCategoryIds: ReadonlySet<number> = new Set(),
+) {
   let main = 0
   let side = 0
+  let drinks = 0
   for (const [id, selection] of Object.entries(selections)) {
     const dish = dishes.get(Number(id))
     if (!dish) continue
-    if (dish.isSideDish) side += 1
+    if (drinksCategoryIds.has(dish.categoryId)) drinks += selection.quantity
+    else if (dish.isSideDish) side += 1
     else main += dish.choiceMode === 'Free' ? 1 : selection.quantity
   }
-  return { main, side }
+  return { main, side, drinks }
 }
+
+/** The category whose ordered units get their own total (matches the backend's seeded drinks category). */
+export const DRINKS_CATEGORY_NAME = 'שתיה'
 
 export const itemCount = (selections: Record<number, Selection>) => Object.keys(selections).length
 

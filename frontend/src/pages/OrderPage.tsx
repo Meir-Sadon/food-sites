@@ -16,6 +16,7 @@ import { formatMoney, formatSupplyDate } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
 import { QuickFill } from '../order/QuickFill'
 import {
+  DRINKS_CATEGORY_NAME,
   dishMap,
   emptyOrder,
   dishTotals,
@@ -64,7 +65,11 @@ export function OrderPage() {
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const total = orderTotal(state.selections, dishes)
   const count = itemCount(state.selections)
-  const totals = dishTotals(state.selections, dishes)
+  const drinksCategoryIds = useMemo(
+    () => new Set((menu?.categories ?? []).filter((c) => c.name === DRINKS_CATEGORY_NAME).map((c) => c.id)),
+    [menu],
+  )
+  const totals = dishTotals(state.selections, dishes, drinksCategoryIds)
   const dirty = count > 0 && !confirmation
   // Set when the profile page's "Reorder" put a past order in the draft.
   const filledSkipped = (location.state as { filled?: { skipped: number } } | null)?.filled?.skipped
@@ -404,6 +409,7 @@ export function OrderPage() {
         <span className="total-bar__counts">
           <span>{t('order.itemCount', { count: totals.main })}</span>
           <span>{t('order.sideDishCount', { count: totals.side })}</span>
+          {drinksCategoryIds.size > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
         </span>
         <strong className="numeric" aria-live="polite">
           {t('order.total')}: {formatMoney(total)}
