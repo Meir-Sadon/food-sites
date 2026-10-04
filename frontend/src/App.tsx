@@ -8,6 +8,7 @@ import { DishFormPage } from './admin/dishes/DishFormPage'
 import { DishesPage } from './admin/dishes/DishesPage'
 import { SettingsPage } from './admin/settings/SettingsPage'
 import { ClientLayout } from './components/ClientLayout'
+import { AboutPage } from './pages/AboutPage'
 import { LoginPage } from './pages/LoginPage'
 import { OrderPage } from './pages/OrderPage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -21,6 +22,7 @@ export function App() {
         <Route path="login" element={<LoginPage />} />
         <Route path="recommendations" element={<RecommendationsPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="about" element={<AboutPage />} />
       </Route>
 
       {/* Admin area: not linked from the client site. */}

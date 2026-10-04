@@ -62,7 +62,6 @@ describe('Order page', () => {
     expect([...groups].map((g) => g.hasAttribute('open'))).toEqual([true, true])
     expect(screen.getByRole('heading', { level: 3, name: 'עוף בתנור' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { level: 3, name: 'ירך' })).not.toBeInTheDocument()
-    expect(screen.getByText('בהשגחת הרבנות')).toBeInTheDocument()
   })
 
   it('shows the main contact in the footer', async () => {

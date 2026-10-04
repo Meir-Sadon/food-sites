@@ -21,7 +21,7 @@ A Hebrew ordering website where clients order admin-configured dishes for config
 
 ## Client site
 
-The site opens on the Order page. A constant top bar holds four buttons: Order (home), Login/Register, Recommendations and Profile. The layout is mobile-first, since most clients will order from a phone.
+The site opens on the Order page. A constant top bar holds five buttons: Order (home), Login/Register, Recommendations, Profile and About. The About page carries the kashrut text. The layout is mobile-first, since most clients will order from a phone.
 
 ### Order page
 

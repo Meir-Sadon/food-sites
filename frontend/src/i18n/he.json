@@ -7,7 +7,8 @@
     "order": "הזמנה",
     "login": "התחברות / הרשמה",
     "recommendations": "המלצות",
-    "profile": "פרופיל"
+    "profile": "פרופיל",
+    "about": "אודות"
   },
   "pages": {
     "order": {
@@ -21,6 +22,10 @@
     },
     "profile": {
       "title": "פרופיל"
+    },
+    "about": {
+      "title": "אודות",
+      "kashrut": "כשרות"
     },
     "comingSoon": "העמוד בבנייה."
   },
