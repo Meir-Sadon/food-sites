@@ -4,6 +4,7 @@ using Kuskus.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using static Kuskus.Api.Controllers.Admin.CategoriesController;
 using static Kuskus.Api.Controllers.Admin.DishesController;
+using static Kuskus.Api.Controllers.Admin.OrdersAdminController;
 using static Kuskus.Api.Controllers.Admin.SupplyDaysController;
 using static Kuskus.Api.Controllers.OrdersController;
 using static Kuskus.Api.Controllers.PhoneVerificationController;
@@ -72,7 +73,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         {
             ["phone"] = "050-123-4567",
             ["name"] = " דנה ",
-            ["city"] = "חיפה",
+            ["city"] = "אשקלון",
             ["street"] = "הרצל",
             ["houseNumber"] = "1",
             ["apartment"] = "4",
@@ -364,6 +365,33 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
             await db.SaveChangesAsync();
         }
         (await Place(await ValidOrder())).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task A_delivery_outside_the_service_city_waits_for_approval_and_holds_no_quantity()
+    {
+        var dish = await (await _admin.GetAsync($"/api/admin/dishes/{_chicken}")).Read<DishDto>();
+        var input = new DishInput(
+            dish.Name, dish.CategoryId, null, null, dish.SellBy, dish.ChoiceMode, null, null, null, null, false, false,
+            dish.Options.Select(o => new OptionInput(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(), [_thigh],
+            MaxPerSupplyDate: 3);
+        (await _admin.PutAsJsonAsync($"/api/admin/dishes/{_chicken}", input, TestFiles.Json)).EnsureSuccessStatusCode();
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+
+        var far = await (await Place(await ValidOrder(o => o["city"] = "חיפה"))).Read<ConfirmationDto>();
+        Assert.True(far.NeedsReview);
+        // Its 2 chickens are not taken out of the 3 available, and the cooking summary leaves it out.
+        Assert.Equal(3m, (await Menu()).Dishes.Single(d => d.Id == _chicken).Remaining![date]);
+        Assert.Empty((await _admin.GetAsync($"/api/admin/orders/summary?date={date}").Read<SummaryDto>()).Rows);
+
+        // Approving it makes it count.
+        (await _admin.PutAsync($"/api/admin/orders/{far.Id}/approve", null)).EnsureSuccessStatusCode();
+        Assert.Equal(1m, (await Menu()).Dishes.Single(d => d.Id == _chicken).Remaining![date]);
+
+        // The service city (spaces ignored) is never flagged.
+        var otherDate = (await Menu()).SupplyDates[1].Date.ToString("yyyy-MM-dd");
+        var home = await (await Place(await ValidOrder(o => { o["city"] = " אשקלון "; o["supplyDate"] = otherDate; }))).Read<ConfirmationDto>();
+        Assert.False(home.NeedsReview);
     }
 
     [Fact]

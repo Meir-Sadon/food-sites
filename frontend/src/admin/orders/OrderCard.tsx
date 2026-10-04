@@ -45,6 +45,18 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
         {t(order.paymentMethod === 'Transfer' ? 'admin.orders.transfer' : 'admin.orders.onDelivery')}
         {order.isGuest && <span className="badge">{t('admin.orders.guest')}</span>}
       </p>
+      {order.needsReview && (
+        <p role="status" className="notice notice--warning">
+          {t('admin.orders.needsReview')}{' '}
+          <button
+            type="button"
+            onClick={() => void apply({ needsReview: false }, () => ordersAdminApi.approve(order.id))}
+          >
+            {t('admin.orders.approve')}
+            <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+          </button>
+        </p>
+      )}
 
       <ul className="list">
         {order.items.map((item) => (

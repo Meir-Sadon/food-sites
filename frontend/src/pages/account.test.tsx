@@ -99,7 +99,6 @@ describe('Login', () => {
     await screen.findByRole('heading', { name: 'הרשמה' })
     expect(screen.getByText(/עוד לא רשום/)).toBeInTheDocument()
     await user.type(screen.getByLabelText('שם מלא'), 'דנה כהן')
-    await user.type(screen.getByLabelText('עיר'), 'חיפה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
     await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.click(screen.getByRole('button', { name: 'הרשמה' }))
@@ -108,11 +107,28 @@ describe('Login', () => {
     expect(api.sent('POST', '/api/account/register')[0].body).toMatchObject({
       phone: '0501234567',
       fullName: 'דנה כהן',
-      city: 'חיפה',
+      city: 'אשקלון',
       street: 'הרצל',
       houseNumber: '1',
       verificationToken: 'proof',
     })
+  })
+
+  it('registration starts with the city אשקלון and warns about another city', async () => {
+    const { user } = open('/login', {
+      ...guest,
+      'POST /api/account/login': () => ({ status: 404, body: { code: 'notRegistered' } }),
+    })
+    await screen.findByRole('heading', { name: 'התחברות' })
+    await confirmPhone(user)
+    await screen.findByRole('heading', { name: 'הרשמה' })
+
+    const city = screen.getByLabelText('עיר')
+    expect(city).toHaveValue('אשקלון')
+    expect(screen.queryByText(/אנחנו עובדים רק באשקלון/)).not.toBeInTheDocument()
+    await user.clear(city)
+    await user.type(city, 'חיפה')
+    expect(screen.getByText(/אנחנו עובדים רק באשקלון/)).toBeInTheDocument()
   })
 
   it('registers from the Register button, with the optional fields marked and the phone confirmed first', async () => {
@@ -127,7 +143,6 @@ describe('Login', () => {
 
     await user.type(screen.getByLabelText('טלפון'), '0501234567')
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('עיר'), 'חיפה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
     await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
@@ -146,7 +161,6 @@ describe('Login', () => {
     await confirmPhone(user)
     await screen.findByRole('heading', { name: 'הרשמה' })
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('עיר'), 'חיפה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
     await user.type(screen.getByLabelText('מספר בית'), '1')
 
@@ -165,7 +179,6 @@ describe('Login', () => {
     await confirmPhone(user)
     await screen.findByRole('heading', { name: 'הרשמה' })
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('עיר'), 'חיפה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
     await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.type(screen.getByLabelText('אימייל (לא חובה)'), 'bad')
@@ -192,7 +205,7 @@ describe('Order page for a logged-in client', () => {
     const { api, user } = open('/', {
       ...loggedIn,
       'POST /api/orders': () => ({
-        id: 7, supplyDate: '2026-10-09', fulfillmentMethod: 'Delivery', paymentMethod: 'OnDelivery', total: 70, paymentPhone: null, items: [],
+        id: 7, supplyDate: '2026-10-09', fulfillmentMethod: 'Delivery', paymentMethod: 'OnDelivery', total: 70, paymentPhone: null, needsReview: false, items: [],
       }),
     })
     await screen.findByRole('heading', { level: 2, name: 'עופות' })

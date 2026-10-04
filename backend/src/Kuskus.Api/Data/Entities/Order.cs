@@ -18,6 +18,12 @@ public class Order
 
     public PaymentMethod PaymentMethod { get; set; }
     public bool IsPaid { get; set; }
+
+    /// <summary>
+    /// A delivery outside the service city: the admin has to approve it. Until then it is not a safe order
+    /// and its dishes are not taken out of the quantity left for the supply date.
+    /// </summary>
+    public bool NeedsReview { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.New;
 
     public decimal Total { get; set; }

@@ -9,7 +9,7 @@ namespace Kuskus.Api.Controllers.Admin;
 
 /// <summary>
 /// Dishes sold and total sales per week (Sunday to Saturday), by supply date.
-/// Cancelled orders are never counted. Every filter is optional.
+/// Cancelled orders and orders waiting for approval are never counted. Every filter is optional.
 /// </summary>
 [Route("api/admin/reports")]
 public class ReportsController(AppDbContext db) : AdminControllerBase
@@ -50,7 +50,7 @@ public class ReportsController(AppDbContext db) : AdminControllerBase
 
     private async Task<List<Line>> LoadAsync(DateOnly? from, DateOnly? to, int? dishId, int? categoryId, PaymentMethod? paymentMethod)
     {
-        var query = db.OrderItems.AsNoTracking().Where(i => i.Order!.Status != OrderStatus.Cancelled);
+        var query = db.OrderItems.AsNoTracking().Where(i => i.Order!.Status != OrderStatus.Cancelled && !i.Order.NeedsReview);
         if (from is { } start) query = query.Where(i => i.Order!.SupplyDate >= start);
         if (to is { } end) query = query.Where(i => i.Order!.SupplyDate <= end);
         if (dishId is { } dish) query = query.Where(i => i.DishId == dish);

@@ -29,6 +29,8 @@ export interface AdminOrder {
   total: number
   createdAt: string
   isGuest: boolean
+  /** Delivery outside the service city, waiting for the admin's approval. */
+  needsReview: boolean
   items: AdminOrderItem[]
 }
 
@@ -93,6 +95,7 @@ export const ordersAdminApi = {
   list: (filter: OrderFilter) => apiJson<AdminOrder[]>(`${orders}${queryString(filter)}`),
   summary: (date: string) => apiJson<CookingSummary>(`${orders}/summary?date=${date}`),
   setStatus: (id: number, status: OrderStatus) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status })),
+  approve: (id: number) => apiJson<void>(`${orders}/${id}/approve`, send('PUT')),
   setPaid: (id: number, isPaid: boolean) => apiJson<void>(`${orders}/${id}/paid`, send('PUT', { isPaid })),
   update: (id: number, input: AdminOrderInput) => apiJson<AdminOrder>(`${orders}/${id}`, send('PUT', input)),
 }

@@ -101,6 +101,8 @@ export interface Confirmation {
   paymentMethod: Payment
   total: number
   paymentPhone: string | null
+  /** A delivery outside the service city: it waits for the admin and holds no quantity yet. */
+  needsReview: boolean
   items: {
     dishName: string
     optionLabel: string | null

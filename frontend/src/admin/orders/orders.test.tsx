@@ -19,6 +19,7 @@ const order = (patch: Partial<AdminOrder> = {}): AdminOrder => ({
   total: 176,
   createdAt: '2030-01-01T10:00:00Z',
   isGuest: false,
+  needsReview: false,
   items: [
     { id: 1, parentItemId: null, dishName: 'עוף בתנור', optionLabel: 'שלם', quantity: 2, unitPrice: 70, lineTotal: 140 },
     { id: 2, parentItemId: 1, dishName: 'ירך', optionLabel: 'יחידה', quantity: 3, unitPrice: 12, lineTotal: 36 },
@@ -35,6 +36,22 @@ const summary: CookingSummary = {
 }
 
 describe('Admin Orders', () => {
+  it('flags an order outside the service city and lets the admin approve it', async () => {
+    const api = fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [order({ needsReview: true })],
+      'PUT /api/admin/orders/7/approve': () => undefined,
+    })
+    renderAt('/admin/orders')
+    const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+    expect(within(card).getByText(/ממתינה לאישור המנהל/)).toBeInTheDocument()
+
+    await userEvent.setup().click(within(card).getByRole('button', { name: /אישור ההזמנה/ }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/approve')).toHaveLength(1))
+    expect(within(card).queryByText(/ממתינה לאישור המנהל/)).not.toBeInTheDocument()
+  })
+
   it('lists orders by supply day and links the tab', async () => {
     fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [order(), order({ id: 8, supplyDate: '2030-01-13', name: 'יעל' })] })
     renderAt('/admin/orders')
