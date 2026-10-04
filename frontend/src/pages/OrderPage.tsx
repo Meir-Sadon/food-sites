@@ -18,6 +18,7 @@ import { QuickFill } from '../order/QuickFill'
 import {
   dishMap,
   emptyOrder,
+  dishTotals,
   itemCount,
   clampToDate,
   orderTotal,
@@ -64,6 +65,7 @@ export function OrderPage() {
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const total = orderTotal(state.selections, dishes)
   const count = itemCount(state.selections)
+  const totals = dishTotals(state.selections, dishes)
   const dirty = count > 0 && !confirmation
   // Set when the profile page's "Reorder" put a past order in the draft.
   const filledSkipped = (location.state as { filled?: { skipped: number } } | null)?.filled?.skipped
@@ -409,7 +411,10 @@ export function OrderPage() {
       </form>
 
       <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
-        <span>{t('order.itemCount', { count })}</span>
+        <span className="total-bar__counts">
+          <span>{t('order.itemCount', { count: totals.main })}</span>
+          <span>{t('order.sideDishCount', { count: totals.side })}</span>
+        </span>
         <strong className="numeric" aria-live="polite">
           {t('order.total')}: {formatMoney(total)}
         </strong>

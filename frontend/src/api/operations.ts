@@ -58,7 +58,7 @@ export interface CookingSummary {
   pickupCount: number
   /** Dishes ordered on their own, not side dishes; add-ons count as part of their dish. */
   mainDishCount: number
-  /** Side dishes ordered on their own; one added to a dish counts zero. */
+  /** Kinds of side dish ordered on their own, however many of each; one added to a dish counts zero. */
   sideDishCount: number
   rows: { dishId: number; dishName: string; optionLabel: string | null; quantity: number; orders: number }[]
 }

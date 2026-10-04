@@ -48,6 +48,8 @@ export interface MenuDish {
   isSoldOut: boolean
   /** The order page shows the dish's choices right away, without clicking add first. */
   openByDefault?: boolean
+  /** Counted by kind in the order's side-dish total, and not at all when added to another dish. */
+  isSideDish?: boolean
   options: MenuOption[]
   images: string[]
   addOnDishIds: number[]

@@ -33,7 +33,7 @@ const summary: CookingSummary = {
   deliveryCount: 1,
   pickupCount: 1,
   mainDishCount: 2,
-  sideDishCount: 2,
+  sideDishCount: 1,
   rows: [{ dishId: 1, dishName: 'עוף בתנור', optionLabel: 'שלם', quantity: 4, orders: 2 }],
 }
 
@@ -123,7 +123,7 @@ describe('Admin Orders', () => {
     const region = await screen.findByRole('region', { name: 'סיכום בישול ליום 06/01/2030' })
     expect(within(region).getByRole('row', { name: /עוף בתנור/ })).toHaveTextContent('4')
     expect(within(region).getByText('2 הזמנות · 1 משלוחים · 1 איסוף עצמי')).toBeInTheDocument()
-    expect(within(region).getByText('2 מנות · 2 מנות צדדיות')).toBeInTheDocument()
+    expect(within(region).getByText('מנות: 2 · מנות צדדיות: 1')).toBeInTheDocument()
     expect(api.sent('GET', 'summary?date=2030-01-06')).toHaveLength(1)
     expect(within(region).getByRole('button', { name: 'הדפסה' })).toBeInTheDocument()
   })
