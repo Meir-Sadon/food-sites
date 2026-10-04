@@ -856,6 +856,15 @@ label {
   outline-offset: 2px;
 }
 
+.option-card__default {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: rgb(200 150 62 / 0.18);
+  color: #7a5614;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .option-card__label {
   font-weight: 600;
 }

@@ -67,6 +67,32 @@ export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
           <p className="badge" role="status">
             {t('order.soldOutForDate')}
           </p>
+        ) : !selection && dish.openByDefault ? (
+          // Open by default: the choices are shown right away and nothing is chosen until the client picks.
+          dish.choiceMode === 'Fixed' && dish.options.length > 1 ? (
+            <div className="dish__choice">
+              <OptionCards
+                dish={dish}
+                name={`${id}-option`}
+                checkedId={null}
+                onPick={(optionId) => onChange({ ...newSelection(dish), optionId })}
+              />
+            </div>
+          ) : (
+            <div className="dish__choice">
+              <div className="row">
+                <AmountControl
+                  name={dish.name}
+                  value={0}
+                  {...range}
+                  max={Math.max(range.max, range.min)}
+                  allowZero
+                  unit={unitLabel(dish, t)}
+                  onChange={(quantity) => quantity > 0 && onChange({ ...newSelection(dish), quantity })}
+                />
+              </div>
+            </div>
+          )
         ) : !selection ? (
           <button type="button" aria-label={t('order.addDish', { name: dish.name })} onClick={() => onChange(newSelection(dish))}>
             {t('order.add')}
@@ -74,24 +100,7 @@ export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
         ) : (
           <div className="dish__choice">
             {dish.choiceMode === 'Fixed' && dish.options.length > 1 && (
-              <fieldset>
-                <legend>{t('order.optionFor', { name: dish.name })}</legend>
-                <div className="option-cards">
-                  {dish.options.map((option) => (
-                    <label key={option.id} className="option-card">
-                      <input
-                        type="radio"
-                        className="visually-hidden"
-                        name={`${id}-option`}
-                        checked={selection.optionId === option.id}
-                        onChange={() => onChange({ ...selection, optionId: option.id })}
-                      />
-                      <span className="option-card__label">{option.label}</span>
-                      <span className="option-card__price numeric">{formatMoney(option.price)}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
+              <OptionCards dish={dish} name={`${id}-option`} checkedId={selection.optionId} onPick={(optionId) => onChange({ ...selection, optionId })} />
             )}
 
             {none && (
@@ -131,6 +140,43 @@ export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
         )}
       </div>
     </article>
+  )
+}
+
+/** The fixed options of a dish as cards; for an open-by-default dish the default one carries a sign. */
+function OptionCards({
+  dish,
+  name,
+  checkedId,
+  onPick,
+}: {
+  dish: MenuDish
+  name: string
+  checkedId: number | null
+  onPick: (optionId: number) => void
+}) {
+  const { t } = useTranslation()
+  const marked = dish.openByDefault ? defaultOption(dish)?.id : undefined
+  return (
+    <fieldset>
+      <legend>{t('order.optionFor', { name: dish.name })}</legend>
+      <div className="option-cards">
+        {dish.options.map((option) => (
+          <label key={option.id} className="option-card">
+            <input
+              type="radio"
+              className="visually-hidden"
+              name={name}
+              checked={checkedId === option.id}
+              onChange={() => onPick(option.id)}
+            />
+            {option.id === marked && <span className="option-card__default">★ {t('order.defaultOption')}</span>}
+            <span className="option-card__label">{option.label}</span>
+            <span className="option-card__price numeric">{formatMoney(option.price)}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
   )
 }
 

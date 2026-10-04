@@ -35,6 +35,9 @@ public class Dish
     public bool IsAddOnOnly { get; set; }
     public bool IsSoldOut { get; set; }
 
+    /// <summary>The order page shows this dish's choices right away, without the client first clicking add.</summary>
+    public bool OpenByDefault { get; set; }
+
     /// <summary>Removed dishes are hidden, never deleted, so old orders still display.</summary>
     public bool IsHidden { get; set; }
 

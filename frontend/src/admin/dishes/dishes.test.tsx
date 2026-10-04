@@ -155,6 +155,7 @@ describe('Dish form', () => {
       unitPrice: null,
       isAddOnOnly: true,
       isSoldOut: false,
+      openByDefault: false,
       maxPerSupplyDate: null,
       options: [
         { id: null, label: 'קטן', amount: 1, price: 5, isDefault: false },
@@ -162,6 +163,19 @@ describe('Dish form', () => {
       ],
       parentDishIds: [1],
     })
+  })
+
+  it('saves a dish as open by default', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    await user.click(screen.getByLabelText(/פתוחה כברירת מחדל/))
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).openByDefault).toBe(true)
   })
 
   it('saves a per-supply-date limit on a dish', async () => {
