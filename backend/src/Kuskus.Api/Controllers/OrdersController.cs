@@ -48,6 +48,7 @@ public class OrdersController(
         PaymentMethod PaymentMethod,
         decimal Total,
         string? PaymentPhone,
+        bool NeedsReview,
         IReadOnlyList<ConfirmationItemDto> Items);
 
     [HttpPost]
@@ -133,6 +134,7 @@ public class OrdersController(
             Notes = Clean(input.Notes),
             PaymentMethod = input.PaymentMethod,
             Status = OrderStatus.New,
+            NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery && !AddressFormat.IsServiceCity(input.City),
             Total = OrderBuilder.Total(items),
             CreatedAt = DateTimeOffset.UtcNow,
         };
@@ -146,6 +148,7 @@ public class OrdersController(
         return new ConfirmationDto(
             order.Id, order.SupplyDate, order.FulfillmentMethod, order.PaymentMethod, order.Total,
             order.PaymentMethod == PaymentMethod.Transfer ? settings.PaymentPhone : null,
+            order.NeedsReview,
             order.Items
                 .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null))
                 .ToList());
@@ -153,7 +156,7 @@ public class OrdersController(
 
     /// <summary>
     /// A dish with a per-supply-date limit can only be ordered until the orders already placed
-    /// for that date (cancelled ones excluded) plus this one would pass it.
+    /// for that date (cancelled ones and ones waiting for approval excluded) plus this one would pass it.
     /// </summary>
     private async Task CheckDishLimitsAsync(
         DateOnly supplyDate, List<OrderItem> items, Dictionary<int, Dish> dishes, Errors errors, CancellationToken ct)
@@ -164,7 +167,7 @@ public class OrdersController(
             return;
 
         var taken = await db.OrderItems.AsNoTracking()
-            .Where(i => limited.Contains(i.DishId) && i.Order!.SupplyDate == supplyDate && i.Order.Status != OrderStatus.Cancelled)
+            .Where(i => limited.Contains(i.DishId) && i.Order!.SupplyDate == supplyDate && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
             .GroupBy(i => i.DishId)
             .Select(g => new { DishId = g.Key, Quantity = g.Sum(i => i.Quantity) })
             .ToDictionaryAsync(g => g.DishId, g => g.Quantity, ct);

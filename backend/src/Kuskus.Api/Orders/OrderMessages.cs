@@ -11,6 +11,8 @@ public static class OrderMessages
     public static string ClientConfirmation(Order order, string? paymentPhone)
     {
         var text = $"תודה, ההזמנה שלך התקבלה!\n{Details(order)}";
+        if (order.NeedsReview)
+            text += $"\nאנחנו משלוחים רק ב{AddressFormat.ServiceCity}. ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור.";
         if (order.PaymentMethod == PaymentMethod.Transfer && !string.IsNullOrWhiteSpace(paymentPhone))
             text += $"\nלהעברת התשלום ב־Bit / PayBox: {paymentPhone}";
         else if (order.PaymentMethod == PaymentMethod.OnDelivery)
@@ -18,7 +20,9 @@ public static class OrderMessages
         return text;
     }
 
-    public static string AdminNotification(Order order) => $"הזמנה חדשה #{order.Id}\n{Details(order)}";
+    public static string AdminNotification(Order order) =>
+        $"הזמנה חדשה #{order.Id}\n{Details(order)}"
+        + (order.NeedsReview ? "\nהכתובת מחוץ לאזור השירות: ההזמנה ממתינה לאישור שלך." : "");
 
     private static string Details(Order order)
     {

@@ -5,6 +5,11 @@ public static class AddressFormat
 {
     public const int PartMaxLength = 100;
 
+    /// <summary>The only city the kitchen delivers to; orders to any other city wait for the admin.</summary>
+    public const string ServiceCity = "אשקלון";
+
+    public static bool IsServiceCity(string? city) => string.Equals(city?.Trim(), ServiceCity, StringComparison.Ordinal);
+
     /// <summary>"Herzl 12, apartment 5, Haifa"; parts that were left empty are skipped.</summary>
     public static string Compose(string? city, string? street, string? houseNumber, string? apartment)
     {

@@ -6,7 +6,7 @@ import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
 import { AddressFields } from '../account/AddressFields'
-import { addressOf, emptyAddress } from '../account/addressParts'
+import { addressOf, noAddress, SERVICE_CITY } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useSite, useSiteFailed } from '../site/useSite'
@@ -75,7 +75,8 @@ export function OrderPage() {
       ...current,
       name: current.name || user.fullName,
       phone: current.phone || user.phone,
-      city: current.city || user.city,
+      // The city starts as the service city, so the saved one only replaces that default.
+      city: current.city === SERVICE_CITY ? user.city || SERVICE_CITY : current.city,
       street: current.street || user.street,
       houseNumber: current.houseNumber || user.houseNumber,
       apartment: current.apartment || user.apartment,
@@ -207,7 +208,7 @@ export function OrderPage() {
       const result = await ordersApi.create({
         phone: verified.phone,
         name: state.name.trim(),
-        ...(fulfillment === 'Delivery' ? addressOf(state) : emptyAddress()),
+        ...(fulfillment === 'Delivery' ? addressOf(state) : noAddress()),
         supplyDate: supplyDate.date,
         fulfillmentMethod: fulfillment,
         paymentMethod: payment,
@@ -344,7 +345,7 @@ export function OrderPage() {
         />
 
         {fulfillment === 'Delivery' && (
-          <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" />
+          <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" context="order" />
         )}
 
         <span className="field">

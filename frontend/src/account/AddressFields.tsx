@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../api/client'
 import { FieldError } from '../admin/ui'
-import type { AddressParts } from './addressParts'
+import { isServiceCity, type AddressParts } from './addressParts'
 
 interface Props {
   value: AddressParts
@@ -9,9 +9,11 @@ interface Props {
   errors: FieldErrors
   /** Prefix for the input ids, so two forms on a page never clash. */
   idPrefix: string
+  /** Which note to show when the city is not the service city. */
+  context: 'order' | 'profile'
 }
 
-export function AddressFields({ value, onChange, errors, idPrefix }: Props) {
+export function AddressFields({ value, onChange, errors, idPrefix, context }: Props) {
   const { t } = useTranslation()
   const id = (name: string) => `${idPrefix}-${name}`
 
@@ -42,6 +44,11 @@ export function AddressFields({ value, onChange, errors, idPrefix }: Props) {
         {field('houseNumber', t('address.houseNumber'), 'off', { required: true, className: 'field--narrow' })}
         {field('apartment', t('address.apartment'), 'address-line2', { className: 'field--narrow' })}
       </div>
+      {value.city.trim() !== '' && !isServiceCity(value.city) && (
+        <p role="status" className="notice notice--warning">
+          {t(context === 'order' ? 'address.outsideOrder' : 'address.outsideProfile')}
+        </p>
+      )}
     </fieldset>
   )
 }

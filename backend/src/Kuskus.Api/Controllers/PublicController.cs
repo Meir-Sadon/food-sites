@@ -96,7 +96,7 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff)).ToList());
     }
 
-    /// <summary>For each limited dish, how much is still free on each open supply date (cancelled orders don't count).</summary>
+    /// <summary>For each limited dish, how much is still free on each open supply date (cancelled orders and orders waiting for the admin's approval don't count).</summary>
     private async Task<Dictionary<int, IReadOnlyDictionary<string, decimal>>> RemainingAsync(
         List<Dish> dishes, List<DateOnly> dates)
     {
@@ -106,7 +106,7 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
 
         var ids = limits.Keys.ToList();
         var taken = await db.OrderItems.AsNoTracking()
-            .Where(i => ids.Contains(i.DishId) && dates.Contains(i.Order!.SupplyDate) && i.Order.Status != OrderStatus.Cancelled)
+            .Where(i => ids.Contains(i.DishId) && dates.Contains(i.Order!.SupplyDate) && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
             .GroupBy(i => new { i.DishId, i.Order!.SupplyDate })
             .Select(g => new { g.Key.DishId, g.Key.SupplyDate, Quantity = g.Sum(i => i.Quantity) })
             .ToListAsync();

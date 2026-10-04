@@ -34,6 +34,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         decimal Total,
         DateTimeOffset CreatedAt,
         bool IsGuest,
+        bool NeedsReview,
         IReadOnlyList<ItemDto> Items);
 
     public record StatusInput(OrderStatus Status);
@@ -76,16 +77,16 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             ? ToDto(order)
             : NotFound();
 
-    /// <summary>The total of each dish and option to cook for one supply day. Cancelled orders are left out.</summary>
+    /// <summary>The total of each dish and option to cook for one supply day. Cancelled orders and orders still waiting for approval are left out.</summary>
     [HttpGet("summary")]
     public async Task<SummaryDto> Summary(DateOnly date)
     {
         var orders = await db.Orders.AsNoTracking()
-            .Where(o => o.SupplyDate == date && o.Status != OrderStatus.Cancelled)
+            .Where(o => o.SupplyDate == date && o.Status != OrderStatus.Cancelled && !o.NeedsReview)
             .Select(o => new { o.FulfillmentMethod })
             .ToListAsync();
         var lines = await db.OrderItems.AsNoTracking()
-            .Where(i => i.Order!.SupplyDate == date && i.Order.Status != OrderStatus.Cancelled)
+            .Where(i => i.Order!.SupplyDate == date && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
             .Select(i => new { i.DishId, i.DishName, i.OptionLabel, i.Quantity, i.OrderId })
             .ToListAsync();
 
@@ -109,6 +110,15 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             return Invalid(nameof(input.Status), "invalid");
         var updated = await db.Orders.Where(o => o.Id == id)
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, input.Status));
+        return updated == 0 ? NotFound() : NoContent();
+    }
+
+    /// <summary>The admin accepts an order that was flagged for review: from now on it takes its quantities.</summary>
+    [HttpPut("{id:int}/approve")]
+    public async Task<ActionResult> Approve(int id)
+    {
+        var updated = await db.Orders.Where(o => o.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.NeedsReview, false));
         return updated == 0 ? NotFound() : NoContent();
     }
 
@@ -190,7 +200,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     private static OrderDto ToDto(Order o) => new(
         o.Id, o.Phone, o.Name, o.Address, o.SupplyDate, o.FulfillmentMethod, o.Notes, o.PaymentMethod, o.IsPaid,
-        o.Status, o.Total, o.CreatedAt, o.UserId is null,
+        o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
         o.Items.OrderBy(i => i.Id)
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal))
             .ToList());

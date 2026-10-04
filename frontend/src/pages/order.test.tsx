@@ -13,6 +13,7 @@ const confirmation: Confirmation = {
   paymentMethod: 'OnDelivery',
   total: 82,
   paymentPhone: null,
+  needsReview: false,
   items: [
     { dishName: 'עוף בתנור', optionLabel: 'שלם', quantity: 1, unitPrice: 70, lineTotal: 70, isAddOn: false },
     { dishName: 'ירך', optionLabel: 'יחידה', quantity: 1, unitPrice: 12, lineTotal: 12, isAddOn: true },
@@ -45,7 +46,6 @@ async function verifyPhone(user: ReturnType<typeof userEvent.setup>) {
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
   await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-  await user.type(screen.getByLabelText('עיר'), 'חיפה')
   await user.type(screen.getByLabelText('רחוב'), 'הרצל')
   await user.type(screen.getByLabelText('מספר בית'), '1')
   await verifyPhone(user)
@@ -142,6 +142,24 @@ describe('Order page', () => {
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
   })
 
+  it('starts the city as אשקלון and warns when another city is typed', async () => {
+    const { api, user } = await openOrderPage({
+      'POST /api/orders': () => ({ ...confirmation, needsReview: true }),
+    })
+    const city = screen.getByLabelText('עיר')
+    expect(city).toHaveValue('אשקלון')
+    expect(screen.queryByText(/אנחנו עובדים רק באשקלון/)).not.toBeInTheDocument()
+
+    await user.clear(city)
+    await user.type(city, 'חיפה')
+    expect(screen.getByText(/אנחנו עובדים רק באשקלון.*הכמות לא נשמרת/)).toBeInTheDocument()
+
+    await fillAndSubmit(user)
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ city: 'חיפה', street: 'הרצל' })
+    const dialog = await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+    expect(within(dialog).getByText(/ההזמנה תיבדק על ידי המנהל/)).toBeInTheDocument()
+  })
+
   it('hides the Bit / PayBox option when the admin set no payment phone', async () => {
     await openOrderPage({ 'GET /api/site': () => site({ paymentPhone: null }) })
     expect(screen.queryByRole('radio', { name: /Bit/ })).not.toBeInTheDocument()
@@ -151,7 +169,6 @@ describe('Order page', () => {
     const { api, user } = await openOrderPage()
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('עיר'), 'חיפה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
     await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.type(screen.getByLabelText('טלפון'), '0501234567')
@@ -193,7 +210,7 @@ describe('Order page', () => {
     expect(api.sent('POST', '/api/orders')[0].body).toEqual({
       phone: '0501234567',
       name: 'דנה',
-      city: 'חיפה',
+      city: 'אשקלון',
       street: 'הרצל',
       houseNumber: '1',
       apartment: '',

@@ -43,6 +43,11 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
       ) : (
         <p>{t('order.payOnDeliveryNote')}</p>
       )}
+      {confirmation.needsReview && (
+        <p role="status" className="notice notice--warning">
+          {t('order.success.needsReview')}
+        </p>
+      )}
       <p>{t('order.success.whatsapp')}</p>
       {contactPhone && (
         <p className="muted">

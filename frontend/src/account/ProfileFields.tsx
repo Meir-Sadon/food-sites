@@ -34,7 +34,7 @@ export function ProfileFields({ form, onChange, errors, idPrefix }: Props) {
         <FieldError errors={errors} field="fullName" id={id('name-error')} />
       </span>
 
-      <AddressFields value={form} onChange={onChange} errors={errors} idPrefix={idPrefix} />
+      <AddressFields value={form} onChange={onChange} errors={errors} idPrefix={idPrefix} context="profile" />
 
       <span className="field">
         <label htmlFor={id('email')}>{t('account.email')}</label>

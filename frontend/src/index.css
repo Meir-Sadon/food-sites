@@ -1063,3 +1063,9 @@ label {
 .terms-section p {
   margin: 0;
 }
+
+.notice--warning {
+  background: #fff7e6;
+  border: 1px solid var(--color-gold);
+  color: #6b4a0b;
+}
