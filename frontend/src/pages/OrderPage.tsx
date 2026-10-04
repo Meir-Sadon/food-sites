@@ -32,6 +32,7 @@ import {
 import { normalizePhone } from '../order/phone'
 import { PhoneVerification, type Verified } from '../order/PhoneVerification'
 import { SuccessDialog } from '../order/SuccessDialog'
+import logo from '../assets/logo.jpg'
 
 function formatCutoff(iso: string) {
   const [date, time] = iso.split('T')
@@ -233,6 +234,7 @@ export function OrderPage() {
   return (
     <div className="order-page">
       <header className="order-hero">
+        <img className="order-hero__logo" src={logo} alt="" />
         <h1>{t('pages.order.title')}</h1>
         <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
         <ul className="order-hero__chips">
