@@ -65,6 +65,11 @@ export function DishesPage() {
               {inCategory.map((dish) => (
                 <li key={dish.id} className="list__row">
                   <span className="list__main">
+                    {dish.images.length > 0 ? (
+                      <img className="dish-thumb" src={dish.images[0].url} alt="" loading="lazy" />
+                    ) : (
+                      <span className="dish-thumb dish-thumb--empty" role="img" aria-label={t('admin.dishes.noImage')} title={t('admin.dishes.noImage')} />
+                    )}
                     <Link to={`/admin/dishes/${dish.id}`}>
                       <strong>{dish.name}</strong>
                     </Link>
