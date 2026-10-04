@@ -70,6 +70,7 @@ export interface Dish {
   unitPrice: number | null
   isAddOnOnly: boolean
   isSoldOut: boolean
+  openByDefault: boolean
   /** Most that can be ordered per supply date (units, or kilos), or null for no limit. */
   maxPerSupplyDate: number | null
   isHidden: boolean
@@ -94,6 +95,7 @@ export interface DishInput {
   unitPrice: number | null
   isAddOnOnly: boolean
   isSoldOut: boolean
+  openByDefault: boolean
   maxPerSupplyDate: number | null
   options: { id: number | null; label: string; amount: number; price: number; isDefault: boolean }[]
   parentDishIds: number[]

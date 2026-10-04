@@ -119,6 +119,9 @@ namespace Kuskus.Api.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<bool>("OpenByDefault")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("SellBy")
                         .IsRequired()
                         .HasColumnType("text");

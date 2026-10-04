@@ -44,6 +44,8 @@ export interface MenuDish {
   unitPrice: number | null
   isAddOnOnly: boolean
   isSoldOut: boolean
+  /** The order page shows the dish's choices right away, without clicking add first. */
+  openByDefault?: boolean
   options: MenuOption[]
   images: string[]
   addOnDishIds: number[]
