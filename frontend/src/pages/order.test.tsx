@@ -281,6 +281,22 @@ describe('Order page', () => {
     expect(within(card).queryByRole('button')).not.toBeInTheDocument()
   })
 
+  it('shows how much of a limited dish is left on the chosen date', async () => {
+    const dates = menu().supplyDates.map((d) => d.date)
+    const limited = menuDish(1, 'עוף בתנור', 1, { remaining: { [dates[0]]: 2, [dates[1]]: 0 } })
+    const { user } = await openOrderPage({ 'GET /api/menu': () => menu({ dishes: [limited, menuDish(2, 'אורז', 2)] }) })
+    const card = dishCard('עוף בתנור')
+
+    expect(within(card).getByText('נותרו 2')).toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: עוף בתנור' }))
+    const more = within(card).getByRole('button', { name: 'הוספה: עוף בתנור' })
+    await user.click(more)
+    expect(more).toBeDisabled()
+
+    await user.selectOptions(screen.getByLabelText('יום אספקה'), dates[1])
+    expect(within(card).getByText('אזל ליום האספקה שנבחר')).toBeInTheDocument()
+  })
+
   it('lets each category be collapsed', async () => {
     const { user } = await openOrderPage()
     const summary = screen.getByRole('heading', { level: 2, name: 'עופות' }).closest('summary')!

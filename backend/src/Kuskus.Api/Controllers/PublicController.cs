@@ -40,7 +40,8 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
         bool IsSoldOut,
         IReadOnlyList<MenuOptionDto> Options,
         IReadOnlyList<string> Images,
-        IReadOnlyList<int> AddOnDishIds);
+        IReadOnlyList<int> AddOnDishIds,
+        IReadOnlyDictionary<string, decimal>? Remaining = null);
 
     public record MenuCategoryDto(int Id, string Name);
 
@@ -79,16 +80,42 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
         var shown = dishes.Where(d => visible.Contains(d.CategoryId) || d.IsAddOnOnly).ToList();
         var shownIds = shown.Select(d => d.Id).ToHashSet();
 
+        var supplyDates = await OpenDatesAsync();
+        var remaining = await RemainingAsync(shown, supplyDates.Select(d => d.Date).ToList());
+
         var menuDishes = shown.Select(d => new MenuDishDto(
             d.Id, d.Name, d.CategoryId, d.Description, d.AllergenInfo, d.SellBy, d.ChoiceMode,
             d.MinAmount, d.MaxAmount, d.AmountStep, d.UnitPrice, d.IsAddOnOnly, d.IsSoldOut,
             d.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
             d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
-            d.AddOns.Select(a => a.AddOnDishId).Where(shownIds.Contains).Order().ToList()))
+            d.AddOns.Select(a => a.AddOnDishId).Where(shownIds.Contains).Order().ToList(),
+            remaining.GetValueOrDefault(d.Id)))
             .ToList();
 
-        var supplyDates = await OpenDatesAsync();
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff)).ToList());
+    }
+
+    /// <summary>For each limited dish, how much is still free on each open supply date (cancelled orders don't count).</summary>
+    private async Task<Dictionary<int, IReadOnlyDictionary<string, decimal>>> RemainingAsync(
+        List<Dish> dishes, List<DateOnly> dates)
+    {
+        var limits = dishes.Where(d => d.MaxPerSupplyDate is not null).ToDictionary(d => d.Id, d => d.MaxPerSupplyDate!.Value);
+        if (limits.Count == 0 || dates.Count == 0)
+            return [];
+
+        var ids = limits.Keys.ToList();
+        var taken = await db.OrderItems.AsNoTracking()
+            .Where(i => ids.Contains(i.DishId) && dates.Contains(i.Order!.SupplyDate) && i.Order.Status != OrderStatus.Cancelled)
+            .GroupBy(i => new { i.DishId, i.Order!.SupplyDate })
+            .Select(g => new { g.Key.DishId, g.Key.SupplyDate, Quantity = g.Sum(i => i.Quantity) })
+            .ToListAsync();
+
+        return limits.ToDictionary(
+            l => l.Key,
+            l => (IReadOnlyDictionary<string, decimal>)dates.ToDictionary(
+                date => date.ToString("yyyy-MM-dd"),
+                date => Math.Max(0, l.Value - taken
+                    .Where(t => t.DishId == l.Key && t.SupplyDate == date).Sum(t => t.Quantity))));
     }
 
     private async Task<IReadOnlyList<SupplyCalendar.OpenDate>> OpenDatesAsync()

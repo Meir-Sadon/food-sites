@@ -137,12 +137,26 @@ describe('Dish form', () => {
       unitPrice: null,
       isAddOnOnly: true,
       isSoldOut: false,
+      maxPerSupplyDate: null,
       options: [
         { id: null, label: 'קטן', amount: 1, price: 5, isDefault: false },
         { id: null, label: 'גדול', amount: 2, price: 9, isDefault: true },
       ],
       parentDishIds: [1],
     })
+  })
+
+  it('saves a per-supply-date limit on a dish', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    await user.type(screen.getByLabelText('הגבלת כמות ליום אספקה (יחידות)'), '30')
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).maxPerSupplyDate).toBe(30)
   })
 
   it('edits a free-choice weight dish', async () => {

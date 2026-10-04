@@ -50,6 +50,39 @@ export function amountRange(dish: MenuDish) {
   return { min: 1, max: MAX_UNITS, step: 1 }
 }
 
+/** How much of the dish is left on a supply date, or null when it has no limit. */
+export function remainingOn(dish: MenuDish, date: string | undefined): number | null {
+  if (!dish.remaining || !date) return null
+  return dish.remaining[date] ?? null
+}
+
+/** The amount range cut down to what is left; max < min means none can be ordered. */
+export function limitedRange(dish: MenuDish, remaining: number | null) {
+  const range = amountRange(dish)
+  if (remaining === null) return range
+  const steps = Math.floor((remaining - range.min) / range.step + 1e-9)
+  return { ...range, max: Math.min(range.max, remaining < range.min ? 0 : round2(range.min + steps * range.step)) }
+}
+
+/** Brings chosen amounts down to what is left on a supply date; dishes with none left keep their line. */
+export function clampToDate(
+  selections: Record<number, Selection>, dishes: Map<number, MenuDish>, date: string,
+): Record<number, Selection> {
+  const clamp = (dish: MenuDish | undefined, quantity: number) => {
+    if (!dish) return quantity
+    const { min, max } = limitedRange(dish, remainingOn(dish, date))
+    return max < min ? quantity : Math.min(quantity, max)
+  }
+  const result: Record<number, Selection> = {}
+  for (const [id, selection] of Object.entries(selections)) {
+    const addOns: Record<number, AddOnSelection> = {}
+    for (const [addOnId, addOn] of Object.entries(selection.addOns))
+      addOns[Number(addOnId)] = { ...addOn, quantity: clamp(dishes.get(Number(addOnId)), addOn.quantity) }
+    result[Number(id)] = { ...selection, quantity: clamp(dishes.get(Number(id)), selection.quantity), addOns }
+  }
+  return result
+}
+
 export function newSelection(dish: MenuDish): Selection {
   return {
     optionId: dish.choiceMode === 'Fixed' ? (defaultOption(dish)?.id ?? null) : null,

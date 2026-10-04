@@ -26,6 +26,12 @@ public class Dish
     /// <summary>Free choice: the amount moves in steps of this size, e.g. 0.25 kg.</summary>
     public decimal? AmountStep { get; set; }
 
+    /// <summary>
+    /// The most of this dish that can be ordered for one supply date, in the same unit as an
+    /// order line's quantity (units, or kilos for free-choice weight dishes). Null means no limit.
+    /// </summary>
+    public decimal? MaxPerSupplyDate { get; set; }
+
     public bool IsAddOnOnly { get; set; }
     public bool IsSoldOut { get; set; }
 

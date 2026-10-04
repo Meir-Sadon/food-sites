@@ -35,7 +35,8 @@ public class DishesController(AppDbContext db, IImageStore images) : AdminContro
         IReadOnlyList<OptionDto> Options,
         IReadOnlyList<ImageDto> Images,
         IReadOnlyList<int> ParentDishIds,
-        IReadOnlyList<int> AddOnDishIds);
+        IReadOnlyList<int> AddOnDishIds,
+        decimal? MaxPerSupplyDate = null);
 
     /// <summary>An option to keep (with Id) or add (without).</summary>
     public record OptionInput(int? Id, string? Label, decimal Amount, decimal Price, bool IsDefault);
@@ -58,7 +59,8 @@ public class DishesController(AppDbContext db, IImageStore images) : AdminContro
         bool IsAddOnOnly,
         bool IsSoldOut,
         List<OptionInput>? Options,
-        List<int>? ParentDishIds);
+        List<int>? ParentDishIds,
+        decimal? MaxPerSupplyDate = null);
 
     public record SoldOutInput(bool IsSoldOut);
 
@@ -210,6 +212,11 @@ public class DishesController(AppDbContext db, IImageStore images) : AdminContro
         else if (input.ChoiceMode == ChoiceMode.Free)
             ValidateFreeChoice(input, errors);
 
+        if (input.MaxPerSupplyDate is <= 0) errors.Add(nameof(input.MaxPerSupplyDate), "positive");
+        else if (input.MaxPerSupplyDate is { } limit && limit >= 10_000_000) errors.Add(nameof(input.MaxPerSupplyDate), "invalid");
+        else if (input.SellBy == SellBy.Units && input.MaxPerSupplyDate is { } units && units % 1 != 0)
+            errors.Add(nameof(input.MaxPerSupplyDate), "wholeNumber");
+
         await ValidateAddOnLinks(input, dish, errors);
         return errors.Any ? Invalid(errors) : null;
     }
@@ -282,6 +289,7 @@ public class DishesController(AppDbContext db, IImageStore images) : AdminContro
         dish.ChoiceMode = input.ChoiceMode;
         dish.IsAddOnOnly = input.IsAddOnOnly;
         dish.IsSoldOut = input.IsSoldOut;
+        dish.MaxPerSupplyDate = input.MaxPerSupplyDate;
 
         if (input.ChoiceMode == ChoiceMode.Fixed)
         {
@@ -341,5 +349,6 @@ public class DishesController(AppDbContext db, IImageStore images) : AdminContro
         d.Options.OrderBy(o => o.Id).Select(o => new OptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
         d.Images.OrderBy(i => i.DisplayOrder).Select(i => new ImageDto(i.Id, i.Url, i.DisplayOrder)).ToList(),
         d.AddOnOf.Select(a => a.ParentDishId).Order().ToList(),
-        d.AddOns.Select(a => a.AddOnDishId).Order().ToList());
+        d.AddOns.Select(a => a.AddOnDishId).Order().ToList(),
+        d.MaxPerSupplyDate);
 }
