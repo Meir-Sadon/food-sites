@@ -72,7 +72,10 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         {
             ["phone"] = "050-123-4567",
             ["name"] = " דנה ",
-            ["address"] = "הרצל 1, חיפה",
+            ["city"] = "חיפה",
+            ["street"] = "הרצל",
+            ["houseNumber"] = "1",
+            ["apartment"] = "4",
             ["supplyDate"] = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd"),
             ["fulfillmentMethod"] = "Delivery",
             ["paymentMethod"] = "OnDelivery",
@@ -261,8 +264,26 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     [Fact]
     public async Task Pickup_does_not_need_an_address_but_delivery_does()
     {
-        Assert.Equal(HttpStatusCode.OK, (await Place(await ValidOrder(o => { o["fulfillmentMethod"] = "Pickup"; o["address"] = null; }))).StatusCode);
-        await (await Place(await ValidOrder(o => o["address"] = " "))).AssertInvalid("Address", "required");
+        Assert.Equal(HttpStatusCode.OK, (await Place(await ValidOrder(o => { o["fulfillmentMethod"] = "Pickup"; o["city"] = null; o["street"] = null; o["houseNumber"] = null; }))).StatusCode);
+        var missing = await Place(await ValidOrder(o => o["street"] = " "));
+        await missing.AssertInvalid("Street", "required");
+    }
+
+    [Fact]
+    public async Task An_order_below_the_minimum_is_rejected_and_one_at_it_passes()
+    {
+        async Task SetMinimum(decimal minimum) =>
+            (await _admin.PutAsJsonAsync("/api/admin/settings", new
+            {
+                deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+                kashrutText = (string?)null, paymentPhone = (string?)null, minimumOrderAmount = minimum,
+            })).EnsureSuccessStatusCode();
+
+        await SetMinimum(312m);
+        await (await Place(await ValidOrder())).AssertInvalid("items", "belowMinimumOrder");
+
+        await SetMinimum(311m);
+        Assert.Equal(HttpStatusCode.OK, (await Place(await ValidOrder())).StatusCode);
     }
 
     [Fact]

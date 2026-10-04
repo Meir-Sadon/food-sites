@@ -20,6 +20,7 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
         string? DeliveryFeeText,
         string? KashrutText,
         string? PaymentPhone,
+        decimal? MinimumOrderAmount,
         ContactDto Contact);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
@@ -59,7 +60,7 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
         var s = await db.Settings.AsNoTracking().SingleAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
-            s.KashrutText, s.PaymentPhone,
+            s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours));
     }
 

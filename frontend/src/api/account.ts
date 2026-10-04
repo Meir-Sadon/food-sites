@@ -5,6 +5,11 @@ export interface Profile {
   /** Local form, "0501234567" */
   phone: string
   fullName: string
+  city: string
+  street: string
+  houseNumber: string
+  apartment: string
+  /** The parts above, joined into one line. */
   address: string
   email: string | null
   /** "yyyy-MM-dd" */
@@ -15,7 +20,10 @@ export interface Profile {
 export interface ProfileInput {
   phone: string
   fullName: string
-  address: string
+  city: string
+  street: string
+  houseNumber: string
+  apartment: string
   email: string
   birthday: string
   ethnicBackground: string

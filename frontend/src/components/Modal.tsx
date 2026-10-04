@@ -4,7 +4,18 @@ import { useEffect, useId, useRef, type ReactNode } from 'react'
  * A dialog over the page. Focus moves into it, Escape closes it and focus returns to where it was.
  * Tab stays inside it.
  */
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Modal({
+  title,
+  onClose,
+  wide,
+  children,
+}: {
+  title: string
+  onClose: () => void
+  /** A wider dialog, for when its buttons should sit on one line. */
+  wide?: boolean
+  children: ReactNode
+}) {
   const titleId = useId()
   const ref = useRef<HTMLDivElement>(null)
 
@@ -42,7 +53,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="modal"
+        className={wide ? 'modal modal--wide' : 'modal'}
         onKeyDown={handleKeyDown}
       >
         <h2 id={titleId}>{title}</h2>

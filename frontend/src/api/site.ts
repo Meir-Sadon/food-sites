@@ -17,6 +17,8 @@ export interface Site {
   deliveryFeeText: string | null
   kashrutText: string | null
   paymentPhone: string | null
+  /** The smallest order total in ₪; null when there is none. */
+  minimumOrderAmount: number | null
   contact: Contact
 }
 
@@ -80,7 +82,10 @@ export interface OrderLineInput {
 export interface OrderInput {
   phone: string
   name: string
-  address: string
+  city: string
+  street: string
+  houseNumber: string
+  apartment: string
   supplyDate: string
   fulfillmentMethod: Fulfillment
   paymentMethod: Payment

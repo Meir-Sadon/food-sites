@@ -88,6 +88,8 @@
       "deliveryFee": "דמי משלוח",
       "kashrut": "טקסט כשרות",
       "paymentPhone": "מספר טלפון ל־Bit / PayBox",
+      "minimumOrder": "מינימום להזמנה (₪)",
+      "minimumOrderHint": "סכום ההזמנה הנמוך ביותר שאפשר לשלוח. השאירו ריק או 0 כדי לא להגביל.",
       "general": "משלוח, כשרות ותשלום"
     },
     "categories": {
@@ -258,6 +260,7 @@
     "positive": "צריך להיות גדול מאפס.",
     "wholeNumber": "צריך להיות מספר שלם.",
     "belowMin": "המקסימום קטן מהמינימום.",
+    "belowMinimumOrder": "סכום ההזמנה נמוך מהמינימום להזמנה.",
     "notFound": "לא נמצא. רעננו את הדף.",
     "invalid": "ערך לא תקין.",
     "phone": "מספר הטלפון לא תקין.",
@@ -296,6 +299,13 @@
     "tooManyFavorites": "אפשר לשמור עד 20 מועדפים. הסירו מועדף כדי להוסיף חדש.",
     "tooManyRecommendations": "שלחתם הרבה המלצות היום. נסו שוב מחר."
   },
+  "address": {
+    "title": "כתובת",
+    "city": "עיר",
+    "street": "רחוב",
+    "houseNumber": "מספר בית",
+    "apartment": "דירה (לא חובה)"
+  },
   "footer": {
     "openingHours": "שעות פעילות",
     "about": "אודות",
@@ -331,8 +341,7 @@
     "perKilo": "₪{{price}} לק\"ג",
     "priceFrom": "₪{{price}} · {{label}}",
     "imageOf": "{{name}}, תמונה {{n}} מתוך {{count}}",
-    "carouselPause": "עצירת גלגול התמונות של {{name}}",
-    "carouselPlay": "הפעלת גלגול התמונות של {{name}}",
+    "belowMinimum": "המינימום להזמנה הוא {{minimum}}. חסרים עוד {{missing}}.",
     "details": "פרטי ההזמנה",
     "supplyDate": "יום אספקה",
     "dayPrefix": "יום {{day}}",
@@ -396,6 +405,10 @@
     "filledSkipped_other": "ההזמנה מולאה מהזמנה קודמת. {{count}} פריטים כבר לא זמינים והוסרו.",
     "filledSkipped_many": "ההזמנה מולאה מהזמנה קודמת. {{count}} פריטים כבר לא זמינים והוסרו.",
     "quick": {
+      "replaceTitle": "להחליף את ההזמנה הנוכחית?",
+      "replaceText": "כבר בחרתם מנות בהזמנה הזו. המילוי המהיר יחליף אותן.",
+      "replace": "כן, להחליף",
+      "keep": "לא, להשאיר את ההזמנה שלי",
       "title": "מילוי מהיר של ההזמנה",
       "last": "ההזמנה האחרונה",
       "favorites": "המועדפים שלי",

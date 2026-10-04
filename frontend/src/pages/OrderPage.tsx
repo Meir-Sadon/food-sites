@@ -5,6 +5,8 @@ import { ordersApi, siteApi, type Confirmation, type Menu, type MenuDish, type F
 import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
+import { AddressFields } from '../account/AddressFields'
+import { addressOf, emptyAddress } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useSite, useSiteFailed } from '../site/useSite'
@@ -20,6 +22,7 @@ import {
   clampToDate,
   orderTotal,
   restoreSelections,
+  round2,
   standaloneDishes,
   toLines,
   type OrderState,
@@ -72,7 +75,10 @@ export function OrderPage() {
       ...current,
       name: current.name || user.fullName,
       phone: current.phone || user.phone,
-      address: current.address || user.address,
+      city: current.city || user.city,
+      street: current.street || user.street,
+      houseNumber: current.houseNumber || user.houseNumber,
+      apartment: current.apartment || user.apartment,
     }))
     setVerified((current) => current ?? { phone: user.phone, token: '' })
   }
@@ -130,6 +136,8 @@ export function OrderPage() {
       : state.fulfillment === 'Pickup' && !site.pickupEnabled
         ? 'Delivery'
         : state.fulfillment
+  const minimum = site.minimumOrderAmount ?? 0
+  const belowMinimum = count > 0 && total < minimum
   const payment: Payment = state.payment === 'Transfer' && !site.paymentPhone ? 'OnDelivery' : state.payment
   const normalizedPhone = normalizePhone(state.phone)
   const phoneVerified = normalizedPhone !== null && verified?.phone === normalizedPhone
@@ -151,7 +159,15 @@ export function OrderPage() {
     })
 
   function reset() {
-    setState((current) => ({ ...emptyOrder(), name: current.name, phone: current.phone, address: current.address }))
+    setState((current) => ({
+      ...emptyOrder(),
+      name: current.name,
+      phone: current.phone,
+      city: current.city,
+      street: current.street,
+      houseNumber: current.houseNumber,
+      apartment: current.apartment,
+    }))
     setNotice(null)
     setErrors({})
     setSubmitError(null)
@@ -191,7 +207,7 @@ export function OrderPage() {
       const result = await ordersApi.create({
         phone: verified.phone,
         name: state.name.trim(),
-        address: state.address.trim(),
+        ...(fulfillment === 'Delivery' ? addressOf(state) : emptyAddress()),
         supplyDate: supplyDate.date,
         fulfillmentMethod: fulfillment,
         paymentMethod: payment,
@@ -225,7 +241,7 @@ export function OrderPage() {
         </p>
       )}
 
-      {user && <QuickFill menu={menu} onApply={applyQuickFill} />}
+      {user && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 
       {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
       {categories.map(({ category, dishes: list }) => (
@@ -328,19 +344,7 @@ export function OrderPage() {
         />
 
         {fulfillment === 'Delivery' && (
-          <span className="field">
-            <label htmlFor="order-address">{t('order.address')}</label>
-            <input
-              id="order-address"
-              autoComplete="street-address"
-              value={state.address}
-              maxLength={300}
-              required
-              aria-describedby="order-address-error"
-              onChange={(e) => change({ address: e.target.value })}
-            />
-            <FieldError errors={errors} field="address" id="order-address-error" />
-          </span>
+          <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" />
         )}
 
         <span className="field">
@@ -378,7 +382,7 @@ export function OrderPage() {
           </p>
         )}
         <div className="row">
-          <button type="submit" disabled={submitting || count === 0 || !supplyDate}>
+          <button type="submit" disabled={submitting || count === 0 || !supplyDate || belowMinimum}>
             {submitting ? t('order.submitting') : t('order.submit')}
           </button>
           <button type="button" className="button-quiet" onClick={reset}>
@@ -386,6 +390,11 @@ export function OrderPage() {
           </button>
         </div>
         {count === 0 && <p className="hint">{t('order.chooseDishes')}</p>}
+        {belowMinimum && (
+          <p role="status" className="hint">
+            {t('order.belowMinimum', { minimum: formatMoney(minimum), missing: formatMoney(round2(minimum - total)) })}
+          </p>
+        )}
       </form>
 
       <div className="total-bar" role="region" aria-label={t('order.totalBar')}>

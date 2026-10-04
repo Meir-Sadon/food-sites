@@ -38,8 +38,11 @@ export function AdminLoginPage() {
         <label htmlFor="admin-password">{t('admin.password')}</label>
         <input
           id="admin-password"
-          type="password"
+          type="text"
+          dir="ltr"
           autoComplete="current-password"
+          autoCapitalize="none"
+          spellCheck={false}
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}

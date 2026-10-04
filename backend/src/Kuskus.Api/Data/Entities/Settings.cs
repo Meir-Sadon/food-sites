@@ -17,6 +17,9 @@ public class Settings
 
     public string? KashrutText { get; set; }
 
+    /// <summary>The smallest order total (₪) a client may place; null means no minimum.</summary>
+    public decimal? MinimumOrderAmount { get; set; }
+
     /// <summary>Phone number for manual Bit/PayBox transfers.</summary>
     public string? PaymentPhone { get; set; }
 

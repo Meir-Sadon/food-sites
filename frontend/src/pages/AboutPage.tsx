@@ -13,7 +13,7 @@ export function AboutPage() {
     <section className="about-page">
       <h1>{t('pages.about.title')}</h1>
       {hasContact && (
-        <address className="about-contact">
+        <address className="about-contact about-card">
           {contact.name && <strong>{contact.name}</strong>}
           {contact.phone && (
             <a href={`tel:${contact.phone.replace(/[^\d+]/g, '')}`} dir="ltr">
@@ -34,7 +34,7 @@ export function AboutPage() {
         </address>
       )}
       {kashrut && (
-        <section className="kashrut" aria-labelledby="about-kashrut">
+        <section className="kashrut about-card" aria-labelledby="about-kashrut">
           <h2 id="about-kashrut">{t('pages.about.kashrut')}</h2>
           <p>{kashrut}</p>
         </section>

@@ -20,8 +20,8 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
         return Task.CompletedTask;
     }
 
-    private static object Input(bool delivery = true, bool pickup = true, string? phone = "050-1234567", string? kashrut = "כשר") =>
-        new { deliveryEnabled = delivery, pickupEnabled = pickup, deliveryAreaText = "  חיפה והקריות ", deliveryFeeText = "", kashrutText = kashrut, paymentPhone = phone };
+    private static object Input(bool delivery = true, bool pickup = true, string? phone = "050-1234567", string? kashrut = "כשר", decimal? minimum = 80m) =>
+        new { deliveryEnabled = delivery, pickupEnabled = pickup, deliveryAreaText = "  חיפה והקריות ", deliveryFeeText = "", kashrutText = kashrut, paymentPhone = phone, minimumOrderAmount = minimum };
 
     [Theory]
     [InlineData("GET", "/api/admin/settings")]
@@ -51,7 +51,16 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
         Assert.Equal("חיפה והקריות", saved.DeliveryAreaText);
         Assert.Null(saved.DeliveryFeeText);
         Assert.Equal("050-1234567", saved.PaymentPhone);
+        Assert.Equal(80m, saved.MinimumOrderAmount);
         Assert.Equal(saved, await (await _admin.GetAsync("/api/admin/settings")).Read<SettingsDto>());
+    }
+
+    [Fact]
+    public async Task A_zero_minimum_means_no_minimum_and_a_negative_one_is_rejected()
+    {
+        var none = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input(minimum: 0m))).Read<SettingsDto>();
+        Assert.Null(none.MinimumOrderAmount);
+        await (await _admin.PutAsJsonAsync("/api/admin/settings", Input(minimum: -1m))).AssertInvalid("MinimumOrderAmount", "invalid");
     }
 
     [Fact]

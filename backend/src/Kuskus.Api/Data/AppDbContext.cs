@@ -39,6 +39,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         model.Entity<Settings>(e =>
         {
             e.Property(s => s.Id).ValueGeneratedNever();
+            e.Property(s => s.MinimumOrderAmount).HasPrecision(10, 2);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
         });
 
