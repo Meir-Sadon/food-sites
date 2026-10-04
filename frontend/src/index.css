@@ -963,3 +963,37 @@ label {
     border-color: #000;
   }
 }
+
+.kashrut p {
+  white-space: pre-line; /* keep the line breaks the admin typed */
+}
+
+.about-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-style: normal;
+}
+
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  max-inline-size: 48rem;
+  margin-inline: auto;
+}
+
+.link-button {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.terms-section h3,
+.terms-section p {
+  margin: 0;
+}

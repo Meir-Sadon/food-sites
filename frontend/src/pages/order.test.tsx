@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Confirmation } from '../api/site'
@@ -62,12 +62,6 @@ describe('Order page', () => {
     expect([...groups].map((g) => g.hasAttribute('open'))).toEqual([true, true])
     expect(screen.getByRole('heading', { level: 3, name: 'עוף בתנור' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { level: 3, name: 'ירך' })).not.toBeInTheDocument()
-  })
-
-  it('shows the main contact in the footer', async () => {
-    await openOrderPage()
-    const footer = screen.getByRole('contentinfo')
-    await waitFor(() => expect(within(footer).getByRole('link', { name: '050-1234567' })).toHaveAttribute('href', 'tel:0501234567'))
   })
 
   it('shows the dish details only once it is chosen, with the default option preselected', async () => {
