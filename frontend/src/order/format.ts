@@ -25,5 +25,9 @@ export function formatSupplyDate(iso: string, t: TFunction): string {
   return `${t('order.dayPrefix', { day: t(`weekdays.${names[weekday]}`) })}, ${pad(d)}/${pad(m)}/${y}`
 }
 
-/** The unit shown next to an amount: ק״ג for weight dishes. */
-export const unitLabel = (dish: MenuDish, t: TFunction) => (dish.sellBy === 'Weight' ? t('order.kilo') : '')
+/**
+ * The unit shown next to an amount: ק״ג only when the client picks a free weight. For dishes with
+ * set options the amount just multiplies the chosen option (e.g. 2 × "1 ק״ג"), so it has no unit.
+ */
+export const unitLabel = (dish: MenuDish, t: TFunction) =>
+  dish.choiceMode === 'Free' && dish.sellBy === 'Weight' ? t('order.kilo') : ''
