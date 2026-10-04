@@ -33,7 +33,9 @@ A small Hebrew ordering website for a home food business. Clients order admin-co
 ```
 /frontend    React client site and admin area
 /backend     ASP.NET Core API, EF Core migrations, tests
-/docs        Project plan and decisions
+/docs        Project plan, decisions and deploy guide
+Dockerfile   Production image: frontend and API in one container
+render.yaml  Render deployment
 ```
 
 ## Getting started
@@ -91,6 +93,10 @@ cd backend
 dotnet run --project src/Kuskus.Api -- hash-password '<password>'
 ```
 Put the output in `Admin__PasswordHash`. On startup it is copied into `Settings` if no admin password is set there yet; after that the value in the database wins. To replace a password that is already set, clear `Settings.AdminPasswordHash` and restart with the new hash.
+
+## Deployment
+
+The site and API deploy together as one free Render web service: the root `Dockerfile` builds the frontend into the API's `wwwroot`, and `render.yaml` describes the service. The database is Neon PostgreSQL. Step-by-step instructions are in [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Configuration
 
