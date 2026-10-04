@@ -36,6 +36,11 @@ export function AdminLayout() {
               </li>
             ))}
             <li>
+              <NavLink to="/" className="top-bar__link">
+                {t('admin.home')}
+              </NavLink>
+            </li>
+            <li>
               <button type="button" className="button-quiet" onClick={handleLogout}>
                 {t('admin.logout')}
               </button>
