@@ -1,34 +1,34 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSite } from '../site/useSite'
+import { Link } from 'react-router'
+import { Modal } from './Modal'
 
-/** The main contact details, on every client page. */
+/** A link to the About page and the terms and policy, on every client page. */
 export function Footer() {
   const { t } = useTranslation()
-  const contact = useSite()?.contact
-  const hasContact = contact && (contact.name || contact.phone)
+  const [termsOpen, setTermsOpen] = useState(false)
+  const sections = t('footer.terms.sections', { returnObjects: true }) as { title: string; text: string }[]
 
   return (
     <footer className="site-footer">
-      {hasContact && (
-        <address className="site-footer__contact">
-          <strong>{contact.name}</strong>
-          {contact.phone && (
-            <a href={`tel:${contact.phone.replace(/[^\d+]/g, '')}`} dir="ltr">
-              {contact.phone}
-            </a>
-          )}
-          {contact.address && <span>{contact.address}</span>}
-          {contact.email && (
-            <a href={`mailto:${contact.email}`} dir="ltr">
-              {contact.email}
-            </a>
-          )}
-          {contact.openingHours && (
-            <span>
-              {t('footer.openingHours')}: {contact.openingHours}
-            </span>
-          )}
-        </address>
+      <div className="site-footer__links">
+        <Link to="/about">{t('footer.about')}</Link>
+        <button type="button" className="link-button" onClick={() => setTermsOpen(true)}>
+          {t('footer.terms.button')}
+        </button>
+      </div>
+      {termsOpen && (
+        <Modal title={t('footer.terms.title')} onClose={() => setTermsOpen(false)}>
+          {sections.map((s) => (
+            <section key={s.title} className="terms-section">
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </section>
+          ))}
+          <button type="button" onClick={() => setTermsOpen(false)}>
+            {t('footer.terms.close')}
+          </button>
+        </Modal>
       )}
     </footer>
   )
