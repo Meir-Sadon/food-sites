@@ -9,7 +9,7 @@ A Hebrew ordering website where clients order admin-configured dishes for config
 | Topic | Decision |
 | --- | --- |
 | Language | Hebrew only at launch, right-to-left. Texts kept in language files so Arabic can be added later. |
-| Login | Phone number plus a one-time code sent by WhatsApp. Guests confirm their phone the same way before ordering. |
+| Login | Phone number only, with no verification code. Guests enter their phone when ordering. |
 | Registration | Optional. Phone, full name and address are required; email, birthday and ethnic background are optional. |
 | Delivery or pickup | The client chooses. No range check: if the address is out of range or a fee applies, the admin calls the client. |
 | Payment | Pay on delivery, or manual Bit/PayBox transfer to the number in General settings. Admin marks orders as paid. |
@@ -32,7 +32,7 @@ The site opens on the Order page. A constant top bar holds five buttons: Order (
 - The order total stays visible at all times in a bar fixed to the bottom of the screen.
 - Supply day: the client picks from the next open dates that match the admin's supply days, cutoff and closed dates.
 - Delivery or pickup choice, and an optional notes field.
-- Guests enter phone and address, then confirm the phone with a WhatsApp code. Logged-in users have these prefilled.
+- Guests enter phone and address, and the order goes through. Logged-in users have these prefilled.
 - Logged-in users see "Last order" and "Favorites" buttons that fill the whole order in one click. Dishes or options that no longer exist are skipped, with a short notice.
 - A "Reset order" button returns everything to the defaults.
 - Payment choice: pay on delivery, or Bit/PayBox transfer. The sentence "התשלום יבוצע במעמד מסירת המשלוח" appears above the Submit button when pay on delivery is selected.
@@ -41,7 +41,7 @@ The site opens on the Order page. A constant top bar holds five buttons: Order (
 
 ### Login / Register
 
-- Login shows one field, the phone number, and a Register button below it. A WhatsApp code confirms the phone.
+- Login shows one field, the phone number, and a Register button below it.
 - Register asks for phone, full name and address (required), and email, birthday (date picker) and ethnic background (optional).
 
 ### Recommendations
@@ -50,7 +50,7 @@ The site opens on the Order page. A constant top bar holds five buttons: Order (
 
 ### Profile
 
-- Personal details, all editable. Changing the phone number requires a new code.
+- Personal details, all editable. The phone number can be changed.
 - Order history with supply dates and status, a "Reorder" button, and "Save as favorite" with a name.
 - The user's own recommendations.
 
@@ -105,13 +105,11 @@ All messages go through WhatsApp's official business API, which charges per deli
 
 | Message | Sent to | When |
 | --- | --- | --- |
-| Login code | Client | Login, registration, guest order, phone change |
 | Order confirmation with details and total | Client | Order submitted |
 | New order with details and total | Every phone on the admin's list | Order submitted |
 
-- Setup needs a Meta business account, a phone number not already used in the regular WhatsApp app, and Meta's approval of the three message templates.
+- Setup needs a Meta business account, a phone number not already used in the regular WhatsApp app, and Meta's approval of the two message templates.
 - If a WhatsApp message fails, the order is still saved and appears in the admin Orders tab.
-- Login codes expire after a few minutes and are limited per phone, to block abuse and keep costs down.
 
 ### Payment
 
@@ -140,7 +138,7 @@ The database has 14 tables. Order lines copy names and prices, so they never dep
 | Recommendations | User, text, created at, handled |
 | NotifyPhones | Phone, name |
 
-The main contact lives in Settings. Login codes are kept in a short-lived table that is cleaned automatically.
+The main contact lives in Settings.
 
 ## Technology and hosting
 
@@ -156,7 +154,7 @@ The site is three parts: a React frontend, a C# API and a PostgreSQL database, p
 | Domain | Paid domain, HTTPS included by the hosts | Registrar of your choice |
 
 - Free backend tiers often sleep when idle, so the first visit after a quiet period can take 30–60 seconds. A paid tier of a few dollars a month removes this if it bothers clients.
-- Security: login codes over WhatsApp, signed session tokens, hashed admin password, HTTPS everywhere, rate limits on login and ordering, server-side validation of every price and date.
+- Security: phone-only client login (no code), signed session tokens, hashed admin password, HTTPS everywhere, rate limits on login and ordering, server-side validation of every price and date.
 - Code quality: one Git repository with frontend and backend folders, database migrations, automated tests for price and date rules, and automatic deployment on every approved change.
 - Privacy: a privacy policy page, minimal data collection, and user data visible only to its owner and the admin.
 
@@ -167,7 +165,7 @@ The work runs in six phases, each ending with something you can try. WhatsApp se
 1. **Foundation.** Project setup, database and migrations, admin login. Start the Meta business account and template approval in parallel.
 2. **Admin catalog.** General settings, categories, dishes with pictures, options and add-on links.
 3. **Order page.** Categories, dish selection, add-ons, supply day, total bar, reset, draft saving, guest ordering and the success popup. The admin Contacts tab (main contact and the WhatsApp notification list), so the contact phone is on the site before clients order. Messages are simulated until WhatsApp is approved.
-4. **Accounts.** WhatsApp code login, registration, profile, order history, last order, favorites and recommendations.
+4. **Accounts.** Phone login, registration, profile, order history, last order, favorites and recommendations.
 5. **Operations.** Admin Orders tab, cooking summary, dish-change warning, real WhatsApp messages, statistics and reports.
 6. **Launch.** Accessibility review, privacy policy and accessibility statement, testing on phones, deployment, domain connection, and a walkthrough for your mam.
 

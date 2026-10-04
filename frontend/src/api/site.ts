@@ -94,7 +94,6 @@ export interface OrderInput {
   fulfillmentMethod: Fulfillment
   paymentMethod: Payment
   notes: string
-  verificationToken: string
   items: OrderLineInput[]
 }
 
@@ -120,13 +119,6 @@ export interface Confirmation {
 export const siteApi = {
   get: () => apiJson<Site>('/api/site'),
   menu: () => apiJson<Menu>('/api/menu'),
-}
-
-export const verificationApi = {
-  /** Answers with the code only when the server shows codes on screen (WhatsApp not set up yet). */
-  send: (phone: string) => apiJson<{ code: string } | undefined>('/api/phone-verification/send', send('POST', { phone })),
-  confirm: (phone: string, code: string) =>
-    apiJson<{ token: string }>('/api/phone-verification/confirm', send('POST', { phone, code })),
 }
 
 export const ordersApi = {

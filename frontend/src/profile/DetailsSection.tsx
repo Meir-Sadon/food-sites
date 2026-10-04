@@ -8,21 +8,19 @@ import { ProfileFields } from '../account/ProfileFields'
 import { formFromProfile } from '../account/profileForm'
 import { addressOf } from '../account/addressParts'
 import { normalizePhone } from '../order/phone'
-import { PhoneVerification, type Verified } from '../order/PhoneVerification'
+import { PhoneField } from '../order/PhoneField'
 
 interface Props {
   user: Profile
   onSaved: (profile: Profile) => void
 }
 
-/** The personal details, all editable. A new phone number must be confirmed with a code. */
+/** The personal details, all editable. */
 export function DetailsSection({ user, onSaved }: Props) {
   const { t } = useTranslation()
   const formError = useFormErrorMessage()
   const [form, setForm] = useState(() => formFromProfile(user))
   const [phone, setPhone] = useState(user.phone)
-  // The current number is already confirmed; only a different one needs a code.
-  const [verified, setVerified] = useState<Verified | null>({ phone: user.phone, token: '' })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
@@ -33,8 +31,8 @@ export function DetailsSection({ user, onSaved }: Props) {
     setMessage(null)
 
     const normalized = normalizePhone(phone)
-    if (!normalized || verified?.phone !== normalized) {
-      setErrors({ phone: [normalized ? 'phoneNotVerified' : 'phone'] })
+    if (!normalized) {
+      setErrors({ phone: ['phone'] })
       setMessage({ text: t('errors.checkFields'), error: true })
       return
     }
@@ -46,11 +44,9 @@ export function DetailsSection({ user, onSaved }: Props) {
         ...form,
         fullName: form.fullName.trim(),
         ...addressOf(form),
-        verificationToken: verified.token,
       })
       onSaved(saved)
       setPhone(saved.phone)
-      setVerified({ phone: saved.phone, token: '' })
       setMessage({ text: t('admin.saved') })
     } catch (err) {
       setErrors(fieldErrorsOf(err))
@@ -64,7 +60,7 @@ export function DetailsSection({ user, onSaved }: Props) {
     <section className="account-section" aria-labelledby="profile-details-title">
       <h2 id="profile-details-title">{t('profile.details')}</h2>
       <form className="stack" onSubmit={handleSubmit} noValidate>
-        <PhoneVerification phone={phone} onPhoneChange={setPhone} verified={verified} onVerified={setVerified} errors={errors} />
+        <PhoneField phone={phone} onPhoneChange={setPhone} errors={errors} />
         <ProfileFields form={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} errors={errors} idPrefix="profile" />
         {message && <Status message={message.text} error={message.error} />}
         <div className="row">

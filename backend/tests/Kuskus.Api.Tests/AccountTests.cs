@@ -7,7 +7,6 @@ using static Kuskus.Api.Controllers.Admin.CategoriesController;
 using static Kuskus.Api.Controllers.Admin.DishesController;
 using static Kuskus.Api.Controllers.Admin.SupplyDaysController;
 using static Kuskus.Api.Controllers.OrdersController;
-using static Kuskus.Api.Controllers.PhoneVerificationController;
 using static Kuskus.Api.Controllers.PublicController;
 
 namespace Kuskus.Api.Tests;
@@ -51,15 +50,7 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     private async Task<DishDto> CreateDish(DishInput input) =>
         await (await _admin.PostAsJsonAsync("/api/admin/dishes", input, TestFiles.Json)).Read<DishDto>();
 
-    private async Task<string> Verify(string phone)
-    {
-        Assert.Equal(HttpStatusCode.NoContent, (await _guest.PostAsJsonAsync("/api/phone-verification/send", new { phone })).StatusCode);
-        var confirmed = await (await _guest.PostAsJsonAsync(
-            "/api/phone-verification/confirm", new { phone, code = _factory.WhatsApp.LastCode(phone) })).Read<ConfirmedDto>();
-        return confirmed.Token;
-    }
-
-    private static object Profile(string phone, string? token, Action<Dictionary<string, object?>>? change = null)
+    private static object Profile(string phone, Action<Dictionary<string, object?>>? change = null)
     {
         var input = new Dictionary<string, object?>
         {
@@ -72,7 +63,6 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
             ["email"] = "dana@example.com",
             ["birthday"] = "1990-05-17",
             ["ethnicBackground"] = "מרוקאי",
-            ["verificationToken"] = token,
         };
         change?.Invoke(input);
         return input;
@@ -93,11 +83,10 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
 
     private async Task<HttpClient> RegisterAsync(string phone = Phone)
     {
-        var token = await Verify(phone);
-        return WithSession(await _guest.PostAsJsonAsync("/api/account/register", Profile(phone, token), TestFiles.Json));
+        return WithSession(await _guest.PostAsJsonAsync("/api/account/register", Profile(phone), TestFiles.Json));
     }
 
-    private async Task<ConfirmationDto> OrderAsync(HttpClient client, string phone = Phone, string? token = null)
+    private async Task<ConfirmationDto> OrderAsync(HttpClient client, string phone = Phone)
     {
         var menu = await (await _guest.GetAsync("/api/menu")).Read<MenuDto>();
         var order = new
@@ -111,7 +100,6 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
             fulfillmentMethod = "Delivery",
             paymentMethod = "OnDelivery",
             notes = (string?)null,
-            verificationToken = token,
             items = new object[]
             {
                 new { dishId = _chicken, optionId = (int?)null, quantity = 2m, addOns = new[] { new { dishId = _thigh, optionId = (int?)null, quantity = 3m } } },
@@ -136,39 +124,24 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Registering_needs_a_confirmed_phone()
-    {
-        await Verify(Phone);
-
-        var noToken = await _guest.PostAsJsonAsync("/api/account/register", Profile(Phone, null), TestFiles.Json);
-        await noToken.AssertInvalid("phone", "phoneNotVerified");
-
-        var otherToken = await Verify(OtherPhone);
-        var wrongPhone = await _guest.PostAsJsonAsync("/api/account/register", Profile(Phone, otherToken), TestFiles.Json);
-        await wrongPhone.AssertInvalid("phone", "phoneNotVerified");
-    }
-
-    [Fact]
     public async Task Registering_requires_name_and_address_and_checks_optional_fields()
     {
-        var token = await Verify(Phone);
-
         var missing = await _guest.PostAsJsonAsync(
-            "/api/account/register", Profile(Phone, token, i => { i["fullName"] = " "; i["street"] = null; }), TestFiles.Json);
+            "/api/account/register", Profile(Phone, i => { i["fullName"] = " "; i["street"] = null; }), TestFiles.Json);
         await missing.AssertInvalid("fullName", "required");
         await missing.AssertInvalid("street", "required");
 
         var badEmail = await _guest.PostAsJsonAsync(
-            "/api/account/register", Profile(Phone, token, i => i["email"] = "not-an-email"), TestFiles.Json);
+            "/api/account/register", Profile(Phone, i => i["email"] = "not-an-email"), TestFiles.Json);
         await badEmail.AssertInvalid("email", "email");
 
         var future = await _guest.PostAsJsonAsync(
-            "/api/account/register", Profile(Phone, token, i => i["birthday"] = "2999-01-01"), TestFiles.Json);
+            "/api/account/register", Profile(Phone, i => i["birthday"] = "2999-01-01"), TestFiles.Json);
         await future.AssertInvalid("birthday", "invalid");
 
         var optionalOnly = await _guest.PostAsJsonAsync(
             "/api/account/register",
-            Profile(Phone, token, i => { i["email"] = null; i["birthday"] = null; i["ethnicBackground"] = null; }),
+            Profile(Phone, i => { i["email"] = null; i["birthday"] = null; i["ethnicBackground"] = null; }),
             TestFiles.Json);
         Assert.True(optionalOnly.IsSuccessStatusCode);
     }
@@ -177,40 +150,26 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     public async Task A_phone_can_register_only_once()
     {
         await RegisterAsync();
-        var token = await Verify(Phone);
 
-        var again = await _guest.PostAsJsonAsync("/api/account/register", Profile(Phone, token), TestFiles.Json);
+        var again = await _guest.PostAsJsonAsync("/api/account/register", Profile(Phone), TestFiles.Json);
 
         Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
     }
 
     [Fact]
-    public async Task Login_with_a_confirmed_phone_starts_a_session()
+    public async Task Login_with_a_registered_phone_starts_a_session()
     {
         await RegisterAsync();
-        var token = await Verify(Phone);
 
-        var client = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone, verificationToken = token }));
+        var client = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone }));
 
         Assert.Equal("דנה כהן", (await (await client.GetAsync("/api/account/me")).Read<ProfileDto>()).FullName);
     }
 
     [Fact]
-    public async Task Login_without_a_confirmed_phone_is_refused()
-    {
-        await RegisterAsync();
-
-        var response = await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone, verificationToken = "nope" });
-
-        await response.AssertInvalid("phone", "phoneNotVerified");
-    }
-
-    [Fact]
     public async Task Login_of_an_unregistered_phone_says_so()
     {
-        var token = await Verify(OtherPhone);
-
-        var response = await _guest.PostAsJsonAsync("/api/account/login", new { phone = OtherPhone, verificationToken = token });
+        var response = await _guest.PostAsJsonAsync("/api/account/login", new { phone = OtherPhone });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Contains("notRegistered", await response.Content.ReadAsStringAsync());
@@ -243,7 +202,7 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
 
         var saved = await (await client.PutAsJsonAsync(
             "/api/account/me",
-            Profile(Phone, null, i => { i["fullName"] = "דנה לוי"; i["email"] = null; }),
+            Profile(Phone, i => { i["fullName"] = "דנה לוי"; i["email"] = null; }),
             TestFiles.Json)).Read<ProfileDto>();
 
         Assert.Equal("דנה לוי", saved.FullName);
@@ -252,15 +211,11 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Changing_the_phone_needs_a_code_for_the_new_number()
+    public async Task The_phone_can_be_changed()
     {
         var client = await RegisterAsync();
 
-        var without = await client.PutAsJsonAsync("/api/account/me", Profile(OtherPhone, null), TestFiles.Json);
-        await without.AssertInvalid("phone", "phoneNotVerified");
-
-        var token = await Verify(OtherPhone);
-        var saved = await (await client.PutAsJsonAsync("/api/account/me", Profile(OtherPhone, token), TestFiles.Json)).Read<ProfileDto>();
+        var saved = await (await client.PutAsJsonAsync("/api/account/me", Profile(OtherPhone), TestFiles.Json)).Read<ProfileDto>();
         Assert.Equal(OtherPhone, saved.Phone);
     }
 
@@ -269,9 +224,8 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     {
         await RegisterAsync(OtherPhone);
         var client = await RegisterAsync();
-        var token = await Verify(OtherPhone);
 
-        var response = await client.PutAsJsonAsync("/api/account/me", Profile(OtherPhone, token), TestFiles.Json);
+        var response = await client.PutAsJsonAsync("/api/account/me", Profile(OtherPhone), TestFiles.Json);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
@@ -279,7 +233,7 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     // ---------- Orders, history and favorites ----------
 
     [Fact]
-    public async Task A_logged_in_client_orders_without_a_code_and_sees_it_in_the_history()
+    public async Task A_logged_in_client_orders_and_sees_it_in_the_history()
     {
         var client = await RegisterAsync();
 
@@ -300,34 +254,11 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_logged_in_client_cannot_order_for_another_phone_without_a_code()
-    {
-        var client = await RegisterAsync();
-
-        var menu = await (await _guest.GetAsync("/api/menu")).Read<MenuDto>();
-        var response = await client.PostAsJsonAsync("/api/orders", new
-        {
-            phone = OtherPhone,
-            name = "דנה",
-            city = "חיפה",
-            street = "הרצל",
-            houseNumber = "1",
-            supplyDate = menu.SupplyDates[0].Date.ToString("yyyy-MM-dd"),
-            fulfillmentMethod = "Delivery",
-            paymentMethod = "OnDelivery",
-            items = new[] { new { dishId = _chicken, optionId = (int?)null, quantity = 1m, addOns = Array.Empty<object>() } },
-        }, TestFiles.Json);
-
-        await response.AssertInvalid("phone", "phoneNotVerified");
-    }
-
-    [Fact]
     public async Task Guest_orders_with_a_registered_phone_join_the_history()
     {
         var client = await RegisterAsync();
-        var token = await Verify(Phone);
 
-        var confirmation = await OrderAsync(_guest, Phone, token);
+        var confirmation = await OrderAsync(_guest, Phone);
 
         var history = await (await client.GetAsync("/api/account/orders")).Read<List<HistoryOrderDto>>();
         Assert.Contains(history, h => h.Id == confirmation.Id);
@@ -336,8 +267,7 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     [Fact]
     public async Task Registering_adopts_earlier_guest_orders_of_the_same_phone()
     {
-        var token = await Verify(Phone);
-        var confirmation = await OrderAsync(_guest, Phone, token);
+        var confirmation = await OrderAsync(_guest, Phone);
 
         var client = await RegisterAsync();
 

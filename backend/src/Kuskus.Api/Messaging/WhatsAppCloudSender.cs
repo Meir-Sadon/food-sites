@@ -16,13 +16,9 @@ public class WhatsAppOptions
     public string ApiVersion { get; set; } = "v21.0";
     public string BaseUrl { get; set; } = "https://graph.facebook.com";
 
-    /// <summary>For trying the site before WhatsApp is set up: login codes are shown on screen. Ignored once WhatsApp is configured.</summary>
-    public bool ShowCodeOnScreen { get; set; }
-
     public string LanguageCode { get; set; } = "he";
 
     // Template names as approved by Meta. Each has one body variable, {{1}}, that carries the message text.
-    public string LoginCodeTemplate { get; set; } = "kuskus_login_code";
     public string OrderConfirmationTemplate { get; set; } = "kuskus_order_confirmation";
     public string NewOrderTemplate { get; set; } = "kuskus_new_order";
 
@@ -30,7 +26,6 @@ public class WhatsAppOptions
 
     public string TemplateName(WhatsAppTemplate template) => template switch
     {
-        WhatsAppTemplate.LoginCode => LoginCodeTemplate,
         WhatsAppTemplate.OrderConfirmation => OrderConfirmationTemplate,
         _ => NewOrderTemplate,
     };

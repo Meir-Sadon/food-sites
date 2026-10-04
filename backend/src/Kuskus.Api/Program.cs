@@ -45,7 +45,6 @@ if (config.GetSection(WhatsAppOptions.Section).Get<WhatsAppOptions>()?.IsConfigu
     builder.Services.AddHttpClient<IWhatsAppSender, WhatsAppCloudSender>(c => c.Timeout = TimeSpan.FromSeconds(15));
 else
     builder.Services.AddSingleton<IWhatsAppSender, SimulatedWhatsAppSender>();
-builder.Services.AddScoped<PhoneVerificationService>();
 
 var jwt = config.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (System.Text.Encoding.UTF8.GetByteCount(jwt.Secret) < 32)

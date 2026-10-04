@@ -307,21 +307,4 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Contains("\"name\":\"kuskus_new_order\"", json);
         Assert.Contains("הזמנה #1 | עוף x2", System.Text.RegularExpressions.Regex.Unescape(json));
     }
-
-    [Fact]
-    public async Task Login_code_is_shown_on_screen_only_when_asked_for_and_whatsapp_is_not_configured()
-    {
-        using var showing = new ApiFactory(postgres, new() { ["WhatsApp:ShowCodeOnScreen"] = "true" });
-        var response = await showing.CreateApiClient().PostAsJsonAsync("/api/phone-verification/send", new { phone = "0501234567" });
-        var body = await response.Read<System.Text.Json.JsonElement>();
-        Assert.Equal(showing.WhatsApp.LastCode("0501234567"), body.GetProperty("code").GetString());
-
-        // With real WhatsApp configured the flag is ignored.
-        using var live = new ApiFactory(postgres, new()
-        {
-            ["WhatsApp:ShowCodeOnScreen"] = "true", ["WhatsApp:PhoneNumberId"] = "1", ["WhatsApp:Token"] = "t",
-        });
-        var sent = await live.CreateApiClient().PostAsJsonAsync("/api/phone-verification/send", new { phone = "0501234567" });
-        Assert.Equal(HttpStatusCode.NoContent, sent.StatusCode);
-    }
 }

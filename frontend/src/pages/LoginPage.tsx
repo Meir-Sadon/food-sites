@@ -10,7 +10,7 @@ import { emptyProfileForm } from '../account/profileForm'
 import { addressOf } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { normalizePhone } from '../order/phone'
-import { PhoneVerification, type Verified } from '../order/PhoneVerification'
+import { PhoneField } from '../order/PhoneField'
 
 type Mode = 'login' | 'register'
 
@@ -22,7 +22,6 @@ export function LoginPage() {
 
   const [mode, setMode] = useState<Mode>('login')
   const [phone, setPhone] = useState('')
-  const [verified, setVerified] = useState<Verified | null>(null)
   const [form, setForm] = useState(emptyProfileForm)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
@@ -61,56 +60,41 @@ export function LoginPage() {
     setMessage(null)
   }
 
-  // The code confirms the phone; for an existing account that is the whole login.
-  async function handleVerified(proof: Verified) {
-    setVerified(proof)
-    setErrors({})
-    if (mode !== 'login') return
-    setBusy(true)
-    setMessage(null)
-    try {
-      setUser(await accountApi.login(proof.phone, proof.token))
-      navigate('/')
-    } catch (err) {
-      if (err instanceof ApiError && err.code === 'notRegistered') {
-        // The phone is already confirmed, so registering needs no second code.
-        setMode('register')
-        setMessage({ text: t('account.notRegistered') })
-      } else {
-        setMessage({ text: formError(err), error: true })
-      }
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function handleRegister(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    // In login mode the form only holds the phone: Enter must not submit anything.
-    if (mode !== 'register') return
     setErrors({})
     setMessage(null)
-    if (!verified || verified.phone !== normalizePhone(phone)) {
-      setErrors({ phone: [normalizePhone(phone) ? 'phoneNotVerified' : 'phone'] })
+    const normalized = normalizePhone(phone)
+    if (!normalized) {
+      setErrors({ phone: ['phone'] })
       setMessage({ text: t('errors.checkFields'), error: true })
       return
     }
 
     setBusy(true)
     try {
-      setUser(
-        await accountApi.register({
-          phone: verified.phone,
-          ...form,
-          fullName: form.fullName.trim(),
-          ...addressOf(form),
-          verificationToken: verified.token,
-        }),
-      )
+      if (mode === 'login') {
+        setUser(await accountApi.login(normalized))
+      } else {
+        setUser(
+          await accountApi.register({
+            phone: normalized,
+            ...form,
+            fullName: form.fullName.trim(),
+            ...addressOf(form),
+          }),
+        )
+      }
       navigate('/')
     } catch (err) {
-      setErrors(fieldErrorsOf(err))
-      setMessage({ text: formError(err), error: true })
+      if (mode === 'login' && err instanceof ApiError && err.code === 'notRegistered') {
+        // Nothing to log in to yet: go on to registering with the same number.
+        setMode('register')
+        setMessage({ text: t('account.notRegistered') })
+      } else {
+        setErrors(fieldErrorsOf(err))
+        setMessage({ text: formError(err), error: true })
+      }
     } finally {
       setBusy(false)
     }
@@ -119,10 +103,10 @@ export function LoginPage() {
   return (
     <section>
       <h1>{mode === 'login' ? t('account.loginTitle') : t('account.registerTitle')}</h1>
-      <form className="stack" onSubmit={handleRegister} noValidate aria-label={mode === 'login' ? t('account.loginTitle') : t('account.registerTitle')}>
+      <form className="stack" onSubmit={handleSubmit} noValidate aria-label={mode === 'login' ? t('account.loginTitle') : t('account.registerTitle')}>
         <p className="hint">{mode === 'login' ? t('account.loginHint') : t('account.registerHint')}</p>
 
-        <PhoneVerification phone={phone} onPhoneChange={setPhone} verified={verified} onVerified={handleVerified} errors={errors} />
+        <PhoneField phone={phone} onPhoneChange={setPhone} errors={errors} />
 
         {mode === 'register' && (
           <>
@@ -135,9 +119,14 @@ export function LoginPage() {
 
         <div className="row">
           {mode === 'login' ? (
-            <button type="button" className="button-quiet" onClick={() => switchTo('register')}>
-              {t('account.register')}
-            </button>
+            <>
+              <button type="submit" disabled={busy}>
+                {busy ? t('account.loggingIn') : t('account.loginSubmit')}
+              </button>
+              <button type="button" className="button-quiet" onClick={() => switchTo('register')}>
+                {t('account.register')}
+              </button>
+            </>
           ) : (
             <>
               <button type="submit" disabled={busy}>

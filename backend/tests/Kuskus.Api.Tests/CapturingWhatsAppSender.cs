@@ -19,8 +19,4 @@ public class CapturingWhatsAppSender : IWhatsAppSender
     }
 
     public IEnumerable<string> MessagesTo(string phone) => Sent.Where(m => m.Phone == phone).Select(m => m.Message);
-
-    /// <summary>The six digits of the latest login code sent to a phone.</summary>
-    public string LastCode(string phone) =>
-        System.Text.RegularExpressions.Regex.Match(MessagesTo(phone).Last(), @"\d{6}").Value;
 }
