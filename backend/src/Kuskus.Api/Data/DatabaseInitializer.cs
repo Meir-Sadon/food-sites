@@ -18,6 +18,69 @@ public static class DatabaseInitializer
             await db.Database.MigrateAsync();
 
         await SeedAdminPasswordAsync(db, admin.PasswordHash, logger);
+
+        if (migrate)
+            await SeedDrinksAsync(db, logger);
+    }
+
+    public const string DrinksCategoryName = "שתיה";
+    public const decimal DrinkPrice = 12m;
+
+    private static readonly string[] DrinkNames =
+    [
+        "קוקה קולה",
+        "קוקה קולה זירו",
+        "ספרייט",
+        "פאנטה",
+        "שוופס",
+        "פיוז טי אפרסק",
+        "פיוז טי לימון",
+        "מים מינרליים",
+        "סודה",
+        "מיץ תפוזים",
+        "מיץ ענבים",
+    ];
+
+    /// <summary>
+    /// Adds the popular drinks to the drinks category, creating the category if it is missing.
+    /// A drink that already exists in the category (removed ones included) is left alone,
+    /// so this is safe to run on every start and never undoes an admin's changes.
+    /// </summary>
+    public static async Task SeedDrinksAsync(AppDbContext db, ILogger logger)
+    {
+        var category = await db.Categories.FirstOrDefaultAsync(c => c.Name == DrinksCategoryName);
+        if (category is null)
+        {
+            var nextOrder = await db.Categories.AnyAsync() ? await db.Categories.MaxAsync(c => c.DisplayOrder) + 1 : 0;
+            category = new Entities.Category { Name = DrinksCategoryName, DisplayOrder = nextOrder };
+            db.Categories.Add(category);
+        }
+
+        var existing = category.Id == 0
+            ? []
+            : await db.Dishes.Where(d => d.CategoryId == category.Id).Select(d => d.Name).ToListAsync();
+
+        var added = 0;
+        foreach (var name in DrinkNames.Where(n => !existing.Contains(n)))
+        {
+            category.Dishes.Add(new Entities.Dish
+            {
+                Name = name,
+                SellBy = Entities.SellBy.Units,
+                ChoiceMode = Entities.ChoiceMode.Free,
+                MinAmount = 1,
+                MaxAmount = 10,
+                AmountStep = 1,
+                UnitPrice = DrinkPrice,
+            });
+            added++;
+        }
+
+        if (added == 0)
+            return;
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} drinks into the '{Category}' category.", added, DrinksCategoryName);
     }
 
     public static async Task SeedAdminPasswordAsync(AppDbContext db, string? configuredHash, ILogger logger)
