@@ -330,7 +330,7 @@ describe('Order page', () => {
     const card = dishCard('עוף בתנור')
 
     expect(within(card).queryByRole('button', { name: 'הוספה להזמנה: עוף בתנור' })).not.toBeInTheDocument()
-    expect(within(card).getByText(/ברירת מחדל/)).toBeInTheDocument()
+    expect(within(card).getByText(/הכי פופולרי/)).toBeInTheDocument()
     for (const radio of within(card).getAllByRole('radio')) expect(radio).not.toBeChecked()
     expect(total().queryByText(/סה"כ: ₪[1-9]/)).not.toBeInTheDocument()
 

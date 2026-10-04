@@ -344,7 +344,7 @@
     "soldOutForDate": "אזל ליום האספקה שנבחר",
     "remaining": "נותרו {{amount}}",
     "allergens": "אלרגנים",
-    "defaultOption": "ברירת מחדל",
+    "defaultOption": "הכי פופולרי",
     "optionFor": "בחירה עבור {{name}}",
     "addOns": "תוספות",
     "less": "הפחתה: {{name}}",
