@@ -1,3 +1,4 @@
+import type { Favorite, HistoryOrder } from '../api/account'
 import type { Fulfillment, Menu, MenuDish, OrderLineInput, Payment } from '../api/site'
 
 export const MAX_UNITS = 99
@@ -151,4 +152,31 @@ export function restoreSelections(saved: Record<number, Selection>, menu: Menu):
     selections[dish.id] = { ...fit(dish, selection.optionId, selection.quantity), addOns }
   }
   return { selections, skipped }
+}
+
+/** A past order as a saved selection. Options are found again by their label; a vanished one falls back to the default. */
+export function selectionsFromHistory(order: HistoryOrder, menu: Menu): Restored {
+  const dishes = dishMap(menu)
+  const optionOf = (dishId: number, label: string | null) =>
+    dishes.get(dishId)?.options.find((o) => o.label === label)?.id ?? null
+
+  const saved: Record<number, Selection> = {}
+  for (const item of order.items.filter((i) => i.parentItemId === null)) {
+    const addOns: Record<number, AddOnSelection> = {}
+    for (const addOn of order.items.filter((i) => i.parentItemId === item.id))
+      addOns[addOn.dishId] = { optionId: optionOf(addOn.dishId, addOn.optionLabel), quantity: addOn.quantity }
+    saved[item.dishId] = { optionId: optionOf(item.dishId, item.optionLabel), quantity: item.quantity, addOns }
+  }
+  return restoreSelections(saved, menu)
+}
+
+/** A favorite as a saved selection, with whatever has vanished from the menu skipped. */
+export function selectionsFromFavorite(favorite: Favorite, menu: Menu): Restored {
+  const saved: Record<number, Selection> = {}
+  for (const item of favorite.items) {
+    const addOns: Record<number, AddOnSelection> = {}
+    for (const addOn of item.addOns) addOns[addOn.dishId] = { optionId: addOn.optionId, quantity: addOn.quantity }
+    saved[item.dishId] = { optionId: item.optionId, quantity: item.quantity, addOns }
+  }
+  return restoreSelections(saved, menu)
 }

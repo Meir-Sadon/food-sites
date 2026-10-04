@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router'
+import { AccountProvider } from '../account/AccountContext'
 import { Footer } from './Footer'
 import { LeaveGuardProvider } from './LeaveGuardProvider'
 import { TopBar } from './TopBar'
@@ -21,9 +22,11 @@ function Shell() {
 export function ClientLayout() {
   return (
     <SiteProvider>
-      <LeaveGuardProvider>
-        <Shell />
-      </LeaveGuardProvider>
+      <AccountProvider>
+        <LeaveGuardProvider>
+          <Shell />
+        </LeaveGuardProvider>
+      </AccountProvider>
     </SiteProvider>
   )
 }

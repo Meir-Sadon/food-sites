@@ -8,7 +8,8 @@
     "login": "התחברות / הרשמה",
     "recommendations": "המלצות",
     "profile": "פרופיל",
-    "about": "אודות"
+    "about": "אודות",
+    "logout": "התנתקות"
   },
   "pages": {
     "order": {
@@ -213,7 +214,11 @@
     "codeWrong": "הקוד שגוי.",
     "codeExpired": "הקוד פג תוקף או נוצל. שלחו קוד חדש.",
     "tooManyCodes": "נשלחו יותר מדי קודים. נסו שוב בעוד כמה דקות.",
-    "messageFailed": "לא הצלחנו לשלוח הודעת WhatsApp. נסו שוב."
+    "messageFailed": "לא הצלחנו לשלוח הודעת WhatsApp. נסו שוב.",
+    "notRegistered": "המספר הזה עוד לא רשום.",
+    "phoneTaken": "המספר הזה כבר רשום. התחברו במקום להירשם.",
+    "tooManyFavorites": "אפשר לשמור עד 20 מועדפים. הסירו מועדף כדי להוסיף חדש.",
+    "tooManyRecommendations": "שלחתם הרבה המלצות היום. נסו שוב מחר."
   },
   "footer": {
     "openingHours": "שעות פעילות"
@@ -293,6 +298,77 @@
       "transfer": "להעברת {{total}} ב־Bit / PayBox למספר:",
       "whatsapp": "פרטי ההזמנה נשלחו אליכם ב־WhatsApp.",
       "close": "סגירה"
+    },
+    "filled": "ההזמנה מולאה מהזמנה קודמת, במחירים הנוכחיים.",
+    "filledSkipped_one": "ההזמנה מולאה מהזמנה קודמת. מנה אחת כבר לא זמינה והוסרה.",
+    "filledSkipped_two": "ההזמנה מולאה מהזמנה קודמת. 2 פריטים כבר לא זמינים והוסרו.",
+    "filledSkipped_other": "ההזמנה מולאה מהזמנה קודמת. {{count}} פריטים כבר לא זמינים והוסרו.",
+    "filledSkipped_many": "ההזמנה מולאה מהזמנה קודמת. {{count}} פריטים כבר לא זמינים והוסרו.",
+    "quick": {
+      "title": "מילוי מהיר של ההזמנה",
+      "last": "ההזמנה האחרונה",
+      "favorites": "המועדפים שלי",
+      "noFavorites": "עוד אין מועדפים. אפשר לשמור הזמנה קודמת כמועדף בפרופיל.",
+      "applied": "ההזמנה מולאה במחירים הנוכחיים.",
+      "appliedSkipped_one": "ההזמנה מולאה. מנה אחת כבר לא זמינה והוסרה.",
+      "appliedSkipped_two": "ההזמנה מולאה. 2 פריטים כבר לא זמינים והוסרו.",
+      "appliedSkipped_other": "ההזמנה מולאה. {{count}} פריטים כבר לא זמינים והוסרו.",
+      "appliedSkipped_many": "ההזמנה מולאה. {{count}} פריטים כבר לא זמינים והוסרו."
     }
+  },
+  "account": {
+    "loginTitle": "התחברות",
+    "registerTitle": "הרשמה",
+    "loginHint": "הקלידו את מספר הטלפון ונשלח אליכם קוד אימות ב־WhatsApp.",
+    "registerHint": "אמתו את הטלפון בקוד שנשלח ב־WhatsApp ומלאו את הפרטים.",
+    "register": "הרשמה",
+    "registerSubmit": "הרשמה",
+    "registering": "נרשם…",
+    "haveAccount": "כבר יש לי חשבון",
+    "notRegistered": "המספר עוד לא רשום. הטלפון אומת, אפשר להשלים את הפרטים ולהירשם.",
+    "optionalHint": "אימייל, תאריך לידה ורקע עדתי הם לא חובה.",
+    "fullName": "שם מלא",
+    "address": "כתובת",
+    "email": "אימייל (לא חובה)",
+    "birthday": "תאריך לידה (לא חובה)",
+    "ethnicBackground": "רקע עדתי (לא חובה)",
+    "loggedInAs": "מחוברים כ{{name}}.",
+    "logout": "התנתקות"
+  },
+  "profile": {
+    "loginPrompt": "הפרופיל זמין למשתמשים מחוברים.",
+    "loginLink": "להתחברות או הרשמה",
+    "details": "הפרטים שלי",
+    "history": "היסטוריית הזמנות",
+    "noOrders": "עוד אין הזמנות.",
+    "orderLabel": "הזמנה #{{id}}",
+    "status": {
+      "New": "חדשה",
+      "Confirmed": "אושרה",
+      "Ready": "מוכנה",
+      "Delivered": "נמסרה",
+      "Cancelled": "בוטלה"
+    },
+    "reorder": "הזמנה חוזרת",
+    "reorderEmpty": "המנות מההזמנה הזו כבר לא זמינות.",
+    "saveFavorite": "שמירה כמועדף",
+    "favoriteName": "שם למועדף",
+    "saveFavoriteConfirm": "שמירה",
+    "favoriteSaved": "נשמר במועדפים.",
+    "favorites": "המועדפים שלי",
+    "noFavorites": "עוד אין מועדפים. אפשר לשמור הזמנה קודמת כמועדף.",
+    "recommendations": "ההמלצות שלי",
+    "noRecommendations": "עוד לא שלחתם המלצות.",
+    "handled": "טופל"
+  },
+  "recommendations": {
+    "loginPrompt": "כדי לשלוח המלצה צריך להתחבר.",
+    "loginLink": "להתחברות או הרשמה",
+    "hint": "חסרה לכם מנה בתפריט? יש רעיון? כתבו לנו.",
+    "text": "ההמלצה שלכם",
+    "send": "שליחה",
+    "sending": "שולח…",
+    "thanks": "תודה! ההמלצה נשלחה.",
+    "mine": "ההמלצות שלי"
   }
 }
