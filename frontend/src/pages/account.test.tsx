@@ -195,6 +195,18 @@ describe('Order page for a logged-in client', () => {
     expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ phone: '0501234567', verificationToken: '', name: 'דנה כהן' })
   })
 
+  it('logs out from the top bar even with an order in progress', async () => {
+    const { api, user } = open('/', { ...loggedIn, 'POST /api/account/logout': () => ({ status: 204 }) })
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+    await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
+
+    await user.click(screen.getByRole('button', { name: 'התנתקות' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'יציאה בלי לשמור' }))
+
+    expect(await screen.findByRole('link', { name: 'התחברות / הרשמה' })).toBeInTheDocument()
+    expect(api.sent('POST', '/api/account/logout')).toHaveLength(1)
+  })
+
   it('fills the whole order from the last order in one click, at current options', async () => {
     const { user } = open('/', loggedIn)
     await screen.findByRole('heading', { level: 2, name: 'עופות' })

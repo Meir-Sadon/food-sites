@@ -16,9 +16,16 @@ export function TopBar() {
   const navigate = useNavigate()
   const checkLeave = useLeaveCheck()
   const { user, logout } = useAccount()
+  async function signOut() {
+    await logout()
+    navigate('/')
+  }
   return (
     <header className="top-bar">
-      <span className="top-bar__brand">{t('app.name')}</span>
+      <NavLink to="/" className="top-bar__brand" onClick={(event) => { if (checkLeave('/')) event.preventDefault() }}>
+        <span className="top-bar__logo" aria-hidden="true">🥘</span>
+        {t('app.name')}
+      </NavLink>
       <nav aria-label={t('nav.label')}>
         <ul className="top-bar__links">
           {links.map((link) => (
@@ -27,11 +34,10 @@ export function TopBar() {
                 // Logged in: the login button becomes the way out.
                 <button
                   type="button"
-                  className="top-bar__link"
-                  onClick={async () => {
-                    if (checkLeave('/')) return
-                    await logout()
-                    navigate('/')
+                  className="top-bar__link top-bar__link--logout"
+                  onClick={() => {
+                    if (checkLeave('/', signOut)) return
+                    void signOut()
                   }}
                 >
                   {t('account.logout')}

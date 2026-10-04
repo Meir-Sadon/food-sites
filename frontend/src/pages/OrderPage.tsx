@@ -54,7 +54,7 @@ export function OrderPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
-  const [leaveTo, setLeaveTo] = useState<string | null>(null)
+  const [leaveTo, setLeaveTo] = useState<{ to: string; proceed?: () => void | Promise<void> } | null>(null)
   const [prefilledFor, setPrefilledFor] = useState<number | null>(null)
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
@@ -102,9 +102,9 @@ export function OrderPage() {
   }, [t, filledSkipped])
 
   // Ask about saving when leaving by the top bar, and warn when closing the tab.
-  useRegisterLeaveGuard((to) => {
+  useRegisterLeaveGuard((to, proceed) => {
     if (!dirty) return false
-    setLeaveTo(to)
+    setLeaveTo({ to, proceed })
     return true
   })
   useEffect(() => {
@@ -170,7 +170,9 @@ export function OrderPage() {
     else clearDraft()
     const to = leaveTo
     setLeaveTo(null)
-    if (to) navigate(to)
+    if (!to) return
+    if (to.proceed) void to.proceed()
+    else navigate(to.to)
   }
 
   async function handleSubmit(event: FormEvent) {
