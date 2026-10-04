@@ -10,6 +10,10 @@ const profile: Profile = {
   id: 1,
   phone: '0501234567',
   fullName: 'דנה כהן',
+  city: 'חיפה',
+  street: 'הרצל',
+  houseNumber: '1',
+  apartment: '',
   address: 'הרצל 1, חיפה',
   email: null,
   birthday: null,
@@ -73,7 +77,7 @@ describe('Login', () => {
     const { api, user } = open('/login', { ...guest, 'POST /api/account/login': () => profile })
     await screen.findByRole('heading', { name: 'התחברות' })
     expect(screen.getByRole('button', { name: 'הרשמה' })).toBeInTheDocument()
-    expect(screen.queryByLabelText('כתובת')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('רחוב')).not.toBeInTheDocument()
 
     await confirmPhone(user)
 
@@ -95,14 +99,18 @@ describe('Login', () => {
     await screen.findByRole('heading', { name: 'הרשמה' })
     expect(screen.getByText(/עוד לא רשום/)).toBeInTheDocument()
     await user.type(screen.getByLabelText('שם מלא'), 'דנה כהן')
-    await user.type(screen.getByLabelText('כתובת'), 'הרצל 1, חיפה')
+    await user.type(screen.getByLabelText('עיר'), 'חיפה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.click(screen.getByRole('button', { name: 'הרשמה' }))
 
     await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
     expect(api.sent('POST', '/api/account/register')[0].body).toMatchObject({
       phone: '0501234567',
       fullName: 'דנה כהן',
-      address: 'הרצל 1, חיפה',
+      city: 'חיפה',
+      street: 'הרצל',
+      houseNumber: '1',
       verificationToken: 'proof',
     })
   })
@@ -119,7 +127,9 @@ describe('Login', () => {
 
     await user.type(screen.getByLabelText('טלפון'), '0501234567')
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('כתובת'), 'הרצל 1')
+    await user.type(screen.getByLabelText('עיר'), 'חיפה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
 
     expect(await screen.findByText('צריך לאמת את הטלפון בקוד שנשלח ב־WhatsApp.')).toBeInTheDocument()
@@ -136,7 +146,9 @@ describe('Login', () => {
     await confirmPhone(user)
     await screen.findByRole('heading', { name: 'הרשמה' })
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('כתובת'), 'הרצל 1')
+    await user.type(screen.getByLabelText('עיר'), 'חיפה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
 
     await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
 
@@ -153,7 +165,9 @@ describe('Login', () => {
     await confirmPhone(user)
     await screen.findByRole('heading', { name: 'הרשמה' })
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('כתובת'), 'הרצל 1')
+    await user.type(screen.getByLabelText('עיר'), 'חיפה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.type(screen.getByLabelText('אימייל (לא חובה)'), 'bad')
 
     await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
@@ -185,7 +199,9 @@ describe('Order page for a logged-in client', () => {
 
     await waitFor(() => expect(screen.getByLabelText('שם מלא')).toHaveValue('דנה כהן'))
     expect(screen.getByLabelText('טלפון')).toHaveValue('0501234567')
-    expect(screen.getByLabelText('כתובת למשלוח')).toHaveValue('הרצל 1, חיפה')
+    expect(screen.getByLabelText('עיר')).toHaveValue('חיפה')
+    expect(screen.getByLabelText('רחוב')).toHaveValue('הרצל')
+    expect(screen.getByLabelText('מספר בית')).toHaveValue('1')
     expect(screen.getByText('✓ הטלפון אומת')).toBeInTheDocument()
 
     await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
@@ -230,8 +246,25 @@ describe('Order page for a logged-in client', () => {
 
     expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪135/)).toBeInTheDocument()
 
+    // The order now has dishes, so a second quick fill asks before replacing them.
     await user.click(screen.getByRole('button', { name: 'ישן' }))
+    await user.click(within(await screen.findByRole('dialog', { name: 'להחליף את ההזמנה הנוכחית?' })).getByRole('button', { name: 'כן, להחליף' }))
     expect(screen.getByText(/מנה אחת כבר לא זמינה והוסרה/)).toBeInTheDocument()
+  })
+
+  it('asks before replacing an order that already has dishes, and keeps it on "no"', async () => {
+    const { user } = open('/', loggedIn)
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+    await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
+    const before = within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪/).textContent
+
+    await user.click(await screen.findByRole('button', { name: 'ההזמנה האחרונה' }))
+    const dialog = await screen.findByRole('dialog', { name: 'להחליף את ההזמנה הנוכחית?' })
+    await user.click(within(dialog).getByRole('button', { name: 'לא, להשאיר את ההזמנה שלי' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByText('ההזמנה מולאה במחירים הנוכחיים.')).not.toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪/).textContent).toBe(before)
   })
 
   it('shows no quick-fill buttons to a guest', async () => {

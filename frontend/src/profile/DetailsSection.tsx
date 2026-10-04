@@ -6,6 +6,7 @@ import { Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { ProfileFields } from '../account/ProfileFields'
 import { formFromProfile } from '../account/profileForm'
+import { addressOf } from '../account/addressParts'
 import { normalizePhone } from '../order/phone'
 import { PhoneVerification, type Verified } from '../order/PhoneVerification'
 
@@ -44,7 +45,7 @@ export function DetailsSection({ user, onSaved }: Props) {
         phone: normalized,
         ...form,
         fullName: form.fullName.trim(),
-        address: form.address.trim(),
+        ...addressOf(form),
         verificationToken: verified.token,
       })
       onSaved(saved)

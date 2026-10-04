@@ -12,6 +12,8 @@ export interface Settings {
   deliveryFeeText: string | null
   kashrutText: string | null
   paymentPhone: string | null
+  /** ₪; null means no minimum. */
+  minimumOrderAmount: number | null
 }
 export type SettingsInput = Omit<Settings, 'backgroundImageUrl'>
 

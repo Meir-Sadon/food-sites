@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../api/client'
 import type { ProfileForm } from './profileForm'
 import { FieldError } from '../admin/ui'
+import { AddressFields } from './AddressFields'
 
 interface Props {
   form: ProfileForm
@@ -33,19 +34,7 @@ export function ProfileFields({ form, onChange, errors, idPrefix }: Props) {
         <FieldError errors={errors} field="fullName" id={id('name-error')} />
       </span>
 
-      <span className="field">
-        <label htmlFor={id('address')}>{t('account.address')}</label>
-        <input
-          id={id('address')}
-          autoComplete="street-address"
-          maxLength={300}
-          required
-          value={form.address}
-          aria-describedby={id('address-error')}
-          onChange={(e) => onChange({ address: e.target.value })}
-        />
-        <FieldError errors={errors} field="address" id={id('address-error')} />
-      </span>
+      <AddressFields value={form} onChange={onChange} errors={errors} idPrefix={idPrefix} />
 
       <span className="field">
         <label htmlFor={id('email')}>{t('account.email')}</label>

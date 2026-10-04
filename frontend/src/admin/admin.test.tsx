@@ -21,7 +21,7 @@ describe('admin login', () => {
   it('shows a login form without the client top bar', () => {
     renderAt('/admin/login')
     expect(screen.getByRole('heading', { name: 'כניסת מנהל' })).toBeInTheDocument()
-    expect(screen.getByLabelText('סיסמה')).toHaveAttribute('type', 'password')
+    expect(screen.getByLabelText('סיסמה')).toHaveAttribute('type', 'text')
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
   })
 

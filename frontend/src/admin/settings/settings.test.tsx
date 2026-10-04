@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { SupplyDay } from '../../api/catalog'
 import { settings, supplyDays } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
@@ -39,7 +39,27 @@ describe('General settings', () => {
       deliveryFeeText: null,
       kashrutText: 'בהשגחת הרב',
       paymentPhone: '050-1234567',
+      minimumOrderAmount: null,
     })
+  })
+
+  it('saves the minimum order amount, and clearing it sends null', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    const minimum = within(form).getByLabelText('מינימום להזמנה (₪)')
+    expect(minimum).toHaveValue(null)
+    await user.type(minimum, '120')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await within(form).findByRole('status')).toHaveTextContent('נשמר.')
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ minimumOrderAmount: 120 })
+
+    await user.clear(minimum)
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    await vi.waitFor(() => expect(api.sent('PUT', '/api/admin/settings')).toHaveLength(2))
+    expect(api.sent('PUT', '/api/admin/settings')[1].body).toMatchObject({ minimumOrderAmount: null })
   })
 
   it('shows field errors from the server in Hebrew', async () => {

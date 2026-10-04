@@ -10,6 +10,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   deliveryFeeText: null,
   kashrutText: null,
   paymentPhone: '050-1234567',
+  minimumOrderAmount: null,
   ...patch,
 })
 
@@ -54,6 +55,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   deliveryFeeText: null,
   kashrutText: 'בהשגחת הרבנות',
   paymentPhone: '052-9999999',
+  minimumOrderAmount: null,
   contact: { name: 'אמא', phone: '050-1234567', address: 'חיפה', email: null, openingHours: null },
   ...patch,
 })

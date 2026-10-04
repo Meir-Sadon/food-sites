@@ -11,6 +11,7 @@ namespace Kuskus.Api.Controllers.Admin;
 public partial class SettingsController(AppDbContext db, IImageStore images) : AdminControllerBase
 {
     public const int TextMaxLength = 1000;
+    public const decimal MaxMinimumOrder = 100_000;
 
     public record SettingsDto(
         string? BackgroundImageUrl,
@@ -19,7 +20,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         string? DeliveryAreaText,
         string? DeliveryFeeText,
         string? KashrutText,
-        string? PaymentPhone);
+        string? PaymentPhone,
+        decimal? MinimumOrderAmount);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -27,7 +29,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         string? DeliveryAreaText,
         string? DeliveryFeeText,
         string? KashrutText,
-        string? PaymentPhone);
+        string? PaymentPhone,
+        decimal? MinimumOrderAmount);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -43,6 +46,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         errors.Text(nameof(input.KashrutText), input.KashrutText, TextMaxLength);
         if (!string.IsNullOrWhiteSpace(input.PaymentPhone) && !PhonePattern().IsMatch(input.PaymentPhone.Trim()))
             errors.Add(nameof(input.PaymentPhone), "phone");
+        if (input.MinimumOrderAmount is < 0m or > MaxMinimumOrder)
+            errors.Add(nameof(input.MinimumOrderAmount), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -53,6 +58,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         settings.DeliveryFeeText = Clean(input.DeliveryFeeText);
         settings.KashrutText = Clean(input.KashrutText);
         settings.PaymentPhone = Clean(input.PaymentPhone);
+        // Zero (or empty) means no minimum.
+        settings.MinimumOrderAmount = input.MinimumOrderAmount is > 0m ? decimal.Round(input.MinimumOrderAmount.Value, 2) : null;
         await db.SaveChangesAsync();
         return ToDto(settings);
     }
@@ -103,7 +110,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
 
     private static SettingsDto ToDto(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
-        s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone);
+        s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount);
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]

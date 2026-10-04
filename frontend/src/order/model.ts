@@ -1,3 +1,4 @@
+import { emptyAddress, type AddressParts } from '../account/addressParts'
 import type { Favorite, HistoryOrder } from '../api/account'
 import type { Fulfillment, Menu, MenuDish, OrderLineInput, Payment } from '../api/site'
 
@@ -16,7 +17,7 @@ export interface Selection {
   addOns: Record<number, AddOnSelection>
 }
 
-export interface OrderState {
+export interface OrderState extends AddressParts {
   selections: Record<number, Selection>
   supplyDate: string | null
   fulfillment: Fulfillment
@@ -24,7 +25,6 @@ export interface OrderState {
   notes: string
   name: string
   phone: string
-  address: string
 }
 
 export const emptyOrder = (): OrderState => ({
@@ -35,7 +35,7 @@ export const emptyOrder = (): OrderState => ({
   notes: '',
   name: '',
   phone: '',
-  address: '',
+  ...emptyAddress(),
 })
 
 export const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100

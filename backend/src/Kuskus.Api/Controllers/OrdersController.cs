@@ -22,13 +22,15 @@ public class OrdersController(
     ILogger<OrdersController> logger) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
-    public const int AddressMaxLength = 300;
     public const int NotesMaxLength = 500;
 
     public record OrderInput(
         string? Phone,
         string? Name,
-        string? Address,
+        string? City,
+        string? Street,
+        string? HouseNumber,
+        string? Apartment,
         DateOnly SupplyDate,
         FulfillmentMethod FulfillmentMethod,
         PaymentMethod PaymentMethod,
@@ -65,12 +67,18 @@ public class OrdersController(
         else if (input.FulfillmentMethod == FulfillmentMethod.Delivery)
         {
             if (!settings.DeliveryEnabled) errors.Add(nameof(input.FulfillmentMethod), "fulfillmentUnavailable");
-            errors.Text(nameof(input.Address), input.Address, AddressMaxLength, required: true);
+            errors.Text(nameof(input.City), input.City, AddressFormat.PartMaxLength, required: true);
+            errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength, required: true);
+            errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength, required: true);
+            errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
         }
         else
         {
             if (!settings.PickupEnabled) errors.Add(nameof(input.FulfillmentMethod), "fulfillmentUnavailable");
-            errors.Text(nameof(input.Address), input.Address, AddressMaxLength);
+            errors.Text(nameof(input.City), input.City, AddressFormat.PartMaxLength);
+            errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength);
+            errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength);
+            errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
         }
 
         if (!Enum.IsDefined(input.PaymentMethod))
@@ -103,6 +111,8 @@ public class OrdersController(
             .Where(d => ids.Contains(d.Id))
             .ToDictionaryAsync(d => d.Id, ct);
         var items = OrderBuilder.Build(input.Items, dishes, errors);
+        if (!errors.Any && settings.MinimumOrderAmount is { } minimum && OrderBuilder.Total(items) < minimum)
+            errors.Add("items", "belowMinimumOrder");
         if (!errors.Any)
             await CheckDishLimitsAsync(input.SupplyDate, items, dishes, errors, ct);
 
@@ -117,7 +127,7 @@ public class OrdersController(
             UserId = userId,
             Phone = phone!,
             Name = input.Name!.Trim(),
-            Address = Clean(input.Address) ?? "",
+            Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment),
             SupplyDate = input.SupplyDate,
             FulfillmentMethod = input.FulfillmentMethod,
             Notes = Clean(input.Notes),

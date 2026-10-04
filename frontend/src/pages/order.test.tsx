@@ -45,7 +45,9 @@ async function verifyPhone(user: ReturnType<typeof userEvent.setup>) {
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
   await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-  await user.type(screen.getByLabelText('כתובת למשלוח'), 'הרצל 1')
+  await user.type(screen.getByLabelText('עיר'), 'חיפה')
+  await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+  await user.type(screen.getByLabelText('מספר בית'), '1')
   await verifyPhone(user)
   await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
 }
@@ -129,6 +131,17 @@ describe('Order page', () => {
     expect(screen.getByText('התשלום יבוצע במעמד מסירת המשלוח')).toBeInTheDocument()
   })
 
+  it('blocks sending an order below the admin minimum and says how much is missing', async () => {
+    const { user } = await openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }) })
+    await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+
+    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeDisabled()
+    expect(screen.getByText(/המינימום להזמנה הוא ₪100\. חסרים עוד ₪30\./)).toBeInTheDocument()
+
+    await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה: עוף בתנור/ }))
+    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
+  })
+
   it('hides the Bit / PayBox option when the admin set no payment phone', async () => {
     await openOrderPage({ 'GET /api/site': () => site({ paymentPhone: null }) })
     expect(screen.queryByRole('radio', { name: /Bit/ })).not.toBeInTheDocument()
@@ -138,7 +151,9 @@ describe('Order page', () => {
     const { api, user } = await openOrderPage()
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('כתובת למשלוח'), 'הרצל 1')
+    await user.type(screen.getByLabelText('עיר'), 'חיפה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.type(screen.getByLabelText('טלפון'), '0501234567')
 
     await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
@@ -178,7 +193,10 @@ describe('Order page', () => {
     expect(api.sent('POST', '/api/orders')[0].body).toEqual({
       phone: '0501234567',
       name: 'דנה',
-      address: 'הרצל 1',
+      city: 'חיפה',
+      street: 'הרצל',
+      houseNumber: '1',
+      apartment: '',
       supplyDate: '2026-10-09',
       fulfillmentMethod: 'Delivery',
       paymentMethod: 'OnDelivery',
@@ -306,23 +324,20 @@ describe('Order page', () => {
     expect(summary.closest('details')).not.toHaveAttribute('open')
   })
 
-  it('rotates a dish carousel and lets it be paused', async () => {
+  it('rotates a dish carousel without a pause button', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       const withImages = menu({
         dishes: [menuDish(1, 'עוף בתנור', 1, { images: ['/a.jpg', '/b.jpg'] }), menuDish(2, 'אורז', 2)],
       })
-      const { user } = await openOrderPage({ 'GET /api/menu': () => withImages })
+      await openOrderPage({ 'GET /api/menu': () => withImages })
       const image = () => within(dishCard('עוף בתנור')).getByRole('img')
       expect(image()).toHaveAttribute('src', '/a.jpg')
 
       await act(() => vi.advanceTimersByTimeAsync(4600))
       expect(image()).toHaveAttribute('src', '/b.jpg')
 
-      await user.click(screen.getByRole('button', { name: 'עצירת גלגול התמונות של עוף בתנור' }))
-      await act(() => vi.advanceTimersByTimeAsync(10_000))
-      expect(image()).toHaveAttribute('src', '/b.jpg')
-      expect(screen.getByRole('button', { name: 'הפעלת גלגול התמונות של עוף בתנור' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /גלגול התמונות/ })).not.toBeInTheDocument()
     } finally {
       vi.useRealTimers()
     }

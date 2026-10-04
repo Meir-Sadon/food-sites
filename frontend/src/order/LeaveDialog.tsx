@@ -11,9 +11,9 @@ interface Props {
 export function LeaveDialog({ onSave, onDiscard, onStay }: Props) {
   const { t } = useTranslation()
   return (
-    <Modal title={t('order.leave.title')} onClose={onStay}>
+    <Modal title={t('order.leave.title')} onClose={onStay} wide>
       <p>{t('order.leave.text')}</p>
-      <div className="row">
+      <div className="row modal__actions modal__actions--inline">
         <button type="button" onClick={onSave}>
           {t('order.leave.save')}
         </button>

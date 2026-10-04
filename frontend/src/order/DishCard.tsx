@@ -81,6 +81,7 @@ export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
                     <label key={option.id} className="option-card">
                       <input
                         type="radio"
+                        className="visually-hidden"
                         name={`${id}-option`}
                         checked={selection.optionId === option.id}
                         onChange={() => onChange({ ...selection, optionId: option.id })}

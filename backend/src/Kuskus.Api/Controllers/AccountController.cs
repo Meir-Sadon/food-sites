@@ -2,6 +2,7 @@ using Kuskus.Api.Auth;
 using Kuskus.Api.Controllers.Admin;
 using Kuskus.Api.Data;
 using Kuskus.Api.Data.Entities;
+using Kuskus.Api.Orders;
 using Kuskus.Api.Phones;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +27,6 @@ public class AccountController(
     TimeProvider time) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
-    public const int AddressMaxLength = 300;
     public const int EmailMaxLength = 200;
     public const int EthnicBackgroundMaxLength = 100;
     public const int FavoriteNameMaxLength = 60;
@@ -42,14 +42,18 @@ public class AccountController(
     public record ProfileInput(
         string? Phone,
         string? FullName,
-        string? Address,
+        string? City,
+        string? Street,
+        string? HouseNumber,
+        string? Apartment,
         string? Email,
         DateOnly? Birthday,
         string? EthnicBackground,
         string? VerificationToken);
 
     public record ProfileDto(
-        int Id, string Phone, string FullName, string Address, string? Email, DateOnly? Birthday, string? EthnicBackground);
+        int Id, string Phone, string FullName, string City, string Street, string HouseNumber, string Apartment,
+        string Address, string? Email, DateOnly? Birthday, string? EthnicBackground);
 
     public record HistoryItemDto(
         int Id, int DishId, int? ParentItemId, string DishName, string? OptionLabel,
@@ -362,7 +366,10 @@ public class AccountController(
     {
         var errors = new Errors();
         errors.Text(nameof(input.FullName), input.FullName, NameMaxLength, required: true);
-        errors.Text(nameof(input.Address), input.Address, AddressMaxLength, required: true);
+        errors.Text(nameof(input.City), input.City, AddressFormat.PartMaxLength, required: true);
+        errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength, required: true);
+        errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength, required: true);
+        errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
         errors.Text(nameof(input.Email), input.Email, EmailMaxLength);
         errors.Text(nameof(input.EthnicBackground), input.EthnicBackground, EthnicBackgroundMaxLength);
         if (!string.IsNullOrWhiteSpace(input.Email) && !ContactsController.LooksLikeEmail(input.Email.Trim()))
@@ -376,14 +383,18 @@ public class AccountController(
     private static void Apply(User user, ProfileInput input)
     {
         user.FullName = input.FullName!.Trim();
-        user.Address = input.Address!.Trim();
+        user.City = input.City!.Trim();
+        user.Street = input.Street!.Trim();
+        user.HouseNumber = input.HouseNumber!.Trim();
+        user.Apartment = input.Apartment?.Trim() ?? "";
+        user.Address = AddressFormat.Compose(user.City, user.Street, user.HouseNumber, user.Apartment);
         user.Email = Clean(input.Email);
         user.Birthday = input.Birthday;
         user.EthnicBackground = Clean(input.EthnicBackground);
     }
 
     private static ProfileDto ToDto(User u) =>
-        new(u.Id, u.Phone, u.FullName, u.Address, u.Email, u.Birthday, u.EthnicBackground);
+        new(u.Id, u.Phone, u.FullName, u.City, u.Street, u.HouseNumber, u.Apartment, u.Address, u.Email, u.Birthday, u.EthnicBackground);
 
     private static FavoriteDto ToDto(FavoriteOrder f) =>
         new(f.Id, f.Name, f.Items.Select(i => new FavoriteItemDto(

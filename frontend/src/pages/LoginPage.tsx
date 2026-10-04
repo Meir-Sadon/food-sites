@@ -7,6 +7,7 @@ import { Loading, Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { ProfileFields } from '../account/ProfileFields'
 import { emptyProfileForm } from '../account/profileForm'
+import { addressOf } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { normalizePhone } from '../order/phone'
 import { PhoneVerification, type Verified } from '../order/PhoneVerification'
@@ -102,7 +103,7 @@ export function LoginPage() {
           phone: verified.phone,
           ...form,
           fullName: form.fullName.trim(),
-          address: form.address.trim(),
+          ...addressOf(form),
           verificationToken: verified.token,
         }),
       )

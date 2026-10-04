@@ -65,7 +65,10 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
         {
             ["phone"] = phone,
             ["fullName"] = " דנה כהן ",
-            ["address"] = "הרצל 1, חיפה",
+            ["city"] = "חיפה",
+            ["street"] = "הרצל",
+            ["houseNumber"] = "1",
+            ["apartment"] = "4",
             ["email"] = "dana@example.com",
             ["birthday"] = "1990-05-17",
             ["ethnicBackground"] = "מרוקאי",
@@ -101,7 +104,9 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
         {
             phone,
             name = "דנה",
-            address = "הרצל 1",
+            city = "חיפה",
+            street = "הרצל",
+            houseNumber = "1",
             supplyDate = menu.SupplyDates[0].Date.ToString("yyyy-MM-dd"),
             fulfillmentMethod = "Delivery",
             paymentMethod = "OnDelivery",
@@ -149,9 +154,9 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
         var token = await Verify(Phone);
 
         var missing = await _guest.PostAsJsonAsync(
-            "/api/account/register", Profile(Phone, token, i => { i["fullName"] = " "; i["address"] = null; }), TestFiles.Json);
+            "/api/account/register", Profile(Phone, token, i => { i["fullName"] = " "; i["street"] = null; }), TestFiles.Json);
         await missing.AssertInvalid("fullName", "required");
-        await missing.AssertInvalid("address", "required");
+        await missing.AssertInvalid("street", "required");
 
         var badEmail = await _guest.PostAsJsonAsync(
             "/api/account/register", Profile(Phone, token, i => i["email"] = "not-an-email"), TestFiles.Json);
@@ -304,7 +309,9 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
         {
             phone = OtherPhone,
             name = "דנה",
-            address = "הרצל 1",
+            city = "חיפה",
+            street = "הרצל",
+            houseNumber = "1",
             supplyDate = menu.SupplyDates[0].Date.ToString("yyyy-MM-dd"),
             fulfillmentMethod = "Delivery",
             paymentMethod = "OnDelivery",

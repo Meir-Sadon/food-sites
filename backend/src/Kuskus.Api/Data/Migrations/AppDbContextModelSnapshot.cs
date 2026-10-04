@@ -469,6 +469,10 @@ namespace Kuskus.Api.Data.Migrations
                     b.Property<string>("KashrutText")
                         .HasColumnType("text");
 
+                    b.Property<decimal?>("MinimumOrderAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<string>("PaymentPhone")
                         .HasColumnType("text");
 
@@ -528,8 +532,16 @@ namespace Kuskus.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Apartment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateOnly?>("Birthday")
                         .HasColumnType("date");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .HasColumnType("text");
@@ -541,7 +553,15 @@ namespace Kuskus.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("HouseNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Street")
                         .IsRequired()
                         .HasColumnType("text");
 
