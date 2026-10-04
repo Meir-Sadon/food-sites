@@ -59,6 +59,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   paymentPhone: '052-9999999',
   minimumOrderAmount: null,
   contact: { name: 'אמא', phone: '050-1234567', address: 'חיפה', email: null, openingHours: null },
+  whatsAppPhones: [],
   ...patch,
 })
 
