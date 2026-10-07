@@ -41,7 +41,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         IReadOnlyList<int> AddOnDishIds,
         decimal? MaxPerSupplyDate = null,
         bool OpenByDefault = false,
-        bool IsSideDish = false);
+        bool IsSideDish = false,
+        string? UnitName = null);
 
     /// <summary>An option to keep (with Id) or add (without).</summary>
     public record OptionInput(int? Id, string? Label, decimal Amount, decimal Price, bool IsDefault);
@@ -67,7 +68,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         List<int>? ParentDishIds,
         decimal? MaxPerSupplyDate = null,
         bool OpenByDefault = false,
-        bool IsSideDish = false);
+        bool IsSideDish = false,
+        string? UnitName = null);
 
     public record SoldOutInput(bool IsSoldOut);
 
@@ -286,6 +288,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         Positive(nameof(input.MaxAmount), input.MaxAmount);
         Positive(nameof(input.AmountStep), input.AmountStep);
         Positive(nameof(input.UnitPrice), input.UnitPrice);
+        errors.Text(nameof(input.UnitName), input.UnitName, Dish.UnitNameMaxLength);
         if (input.MinAmount > 0 && input.MaxAmount > 0 && input.MaxAmount < input.MinAmount)
             errors.Add(nameof(input.MaxAmount), "belowMin");
     }
@@ -322,13 +325,13 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
 
         if (input.ChoiceMode == ChoiceMode.Fixed)
         {
-            (dish.MinAmount, dish.MaxAmount, dish.AmountStep, dish.UnitPrice) = (null, null, null, null);
+            (dish.MinAmount, dish.MaxAmount, dish.AmountStep, dish.UnitPrice, dish.UnitName) = (null, null, null, null, null);
             ApplyOptions(input.Options!, dish);
         }
         else
         {
-            (dish.MinAmount, dish.MaxAmount, dish.AmountStep, dish.UnitPrice) =
-                (input.MinAmount, input.MaxAmount, input.AmountStep, input.UnitPrice);
+            (dish.MinAmount, dish.MaxAmount, dish.AmountStep, dish.UnitPrice, dish.UnitName) =
+                (input.MinAmount, input.MaxAmount, input.AmountStep, input.UnitPrice, Clean(input.UnitName));
             db.DishOptions.RemoveRange(dish.Options);
         }
 
@@ -381,5 +384,6 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.AddOns.Select(a => a.AddOnDishId).Order().ToList(),
         d.MaxPerSupplyDate,
         d.OpenByDefault,
-        d.IsSideDish);
+        d.IsSideDish,
+        d.UnitName);
 }

@@ -48,7 +48,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<int> AddOnDishIds,
         IReadOnlyDictionary<string, decimal>? Remaining = null,
         bool OpenByDefault = false,
-        bool IsSideDish = false);
+        bool IsSideDish = false,
+        string? UnitName = null);
 
     public record MenuCategoryDto(int Id, string Name);
 
@@ -100,7 +101,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             d.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
             d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
             d.AddOns.Select(a => a.AddOnDishId).Where(shownIds.Contains).Order().ToList(),
-            remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish))
+            remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, d.UnitName))
             .ToList();
 
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff)).ToList());

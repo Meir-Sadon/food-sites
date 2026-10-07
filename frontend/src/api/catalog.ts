@@ -70,6 +70,8 @@ export interface Dish {
   maxAmount: number | null
   amountStep: number | null
   unitPrice: number | null
+  /** Free choice: what one unit of the amount is called (e.g. "מגש של 50"); null for יחידה / ק"ג. */
+  unitName: string | null
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
@@ -96,6 +98,7 @@ export interface DishInput {
   maxAmount: number | null
   amountStep: number | null
   unitPrice: number | null
+  unitName: string | null
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
@@ -108,6 +111,7 @@ export interface DishInput {
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 export const MAX_DISH_IMAGES = 6
 export const DESCRIPTION_MAX_LENGTH = 254
+export const UNIT_NAME_MAX_LENGTH = 30
 export const IMAGE_TYPES = 'image/jpeg,image/png,image/webp'
 
 function upload(file: File): RequestInit {

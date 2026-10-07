@@ -6,10 +6,11 @@ const money = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 2 })
 
 export const formatMoney = (value: number) => `₪${money.format(value)}`
 
-/** The price shown on a dish card: the default option, or the price per unit / kilo. */
+/** The price shown on a dish card: the default option, or the price per unit / kilo / named unit. */
 export function priceText(dish: MenuDish, t: TFunction): string {
   if (dish.choiceMode === 'Free') {
     const price = money.format(dish.unitPrice ?? 0)
+    if (dish.unitName) return t('order.perNamedUnit', { price, unit: dish.unitName })
     return dish.sellBy === 'Weight' ? t('order.perKilo', { price }) : t('order.perUnit', { price })
   }
   const option = defaultOption(dish)
@@ -26,8 +27,11 @@ export function formatSupplyDate(iso: string, t: TFunction): string {
 }
 
 /**
- * The unit shown next to an amount: ק״ג only when the client picks a free weight. For dishes with
- * set options the amount just multiplies the chosen option (e.g. 2 × "1 ק״ג"), so it has no unit.
+ * The unit shown next to an amount when the client picks a free amount: the dish's own unit name,
+ * else ק״ג for a weight. For dishes with set options the amount just multiplies the chosen option
+ * (e.g. 2 × "1 ק״ג"), so it has no unit.
  */
-export const unitLabel = (dish: MenuDish, t: TFunction) =>
-  dish.choiceMode === 'Free' && dish.sellBy === 'Weight' ? t('order.kilo') : ''
+export function unitLabel(dish: MenuDish, t: TFunction): string {
+  if (dish.choiceMode !== 'Free') return ''
+  return dish.unitName || (dish.sellBy === 'Weight' ? t('order.kilo') : '')
+}

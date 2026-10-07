@@ -153,6 +153,7 @@ describe('Dish form', () => {
       maxAmount: null,
       amountStep: null,
       unitPrice: null,
+      unitName: null,
       isAddOnOnly: true,
       isSoldOut: false,
       openByDefault: false,
@@ -206,6 +207,33 @@ describe('Dish form', () => {
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     const body = api.sent('PUT', '/api/admin/dishes/2')[0].body as DishInput
     expect(body).toMatchObject({ choiceMode: 'Free', sellBy: 'Weight', minAmount: 0.5, maxAmount: 3, amountStep: 0.25, unitPrice: 95, options: [] })
+  })
+
+  it('names the unit of a free-choice dish', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/2': (_, body) => ({ ...eggplant, ...(body as object) }) })
+    renderAt('/admin/dishes/2')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: 'עריכת מנה: חציל' })
+    await user.click(screen.getByLabelText('יחידות'))
+    await user.type(screen.getByLabelText('שם יחידת המידה (לא חובה)'), ' מגש של 50 ')
+    expect(screen.getByRole('group', { name: 'כמות (מגש של 50)' })).toBeInTheDocument()
+    await user.clear(screen.getByLabelText('מחיר למגש של 50 (₪)'))
+    await user.type(screen.getByLabelText('מחיר למגש של 50 (₪)'), '120')
+    for (const field of ['מינימום', 'קפיצה']) {
+      await user.clear(screen.getByLabelText(field))
+      await user.type(screen.getByLabelText(field), '1')
+    }
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/dishes/2')[0].body).toMatchObject({ sellBy: 'Units', unitName: 'מגש של 50', unitPrice: 120 })
+  })
+
+  it('shows a named unit in the dishes list', async () => {
+    fakeApi({ ...base, 'GET /api/admin/dishes': () => [{ ...eggplant, unitName: 'מגש' }] })
+    renderAt('/admin/dishes')
+    expect(await screen.findByText('₪90 למגש')).toBeInTheDocument()
   })
 
   it('keeps option ids when editing', async () => {

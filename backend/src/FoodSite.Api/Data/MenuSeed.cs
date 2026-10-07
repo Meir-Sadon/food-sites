@@ -20,7 +20,8 @@ public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
         decimal MinAmount = 1,
         decimal MaxAmount = 10,
         decimal AmountStep = 1,
-        IReadOnlyList<string>? Images = null);
+        IReadOnlyList<string>? Images = null,
+        string? UnitName = null);
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
