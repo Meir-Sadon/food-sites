@@ -31,6 +31,12 @@ public class Settings
 
     public string? AdminPasswordHash { get; set; }
 
+    /// <summary>
+    /// Set once the site's <c>site.json</c> → <c>settings</c> defaults were copied in on startup, so a value the
+    /// admin clears later is not filled in again.
+    /// </summary>
+    public bool SiteDefaultsApplied { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }

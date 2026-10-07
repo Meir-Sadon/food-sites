@@ -504,6 +504,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");
 
+                    b.Property<bool>("SiteDefaultsApplied")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.ToTable("Settings");

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Guard rail for the sites/ folders (docs/MIGRATION-PLAN.md, Phase 2). Fails when:
-// - a site folder is missing a required file, or its site.json is invalid (including "features" that aren't on/off values);
+// - a site folder is missing a required file, or its site.json is invalid (including "features" that aren't on/off values
+//   and "settings" the API doesn't know);
 // - a site's theme.css leaves out a variable the shared CSS uses but doesn't define;
 // - a site's i18n/he.json overrides a key the shared frontend/src/i18n/he.json doesn't have;
 // - a business's id, name, emoji or WhatsApp template names appear in shared code (outside sites/).
@@ -19,6 +20,8 @@ const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'))
 const sharedTexts = readJson(join(root, 'frontend/src/i18n/he.json'))
 const logos = ['logo.svg', 'logo.jpg', 'logo.jpeg', 'logo.png', 'logo.webp']
 const idPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
+// site.json → settings: the fields of SiteSettingsDefaults (backend/src/FoodSite.Api/Sites/SiteOptions.cs).
+const settingKeys = ['contactName', 'contactPhone', 'contactAddress', 'contactEmail', 'contactOpeningHours', 'deliveryAreaText', 'deliveryFeeText', 'kashrutText', 'backgroundImageUrl']
 
 /** Every leaf key of an i18n file, as dotted paths ("order.hero.tagline"). Arrays count as one value. */
 function leafKeys(texts, prefix = '') {
@@ -61,6 +64,13 @@ for (const name of readdirSync(sitesDir).filter((n) => statSync(join(sitesDir, n
   const features = site.features ?? {}
   if (typeof features !== 'object' || Array.isArray(features) || Object.values(features).some((on) => typeof on !== 'boolean'))
     fail(`${where}/site.json: "features" must map feature names to true or false`)
+  const settings = site.settings ?? {}
+  if (typeof settings !== 'object' || Array.isArray(settings)) fail(`${where}/site.json: "settings" must be an object`)
+  else
+    for (const [key, value] of Object.entries(settings)) {
+      if (!settingKeys.includes(key)) fail(`${where}/site.json: unknown setting "${key}" (known: ${settingKeys.join(', ')})`)
+      else if (typeof value !== 'string') fail(`${where}/site.json: setting "${key}" must be text`)
+    }
   for (const seed of site.seed ?? [])
     if (!existsSync(join(dir, seed))) fail(`${where}/site.json: seed file ${seed} does not exist`)
 

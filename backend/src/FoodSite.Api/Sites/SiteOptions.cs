@@ -30,6 +30,12 @@ public partial class SiteOptions
     /// </summary>
     public string? ServiceCities { get; set; }
 
+    /// <summary>
+    /// <c>site.json</c> → <c>settings</c>: the admin settings a new site starts with (main contact, delivery
+    /// texts, background). Copied into Settings once, on the first start that has them; the admin edits them there afterwards.
+    /// </summary>
+    public SiteSettingsDefaults Settings { get; set; } = new();
+
     /// <summary>Menu seed files, relative to <see cref="Directory"/>, applied on every start without undoing admin changes.</summary>
     public List<string> Seed { get; set; } = [];
 
@@ -51,6 +57,22 @@ public partial class SiteOptions
 
     [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$")]
     private static partial Regex IdPattern();
+}
+
+/// <summary>Admin settings a site starts with; a value left out stays empty. See <see cref="SiteOptions.Settings"/>.</summary>
+public class SiteSettingsDefaults
+{
+    public string? ContactName { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? ContactAddress { get; set; }
+    public string? ContactEmail { get; set; }
+    public string? ContactOpeningHours { get; set; }
+    public string? DeliveryAreaText { get; set; }
+    public string? DeliveryFeeText { get; set; }
+    public string? KashrutText { get; set; }
+
+    /// <summary>An absolute URL, or a path served from the site root (the site's <c>public/</c> folder).</summary>
+    public string? BackgroundImageUrl { get; set; }
 }
 
 public class SiteWhatsAppTemplates
