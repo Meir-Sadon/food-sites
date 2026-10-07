@@ -12,16 +12,19 @@ Read `CLAUDE.md` and `sites/_template/README.md` first. The rules that matter mo
 - The repo is public: never commit the business's photos, ad, or secrets. Photos go to Cloudinary.
 - Commit and PR text in English, site text in Hebrew.
 
-## 1. Read the inputs
+## 1. Gather the details first
 
-From the ad and the person's message, write down before touching files:
-- **Dishes**: name, what one unit is (e.g. a tray of 50), price. Prices come from the ad only; never guess a price. A photo of a dish with no price in the ad is a question for the owner, not a dish.
-- **Contact**: name, phone, pickup address or area.
-- **Service cities** (delivery area) and delivery terms (e.g. "משלוח בתוספת תשלום").
-- **Palette**: two or three colours from the ad (background, main accent, highlight).
-- **Business name**: if none is given, derive one (e.g. "הסיגרים של שירז") and an id from it, and say so in the reply so the owner can rename it.
+Read the ad, the photos and the message, then ask the owner **once, in one message**, for everything still missing, before creating any files. Offer a default for each item where you can, so a one-word answer works.
 
-Photo file names can mislead (a "beef" photo dusted with sugar was still beef): trust the owner's file names over your own reading, and ask once if something doesn't add up.
+| Detail | What you need | Default if they don't care |
+| --- | --- | --- |
+| **Site name** | The business's display name (Hebrew), and from it the site id (lowercase English letters, digits, dashes) | A name from the ad, e.g. "הסיגרים של שירז" → `cigars-shiraz` |
+| **Main contact** | Name, phone, address (or pickup place), email | Email and address left empty |
+| **Dishes** | For each: name, a short description, what one unit is (a tray of 50, a kilo, a portion), price, and which photo belongs to it | None for prices: never guess one. A dish without a price waits. |
+| **Delivery and pickup** | Delivery cities, delivery fee or terms, pickup place | The ad's wording |
+| **Other details** | Opening hours, kashrut (only if the business states it), minimum order, a different Bit/PayBox phone or extra phones for new-order alerts, a business logo if they have one | Empty; Bit/PayBox and alerts go to the main contact's phone; a hand-drawn logo |
+
+Photo file names can mislead (a "beef" photo dusted with sugar was still beef): ask about anything that doesn't add up in the same message. While waiting for answers, work only on what doesn't depend on them (the palette from the ad, the background).
 
 ## 2. Site folder (`sites/<site-id>/`)
 
@@ -41,10 +44,15 @@ Leave `images` out of the seed unless the pictures are already in Cloudinary (se
 
 ## 3. Pictures (Cloudinary)
 
-Pictures live in the shared Cloudinary account under `<site-id>/dishes` and `<site-id>/background`.
+All sites share one Cloudinary account; each site's pictures sit under `<site-id>/dishes` and `<site-id>/background`. Give each site its own API key (Cloudinary console → **Settings → API Keys → Generate New API Key**, named after the site id) and use it in that site's `Cloudinary__Url` (`cloudinary://<key>:<secret>@<cloud_name>`). A key can still reach every folder in the account, so this doesn't stop a leaked key from touching other sites' pictures, but it lets that one key be revoked without breaking the other sites, and the console shows which site used which key. The owner creates the key and pastes the URL into Render; the secret never goes in the thread or the repo. A business that needs full isolation gets its own free Cloudinary account; nothing in the code changes.
 
-- **Background**: generate one with the Cloudinary `generate-image` tool (`target.public_id: <site-id>/background/background-1`, 16:9, 2K, jpeg) from a prompt describing a light, low-contrast texture in the ad's palette with an empty centre and no text, and put its `secure_url` in `settings.backgroundImageUrl`. The page shows it with `background-size: cover` behind the content. Don't use stock photos you can't license.
-- **Dish photos**: cloud sessions can't reach `api.cloudinary.com` (the network policy blocks it), so `sign-upload` + `curl` fails, and pasting photos as base64 data URIs into `upload-asset` isn't reliable. Unless the photos are already at a public HTTPS URL (then use `upload-asset` with `folder: <site-id>/dishes` and add the `secure_url`s to the seed's `images`), the owner adds them from the site's admin after the first deploy: **Admin → Dishes → the dish → Pictures**. Say so in the hand-off list.
+- **Background**: generate one with the Cloudinary `generate-image` tool (`target.public_id: <site-id>/background/background-1`, 16:9, 2K, jpeg) from a prompt describing a light, low-contrast texture in the ad's palette with an empty centre and no text, and put its `secure_url` in `settings.backgroundImageUrl`. The page shows it with `background-size: cover` behind the content. Don't use stock photos you can't license. You can't preview it from a cloud session, so ask the owner to look at it.
+- **Dish photos**: try these in order.
+  1. The photos are already at a public HTTPS URL: `upload-asset` with that URL and `folder: <site-id>/dishes`, then add the `secure_url`s to the seed's `images`.
+  2. The thread is linked to the owner's computer (the `mcp__remote-devices__` tools work) and the photos are in a folder there: get signed parameters with `sign-upload` (`folder` and `asset_folder` = `<site-id>/dishes`, a `public_id` per photo) and run the `curl` it describes with `device_bash`, which has normal internet access.
+  3. Otherwise the owner uploads them from the site's admin after the first deploy: **מנות** → the dish → its pictures (needs `Cloudinary__Url` set on the service).
+
+  What doesn't work from a cloud session: `curl` to `api.cloudinary.com` (blocked by the network policy), and passing a photo to `upload-asset` as a base64 data URI (a 25 KB photo is about 50,000 tokens to read and as many to write back, and one wrong character breaks the image).
 
 ## 4. Deploy files
 
@@ -67,15 +75,34 @@ One PR with the site folder and the deploy files, on a readable branch. Run `/ch
 ## 7. Database and service
 
 - **Neon**: create a project named after the id, region `aws-eu-central-1`, in the same organization as the other sites (`list_projects` shows it). The API needs the Npgsql form of the connection string (`Host=...;Database=neondb;Username=...;Password=...;SSL Mode=Require`). Never post the password in the thread or the repo; pass it straight to Render.
-- **Render** (after the PR is merged, since the service builds from `main`): the services come from `render.yaml`, so the owner syncs the Blueprint in the Render dashboard, which creates the new service and asks for its secrets. Alternatively create it with the Render `create_web_service` tool (runtime docker, region frankfurt, plan free, branch main, auto-deploy off, the env vars from `render.yaml`) once the owner confirms the workspace; don't do both. Then set `ConnectionStrings__Default` and `Cloudinary__Url` (same value as the other sites) with `update_environment_variables`.
+- **Render** (after the PR is merged, since the service builds from `main`): create it with the Render `create_web_service` tool in the workspace the other sites live in (`list_services` shows them): runtime `docker`, region `frankfurt`, plan `free`, branch `main`, `autoDeploy: no`, and the env vars from `render.yaml`: `SITE`, `ConnectionStrings__Default` (the Neon string in Npgsql form, using the host without `-pooler`), `Jwt__Secret` (a random 48+ character string, e.g. `openssl rand -base64 48`), `Database__MigrateOnStartup=true`, `ForwardedHeaders__Enabled=true`, `AuthCookie__SameSite=Lax`, `PORT=8080`. Creating the service starts the first deploy. The tool can't set the health check path, so the owner sets `/api/health` under the service's **Settings → Health Checks**. Don't also sync the Blueprint, or Render creates a second service.
+- **Check the deploy** with `get_deploy` (status `live`) and `list_logs` (type `app`): look for "Site settings defaults applied", "Seeded N dishes" and "Now listening". "No admin password is set" is expected until the owner adds the hash. A `libgssapi_krb5.so.2` error at start is harmless.
 - First start migrates the database, applies `settings` and the seed.
 
-## 8. What only the owner can do
+- **Business defaults**: once the first deploy is live, apply these in one `run_sql_transaction` on the site's Neon project (they're admin settings, so the owner can change them later):
+  - Supply days: every day but Saturday, orders closing at 15:00 the day before.
+  - Bit/PayBox phone: the main contact's phone.
+  - New-order WhatsApp alerts: the main contact's phone first (in its normalized form, digits only, e.g. `0545776707`).
+  ```sql
+  UPDATE "SupplyDays" SET "Enabled" = ("Weekday" <> 6), "CutoffDay" = ("Weekday" + 6) % 7, "CutoffTime" = '15:00';
+  UPDATE "Settings" SET "PaymentPhone" = "ContactPhone" WHERE "PaymentPhone" IS NULL;
+  INSERT INTO "NotifyPhones" ("Phone", "Name") VALUES ('<contact phone, digits only>', '<contact name>') ON CONFLICT ("Phone") DO NOTHING;
+  ```
+  Read the rows back to check them.
+- **Admin password**: set it to the default `admin`: run `dotnet run --project backend/src/FoodSite.Api -- hash-password 'admin'` and add the output as the service's `Admin__PasswordHash` with `update_environment_variables`. The admin has no password-change screen. When the owner sends a new password, hash it, clear the stored one in the site's Neon database (`UPDATE "Settings" SET "AdminPasswordHash" = NULL;` with `run_sql`), and set the new hash as `Admin__PasswordHash`. That restarts the service, and the start copies it in.
 
-List these in one reply:
-1. **Admin password**: pick one, run `dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'` (or the Docker variant in `docs/DEPLOY.md`), and paste the hash as the service's `Admin__PasswordHash`.
-2. **Render**: sync the Blueprint (or confirm the workspace for creating the service), and add the service's deploy hook as the GitHub secret named in `deploy.yml`.
-3. **Dish photos**, if they couldn't be uploaded: Admin → Dishes → each dish → Pictures.
-4. **Supply days**: Admin → supply days (the order page says there are no open dates until they're set).
-5. **WhatsApp** (optional): `WhatsApp__Token`, `WhatsApp__PhoneNumberId`, and the two templates named in `site.json` approved in Meta; without them messages are only logged.
-6. Anything assumed: the business name and id, dish descriptions, and any dish left out for lack of a price.
+## 8. Tell the owner how to activate the site
+
+End with one reply that gives the site's address and a numbered checklist of exactly what the owner has to do, with where to click. Mark what's required and what's optional, and say which steps Claude does once they answer. Fill in the real names (site id, secret name, address):
+
+1. **Change the admin password** (required): the site is public and the password is `admin`, so anyone who guesses it can see the orders and the clients' phone numbers. Send Claude a new password and Claude sets it.
+2. **Cloudinary key** (required for pictures): Cloudinary → **Settings → API Keys → Generate New API Key**, named `<site-id>`. Then Render → the `<site-id>` service → **Environment** → add `Cloudinary__Url` = `cloudinary://<key>:<secret>@<cloud_name>` → **Save**.
+3. **Health check** (required): Render → the service → **Settings → Health Check Path** → `/api/health`.
+4. **Deploy hook** (required for later updates): Render → the service → **Settings → Deploy Hook** → copy. GitHub → the repo → **Settings → Secrets and variables → Actions → New repository secret**, named `RENDER_DEPLOY_HOOK_<ID_UPPER>`, with the hook as the value.
+5. **Sign in to the admin** at `https://<site-id>.onrender.com/admin` and:
+   - **Supply days** (check): **הגדרות כלליות → ימי אספקה**. They're set to Sunday to Friday, with orders closing at 15:00 the day before; change them to the business's real days.
+   - **Bit/PayBox phone and order alerts** (check): both are the main contact's phone (**הגדרות כלליות** and **אנשי קשר**); add more alert phones there if needed.
+   - **Dish photos** (if Claude couldn't upload them): **מנות** → each dish → its pictures.
+   - Check the contact (**אנשי קשר**), and the delivery texts and background (**הגדרות כלליות**).
+6. **WhatsApp** (optional): `WhatsApp__Token` and `WhatsApp__PhoneNumberId` on the service, plus the two templates named in `site.json` approved in Meta. Without them, order messages are only logged.
+7. **Confirm the assumptions**: list what was guessed (name and id, dish descriptions, any dish left out for lack of a price).
