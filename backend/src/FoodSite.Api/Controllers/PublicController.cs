@@ -1,14 +1,15 @@
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Orders;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FoodSite.Api.Controllers;
 
-/// <summary>What the client site shows: site info, contact details, the menu and the open supply dates.</summary>
+/// <summary>What the client site shows: site info, contact details, the enabled features, the menu and the open supply dates.</summary>
 [Route("api")]
-public class PublicController(AppDbContext db, SiteClock clock) : PublicControllerBase
+public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features) : PublicControllerBase
 {
     public record ContactDto(string? Name, string? Phone, string? Address, string? Email, string? OpeningHours);
 
@@ -23,7 +24,8 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
         decimal? MinimumOrderAmount,
         ContactDto Contact,
         IReadOnlyList<string> WhatsAppPhones,
-        IReadOnlyList<string> ServiceCities);
+        IReadOnlyList<string> ServiceCities,
+        IReadOnlyList<string> Features);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -68,7 +70,8 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
             s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
             whatsAppPhones,
-            ServiceArea.Parse(s.ServiceCities));
+            ServiceArea.Parse(s.ServiceCities),
+            await features.EnabledAsync());
     }
 
     [HttpGet("menu")]

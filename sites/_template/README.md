@@ -4,7 +4,7 @@ The starting point for a new business. Copy this folder to `sites/<site-id>/` (l
 
 | File | What it holds |
 | --- | --- |
-| `site.json` | `id` (must match the folder name), time zone, `serviceCities` (comma-separated delivery cities, copied into the admin settings on first start; empty means every city), top-bar emoji, WhatsApp template names, and the seed files to apply |
+| `site.json` | `id` (must match the folder name), time zone, `serviceCities` (comma-separated delivery cities, copied into the admin settings on first start; empty means every city), top-bar emoji, WhatsApp template names, `features` (which optional features the site has, e.g. `"favorites": true`; a feature left out is off, and the known ones are in `backend/src/FoodSite.Api/Sites/Features.cs`), and the seed files to apply |
 | `theme.css` | The site's look: every variable the shared CSS uses without defining it (the `--color-*` palette with the shadow tint, and `--gradient-hero`); `check-sites` lists any that are missing |
 | `logo.svg` (or `.jpg`, `.png`, `.webp`) | The logo on the order page |
 | `public/` | Files served from the site root: `favicon.svg`, and pictures a seed refers to (e.g. `/drinks/cola.svg`) |

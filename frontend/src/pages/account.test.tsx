@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Favorite, HistoryOrder, Profile } from '../api/account'
-import { publicApi } from '../test/catalogData'
+import { publicApi, site } from '../test/catalogData'
 import { fakeApi, invalid } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 
@@ -399,5 +399,43 @@ describe('Recommendations', () => {
     expect(await screen.findByText('תודה! ההמלצה נשלחה.')).toBeInTheDocument()
     expect(api.sent('POST', '/api/account/recommendations')[0].body).toEqual({ text: 'קובה סלק' })
     expect(text).toHaveValue('')
+  })
+})
+
+describe('Features the site has turned off', () => {
+  // The site says no feature is on, and the API has no favorites or recommendations to give.
+  const featuresOff = {
+    'GET /api/site': () => site({ features: [] }),
+    'GET /api/account/me': () => profile,
+    'GET /api/account/orders': () => [pastOrder],
+  }
+
+  it('drops the recommendations button and sends its page to the order page', async () => {
+    open('/recommendations', featuresOff)
+
+    // Until the site info answers, the page follows the build's site.json; then it moves to the order page.
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'הזמנה' })).toBeInTheDocument())
+    const nav = screen.getByRole('navigation', { name: 'תפריט ראשי' })
+    expect(within(nav).queryByRole('link', { name: 'המלצות' })).not.toBeInTheDocument()
+  })
+
+  it('leaves favorites and recommendations off the profile, without asking the API for them', async () => {
+    const { api } = open('/profile', featuresOff)
+
+    const order = await screen.findByRole('article', { name: 'הזמנה #5' })
+    expect(within(order).getByRole('button', { name: 'הזמנה חוזרת' })).toBeInTheDocument()
+    expect(within(order).queryByRole('button', { name: 'שמירה כמועדף' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'המועדפים שלי' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'ההמלצות שלי' })).not.toBeInTheDocument()
+    expect(api.sent('GET', '/api/account/favorites')).toHaveLength(0)
+    expect(api.sent('GET', '/api/account/recommendations')).toHaveLength(0)
+  })
+
+  it('offers only the last order as a quick fill', async () => {
+    const { api } = open('/', featuresOff)
+
+    expect(await screen.findByRole('button', { name: 'ההזמנה האחרונה' })).toBeInTheDocument()
+    expect(screen.queryByText('המועדפים שלי')).not.toBeInTheDocument()
+    expect(api.sent('GET', '/api/account/favorites')).toHaveLength(0)
   })
 })

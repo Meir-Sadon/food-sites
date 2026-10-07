@@ -18,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<FavoriteOrder> FavoriteOrders => Set<FavoriteOrder>();
     public DbSet<Recommendation> Recommendations => Set<Recommendation>();
+    public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
     public DbSet<NotifyPhone> NotifyPhones => Set<NotifyPhone>();
     public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
 
@@ -143,6 +144,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(r => r.User).WithMany(u => u.Recommendations)
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<FeatureFlag>(e =>
+        {
+            e.HasKey(f => f.Name);
         });
 
         model.Entity<NotifyPhone>(e =>

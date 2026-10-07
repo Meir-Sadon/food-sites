@@ -62,6 +62,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   contact: { name: 'אמא', phone: '050-1234567', address: 'חיפה', email: null, openingHours: null },
   whatsAppPhones: [],
   serviceCities: ['אשקלון'],
+  features: ['recommendations', 'favorites'],
   ...patch,
 })
 

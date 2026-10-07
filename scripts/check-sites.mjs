@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Guard rail for the sites/ folders (docs/MIGRATION-PLAN.md, Phase 2). Fails when:
-// - a site folder is missing a required file, or its site.json is invalid;
+// - a site folder is missing a required file, or its site.json is invalid (including "features" that aren't on/off values);
 // - a site's theme.css leaves out a variable the shared CSS uses but doesn't define;
 // - a site's i18n/he.json overrides a key the shared frontend/src/i18n/he.json doesn't have;
 // - a business's id, name, emoji or WhatsApp template names appear in shared code (outside sites/).
@@ -58,6 +58,9 @@ for (const name of readdirSync(sitesDir).filter((n) => statSync(join(sitesDir, n
   if (!idPattern.test(site.id ?? '')) fail(`${where}/site.json: "id" must be lowercase letters, digits and dashes`)
   else if (name !== template && site.id !== name) fail(`${where}/site.json: "id" is "${site.id}" but the folder is "${name}"`)
   if (typeof site.emoji !== 'string' || !site.emoji) fail(`${where}/site.json: "emoji" is required`)
+  const features = site.features ?? {}
+  if (typeof features !== 'object' || Array.isArray(features) || Object.values(features).some((on) => typeof on !== 'boolean'))
+    fail(`${where}/site.json: "features" must map feature names to true or false`)
   for (const seed of site.seed ?? [])
     if (!existsSync(join(dir, seed))) fail(`${where}/site.json: seed file ${seed} does not exist`)
 
