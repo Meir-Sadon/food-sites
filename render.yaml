@@ -1,0 +1,31 @@
+# Render Blueprint: deploys the site and API as one free web service.
+# Step-by-step instructions are in docs/DEPLOY.md.
+services:
+  - type: web
+    name: kuskus-shel-ima
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
+      - key: ConnectionStrings__Default
+        sync: false
+      # Output of: dotnet run --project backend/src/Kuskus.Api -- hash-password '<password>'
+      - key: Admin__PasswordHash
+        sync: false
+      # cloudinary://<api_key>:<api_secret>@<cloud_name>
+      - key: Cloudinary__Url
+        sync: false
+      - key: Jwt__Secret
+        generateValue: true
+      - key: Database__MigrateOnStartup
+        value: "true"
+      - key: ForwardedHeaders__Enabled
+        value: "true"
+      - key: AuthCookie__SameSite
+        value: Lax
+      - key: PORT
+        value: "8080"
