@@ -86,11 +86,11 @@ Each phase is its own pull request and leaves the repo green: frontend lint, bui
 - [x] Import the full `kuskus-shel-ima` history.
 - [x] README, this plan, `CLAUDE.md`, `.gitattributes`, `.editorconfig`, issue and PR templates, Dependabot, CI.
 
-### Phase 1 — Neutral names
-- [ ] Rename `Kuskus.Api` / `Kuskus.Api.Tests` / `Kuskus.slnx` to `FoodSite.*`: namespaces, Dockerfiles, `docker-compose.yml`, `render.yaml`, the session-start hook, `/check`, `CLAUDE.md`.
-- [ ] Rename the CSRF header to `X-Food-Site-Request` in the middleware, `api/client.ts` and `ApiFactory`.
-- [ ] Rename the local database and user from `kuskus` to `foodsite` in compose and examples.
-- [ ] Nothing changes in behaviour; all tests pass unchanged apart from names.
+### Phase 1 — Neutral names (done)
+- [x] Rename `Kuskus.Api` / `Kuskus.Api.Tests` / `Kuskus.slnx` to `FoodSite.*`: namespaces, Dockerfiles, `docker-compose.yml`, `render.yaml`, the session-start hook, `/check`, `CLAUDE.md`.
+- [x] Rename the CSRF header to `X-Food-Site-Request` in the middleware, `api/client.ts` and `ApiFactory`.
+- [x] Rename the local database and user from `kuskus` to `foodsite` in compose and examples.
+- [x] Nothing changes in behaviour; all tests pass unchanged apart from names.
 
 ### Phase 2 — Site folders
 - [ ] **Backend:** add a `SiteOptions` (`Site:Id`, plus the existing `Site:TimeZone`) and build cookie names, the JWT issuer and the WhatsApp template defaults from it. The site's `site.json` is copied into the image and bound as configuration. Environment variables still win, as today.

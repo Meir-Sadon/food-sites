@@ -4,7 +4,7 @@ const baseUrl = import.meta.env.VITE_API_URL ?? ''
 export const apiUrl = (path: string) => `${baseUrl}${path}`
 
 /** Sent on every request; the API refuses changes without it (blocks cross-site forms). */
-export const requestHeader = { 'X-Kuskus-Request': '1' }
+export const requestHeader = { 'X-Food-Site-Request': '1' }
 
 export type FieldErrors = Record<string, string[]>
 

@@ -9,7 +9,7 @@ Every business gets **its own deployment**: its own server, database, admin pass
 | `kuskus` | הקוסקוס של אמא | Code imported from [kuskus-shel-ima](https://github.com/Meir-Sadon/kuskus-shel-ima) |
 | `grape-leaves` | עלי גפן - אליאל | Branding to be moved in from [grape-leaves-eliel](https://github.com/Meir-Sadon/grape-leaves-eliel) |
 
-> **Migration in progress.** The code still uses the `Kuskus.*` names of the site it came from. The phases, decisions and target layout are in [`docs/MIGRATION-PLAN.md`](docs/MIGRATION-PLAN.md); the commands below change with Phase 1.
+> **Migration in progress.** The projects use neutral `FoodSite.*` names, but some defaults (cookie names, WhatsApp template names, image folders) still carry the kuskus values until Phase 2. The phases, decisions and target layout are in [`docs/MIGRATION-PLAN.md`](docs/MIGRATION-PLAN.md).
 
 ## Features
 
@@ -60,7 +60,7 @@ docker compose up --build
 
 - Site: http://localhost:8080
 - Admin area: http://localhost:8080/admin (local password: `admin`)
-- API: http://localhost:5000, PostgreSQL: localhost:5432 (user, password and database `kuskus`)
+- API: http://localhost:5000, PostgreSQL: localhost:5432 (user, password and database `foodsite`)
 
 The API applies database migrations on startup. The defaults in `docker-compose.yml` are for local use only; override them in a `.env` file (`POSTGRES_PASSWORD`, `JWT_SECRET`, `ADMIN_PASSWORD_HASH`, `CLOUDINARY_URL`).
 
@@ -79,18 +79,18 @@ Each cloud session starts in a fresh container with only Node.js pre-installed. 
 ### Backend
 ```bash
 cd backend
-cp appsettings.Example.json src/Kuskus.Api/appsettings.Development.json   # fill in your values
-dotnet run --project src/Kuskus.Api        # http://localhost:5000
+cp appsettings.Example.json src/FoodSite.Api/appsettings.Development.json   # fill in your values
+dotnet run --project src/FoodSite.Api        # http://localhost:5000
 ```
 
 With `Database:MigrateOnStartup` set to `true` the API migrates the database itself. To do it by hand:
 ```bash
-dotnet ef database update --project src/Kuskus.Api
+dotnet ef database update --project src/FoodSite.Api
 ```
 
 Add a migration after changing the model:
 ```bash
-dotnet ef migrations add <Name> --project src/Kuskus.Api --output-dir Data/Migrations
+dotnet ef migrations add <Name> --project src/FoodSite.Api --output-dir Data/Migrations
 ```
 
 ### Frontend
@@ -106,7 +106,7 @@ npm run dev                  # http://localhost:5173, proxies /api to localhost:
 There is one admin password. Only its hash is stored, in the `Settings` table. Create a hash with:
 ```bash
 cd backend
-dotnet run --project src/Kuskus.Api -- hash-password '<password>'
+dotnet run --project src/FoodSite.Api -- hash-password '<password>'
 ```
 Put the output in `Admin__PasswordHash`. On startup it is copied into `Settings` if no admin password is set there yet; after that the value in the database wins. To replace a password that is already set, clear `Settings.AdminPasswordHash` and restart with the new hash.
 
@@ -147,7 +147,7 @@ Without those two settings nothing is sent: messages are written to the API log 
 
 ## API notes
 
-- Every `POST`, `PUT` and `DELETE` to `/api` must send the header `X-Kuskus-Request: 1`. Browsers can't add it from another site's page, so other sites can't act with the admin's cookie. The frontend sends it on every request.
+- Every `POST`, `PUT` and `DELETE` to `/api` must send the header `X-Food-Site-Request: 1`. Browsers can't add it from another site's page, so other sites can't act with the admin's cookie. The frontend sends it on every request.
 - Public endpoints: `GET /api/site` (contact, delivery text, background), `GET /api/menu` (categories, dishes, open supply dates), and `POST /api/orders`. Orders are priced and validated on the server.
 - Client account endpoints live under `/api/account`: `login` (phone number only) and `register`, `logout`, `me`, `orders`, `favorites` and `recommendations`. They use the client's own session cookie, which never works as an admin session.
 - Admin endpoints live under `/api/admin` and need the admin session cookie. Besides the catalog and settings, they include `orders` (list by supply date and status, `summary?date=` for the cooking summary, status, paid and edit), `dishes/{id}/affected-orders` (orders not yet supplied that contain a dish) and `reports` (sales per week and dish, with `reports/export` as an Excel file). Validation errors come back as codes per field (for example `{"errors": {"name": ["required"]}}`), which the admin screens translate.

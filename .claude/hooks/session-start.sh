@@ -20,7 +20,7 @@ fi
 
 if command -v dotnet >/dev/null 2>&1; then
   echo "Restoring backend packages..."
-  dotnet restore backend/Kuskus.slnx >/dev/null || echo "WARNING: dotnet restore failed"
+  dotnet restore backend/FoodSite.slnx >/dev/null || echo "WARNING: dotnet restore failed"
   if [ ! -x "$HOME/.dotnet/tools/dotnet-ef" ]; then
     dotnet tool install --global dotnet-ef >/dev/null || echo "WARNING: could not install dotnet-ef"
   fi

@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Kuskus.Api/Kuskus.Api.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/Kuskus.Api.Tests/Kuskus.Api.Tests.csproj" />
-  </Folder>
-</Solution>
