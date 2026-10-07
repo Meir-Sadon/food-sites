@@ -206,6 +206,20 @@
       "approve": "אישור ההזמנה",
       "status": "סטטוס",
       "paid": "שולם",
+      "paidWith": "אמצעי תשלום",
+      "paymentComment": "הערה לתשלום",
+      "markPaid": "סימון כשולם",
+      "markPaidFor": "סימון הזמנה #{{id}} כשולם",
+      "paidVia": "שולם: {{method}}",
+      "paidMethods": {
+        "Unknown": "אמצעי התשלום לא נרשם",
+        "Cash": "מזומן",
+        "Bit": "Bit",
+        "PayBox": "PayBox",
+        "BankTransfer": "העברה בנקאית",
+        "CreditCard": "כרטיס אשראי",
+        "Other": "אמצעי אחר"
+      },
       "statuses": {
         "New": "חדשה",
         "Confirmed": "אושרה",

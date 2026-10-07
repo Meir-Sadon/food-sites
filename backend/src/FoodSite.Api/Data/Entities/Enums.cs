@@ -24,6 +24,18 @@ public enum PaymentMethod
     Transfer,
 }
 
+/// <summary>How a paid order was actually paid. Unknown is for orders marked paid before this was recorded.</summary>
+public enum PaidWith
+{
+    Unknown,
+    Cash,
+    Bit,
+    PayBox,
+    BankTransfer,
+    CreditCard,
+    Other,
+}
+
 public enum OrderStatus
 {
     New,

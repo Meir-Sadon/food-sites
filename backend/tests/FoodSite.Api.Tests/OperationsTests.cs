@@ -111,13 +111,36 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
         var id = await SeedOrder(Sunday, payment: PaymentMethod.Transfer);
 
         Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync($"/api/admin/orders/{id}/status", new { status = "Ready" })).StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync($"/api/admin/orders/{id}/paid", new { isPaid = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await _admin.PutAsJsonAsync($"/api/admin/orders/{id}/paid", new { isPaid = true, paidWith = "Bit", paymentComment = " paid by her son " })).StatusCode);
 
         var order = await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>();
-        Assert.Equal((OrderStatus.Ready, true), (order.Status, order.IsPaid));
+        Assert.Equal((OrderStatus.Ready, true, PaidWith.Bit, "paid by her son"), (order.Status, order.IsPaid, order.PaidWith, order.PaymentComment));
         Assert.Equal(HttpStatusCode.NotFound, (await _admin.PutAsJsonAsync("/api/admin/orders/999/status", new { status = "Ready" })).StatusCode);
         // A name that isn't a status never reaches the action (JSON binding rejects it); an undefined number does.
         await (await _admin.PutAsJsonAsync($"/api/admin/orders/{id}/status", new { status = 99 })).AssertInvalid("Status", "invalid");
+    }
+
+    [Fact]
+    public async Task Marking_paid_takes_how_it_was_paid_and_unpaid_clears_it()
+    {
+        var id = await SeedOrder(Sunday);
+        string Paid() => $"/api/admin/orders/{id}/paid";
+
+        await (await _admin.PutAsJsonAsync(Paid(), new { isPaid = true })).AssertInvalid("PaidWith", "required");
+        await (await _admin.PutAsJsonAsync(Paid(), new { isPaid = true, paidWith = "Unknown" })).AssertInvalid("PaidWith", "invalid");
+        await (await _admin.PutAsJsonAsync(Paid(), new { isPaid = true, paidWith = "Cash", paymentComment = new string('a', 201) }))
+            .AssertInvalid("PaymentComment", "tooLong");
+        Assert.False((await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>()).IsPaid);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync(Paid(), new { isPaid = true, paidWith = "Cash" })).StatusCode);
+        var paid = await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>();
+        Assert.Equal((true, PaidWith.Cash, (string?)null), (paid.IsPaid, paid.PaidWith, paid.PaymentComment));
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await _admin.PutAsJsonAsync(Paid(), new { isPaid = false, paidWith = "Cash", paymentComment = "x" })).StatusCode);
+        var unpaid = await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>();
+        Assert.Equal((false, (PaidWith?)null, (string?)null), (unpaid.IsPaid, unpaid.PaidWith, unpaid.PaymentComment));
     }
 
     private static object Edit(OrderDto order, Action<Dictionary<string, object?>>? change = null)

@@ -15,6 +15,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     public const int NameMaxLength = 100;
     public const int AddressMaxLength = 300;
     public const int NotesMaxLength = 500;
+    public const int PaymentCommentMaxLength = 200;
     public const decimal MaxQuantity = 999;
 
     public record ItemDto(
@@ -30,6 +31,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         string? Notes,
         PaymentMethod PaymentMethod,
         bool IsPaid,
+        PaidWith? PaidWith,
+        string? PaymentComment,
         OrderStatus Status,
         decimal Total,
         DateTimeOffset CreatedAt,
@@ -39,7 +42,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     public record StatusInput(OrderStatus Status);
 
-    public record PaidInput(bool IsPaid);
+    /// <summary>Marking an order paid takes how it was paid (Unknown is only for old orders) and an optional comment.</summary>
+    public record PaidInput(bool IsPaid, PaidWith? PaidWith = null, string? PaymentComment = null);
 
     public record ItemInput(int Id, decimal Quantity);
 
@@ -144,8 +148,26 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     [HttpPut("{id:int}/paid")]
     public async Task<ActionResult> SetPaid(int id, PaidInput input)
     {
+        if (input.IsPaid)
+        {
+            var errors = new Errors();
+            if (input.PaidWith is not { } method)
+                errors.Add(nameof(input.PaidWith), "required");
+            else if (!Enum.IsDefined(method) || method == PaidWith.Unknown)
+                errors.Add(nameof(input.PaidWith), "invalid");
+            errors.Text(nameof(input.PaymentComment), input.PaymentComment, PaymentCommentMaxLength);
+            if (errors.Any)
+                return Invalid(errors);
+        }
+
+        // Unpaid clears how it was paid, so the two never disagree.
+        var paidWith = input.IsPaid ? input.PaidWith : null;
+        var comment = input.IsPaid ? Clean(input.PaymentComment) : null;
         var updated = await db.Orders.Where(o => o.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.IsPaid, input.IsPaid));
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(o => o.IsPaid, input.IsPaid)
+                .SetProperty(o => o.PaidWith, paidWith)
+                .SetProperty(o => o.PaymentComment, comment));
         return updated == 0 ? NotFound() : NoContent();
     }
 
@@ -219,7 +241,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     private static OrderDto ToDto(Order o) => new(
         o.Id, o.Phone, o.Name, o.Address, o.SupplyDate, o.FulfillmentMethod, o.Notes, o.PaymentMethod, o.IsPaid,
-        o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
+        o.PaidWith, o.PaymentComment, o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
         o.Items.OrderBy(i => i.Id)
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal))
             .ToList());

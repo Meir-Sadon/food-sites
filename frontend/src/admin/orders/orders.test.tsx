@@ -15,6 +15,8 @@ const order = (patch: Partial<AdminOrder> = {}): AdminOrder => ({
   notes: null,
   paymentMethod: 'OnDelivery',
   isPaid: false,
+  paidWith: null,
+  paymentComment: null,
   status: 'New',
   total: 176,
   createdAt: '2030-01-01T10:00:00Z',
@@ -66,24 +68,83 @@ describe('Admin Orders', () => {
     expect(within(screen.getByRole('navigation', { name: 'תפריט ניהול' })).getByRole('link', { name: 'הזמנות' })).toHaveAttribute('href', '/admin/orders')
   })
 
-  it('changes the status and the paid flag', async () => {
+  it('changes the status', async () => {
     const api = fakeApi({
       ...adminSession,
       'GET /api/admin/orders.*': () => [order()],
       'PUT /api/admin/orders/7/status': () => undefined,
-      'PUT /api/admin/orders/7/paid': () => undefined,
     })
     renderAt('/admin/orders')
     const user = userEvent.setup()
     const card = await screen.findByRole('article', { name: 'הזמנה #7' })
 
     await user.selectOptions(within(card).getByLabelText('סטטוס'), 'Ready')
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/status')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/orders/7/status')[0].body).toEqual({ status: 'Ready' })
+    expect(within(card).getByLabelText('סטטוס')).toHaveValue('Ready')
+  })
+
+  it('asks how the order was paid before marking it paid', async () => {
+    const api = fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [order({ paymentMethod: 'Transfer' })],
+      'PUT /api/admin/orders/7/paid': () => undefined,
+    })
+    renderAt('/admin/orders')
+    const user = userEvent.setup()
+    const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+
+    await user.click(within(card).getByRole('checkbox', { name: /שולם/ }))
+    const form = within(card).getByRole('form', { name: 'סימון הזמנה #7 כשולם' })
+    expect(api.sent('PUT', '/api/admin/orders/7/paid')).toHaveLength(0)
+    // A transfer by Bit / PayBox suggests Bit.
+    expect(within(form).getByLabelText('אמצעי תשלום')).toHaveValue('Bit')
+
+    await user.selectOptions(within(form).getByLabelText('אמצעי תשלום'), 'PayBox')
+    await user.type(within(form).getByLabelText('הערה לתשלום'), 'שילם הבן')
+    await user.click(within(form).getByRole('button', { name: 'סימון כשולם' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/paid')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/orders/7/paid')[0].body).toEqual({ isPaid: true, paidWith: 'PayBox', paymentComment: 'שילם הבן' })
+    expect(within(card).queryByRole('form', { name: 'סימון הזמנה #7 כשולם' })).not.toBeInTheDocument()
+    expect(within(card).getByRole('checkbox', { name: /שולם/ })).toBeChecked()
+    expect(within(card).getByText('שולם: PayBox · שילם הבן')).toBeInTheDocument()
+  })
+
+  it('suggests cash for an order paid on delivery, and closes the form on cancel', async () => {
+    const api = fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [order()] })
+    renderAt('/admin/orders')
+    const user = userEvent.setup()
+    const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+
+    await user.click(within(card).getByRole('checkbox', { name: /שולם/ }))
+    const form = within(card).getByRole('form', { name: 'סימון הזמנה #7 כשולם' })
+    expect(within(form).getByLabelText('אמצעי תשלום')).toHaveValue('Cash')
+
+    await user.click(within(form).getByRole('button', { name: 'ביטול' }))
+    expect(within(card).queryByRole('form', { name: 'סימון הזמנה #7 כשולם' })).not.toBeInTheDocument()
+    expect(within(card).getByRole('checkbox', { name: /שולם/ })).not.toBeChecked()
+    expect(api.sent('PUT', '/api/admin/orders/7/paid')).toHaveLength(0)
+  })
+
+  it('unmarks a paid order at once and clears how it was paid', async () => {
+    const api = fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [order({ isPaid: true, paidWith: 'Unknown' })],
+      'PUT /api/admin/orders/7/paid': () => undefined,
+    })
+    renderAt('/admin/orders')
+    const user = userEvent.setup()
+    const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+    expect(within(card).getByText('שולם: אמצעי התשלום לא נרשם')).toBeInTheDocument()
+
     await user.click(within(card).getByRole('checkbox', { name: /שולם/ }))
 
     await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/paid')).toHaveLength(1))
-    expect(api.sent('PUT', '/api/admin/orders/7/status')[0].body).toEqual({ status: 'Ready' })
-    expect(api.sent('PUT', '/api/admin/orders/7/paid')[0].body).toEqual({ isPaid: true })
-    expect(within(card).getByLabelText('סטטוס')).toHaveValue('Ready')
+    expect(api.sent('PUT', '/api/admin/orders/7/paid')[0].body).toEqual({ isPaid: false })
+    expect(within(card).queryByText(/אמצעי התשלום לא נרשם/)).not.toBeInTheDocument()
+    expect(within(card).getByRole('checkbox', { name: /שולם/ })).not.toBeChecked()
   })
 
   it('undoes a status change that fails to save', async () => {

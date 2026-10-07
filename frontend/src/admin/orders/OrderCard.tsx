@@ -6,11 +6,13 @@ import { formatNumber } from '../format'
 import { useErrorMessage } from '../hooks'
 import { ConfirmRemove, Status } from '../ui'
 import { OrderEditor } from './OrderEditor'
+import { PaidForm } from './PaidForm'
 
 export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (order: AdminOrder) => void }) {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
   const [editing, setEditing] = useState(false)
+  const [markingPaid, setMarkingPaid] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   /** Shows the change at once and undoes it when saving fails. */
@@ -26,6 +28,16 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
   }
 
   const setStatus = (status: OrderStatus) => apply({ status }, () => ordersAdminApi.setStatus(order.id, status))
+  const unpay = () =>
+    apply({ isPaid: false, paidWith: null, paymentComment: null }, () => ordersAdminApi.setPaid(order.id, { isPaid: false }))
+
+  /** Ticking opens the form that asks how it was paid; unticking a paid order clears it at once. */
+  function togglePaid(checked: boolean) {
+    setError(null)
+    if (checked) setMarkingPaid(true)
+    else if (markingPaid) setMarkingPaid(false)
+    else void unpay()
+  }
   const cancelled = order.status === 'Cancelled'
 
   return (
@@ -70,6 +82,12 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
           </li>
         ))}
       </ul>
+      {order.isPaid && order.paidWith && (
+        <p className="muted">
+          {t('admin.orders.paidVia', { method: t(`admin.orders.paidMethods.${order.paidWith}`) })}
+          {order.paymentComment ? ` · ${order.paymentComment}` : ''}
+        </p>
+      )}
       {order.notes && (
         <p>
           {t('admin.orders.notes')}: {order.notes}
@@ -90,8 +108,8 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
         <label className="checkbox">
           <input
             type="checkbox"
-            checked={order.isPaid}
-            onChange={(e) => void apply({ isPaid: e.target.checked }, () => ordersAdminApi.setPaid(order.id, e.target.checked))}
+            checked={order.isPaid || markingPaid}
+            onChange={(e) => togglePaid(e.target.checked)}
           />
           {t('admin.orders.paid')}
           <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
@@ -111,6 +129,17 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
         )}
       </div>
       {error && <Status message={error} error />}
+
+      {markingPaid && !order.isPaid && (
+        <PaidForm
+          order={order}
+          onClose={() => setMarkingPaid(false)}
+          onSaved={(change) => {
+            onChange({ ...order, ...change })
+            setMarkingPaid(false)
+          }}
+        />
+      )}
 
       {editing && (
         <OrderEditor
