@@ -70,6 +70,7 @@ public static class DatabaseInitializer
                     MaxAmount = dish.MaxAmount,
                     AmountStep = dish.AmountStep,
                     UnitPrice = dish.UnitPrice,
+                    UnitName = dish.UnitName,
                     Images = (dish.Images ?? []).Select((url, i) => new Entities.DishImage
                     {
                         Url = url,

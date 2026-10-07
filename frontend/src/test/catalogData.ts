@@ -38,6 +38,7 @@ export const dish = (id: number, name: string, categoryId: number, patch: Partia
   maxAmount: null,
   amountStep: null,
   unitPrice: null,
+  unitName: null,
   isAddOnOnly: false,
   isSoldOut: false,
   openByDefault: false,

@@ -182,6 +182,22 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Free_choice_unit_name_is_saved_trimmed_and_dropped_for_set_options()
+    {
+        var category = await AddCategory("עלי גפן");
+        var dish = await CreateOk(FreeWeight("עלי גפן", category.Id) with { SellBy = SellBy.Units, MinAmount = 1, AmountStep = 1, UnitName = " מגש של 50 " });
+        Assert.Equal("מגש של 50", dish.UnitName);
+
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        Assert.Equal("מגש של 50", menu.Dishes.Single(d => d.Id == dish.Id).UnitName);
+
+        (await Update(dish.Id, Fixed("עלי גפן", category.Id) with { UnitName = "מגש" })).EnsureSuccessStatusCode();
+        Assert.Null((await GetDish(dish.Id)).UnitName);
+
+        await (await Create(FreeWeight("חציל", category.Id) with { UnitName = new string('א', 31) })).AssertInvalid("UnitName", "tooLong");
+    }
+
+    [Fact]
     public async Task Free_choice_validates_its_range()
     {
         var category = await AddCategory("סלטים");

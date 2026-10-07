@@ -9,6 +9,7 @@ export const formatNumber = (value: number) => number.format(value)
 export function priceSummary(dish: Dish, t: TFunction): string {
   if (dish.choiceMode === 'Free') {
     const price = formatNumber(dish.unitPrice ?? 0)
+    if (dish.unitName) return t('admin.dishes.perNamedUnit', { price, unit: dish.unitName })
     return dish.sellBy === 'Weight' ? t('admin.dishes.perKilo', { price }) : t('admin.dishes.perUnit', { price })
   }
   const option = dish.options.find((o) => o.isDefault) ?? dish.options[0]

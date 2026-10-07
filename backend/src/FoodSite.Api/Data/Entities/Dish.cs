@@ -5,6 +5,7 @@ public class Dish
     public const int NameMaxLength = 100;
     public const int DescriptionMaxLength = 254;
     public const int MaxImages = 6;
+    public const int UnitNameMaxLength = 30;
 
     public int Id { get; set; }
     public required string Name { get; set; }
@@ -22,6 +23,12 @@ public class Dish
     public decimal? MinAmount { get; set; }
     public decimal? MaxAmount { get; set; }
     public decimal? UnitPrice { get; set; }
+
+    /// <summary>
+    /// Free choice: what one unit of the amount is called, e.g. "מגש של 50". Null shows the default
+    /// for SellBy (a unit, or a kilo); SellBy still decides whether amounts are whole numbers.
+    /// </summary>
+    public string? UnitName { get; set; }
 
     /// <summary>Free choice: the amount moves in steps of this size, e.g. 0.25 kg.</summary>
     public decimal? AmountStep { get; set; }

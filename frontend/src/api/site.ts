@@ -53,6 +53,8 @@ export interface MenuDish {
   maxAmount: number | null
   amountStep: number | null
   unitPrice: number | null
+  /** Free choice: what one unit of the amount is called; absent or null for יחידה / ק"ג. */
+  unitName?: string | null
   isAddOnOnly: boolean
   isSoldOut: boolean
   /** The order page shows the dish's choices right away, without clicking add first. */

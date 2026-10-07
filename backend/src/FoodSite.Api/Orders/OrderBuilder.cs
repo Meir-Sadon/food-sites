@@ -91,7 +91,7 @@ public static class OrderBuilder
                 Dish = dish,
                 DishId = dish.Id,
                 DishName = dish.Name,
-                OptionLabel = dish.SellBy == SellBy.Weight ? "ק״ג" : "יח׳",
+                OptionLabel = dish.UnitName ?? (dish.SellBy == SellBy.Weight ? "ק״ג" : "יח׳"),
                 Quantity = quantity,
                 UnitPrice = price,
                 LineTotal = decimal.Round(price * quantity, 2),

@@ -66,6 +66,16 @@ public class OrderBuilderTests
         Assert.Equal(157.5m, items.Single().LineTotal);
     }
 
+    [Fact]
+    public void Free_choice_line_is_labelled_with_the_dish_unit_name()
+    {
+        var trays = FreeWeight(2);
+        (trays.SellBy, trays.MinAmount, trays.AmountStep, trays.UnitName) = (SellBy.Units, 1m, 1m, "מגש של 50");
+        var (items, _) = Build(Menu(FreeWeight(1), trays), new OrderLineInput(1, null, 1m, null), new OrderLineInput(2, null, 2m, null));
+
+        Assert.Equal(["ק״ג", "מגש של 50"], items.Select(i => i.OptionLabel));
+    }
+
     [Theory]
     [InlineData(0.25)]
     [InlineData(3.25)]

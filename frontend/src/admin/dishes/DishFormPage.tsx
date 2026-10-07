@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   DESCRIPTION_MAX_LENGTH,
+  UNIT_NAME_MAX_LENGTH,
   categoriesApi,
   dishesApi,
   type Category,
@@ -36,6 +37,7 @@ interface DishForm {
   maxAmount: string
   amountStep: string
   unitPrice: string
+  unitName: string
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
@@ -64,6 +66,7 @@ function toForm(dish: Dish | null, categories: Category[]): DishForm {
       maxAmount: '',
       amountStep: '',
       unitPrice: '',
+      unitName: '',
       isAddOnOnly: false,
       isSoldOut: false,
       openByDefault: false,
@@ -83,6 +86,7 @@ function toForm(dish: Dish | null, categories: Category[]): DishForm {
     maxAmount: str(dish.maxAmount),
     amountStep: str(dish.amountStep),
     unitPrice: str(dish.unitPrice),
+    unitName: dish.unitName ?? '',
     isAddOnOnly: dish.isAddOnOnly,
     isSoldOut: dish.isSoldOut,
     openByDefault: dish.openByDefault,
@@ -108,6 +112,7 @@ function toInput(form: DishForm): DishInput {
     maxAmount: fixed ? null : num(form.maxAmount),
     amountStep: fixed ? null : num(form.amountStep),
     unitPrice: fixed ? null : num(form.unitPrice),
+    unitName: fixed ? null : form.unitName.trim() || null,
     isAddOnOnly: form.isAddOnOnly,
     isSoldOut: form.isSoldOut,
     openByDefault: form.openByDefault,
@@ -206,6 +211,7 @@ export function DishFormPage() {
   const err = (field: string) => ({ 'aria-describedby': `dish-${field}-error` })
   const fieldError = (field: string) => <FieldError errors={errors} field={field} id={`dish-${field}-error`} />
   const weight = form.sellBy === 'Weight'
+  const unitName = form.unitName.trim()
   const parentCandidates = allDishes.filter((d) => !d.isHidden && !d.isAddOnOnly && d.id !== dishId)
 
   return (
@@ -328,32 +334,58 @@ export function DishFormPage() {
             </button>
           </fieldset>
         ) : (
-          <fieldset className="row row--end">
-            <legend>{t(weight ? 'admin.dishes.amountWeight' : 'admin.dishes.amountUnits')}</legend>
-            {(
-              [
-                ['minAmount', 'admin.dishes.min'],
-                ['maxAmount', 'admin.dishes.max'],
-                ['amountStep', 'admin.dishes.step'],
-                ['unitPrice', weight ? 'admin.dishes.kiloPrice' : 'admin.dishes.unitPrice'],
-              ] as const
-            ).map(([field, label]) => (
-              <span key={field} className="field field--narrow">
-                <label htmlFor={`dish-${field}`}>{t(label)}</label>
-                <input
-                  id={`dish-${field}`}
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step={weight || field === 'unitPrice' ? 'any' : '1'}
-                  value={form[field]}
-                  onChange={(e) => set({ [field]: e.target.value })}
-                  {...err(field)}
-                />
-                {fieldError(field)}
+          <>
+            <span className="field">
+              <label htmlFor="dish-unitName">{t('admin.dishes.unitName')}</label>
+              <input
+                id="dish-unitName"
+                maxLength={UNIT_NAME_MAX_LENGTH}
+                placeholder={t(weight ? 'order.kilo' : 'admin.dishes.unit')}
+                value={form.unitName}
+                onChange={(e) => set({ unitName: e.target.value })}
+                aria-describedby="dish-unitName-hint dish-unitName-error"
+              />
+              <span id="dish-unitName-hint" className="hint">
+                {t('admin.dishes.unitNameHint')}
               </span>
-            ))}
-          </fieldset>
+              {fieldError('unitName')}
+            </span>
+            <fieldset className="row row--end">
+              <legend>
+                {unitName
+                  ? t('admin.dishes.amountNamed', { unit: unitName })
+                  : t(weight ? 'admin.dishes.amountWeight' : 'admin.dishes.amountUnits')}
+              </legend>
+              {(
+                [
+                  ['minAmount', t('admin.dishes.min')],
+                  ['maxAmount', t('admin.dishes.max')],
+                  ['amountStep', t('admin.dishes.step')],
+                  [
+                    'unitPrice',
+                    unitName
+                      ? t('admin.dishes.namedUnitPrice', { unit: unitName })
+                      : t(weight ? 'admin.dishes.kiloPrice' : 'admin.dishes.unitPrice'),
+                  ],
+                ] as const
+              ).map(([field, label]) => (
+                <span key={field} className="field field--narrow">
+                  <label htmlFor={`dish-${field}`}>{label}</label>
+                  <input
+                    id={`dish-${field}`}
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step={weight || field === 'unitPrice' ? 'any' : '1'}
+                    value={form[field]}
+                    onChange={(e) => set({ [field]: e.target.value })}
+                    {...err(field)}
+                  />
+                  {fieldError(field)}
+                </span>
+              ))}
+            </fieldset>
+          </>
         )}
 
         <label className="checkbox">
