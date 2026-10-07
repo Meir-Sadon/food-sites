@@ -84,7 +84,7 @@ describe('Order page', () => {
     await user.click(within(meat).getByRole('button', { name: 'הוספה: בשר טחון' }))
     expect(total().getByText('סה"כ: ₪171.5')).toBeInTheDocument()
     expect(total().getByText('3 מנות')).toBeInTheDocument()
-    expect(total().getByText('0 מנות צדדיות')).toBeInTheDocument()
+    expect(total().queryByText(/מנות צדדיות|מנה צדדית/)).not.toBeInTheDocument()
   })
 
   it('totals dishes by amount and side dishes by kind, leaving out side dishes added to a dish', async () => {
@@ -99,7 +99,7 @@ describe('Order page', () => {
     await user.click(within(salad).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.click(within(salad).getByRole('button', { name: 'הוספה: סלט' }))
     await user.click(within(salad).getByRole('button', { name: 'הוספה: סלט' }))
-    expect(total().getByText('0 מנות')).toBeInTheDocument()
+    expect(total().queryByText(/^\d+ מנות$|^מנה אחת$/)).not.toBeInTheDocument()
     expect(total().getByText('2 מנות צדדיות')).toBeInTheDocument()
 
     // Remove the salad; two couscous with a pita added to them: pita as part of the dish counts nowhere.
@@ -109,6 +109,26 @@ describe('Order page', () => {
     await user.click(within(couscous).getByRole('button', { name: 'הוספה: קוסקוס' }))
     await user.click(within(couscous).getByRole('button', { name: 'הוספה: כפיתה' }))
     expect(total().getByText('2 מנות')).toBeInTheDocument()
+    expect(total().getByText('מנה צדדית אחת')).toBeInTheDocument()
+  })
+
+  it('shows each total only once something of its kind is in the order', async () => {
+    const dishes = [menuDish(1, 'קוסקוס', 1), menuDish(3, 'סלט', 1, { isSideDish: true }), menuDish(5, 'קולה', 9)]
+    const { user } = await openOrderPage({
+      'GET /api/menu': () => menu({ categories: [{ id: 1, name: 'עופות' }, { id: 9, name: 'שתיה' }], dishes }),
+    })
+    expect(total().queryByText(/מנות|מנה|שתיה/)).not.toBeInTheDocument()
+
+    await user.click(within(dishCard('קוסקוס')).getByRole('button', { name: /הוספה להזמנה/ }))
+    expect(total().getByText('מנה אחת')).toBeInTheDocument()
+    expect(total().queryByText(/צדדי|שתיה/)).not.toBeInTheDocument()
+
+    await user.click(within(dishCard('סלט')).getByRole('button', { name: /הוספה להזמנה/ }))
+    expect(total().getByText('מנה צדדית אחת')).toBeInTheDocument()
+    expect(total().queryByText(/שתיה/)).not.toBeInTheDocument()
+
+    await user.click(within(dishCard('קוסקוס')).getByRole('button', { name: 'הסרה מההזמנה: קוסקוס' }))
+    expect(total().queryByText('מנה אחת')).not.toBeInTheDocument()
     expect(total().getByText('מנה צדדית אחת')).toBeInTheDocument()
   })
 
@@ -123,7 +143,7 @@ describe('Order page', () => {
     await user.click(within(cola).getByRole('button', { name: 'הוספה: קולה' }))
     await user.click(within(cola).getByRole('button', { name: 'הוספה: קולה' }))
     expect(total().getByText('3 שתיה')).toBeInTheDocument()
-    expect(total().getByText('0 מנות')).toBeInTheDocument()
+    expect(total().queryByText(/^\d+ מנות$|^מנה אחת$/)).not.toBeInTheDocument()
   })
 
   it('stops a free amount at the admin range', async () => {

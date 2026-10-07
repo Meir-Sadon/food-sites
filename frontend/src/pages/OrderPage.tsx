@@ -408,9 +408,9 @@ export function OrderPage() {
 
       <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
         <span className="total-bar__counts">
-          <span>{t('order.itemCount', { count: totals.main })}</span>
-          <span>{t('order.sideDishCount', { count: totals.side })}</span>
-          {drinksCategoryIds.size > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
+          {totals.main > 0 && <span>{t('order.itemCount', { count: totals.main })}</span>}
+          {totals.side > 0 && <span>{t('order.sideDishCount', { count: totals.side })}</span>}
+          {totals.drinks > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
         </span>
         <strong className="numeric" aria-live="polite">
           {t('order.total')}: {formatMoney(total)}
