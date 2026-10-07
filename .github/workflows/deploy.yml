@@ -1,10 +1,12 @@
-# Staged rollout (docs/DEPLOY.md). The canary service auto-deploys once CI passes on main.
-# This waits until the canary's /api/health reports the commit CI tested, then deploys
-# every other site through its Render deploy hook at that same commit.
+# Staged rollout (docs/DEPLOY.md). After CI passes on main, this deploys the canary through its
+# Render deploy hook, waits until its /api/health reports that commit, then deploys every other
+# site through its own deploy hook at the same commit. Every service has Render's auto-deploy off:
+# with "After CI checks pass", Render would also wait for this workflow's own check, which waits
+# for Render, so nothing would ever deploy.
 #
-# Setup: repository variable CANARY_URL (e.g. https://kuskus-shel-ima.onrender.com) and one
-# secret per non-canary site holding its deploy hook URL, named in the matrix below.
-# Without CANARY_URL the workflow does nothing.
+# Setup: repository variable CANARY_URL (e.g. https://kuskus-shel-ima.onrender.com), secret
+# RENDER_DEPLOY_HOOK_CANARY (the canary's deploy hook) and one secret per other site, named in
+# the matrix below. Without CANARY_URL the workflow does nothing.
 name: Deploy
 
 on:
@@ -16,14 +18,15 @@ on:
 
 concurrency:
   group: deploy
-  cancel-in-progress: false
+  # A newer commit supersedes a rollout still waiting on the canary.
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   canary:
-    name: Wait for the canary
+    name: Deploy the canary
     if: vars.CANARY_URL != '' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -32,6 +35,13 @@ jobs:
     steps:
       - id: sha
         run: echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
+      - name: Trigger the canary's deploy hook
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_CANARY }}
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "::error::Secret RENDER_DEPLOY_HOOK_CANARY is not set."; exit 1; fi
+          curl -fsS -X POST "$HOOK&ref=$SHA" > /dev/null
       - name: Canary reports ${{ steps.sha.outputs.sha }}
         env:
           URL: ${{ vars.CANARY_URL }}/api/health

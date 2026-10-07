@@ -2,9 +2,9 @@
 # A service's SITE picks its folder under sites/; Render passes it to the Dockerfile as a build argument.
 # Each service has its own Neon database and secrets. Step-by-step instructions are in docs/DEPLOY.md.
 #
-# Staged rollout: the canary (first service) deploys by itself once CI passes on main.
-# The others have auto-deploy off; .github/workflows/deploy.yml deploys them through
-# their deploy hooks after the canary's /api/health reports the new commit.
+# Staged rollout: every service has auto-deploy off. After CI passes on main,
+# .github/workflows/deploy.yml deploys the canary (first service) through its deploy hook,
+# then the others once the canary's /api/health reports the new commit.
 
 services:
   # Canary
@@ -16,7 +16,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/health
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: "off"
     envVars:
       - key: SITE
         value: kuskus-shel-ima
