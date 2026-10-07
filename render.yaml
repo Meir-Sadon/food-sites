@@ -9,7 +9,7 @@
 services:
   # Canary
   - type: web
-    name: food-sites-kuskus
+    name: kuskus-shel-ima
     runtime: docker
     plan: free
     region: frankfurt
@@ -38,6 +38,9 @@ services:
         generateValue: true
       - key: Database__MigrateOnStartup
         value: "true"
+      # This site's menu already lives in its database; the seed would re-add dishes renamed since.
+      - key: Database__ApplySeeds
+        value: "false"
       - key: ForwardedHeaders__Enabled
         value: "true"
       - key: AuthCookie__SameSite
@@ -46,7 +49,7 @@ services:
         value: "8080"
 
   - type: web
-    name: food-sites-grape-leaves
+    name: grape-leaves-eliel
     runtime: docker
     plan: free
     region: frankfurt
@@ -75,6 +78,9 @@ services:
         generateValue: true
       - key: Database__MigrateOnStartup
         value: "true"
+      # This site's menu already lives in its database; the seed would re-add dishes renamed since.
+      - key: Database__ApplySeeds
+        value: "false"
       - key: ForwardedHeaders__Enabled
         value: "true"
       - key: AuthCookie__SameSite
