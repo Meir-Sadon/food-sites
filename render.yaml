@@ -1,16 +1,23 @@
-# Render Blueprint: deploys the site and API as one free web service.
-# Step-by-step instructions are in docs/DEPLOY.md.
+# Render Blueprint: one free web service per site, all built from the same Dockerfile.
+# A service's SITE picks its folder under sites/; Render passes it to the Dockerfile as a build argument.
+# Each service has its own Neon database and secrets. Step-by-step instructions are in docs/DEPLOY.md.
+#
+# Staged rollout: the canary (first service) deploys by itself once CI passes on main.
+# The others have auto-deploy off; .github/workflows/deploy.yml deploys them through
+# their deploy hooks after the canary's /api/health reports the new commit.
+
 services:
+  # Canary
   - type: web
-    name: kuskus-shel-ima
+    name: food-sites-kuskus
     runtime: docker
     plan: free
     region: frankfurt
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
     envVars:
-      # The folder under sites/ this service builds; Render passes it to the Dockerfile as a build argument.
       - key: SITE
         value: kuskus
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
@@ -19,8 +26,50 @@ services:
       # Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
       - key: Admin__PasswordHash
         sync: false
-      # cloudinary://<api_key>:<api_secret>@<cloud_name>
+      # cloudinary://<api_key>:<api_secret>@<cloud_name>; empty disables picture uploads
       - key: Cloudinary__Url
+        sync: false
+      # Both empty: WhatsApp messages are only logged
+      - key: WhatsApp__Token
+        sync: false
+      - key: WhatsApp__PhoneNumberId
+        sync: false
+      - key: Jwt__Secret
+        generateValue: true
+      - key: Database__MigrateOnStartup
+        value: "true"
+      - key: ForwardedHeaders__Enabled
+        value: "true"
+      - key: AuthCookie__SameSite
+        value: Lax
+      - key: PORT
+        value: "8080"
+
+  - type: web
+    name: food-sites-grape-leaves
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: SITE
+        value: grape-leaves
+      # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
+      - key: ConnectionStrings__Default
+        sync: false
+      # Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
+      - key: Admin__PasswordHash
+        sync: false
+      # cloudinary://<api_key>:<api_secret>@<cloud_name>; empty disables picture uploads
+      - key: Cloudinary__Url
+        sync: false
+      # Both empty: WhatsApp messages are only logged
+      - key: WhatsApp__Token
+        sync: false
+      - key: WhatsApp__PhoneNumberId
         sync: false
       - key: Jwt__Secret
         generateValue: true

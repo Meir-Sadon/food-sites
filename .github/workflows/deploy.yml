@@ -1,0 +1,69 @@
+# Staged rollout (docs/DEPLOY.md). The canary service auto-deploys once CI passes on main.
+# This waits until the canary's /api/health reports the commit CI tested, then deploys
+# every other site through its Render deploy hook at that same commit.
+#
+# Setup: repository variable CANARY_URL (e.g. https://food-sites-kuskus.onrender.com) and one
+# secret per non-canary site holding its deploy hook URL, named in the matrix below.
+# Without CANARY_URL the workflow does nothing.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    name: Wait for the canary
+    if: vars.CANARY_URL != '' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - id: sha
+        run: echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
+      - name: Canary reports ${{ steps.sha.outputs.sha }}
+        env:
+          URL: ${{ vars.CANARY_URL }}/api/health
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          # A free service may be asleep; each request also wakes it.
+          for i in $(seq 1 50); do
+            commit=$(curl -fsS --max-time 60 "$URL" | jq -r '.commit // empty' || true)
+            echo "attempt $i: canary runs ${commit:-unknown}"
+            [ "$commit" = "$SHA" ] && exit 0
+            sleep 30
+          done
+          echo "::error::The canary did not report $SHA. The other sites were not deployed."
+          exit 1
+
+  sites:
+    name: Deploy ${{ matrix.site }}
+    needs: canary
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # One line per non-canary site: its folder and the secret holding its deploy hook.
+          - site: grape-leaves
+            hook: RENDER_DEPLOY_HOOK_GRAPE_LEAVES
+    steps:
+      - name: Trigger the deploy hook
+        env:
+          HOOK: ${{ secrets[matrix.hook] }}
+          SHA: ${{ needs.canary.outputs.sha }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "::warning::Secret ${{ matrix.hook }} is not set; ${{ matrix.site }} was not deployed."; exit 0; fi
+          curl -fsS -X POST "$HOOK&ref=$SHA" > /dev/null
+          echo "Deploy of ${{ matrix.site }} at $SHA requested."

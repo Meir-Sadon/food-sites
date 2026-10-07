@@ -1,10 +1,28 @@
 # Publishing the site (free hosting)
 
-The site and API run as **one free Render web service**, built from the `Dockerfile` at the repo root and described in `render.yaml`. The database is a **free Neon PostgreSQL**, and pictures go to a **free Cloudinary** account.
+Each site (a folder under `sites/`) runs as **its own free Render web service**, built from the `Dockerfile` at the repo root with that folder as `SITE`, and listed in `render.yaml`. Each site has **its own free Neon database** and its own secrets; pictures go to a **free Cloudinary** account.
 
-When you're done, the site lives at an address like `https://kuskus-shel-ima.onrender.com`, with HTTPS included. A real domain can be connected later (see the end of this guide).
+When you're done, a site lives at an address like `https://food-sites-kuskus.onrender.com`, with HTTPS included. A real domain can be connected later (see the end of this guide).
 
-Every merge to the `main` branch redeploys the site automatically.
+## How a merge reaches the sites
+
+1. CI runs on `main` (tests, migrations check, and a production image per site).
+2. The **canary** (the first service in `render.yaml`) deploys by itself once CI passes (`autoDeployTrigger: checksPass`).
+3. `.github/workflows/deploy.yml` waits until the canary's `/api/health` reports the new commit, then deploys every other site at the same commit through its Render **deploy hook**. If the canary never comes up, the others keep running the previous version.
+
+The workflow needs, in GitHub **Settings → Secrets and variables → Actions**:
+- variable `CANARY_URL`: the canary's address, e.g. `https://food-sites-kuskus.onrender.com`
+- one secret per other site with its deploy hook (Render: service → **Settings → Deploy Hook**), named in the workflow's matrix, e.g. `RENDER_DEPLOY_HOOK_GRAPE_LEAVES`
+
+Migrations run on each site's start, so a migration must work with the code before it: add columns as nullable or with defaults, and drop old ones only in a later release (expand, then contract).
+
+## Adding a site
+
+1. Its folder under `sites/` (copy `sites/_template/`).
+2. A service entry in `render.yaml` with `SITE` set to the folder and `autoDeployTrigger: "off"`, and a line in the matrix of `.github/workflows/deploy.yml`.
+3. A Neon project and the service's secrets (steps 1 to 4 below), and the deploy hook secret.
+
+Before adding a third site, check the free tiers: free Render services share a monthly allowance of instance hours, and Neon limits the number of free projects.
 
 ## Before you start
 
@@ -14,7 +32,7 @@ Every merge to the `main` branch redeploys the site automatically.
 ## 1. Database: Neon
 
 1. Sign up at https://neon.tech (signing in with GitHub works).
-2. Create a project. Name: `kuskus`. Region: **AWS Europe Central (Frankfurt)**, which is closest to Israel and to the Render server.
+2. Create a project per site, named after the site (e.g. `food-sites-kuskus`). Region: **AWS Europe Central (Frankfurt)**, which is closest to Israel and to the Render server.
 3. On the project dashboard, click **Connect**. You get a connection string like this:
    ```
    postgresql://neondb_owner:AbC123xyz@ep-cool-name-123456.eu-central-1.aws.neon.tech/neondb?sslmode=require
@@ -43,15 +61,16 @@ Copy the line it prints (it starts with `AQAAAA`).
 
 ## 4. Hosting: Render
 
-1. Sign up at https://render.com with **GitHub**, and let Render see the `kuskus-shel-ima` repository.
+1. Sign up at https://render.com with **GitHub**, and let Render see the `food-sites` repository.
 2. Click **New → Blueprint**, pick the repository, and keep the `main` branch.
-3. Render reads `render.yaml` and asks for three values:
+3. Render reads `render.yaml` and asks, per service, for these values:
 
    | Setting | What to paste |
    | --- | --- |
    | `ConnectionStrings__Default` | The connection string from step 1 |
    | `Admin__PasswordHash` | The hash from step 3 |
    | `Cloudinary__Url` | The Cloudinary value from step 2, or leave it empty |
+   | `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | From Meta's WhatsApp Cloud API, or leave both empty (messages are only logged) |
 
    Render generates the login-signing secret (`Jwt__Secret`) itself. The `SITE` value in `render.yaml` picks the folder under `sites/` the service is built from; Render passes it to the `Dockerfile` as a build argument.
 4. Click **Apply**. The first build takes about 5–10 minutes. When the service shows **Live**, open the address shown at the top of the service page.
