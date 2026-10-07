@@ -2,7 +2,7 @@
 # This waits until the canary's /api/health reports the commit CI tested, then deploys
 # every other site through its Render deploy hook at that same commit.
 #
-# Setup: repository variable CANARY_URL (e.g. https://food-sites-kuskus.onrender.com) and one
+# Setup: repository variable CANARY_URL (e.g. https://kuskus-shel-ima.onrender.com) and one
 # secret per non-canary site holding its deploy hook URL, named in the matrix below.
 # Without CANARY_URL the workflow does nothing.
 name: Deploy
