@@ -7,7 +7,7 @@ namespace FoodSite.Api.Data.Migrations
 {
     /// <inheritdoc />
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261007210000_OrderPaidWith")]
+    [Migration("20261007220000_OrderPaidWith")]
     public partial class OrderPaidWith : Migration
     {
         /// <inheritdoc />
