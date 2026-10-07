@@ -1,6 +1,15 @@
-# הקוסקוס של אמא
+# Food sites
 
-A small Hebrew ordering website for a home food business. Clients order admin-configured dishes for configured supply days; the admin manages the menu, orders and reports from a password-protected area.
+One codebase for the Hebrew ordering websites of small home food businesses. Clients order dishes for the business's supply days; the owner manages the menu, orders and reports in a password-protected admin area.
+
+Every business gets **its own deployment**: its own server, database, admin password and branding, built from this same code. A feature added here reaches every site on its next deploy.
+
+| Site | Business | Status |
+| --- | --- | --- |
+| `kuskus` | הקוסקוס של אמא | Code imported from [kuskus-shel-ima](https://github.com/Meir-Sadon/kuskus-shel-ima) |
+| `grape-leaves` | עלי גפן - אליאל | Branding to be moved in from [grape-leaves-eliel](https://github.com/Meir-Sadon/grape-leaves-eliel) |
+
+> **Migration in progress.** The code still uses the `Kuskus.*` names of the site it came from. The phases, decisions and target layout are in [`docs/MIGRATION-PLAN.md`](docs/MIGRATION-PLAN.md); the commands below change with Phase 1.
 
 ## Features
 
@@ -33,10 +42,13 @@ A small Hebrew ordering website for a home food business. Clients order admin-co
 ```
 /frontend    React client site and admin area
 /backend     ASP.NET Core API, EF Core migrations, tests
-/docs        Project plan, decisions and deploy guide
+/docs        Product spec, migration plan, deploy guide
+/sites       One folder per business: config, theme, logo, texts (from Phase 2)
 Dockerfile   Production image: frontend and API in one container
-render.yaml  Render deployment
+render.yaml  Render deployment (one service per site, from Phase 5)
 ```
+
+Related repo (planned): `food-sites-console`, a private console for managing all the sites: feature toggles, reports, recommendations, comments and bugs.
 
 ## Getting started
 
@@ -62,7 +74,7 @@ Picture uploads need a Cloudinary account: put its `CLOUDINARY_URL` (from the Cl
 
 ### Cloud sessions (Claude Code on the web)
 
-Each cloud session starts in a fresh container, so a .NET SDK installed in one session is not there in the next, and only Node.js is pre-installed. Without the SDK the backend can't be built or tested (`dotnet: command not found`) and only the frontend checks (`npm test`, `npm run build`) can run. To have .NET in every session, add its install command to the environment's setup script (environment menu in the session title bar, then Edit). The container's network policy must also allow the .NET download hosts (`dot.net`, `builds.dotnet.microsoft.com`).
+Each cloud session starts in a fresh container with only Node.js pre-installed. The repo's session-start hook (`.claude/hooks/session-start.sh`) installs the .NET 10 SDK from Ubuntu's package archive, restores packages, installs `dotnet-ef` and the frontend packages, and starts Docker for the backend tests. `/check` runs every check.
 
 ### Backend
 ```bash
@@ -146,9 +158,16 @@ cd backend && dotnet test     # needs Docker: runs against a real PostgreSQL con
 cd frontend && npm test
 ```
 
-## Project plan
+## Documents
 
-The full plan, decisions and build phases are in [`docs/PLAN.md`](docs/PLAN.md).
+- [`docs/MIGRATION-PLAN.md`](docs/MIGRATION-PLAN.md): how this repo becomes the shared platform, the console, and ideas for later
+- [`docs/PLAN.md`](docs/PLAN.md): product spec and decisions (written for the first site)
+- [`docs/DEPLOY.md`](docs/DEPLOY.md): deploying a site to Render, Neon and Cloudinary
+- [`CLAUDE.md`](CLAUDE.md): commands and architecture notes for Claude Code and other contributors
+
+## Contributing
+
+Work on a branch and open a pull request; CI runs the frontend lint, build and tests, the backend build and tests, and a migration snapshot check. Use the issue templates for bugs, features and new sites, and say which sites a change affects.
 
 ## License
 

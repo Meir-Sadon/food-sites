@@ -2,7 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Hebrew (RTL) ordering site for a home food business: a React/Vite frontend (`frontend/`) and an ASP.NET Core (.NET 10) + EF Core + PostgreSQL API (`backend/`). The product spec and decisions are in `docs/PLAN.md`; deployment in `docs/DEPLOY.md`. Commit and PR text is written in English; user-facing text is Hebrew.
+One codebase for the Hebrew (RTL) ordering sites of several home food businesses: a React/Vite frontend (`frontend/`) and an ASP.NET Core (.NET 10) + EF Core + PostgreSQL API (`backend/`). Each business is deployed separately (its own Render service, Neon database and secrets) from the same code. The product spec and decisions are in `docs/PLAN.md`; deployment in `docs/DEPLOY.md`. Commit and PR text is written in English; user-facing text is Hebrew.
+
+## Platform status and rules
+
+This repo started as a copy of `kuskus-shel-ima` (history imported) and is being made generic. **Read `docs/MIGRATION-PLAN.md` first**: it lists the phases, which are done, and the target layout (`sites/<site-id>/` per business). Until Phase 1 lands, the code still uses the `Kuskus.*` names described below; update this file in the same PR that changes them.
+
+- Shared code never names a business or checks which site it runs as (`if (siteId == ...)`). Business-specific values (name, texts, palette, logo, WhatsApp template names, seeds) belong in `sites/<site-id>/`; behaviour only some businesses want goes behind a feature flag, off by default.
+- Every migration reaches every site: make it backward compatible (expand, then contract), and keep `AppDbContextModelSnapshot.cs` in sync.
+- This repo is public. Never commit secrets, client data, or a business's photos and texts collected for a demo; those go to Cloudinary or stay local.
+- Mark a phase's checkboxes in `docs/MIGRATION-PLAN.md` in the PR that completes them.
 
 ## Commands
 
