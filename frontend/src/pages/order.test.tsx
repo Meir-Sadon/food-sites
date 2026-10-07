@@ -170,12 +170,35 @@ describe('Order page', () => {
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
   })
 
+  it('starts with the first of several service cities, offers them all, and names them in the warning', async () => {
+    const { user } = await openOrderPage({ 'GET /api/site': () => site({ serviceCities: ['אשדוד', 'אשקלון', 'שדרות'] }) })
+    const city = screen.getByLabelText('עיר')
+    await vi.waitFor(() => expect(city).toHaveValue('אשדוד'))
+    const options = [...(city as HTMLInputElement).list!.options].map((o) => o.value)
+    expect(options).toEqual(['אשדוד', 'אשקלון', 'שדרות'])
+
+    await user.clear(city)
+    await user.type(city, 'אשקלון')
+    expect(screen.queryByText(/אנחנו עובדים רק ב/)).not.toBeInTheDocument()
+    await user.clear(city)
+    await user.type(city, 'חיפה')
+    expect(screen.getByText(/אנחנו עובדים רק באשדוד, אשקלון ושדרות\./)).toBeInTheDocument()
+  })
+
+  it('never warns when every city is served', async () => {
+    const { user } = await openOrderPage({ 'GET /api/site': () => site({ serviceCities: [] }) })
+    const city = screen.getByLabelText('עיר')
+    expect(city).toHaveValue('')
+    await user.type(city, 'חיפה')
+    expect(screen.queryByText(/אנחנו עובדים רק ב/)).not.toBeInTheDocument()
+  })
+
   it('starts the city as אשקלון and warns when another city is typed', async () => {
     const { api, user } = await openOrderPage({
       'POST /api/orders': () => ({ ...confirmation, needsReview: true }),
     })
     const city = screen.getByLabelText('עיר')
-    expect(city).toHaveValue('אשקלון')
+    await vi.waitFor(() => expect(city).toHaveValue('אשקלון'))
     expect(screen.queryByText(/אנחנו עובדים רק באשקלון/)).not.toBeInTheDocument()
 
     await user.clear(city)

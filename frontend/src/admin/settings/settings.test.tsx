@@ -40,7 +40,22 @@ describe('General settings', () => {
       kashrutText: 'בהשגחת הרב',
       paymentPhone: '050-1234567',
       minimumOrderAmount: null,
+      serviceCities: 'אשקלון',
     })
+  })
+
+  it('saves the service cities as typed', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    const cities = within(form).getByLabelText('ערי משלוח')
+    expect(cities).toHaveValue('אשקלון')
+    await user.type(cities, ', אשדוד')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await within(form).findByRole('status')).toHaveTextContent('נשמר.')
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ serviceCities: 'אשקלון, אשדוד' })
   })
 
   it('saves the minimum order amount, and clearing it sends null', async () => {

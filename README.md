@@ -21,7 +21,7 @@ Every business gets **its own deployment**: its own server, database, admin pass
 - Recommendations and profile pages
 
 **Admin area**
-- General settings: supply days, order cutoff, closed dates, background picture
+- General settings: supply days, order cutoff, closed dates, background picture, delivery cities
 - Categories and dishes: pictures, options, prices, add-on links, sold-out toggle
 - Orders by supply day with status, payment flag and a cooking summary
 - Contacts and WhatsApp notification list

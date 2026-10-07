@@ -22,7 +22,8 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
         string? PaymentPhone,
         decimal? MinimumOrderAmount,
         ContactDto Contact,
-        IReadOnlyList<string> WhatsAppPhones);
+        IReadOnlyList<string> WhatsAppPhones,
+        IReadOnlyList<string> ServiceCities);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -66,7 +67,8 @@ public class PublicController(AppDbContext db, SiteClock clock) : PublicControll
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
             s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
-            whatsAppPhones);
+            whatsAppPhones,
+            ServiceArea.Parse(s.ServiceCities));
     }
 
     [HttpGet("menu")]

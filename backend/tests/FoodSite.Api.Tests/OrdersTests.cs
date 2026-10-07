@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using static FoodSite.Api.Controllers.Admin.CategoriesController;
 using static FoodSite.Api.Controllers.Admin.DishesController;
 using static FoodSite.Api.Controllers.Admin.OrdersAdminController;
+using static FoodSite.Api.Controllers.Admin.SettingsController;
 using static FoodSite.Api.Controllers.Admin.SupplyDaysController;
 using static FoodSite.Api.Controllers.OrdersController;
 using static FoodSite.Api.Controllers.PublicController;
@@ -317,6 +318,20 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         var otherDate = (await Menu()).SupplyDates[1].Date.ToString("yyyy-MM-dd");
         var home = await (await Place(await ValidOrder(o => { o["city"] = " אשקלון "; o["supplyDate"] = otherDate; }))).Read<ConfirmationDto>();
         Assert.False(home.NeedsReview);
+    }
+
+    [Fact]
+    public async Task Every_configured_service_city_is_served_and_the_client_hears_which()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        var cities = settings with { ServiceCities = "אשקלון, אשדוד, שדרות" };
+        (await _admin.PutAsJsonAsync("/api/admin/settings", cities)).EnsureSuccessStatusCode();
+
+        var ashdod = await (await Place(await ValidOrder(o => o["city"] = "אשדוד"))).Read<ConfirmationDto>();
+        Assert.False(ashdod.NeedsReview);
+        var haifa = await (await Place(await ValidOrder(o => o["city"] = "חיפה"))).Read<ConfirmationDto>();
+        Assert.True(haifa.NeedsReview);
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("משלוחים רק באשקלון, אשדוד ושדרות"));
     }
 
     [Fact]

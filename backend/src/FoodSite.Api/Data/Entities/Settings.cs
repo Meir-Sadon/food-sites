@@ -23,6 +23,12 @@ public class Settings
     /// <summary>Phone number for manual Bit/PayBox transfers.</summary>
     public string? PaymentPhone { get; set; }
 
+    /// <summary>
+    /// The cities deliveries go to, comma-separated (see <c>ServiceArea</c>). Null until seeded from the
+    /// site's <c>site.json</c> on startup; empty means every city is served.
+    /// </summary>
+    public string? ServiceCities { get; set; }
+
     public string? AdminPasswordHash { get; set; }
 
     // Main contact

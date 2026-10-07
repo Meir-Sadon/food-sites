@@ -74,6 +74,20 @@ export function GeneralSection() {
           </fieldset>
           <FieldError errors={errors} field="deliveryEnabled" id="settings-deliveryEnabled-error" />
           {text('deliveryAreaText', t('admin.settings.deliveryArea'))}
+          <span className="field">
+            <label htmlFor="settings-serviceCities">{t('admin.settings.serviceCities')}</label>
+            <input
+              id="settings-serviceCities"
+              value={settings.serviceCities}
+              maxLength={500}
+              aria-describedby="settings-serviceCities-hint settings-serviceCities-error"
+              onChange={(e) => change({ serviceCities: e.target.value })}
+            />
+            <span id="settings-serviceCities-hint" className="hint">
+              {t('admin.settings.serviceCitiesHint')}
+            </span>
+            <FieldError errors={errors} field="serviceCities" id="settings-serviceCities-error" />
+          </span>
           {text('deliveryFeeText', t('admin.settings.deliveryFee'))}
           {text('kashrutText', t('admin.settings.kashrut'))}
           {text('paymentPhone', t('admin.settings.paymentPhone'), false)}

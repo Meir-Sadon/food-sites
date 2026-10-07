@@ -9,11 +9,12 @@ namespace FoodSite.Api.Orders;
 /// </summary>
 public static class OrderMessages
 {
-    public static string ClientConfirmation(Order order, string? paymentPhone, string? siteName = null)
+    public static string ClientConfirmation(
+        Order order, string? paymentPhone, string? siteName = null, IReadOnlyList<string>? serviceCities = null)
     {
         var text = $"{Heading(siteName)}תודה, ההזמנה שלך התקבלה!\n{Details(order)}";
         if (order.NeedsReview)
-            text += $"\nאנחנו משלוחים רק ב{AddressFormat.ServiceCity}. ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור.";
+            text += $"\nאנחנו משלוחים רק ב{ServiceArea.Describe(serviceCities ?? [])}. ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור.";
         if (order.PaymentMethod == PaymentMethod.Transfer && !string.IsNullOrWhiteSpace(paymentPhone))
             text += $"\nלהעברת התשלום ב־Bit / PayBox: {paymentPhone}";
         else if (order.PaymentMethod == PaymentMethod.OnDelivery)

@@ -106,6 +106,7 @@ How it was built, where it differs from the outline above:
 - The image folders (`<siteId>/dishes`, `<siteId>/background`) and the report file name also come from the site id.
 - The API reads the business name from the site's `i18n/he.json` (`app.name`) and starts every WhatsApp message with it.
 - Without `SITE`, local runs and tests use `_template`; the Docker images refuse to build without it.
+- The delivery cities (hard-coded Ashkelon before) are an admin setting, a comma-separated list. `site.json` → `serviceCities` gives the first value; an empty list means every city is served.
 
 ### Phase 3 — Grape leaves as the second site
 - [ ] Create `sites/grape-leaves/` from `grape-leaves-eliel`: palette (vine green and grape plum, plus its extra `--color-grape` variable), `logo.svg`, favicon, 🍇, and its three Hebrew texts.

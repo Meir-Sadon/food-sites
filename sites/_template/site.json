@@ -2,6 +2,7 @@
   "id": "template",
   "timeZone": "Asia/Jerusalem",
   "language": "he",
+  "serviceCities": "",
   "emoji": "🍽️",
   "whatsApp": {
     "orderConfirmationTemplate": "template_order_confirmation",

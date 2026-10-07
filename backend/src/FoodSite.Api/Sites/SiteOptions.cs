@@ -24,6 +24,12 @@ public partial class SiteOptions
     /// <summary>Template names from <c>site.json</c>; when missing they are built from <see cref="Id"/>.</summary>
     public SiteWhatsAppTemplates WhatsApp { get; set; } = new();
 
+    /// <summary>
+    /// The cities deliveries go to, comma-separated. Copied into Settings on startup while Settings has none;
+    /// the admin edits them there afterwards.
+    /// </summary>
+    public string? ServiceCities { get; set; }
+
     /// <summary>Menu seed files, relative to <see cref="Directory"/>, applied on every start without undoing admin changes.</summary>
     public List<string> Seed { get; set; } = [];
 

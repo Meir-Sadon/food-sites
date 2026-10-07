@@ -488,6 +488,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("PickupEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ServiceCities")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("Settings");

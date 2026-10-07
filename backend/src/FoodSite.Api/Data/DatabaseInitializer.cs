@@ -24,6 +24,7 @@ public static class DatabaseInitializer
             await db.Database.MigrateAsync();
 
         await SeedAdminPasswordAsync(db, admin.PasswordHash, logger);
+        await SeedServiceCitiesAsync(db, site.ServiceCities, logger);
 
         if (!migrate || !applySeeds || site.Seed.Count == 0)
             return;
@@ -85,6 +86,18 @@ public static class DatabaseInitializer
             await db.SaveChangesAsync();
             logger.LogInformation("Seeded {Count} dishes into the '{Category}' category.", added, seedCategory.Name);
         }
+    }
+
+    /// <summary>Copies the site's service cities into Settings once; the admin's value wins afterwards.</summary>
+    public static async Task SeedServiceCitiesAsync(AppDbContext db, string? configured, ILogger logger)
+    {
+        var settings = await db.Settings.SingleAsync(s => s.Id == Entities.Settings.SingletonId);
+        if (settings.ServiceCities is not null || configured is null)
+            return;
+
+        settings.ServiceCities = Orders.ServiceArea.Format(Orders.ServiceArea.Parse(configured));
+        await db.SaveChangesAsync();
+        logger.LogInformation("Service cities seeded from the site: {Cities}", settings.ServiceCities);
     }
 
     public static async Task SeedAdminPasswordAsync(AppDbContext db, string? configuredHash, ILogger logger)

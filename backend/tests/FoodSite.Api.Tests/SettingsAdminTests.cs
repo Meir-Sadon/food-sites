@@ -20,8 +20,33 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
         return Task.CompletedTask;
     }
 
-    private static object Input(bool delivery = true, bool pickup = true, string? phone = "050-1234567", string? kashrut = "כשר", decimal? minimum = 80m) =>
-        new { deliveryEnabled = delivery, pickupEnabled = pickup, deliveryAreaText = "  חיפה והקריות ", deliveryFeeText = "", kashrutText = kashrut, paymentPhone = phone, minimumOrderAmount = minimum };
+    private static object Input(bool delivery = true, bool pickup = true, string? phone = "050-1234567", string? kashrut = "כשר", decimal? minimum = 80m, string? cities = "אשקלון") =>
+        new { deliveryEnabled = delivery, pickupEnabled = pickup, deliveryAreaText = "  חיפה והקריות ", deliveryFeeText = "", kashrutText = kashrut, paymentPhone = phone, minimumOrderAmount = minimum, serviceCities = cities };
+
+    [Fact]
+    public async Task Service_cities_start_from_the_site_and_are_saved_as_a_clean_list()
+    {
+        Assert.Equal(ApiFactory.ServiceCity, (await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).ServiceCities);
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input(cities: " אשקלון ,אשדוד,, אשדוד ,שדרות"))).Read<SettingsDto>();
+        Assert.Equal("אשקלון, אשדוד, שדרות", saved.ServiceCities);
+        var site = await _factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal(["אשקלון", "אשדוד", "שדרות"], site.ServiceCities);
+
+        // Left out by an older client: unchanged. Emptied: every city is served, and a restart doesn't re-seed it.
+        Assert.Equal("אשקלון, אשדוד, שדרות", (await (await _admin.PutAsJsonAsync("/api/admin/settings", Input(cities: null))).Read<SettingsDto>()).ServiceCities);
+        Assert.Equal("", (await (await _admin.PutAsJsonAsync("/api/admin/settings", Input(cities: " , "))).Read<SettingsDto>()).ServiceCities);
+        await using var db = _factory.CreateDbContext();
+        await Data.DatabaseInitializer.SeedServiceCitiesAsync(db, ApiFactory.ServiceCity, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+        Assert.Equal("", (await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).ServiceCities);
+    }
+
+    [Fact]
+    public async Task A_service_city_longer_than_an_address_part_is_rejected()
+    {
+        var response = await _admin.PutAsJsonAsync("/api/admin/settings", Input(cities: "אשקלון, " + new string('א', 101)));
+        await response.AssertInvalid("ServiceCities", "tooLong");
+    }
 
     [Theory]
     [InlineData("GET", "/api/admin/settings")]
