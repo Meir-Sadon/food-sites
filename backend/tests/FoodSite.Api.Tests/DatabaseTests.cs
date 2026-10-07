@@ -76,10 +76,11 @@ public sealed class DatabaseTests : IDisposable
         await DatabaseInitializer.SeedDrinksAsync(db, NullLogger.Instance);
 
         db.ChangeTracker.Clear();
-        var category = await db.Categories.Include(c => c.Dishes).SingleAsync();
+        var category = await db.Categories.Include(c => c.Dishes).ThenInclude(d => d.Images).SingleAsync();
         Assert.Equal(DatabaseInitializer.DrinksCategoryName, category.Name);
         Assert.Equal(11, category.Dishes.Count);
         Assert.All(category.Dishes, d => Assert.Equal(DatabaseInitializer.DrinkPrice, d.UnitPrice));
+        Assert.All(category.Dishes, d => Assert.StartsWith("/drinks/", Assert.Single(d.Images).Url));
     }
 
     [Fact]
