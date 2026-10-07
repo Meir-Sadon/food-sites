@@ -245,8 +245,7 @@ describe('Order page for a logged-in client', () => {
     const { user } = open('/', { ...loggedIn, 'GET /api/account/favorites': () => [favorite, gone] })
     await screen.findByRole('heading', { level: 2, name: 'עופות' })
 
-    await user.click(await screen.findByText('המועדפים שלי'))
-    await user.click(screen.getByRole('button', { name: 'שישי' }))
+    await user.click(await screen.findByRole('button', { name: 'שישי' }))
 
     expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪135/)).toBeInTheDocument()
 
@@ -254,6 +253,26 @@ describe('Order page for a logged-in client', () => {
     await user.click(screen.getByRole('button', { name: 'ישן' }))
     await user.click(within(await screen.findByRole('dialog', { name: 'להחליף את ההזמנה הנוכחית?' })).getByRole('button', { name: 'כן, להחליף' }))
     expect(screen.getByText(/מנה אחת כבר לא זמינה והוסרה/)).toBeInTheDocument()
+  })
+
+  it('describes each quick fill by what it holds', async () => {
+    open('/', loggedIn)
+
+    const last = await screen.findByRole('button', { name: 'ההזמנה האחרונה' })
+    expect(last).toHaveAccessibleDescription(/02\/10\/2026 ·\s₪116 עוף בתנור$/)
+    expect(await screen.findByRole('button', { name: 'שישי' })).toHaveAccessibleDescription('בשר טחון')
+  })
+
+  it('hints at saving a favorite when there are none yet', async () => {
+    open('/', { ...loggedIn, 'GET /api/account/favorites': () => [] })
+    expect(await screen.findByText(/עוד אין מועדפים/)).toBeInTheDocument()
+  })
+
+  it('shows no quick fill to a client with no orders and no favorites', async () => {
+    open('/', { ...loggedIn, 'GET /api/account/orders': () => [], 'GET /api/account/favorites': () => [] })
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'מילוי מהיר של ההזמנה' })).not.toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: 'ההזמנה האחרונה' })).not.toBeInTheDocument()
   })
 
   it('asks before replacing an order that already has dishes, and keeps it on "no"', async () => {
@@ -435,7 +454,7 @@ describe('Features the site has turned off', () => {
     const { api } = open('/', featuresOff)
 
     expect(await screen.findByRole('button', { name: 'ההזמנה האחרונה' })).toBeInTheDocument()
-    expect(screen.queryByText('המועדפים שלי')).not.toBeInTheDocument()
+    expect(screen.queryByText(/מועדף/)).not.toBeInTheDocument()
     expect(api.sent('GET', '/api/account/favorites')).toHaveLength(0)
   })
 })
