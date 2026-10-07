@@ -103,6 +103,17 @@ public sealed class SiteFolderTests : IDisposable
         }
     }
 
+    [Fact]
+    public void Every_feature_a_site_lists_is_known()
+    {
+        var sites = Path.Combine(RepoRoot(), "sites");
+        foreach (var siteJson in Directory.GetFiles(sites, "site.json", SearchOption.AllDirectories))
+        {
+            var site = new ConfigurationBuilder().AddJsonFile(siteJson).Build().Get<SiteOptions>()!;
+            Assert.All(site.Features.Keys, name => Assert.True(Features.IsKnown(name), $"{siteJson}: unknown feature {name}"));
+        }
+    }
+
     [Theory]
     [InlineData("kitchen", true)]
     [InlineData("sample-site", true)]

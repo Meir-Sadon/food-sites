@@ -35,7 +35,11 @@ if (!SiteOptions.IsValidId(site.Id))
     throw new InvalidOperationException(
         "Site:Id must be set (from sites/<id>/site.json via Site:Directory, or Site__Id) "
         + "and use only lowercase letters, digits and dashes.");
+if (site.Features.Keys.FirstOrDefault(name => !Features.IsKnown(name)) is { } unknownFeature)
+    throw new InvalidOperationException(
+        $"Site:Features:{unknownFeature} is not a feature. Known features: {string.Join(", ", Features.All)}.");
 builder.Services.Configure<SiteOptions>(config.GetSection(SiteOptions.Section));
+builder.Services.AddScoped<FeatureFlags>();
 // Cookie names, the JWT issuer and the WhatsApp template names are built from the site id unless configured.
 builder.Services.PostConfigure<JwtOptions>(o => o.UseSiteDefaults(site));
 builder.Services.PostConfigure<FoodSite.Api.Auth.CookieOptions>(o => o.UseSiteDefaults(site));

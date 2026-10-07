@@ -6,20 +6,26 @@ import { siteApi } from '../api/site'
 import { Loading } from '../admin/ui'
 import { useLoad } from '../admin/hooks'
 import { useAccount } from '../account/useAccount'
+import { useFeature, useSiteSettled } from '../site/useSite'
 import { loadDraft, saveDraft } from '../order/draft'
 import { emptyOrder, selectionsFromHistory } from '../order/model'
 import { DetailsSection } from '../profile/DetailsSection'
 import { FavoritesSection, RecommendationsSection } from '../profile/FavoritesSection'
 import { HistorySection } from '../profile/HistorySection'
 
+/** Stands in for a list the site's features leave out. */
+const nothing = () => Promise.resolve([])
+
 export function ProfilePage() {
   const { t } = useTranslation()
   const { user, loading, setUser } = useAccount()
+  // Which sections to show depends on the site's features, so wait for them.
+  const siteSettled = useSiteSettled()
 
   return (
     <section className="stack">
       <h1>{t('pages.profile.title')}</h1>
-      {loading ? (
+      {loading || !siteSettled ? (
         <Loading />
       ) : !user ? (
         <p>
@@ -35,8 +41,10 @@ export function ProfilePage() {
 function ProfileContent({ user, onSaved }: { user: Profile; onSaved: (profile: Profile) => void }) {
   const navigate = useNavigate()
   const orders = useLoad(accountApi.orders)
-  const favorites = useLoad(accountApi.favorites)
-  const recommendations = useLoad(accountApi.recommendations)
+  const favoritesOn = useFeature('favorites')
+  const recommendationsOn = useFeature('recommendations')
+  const favorites = useLoad(favoritesOn ? accountApi.favorites : nothing)
+  const recommendations = useLoad(recommendationsOn ? accountApi.recommendations : nothing)
   const [dishNames, setDishNames] = useState(() => new Map<number, string>())
 
   // Dish names for the favorites' descriptions come from the current menu.
@@ -70,12 +78,12 @@ function ProfileContent({ user, onSaved }: { user: Profile; onSaved: (profile: P
     <>
       <DetailsSection user={user} onSaved={onSaved} />
       {orders.data ? (
-        <HistorySection orders={orders.data} onReorder={reorder} onSaveFavorite={saveFavorite} />
+        <HistorySection orders={orders.data} onReorder={reorder} onSaveFavorite={favoritesOn ? saveFavorite : undefined} />
       ) : (
         <Loading failed={orders.failed} />
       )}
-      {favorites.data && <FavoritesSection favorites={favorites.data} dishNames={dishNames} onRemove={removeFavorite} />}
-      {recommendations.data && <RecommendationsSection recommendations={recommendations.data} />}
+      {favoritesOn && favorites.data && <FavoritesSection favorites={favorites.data} dishNames={dishNames} onRemove={removeFavorite} />}
+      {recommendationsOn && recommendations.data && <RecommendationsSection recommendations={recommendations.data} />}
     </>
   )
 }

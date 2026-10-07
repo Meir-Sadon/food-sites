@@ -14,7 +14,8 @@ const itemText = (item: HistoryItem) =>
 interface EntryProps {
   order: HistoryOrder
   onReorder: (order: HistoryOrder) => Promise<void>
-  onSaveFavorite: (order: HistoryOrder, name: string) => Promise<void>
+  /** Missing when the site has no favorites: then there's no button to save one. */
+  onSaveFavorite?: (order: HistoryOrder, name: string) => Promise<void>
 }
 
 function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
@@ -29,6 +30,7 @@ function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
 
   async function save(event: FormEvent) {
     event.preventDefault()
+    if (!onSaveFavorite) return
     setErrors({})
     setMessage(null)
     setBusy(true)
@@ -100,9 +102,11 @@ function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
             <button type="button" onClick={reorder}>
               {t('profile.reorder')}
             </button>
-            <button type="button" className="button-quiet" onClick={() => setNaming(true)}>
-              {t('profile.saveFavorite')}
-            </button>
+            {onSaveFavorite && (
+              <button type="button" className="button-quiet" onClick={() => setNaming(true)}>
+                {t('profile.saveFavorite')}
+              </button>
+            )}
           </div>
         )}
         {message && <Status message={message.text} error={message.error} />}
@@ -114,7 +118,8 @@ function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
 interface Props {
   orders: HistoryOrder[]
   onReorder: (order: HistoryOrder) => Promise<void>
-  onSaveFavorite: (order: HistoryOrder, name: string) => Promise<void>
+  /** Missing when the site has no favorites: then there's no button to save one. */
+  onSaveFavorite?: (order: HistoryOrder, name: string) => Promise<void>
 }
 
 export function HistorySection({ orders, onReorder, onSaveFavorite }: Props) {
