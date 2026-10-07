@@ -130,6 +130,7 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 | `AuthCookie__Secure` | Send the session cookie over HTTPS only (default `true`) |
 | `AuthCookie__SameSite` | `Lax` when site and API share a domain, `None` when they don't |
 | `Database__MigrateOnStartup` | Apply migrations when the API starts |
+| `Database__SeedDrinks` | Add the drinks category and its drinks after migrating (default `true`; the tests turn it off) |
 | `ForwardedHeaders__Enabled` | Trust `X-Forwarded-For` from one reverse proxy in front of the API |
 | `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | WhatsApp Cloud API credentials. When both are set, messages are really sent; otherwise they are only logged (see below) |
 | `WhatsApp__OrderConfirmationTemplate`, `WhatsApp__NewOrderTemplate` | Names of the two approved message templates (defaults `kuskus_order_confirmation`, `kuskus_new_order`) |

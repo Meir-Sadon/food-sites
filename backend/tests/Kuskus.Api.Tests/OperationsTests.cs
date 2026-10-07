@@ -115,7 +115,8 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
         var order = await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>();
         Assert.Equal((OrderStatus.Ready, true), (order.Status, order.IsPaid));
         Assert.Equal(HttpStatusCode.NotFound, (await _admin.PutAsJsonAsync("/api/admin/orders/999/status", new { status = "Ready" })).StatusCode);
-        await (await _admin.PutAsJsonAsync($"/api/admin/orders/{id}/status", new { status = "Nope" })).AssertInvalid("Status", "invalid");
+        // A name that isn't a status never reaches the action (JSON binding rejects it); an undefined number does.
+        await (await _admin.PutAsJsonAsync($"/api/admin/orders/{id}/status", new { status = 99 })).AssertInvalid("Status", "invalid");
     }
 
     private static object Edit(OrderDto order, Action<Dictionary<string, object?>>? change = null)

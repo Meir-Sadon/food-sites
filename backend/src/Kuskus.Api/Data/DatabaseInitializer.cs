@@ -6,8 +6,11 @@ namespace Kuskus.Api.Data;
 
 public static class DatabaseInitializer
 {
-    /// <summary>Applies pending migrations and seeds the admin password hash from configuration.</summary>
-    public static async Task InitializeAsync(IServiceProvider services, bool migrate)
+    /// <summary>
+    /// Applies pending migrations and seeds the admin password hash from configuration, and the drinks
+    /// when <paramref name="seedDrinks"/> is set and migrations ran.
+    /// </summary>
+    public static async Task InitializeAsync(IServiceProvider services, bool migrate, bool seedDrinks = true)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -19,7 +22,7 @@ public static class DatabaseInitializer
 
         await SeedAdminPasswordAsync(db, admin.PasswordHash, logger);
 
-        if (migrate)
+        if (migrate && seedDrinks)
             await SeedDrinksAsync(db, logger);
     }
 

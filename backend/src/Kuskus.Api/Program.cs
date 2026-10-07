@@ -175,7 +175,10 @@ if (Directory.Exists(app.Environment.WebRootPath))
     app.MapFallbackToFile("{*path:nonfile:regex(^(?!api(/|$)).*$)}", "index.html");
 }
 
-await DatabaseInitializer.InitializeAsync(app.Services, migrate: config.GetValue<bool>("Database:MigrateOnStartup"));
+await DatabaseInitializer.InitializeAsync(
+    app.Services,
+    migrate: config.GetValue<bool>("Database:MigrateOnStartup"),
+    seedDrinks: config.GetValue("Database:SeedDrinks", true));
 
 app.Run();
 return 0;

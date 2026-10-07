@@ -260,7 +260,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         var dish = await (await _admin.GetAsync($"/api/admin/dishes/{_chicken}")).Read<DishDto>();
         var input = new DishInput(
             dish.Name, dish.CategoryId, null, null, dish.SellBy, dish.ChoiceMode, null, null, null, null, false, false,
-            dish.Options.Select(o => new OptionInput(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(), [_thigh],
+            dish.Options.Select(o => new OptionInput(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(), dish.ParentDishIds.ToList(),
             MaxPerSupplyDate: 3);
         (await _admin.PutAsJsonAsync($"/api/admin/dishes/{_chicken}", input, TestFiles.Json)).EnsureSuccessStatusCode();
 
@@ -295,7 +295,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         var dish = await (await _admin.GetAsync($"/api/admin/dishes/{_chicken}")).Read<DishDto>();
         var input = new DishInput(
             dish.Name, dish.CategoryId, null, null, dish.SellBy, dish.ChoiceMode, null, null, null, null, false, false,
-            dish.Options.Select(o => new OptionInput(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(), [_thigh],
+            dish.Options.Select(o => new OptionInput(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(), dish.ParentDishIds.ToList(),
             MaxPerSupplyDate: 3);
         (await _admin.PutAsJsonAsync($"/api/admin/dishes/{_chicken}", input, TestFiles.Json)).EnsureSuccessStatusCode();
         var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");

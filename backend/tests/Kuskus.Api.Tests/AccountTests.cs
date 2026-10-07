@@ -247,7 +247,7 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
         var entry = Assert.Single(history);
         Assert.Equal(confirmation.Id, entry.Id);
         Assert.Equal(OrderStatus.New, entry.Status);
-        Assert.Equal(3, entry.Items.Count);
+        Assert.Equal(2, entry.Items.Count); // the chicken and its thigh add-on
         var parent = entry.Items.Single(i => i.ParentItemId is null);
         Assert.Equal("עוף בתנור", parent.DishName);
         Assert.Equal(parent.Id, entry.Items.Single(i => i.DishId == _thigh).ParentItemId);

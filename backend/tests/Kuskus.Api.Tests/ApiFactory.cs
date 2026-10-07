@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace Kuskus.Api.Tests;
 
@@ -30,6 +31,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["Admin:LoginAttemptsPerMinute"] = "1000",
             ["Public:RequestsPerMinute"] = "1000",
             ["Database:MigrateOnStartup"] = "true",
+            // Tests start from an empty catalog; DatabaseTests covers the drinks seed directly.
+            ["Database:SeedDrinks"] = "false",
         };
         foreach (var (key, value) in overrides ?? [])
             _settings[key] = value;
@@ -69,6 +72,17 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         var cookie = login.Headers.GetValues("Set-Cookie").Single().Split(';')[0];
         client.DefaultRequestHeaders.Add("Cookie", cookie);
         return client;
+    }
+
+    /// <summary>
+    /// Also closes the pooled connections to this factory's database. Every factory has its own database,
+    /// so its Npgsql pool would otherwise keep idle connections open until PostgreSQL runs out of them.
+    /// </summary>
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        using var connection = new NpgsqlConnection(_connectionString);
+        NpgsqlConnection.ClearPool(connection);
     }
 
     public AppDbContext CreateDbContext()

@@ -68,6 +68,21 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
+    public async Task Drinks_are_seeded_once_into_their_own_category()
+    {
+        await using var db = _factory.CreateDbContext();
+
+        await DatabaseInitializer.SeedDrinksAsync(db, NullLogger.Instance);
+        await DatabaseInitializer.SeedDrinksAsync(db, NullLogger.Instance);
+
+        db.ChangeTracker.Clear();
+        var category = await db.Categories.Include(c => c.Dishes).SingleAsync();
+        Assert.Equal(DatabaseInitializer.DrinksCategoryName, category.Name);
+        Assert.Equal(11, category.Dishes.Count);
+        Assert.All(category.Dishes, d => Assert.Equal(DatabaseInitializer.DrinkPrice, d.UnitPrice));
+    }
+
+    [Fact]
     public async Task Dish_with_options_images_and_add_ons_round_trips()
     {
         await using (var db = _factory.CreateDbContext())
