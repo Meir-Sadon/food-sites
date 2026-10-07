@@ -7,12 +7,15 @@ When you're done, a site lives at an address like `https://kuskus-shel-ima.onren
 ## How a merge reaches the sites
 
 1. CI runs on `main` (tests, migrations check, and a production image per site).
-2. The **canary** (the first service in `render.yaml`) deploys by itself once CI passes (`autoDeployTrigger: checksPass`).
-3. `.github/workflows/deploy.yml` waits until the canary's `/api/health` reports the new commit, then deploys every other site at the same commit through its Render **deploy hook**. If the canary never comes up, the others keep running the previous version.
+2. `.github/workflows/deploy.yml` deploys the **canary** (the first service in `render.yaml`) at that commit through its Render **deploy hook**.
+3. It waits until the canary's `/api/health` reports the new commit, then deploys every other site at the same commit through its deploy hook. If the canary never comes up, the others keep running the previous version.
 
 The workflow needs, in GitHub **Settings → Secrets and variables → Actions**:
 - variable `CANARY_URL`: the canary's address, e.g. `https://kuskus-shel-ima.onrender.com`
-- one secret per other site with its deploy hook (Render: service → **Settings → Deploy Hook**), named in the workflow's matrix, e.g. `RENDER_DEPLOY_HOOK_GRAPE_LEAVES`
+- secret `RENDER_DEPLOY_HOOK_CANARY`: the canary's deploy hook (Render: service → **Settings → Deploy Hook**)
+- one secret per other site with its deploy hook, named in the workflow's matrix, e.g. `RENDER_DEPLOY_HOOK_GRAPE_LEAVES`
+
+Every service has Render's **Auto-Deploy** set to Off. With "After CI checks pass", Render would also wait for the Deploy workflow's own check, which waits for Render, so nothing would deploy.
 
 Migrations run on each site's start, so a migration must work with the code before it: add columns as nullable or with defaults, and drop old ones only in a later release (expand, then contract).
 
