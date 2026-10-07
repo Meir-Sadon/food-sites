@@ -1,0 +1,21 @@
+/* The site's colour palette: vine green and grape plum. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #f5f3e8;
+  --color-surface: #ffffff;
+  --color-text: #25301d;
+  --color-muted: #5d6652;
+  --color-accent: #4a6b2a;
+  --color-accent-hover: #3b5621;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #b8963a;
+  --color-grape: #6b2d5c;
+  --color-border: #e2dfcc;
+  --color-error: #b42318;
+  --color-success: #166534;
+  --color-soft: #eef2e2;
+  --color-shadow: #25301d;
+  --color-highlight: var(--color-grape);
+  --color-badge: rgb(107 45 92 / 0.12);
+  --color-badge-text: var(--color-grape);
+  --gradient-hero: linear-gradient(135deg, var(--color-accent-hover) 0%, #5f8a34 55%, var(--color-grape) 135%);
+}

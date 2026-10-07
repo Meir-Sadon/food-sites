@@ -307,13 +307,13 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
     public void Whatsapp_template_payload_flattens_the_message_and_uses_the_international_number()
     {
         var options = new WhatsAppOptions { PhoneNumberId = "1", Token = "t" };
-        options.UseSiteDefaults(new SiteOptions { Id = "grape-leaves" });
+        options.UseSiteDefaults(new SiteOptions { Id = "sample-site" });
         var sender = new WhatsAppCloudSender(new HttpClient(), Options.Create(options));
 
         var json = System.Text.Json.JsonSerializer.Serialize(sender.Payload("0501234567", WhatsAppTemplate.NewOrder, "הזמנה #1\nעוף   x2\n"));
 
         Assert.Contains("\"to\":\"972501234567\"", json);
-        Assert.Contains("\"name\":\"grape_leaves_new_order\"", json);
+        Assert.Contains("\"name\":\"sample_site_new_order\"", json);
         Assert.Contains("הזמנה #1 | עוף x2", System.Text.RegularExpressions.Regex.Unescape(json));
     }
 }

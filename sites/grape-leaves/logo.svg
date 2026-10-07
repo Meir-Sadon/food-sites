@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="65%">
+      <stop offset="0" stop-color="#fbf8ec"/>
+      <stop offset="1" stop-color="#e9e4cc"/>
+    </radialGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7aa043"/>
+      <stop offset="1" stop-color="#3b5621"/>
+    </linearGradient>
+    <radialGradient id="grape" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#a65a92"/>
+      <stop offset="1" stop-color="#4f1f44"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#bg)"/>
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#b8963a" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/>
+  <!-- vine tendril -->
+  <path d="M100 30 C 92 22, 80 26, 84 36 C 88 44, 98 38, 94 32" fill="none" stroke="#5f8a34" stroke-width="3" stroke-linecap="round"/>
+  <!-- grape leaf: five lobes with serrated edge -->
+  <path fill="url(#leaf)" stroke="#2f461a" stroke-width="2" stroke-linejoin="round" d="
+    M100 152
+    C 92 140, 78 140, 66 146 L 70 138 L 58 136 C 46 128, 40 114, 44 100 L 52 104 L 50 94
+    C 40 84, 40 70, 48 60 L 56 66 L 58 56 C 66 46, 80 44, 90 50 L 92 58 L 100 40
+    L 108 58 L 110 50 C 120 44, 134 46, 142 56 L 144 66 L 152 60 C 160 70, 160 84, 150 94
+    L 148 104 L 156 100 C 160 114, 154 128, 142 136 L 130 138 L 134 146 C 122 140, 108 140, 100 152 Z"/>
+  <!-- veins -->
+  <g fill="none" stroke="#dfe9c4" stroke-width="2.2" stroke-linecap="round" opacity="0.85">
+    <path d="M100 150 L 100 52"/>
+    <path d="M100 112 L 64 76"/>
+    <path d="M100 112 L 136 76"/>
+    <path d="M100 128 L 62 124"/>
+    <path d="M100 128 L 138 124"/>
+    <path d="M100 90 L 86 74 M100 90 L 114 74"/>
+  </g>
+  <!-- grape cluster -->
+  <g fill="url(#grape)" stroke="#3b1633" stroke-width="1.2">
+    <circle cx="128" cy="142" r="9"/>
+    <circle cx="146" cy="142" r="9"/>
+    <circle cx="164" cy="140" r="8"/>
+    <circle cx="137" cy="157" r="9"/>
+    <circle cx="155" cy="157" r="9"/>
+    <circle cx="146" cy="172" r="9"/>
+  </g>
+  <path d="M146 133 C 146 124, 150 120, 156 118" fill="none" stroke="#5c3d1e" stroke-width="3" stroke-linecap="round"/>
+</svg>

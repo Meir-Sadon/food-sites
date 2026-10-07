@@ -1,8 +1,11 @@
 /* Mobile-first. Logical properties (inline-start/end) keep the layout correct in RTL.
-   The colour palette (--color-*) comes from the site's theme.css (sites/<id>/theme.css), loaded after this file. */
+   The site's look (the --color-* palette and --gradient-hero) comes from its theme.css (sites/<id>/theme.css),
+   loaded after this file; colours here are derived from those variables. */
 :root {
-  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.08);
-  --shadow-md: 0 4px 12px rgb(16 24 40 / 0.08), 0 2px 4px rgb(16 24 40 / 0.05);
+  --shadow-sm: 0 1px 2px color-mix(in srgb, var(--color-shadow) 6%, transparent),
+    0 1px 3px color-mix(in srgb, var(--color-shadow) 8%, transparent);
+  --shadow-md: 0 4px 12px color-mix(in srgb, var(--color-shadow) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-shadow) 5%, transparent);
   --radius: 0.75rem;
 
   font-family: 'Assistant', 'Rubik', 'Segoe UI', Arial, sans-serif;
@@ -120,7 +123,7 @@ a {
 .top-bar__link.active {
   background: var(--color-accent);
   color: var(--color-accent-contrast);
-  box-shadow: 0 4px 10px rgb(15 92 77 / 0.35);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
 
 .top-bar__brand.active {
@@ -626,7 +629,7 @@ label {
   gap: 0.5rem;
   padding: 2rem 1.5rem;
   border-radius: calc(var(--radius) * 1.5);
-  background: linear-gradient(135deg, var(--color-accent) 0%, #1b8a73 60%, var(--color-gold) 140%);
+  background: var(--gradient-hero);
   color: var(--color-accent-contrast);
   box-shadow: var(--shadow-md);
 }
@@ -749,7 +752,7 @@ label {
 
 .category {
   overflow: hidden;
-  border-inline-start: 5px solid var(--color-gold);
+  border-inline-start: 5px solid var(--color-highlight);
   box-shadow: var(--shadow-sm);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -865,8 +868,8 @@ label {
 .option-card__default {
   padding: 0.05rem 0.5rem;
   border-radius: 999px;
-  background: rgb(200 150 62 / 0.18);
-  color: #7a5614;
+  background: var(--color-badge);
+  color: var(--color-badge-text);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -951,7 +954,7 @@ label {
   background: var(--color-accent);
   color: var(--color-accent-contrast);
   font-size: 1.125rem;
-  box-shadow: 0 -4px 12px rgb(16 24 40 / 0.15);
+  box-shadow: 0 -4px 12px color-mix(in srgb, var(--color-shadow) 15%, transparent);
 }
 
 .total-bar__counts {
