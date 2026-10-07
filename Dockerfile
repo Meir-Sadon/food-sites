@@ -2,13 +2,13 @@
 # Build with --build-arg SITE=<folder under sites/>; render.yaml sets SITE per service.
 # For local development use docker-compose.yml instead.
 
-FROM node:22-alpine AS site
+FROM node:26-alpine AS site
 ARG SITE
 COPY sites/ /sites/
 RUN test -n "$SITE" && test -f "/sites/$SITE/site.json" \
     || { echo "Build with --build-arg SITE=<a folder under sites/ that has a site.json>; got '$SITE'." >&2; exit 1; }
 
-FROM node:22-alpine AS frontend
+FROM node:26-alpine AS frontend
 ARG SITE
 WORKDIR /repo/frontend
 COPY frontend/package.json frontend/package-lock.json ./
