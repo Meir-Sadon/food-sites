@@ -1,0 +1,20 @@
+/* The site's colour palette: the ad's cream, chocolate brown and fried gold. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #f7efe3;
+  --color-surface: #fffdf9;
+  --color-text: #3b2418;
+  --color-muted: #75604f;
+  --color-accent: #5b2c1c;
+  --color-accent-hover: #46200f;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #c8862f;
+  --color-border: #e8dccb;
+  --color-error: #b42318;
+  --color-success: #3f6b35;
+  --color-soft: #f3e7d6;
+  --color-shadow: #3b2418;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(200 134 47 / 0.18);
+  --color-badge-text: #7a4b12;
+  --gradient-hero: linear-gradient(135deg, var(--color-accent-hover) 0%, #8a4a26 55%, var(--color-gold) 135%);
+}

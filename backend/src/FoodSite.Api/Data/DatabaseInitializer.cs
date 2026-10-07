@@ -25,6 +25,7 @@ public static class DatabaseInitializer
 
         await SeedAdminPasswordAsync(db, admin.PasswordHash, logger);
         await SeedServiceCitiesAsync(db, site.ServiceCities, logger);
+        await SeedSiteSettingsAsync(db, site.Settings, logger);
 
         if (!migrate || !applySeeds || site.Seed.Count == 0)
             return;
@@ -98,6 +99,36 @@ public static class DatabaseInitializer
         settings.ServiceCities = Orders.ServiceArea.Format(Orders.ServiceArea.Parse(configured));
         await db.SaveChangesAsync();
         logger.LogInformation("Service cities seeded from the site: {Cities}", settings.ServiceCities);
+    }
+
+    /// <summary>
+    /// Copies the site's starting settings (<c>site.json</c> → <c>settings</c>) into the empty Settings fields, once:
+    /// afterwards the admin's values win, cleared ones included.
+    /// </summary>
+    public static async Task SeedSiteSettingsAsync(AppDbContext db, SiteSettingsDefaults defaults, ILogger logger)
+    {
+        var settings = await db.Settings.SingleAsync(s => s.Id == Entities.Settings.SingletonId);
+        if (settings.SiteDefaultsApplied)
+            return;
+
+        static string? Fill(string? current, string? value) => current ?? (string.IsNullOrWhiteSpace(value) ? null : value.Trim());
+        settings.ContactName = Fill(settings.ContactName, defaults.ContactName);
+        settings.ContactPhone = Fill(settings.ContactPhone, defaults.ContactPhone);
+        settings.ContactAddress = Fill(settings.ContactAddress, defaults.ContactAddress);
+        settings.ContactEmail = Fill(settings.ContactEmail, defaults.ContactEmail);
+        settings.ContactOpeningHours = Fill(settings.ContactOpeningHours, defaults.ContactOpeningHours);
+        settings.DeliveryAreaText = Fill(settings.DeliveryAreaText, defaults.DeliveryAreaText);
+        settings.DeliveryFeeText = Fill(settings.DeliveryFeeText, defaults.DeliveryFeeText);
+        settings.KashrutText = Fill(settings.KashrutText, defaults.KashrutText);
+        if (settings.BackgroundImageUrl is null && Fill(null, defaults.BackgroundImageUrl) is { } background)
+        {
+            // Not in the image store (or not under this site's folder): replacing it never deletes it there.
+            settings.BackgroundImageUrl = background;
+            settings.BackgroundImagePublicId = null;
+        }
+        settings.SiteDefaultsApplied = true;
+        await db.SaveChangesAsync();
+        logger.LogInformation("Site settings defaults applied.");
     }
 
     public static async Task SeedAdminPasswordAsync(AppDbContext db, string? configuredHash, ILogger logger)

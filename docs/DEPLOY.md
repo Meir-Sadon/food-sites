@@ -18,7 +18,9 @@ Migrations run on each site's start, so a migration must work with the code befo
 
 ## Adding a site
 
-1. Its folder under `sites/` (copy `sites/_template/`).
+The `new-food-site` skill (`.claude/skills/new-food-site/SKILL.md`) walks through all of it, from the business's ad and photos.
+
+1. Its folder under `sites/` (copy `sites/_template/`), with the main contact and other starting settings in `site.json` → `settings`.
 2. A service entry in `render.yaml` with `SITE` set to the folder, `autoDeployTrigger: "off"` and no `Database__ApplySeeds` (a new site wants its seed menu), and a line in the matrix of `.github/workflows/deploy.yml`.
 3. A Neon project and the service's secrets (steps 1 to 4 below), and the deploy hook secret.
 

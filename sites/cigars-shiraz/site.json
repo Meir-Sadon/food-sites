@@ -1,0 +1,23 @@
+{
+  "id": "cigars-shiraz",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אשקלון",
+  "emoji": "🌯",
+  "whatsApp": {
+    "orderConfirmationTemplate": "cigars_shiraz_order_confirmation",
+    "newOrderTemplate": "cigars_shiraz_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true
+  },
+  "settings": {
+    "contactName": "שירז ניסני",
+    "contactPhone": "054-5776707",
+    "contactAddress": "איסוף מעיר היין, אשקלון",
+    "deliveryFeeText": "משלוח בתוספת תשלום",
+    "backgroundImageUrl": "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791399375/cigars-shiraz/background/background-1.jpg"
+  },
+  "seed": ["seed/cigars.json"]
+}

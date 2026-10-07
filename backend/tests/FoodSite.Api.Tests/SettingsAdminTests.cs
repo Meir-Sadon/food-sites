@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using static FoodSite.Api.Controllers.Admin.ClosedDatesController;
 using static FoodSite.Api.Controllers.Admin.SettingsController;
 using static FoodSite.Api.Controllers.Admin.SupplyDaysController;
@@ -39,6 +40,41 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
         await using var db = _factory.CreateDbContext();
         await Data.DatabaseInitializer.SeedServiceCitiesAsync(db, ApiFactory.ServiceCity, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
         Assert.Equal("", (await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).ServiceCities);
+    }
+
+    [Fact]
+    public async Task The_site_settings_fill_empty_fields_once()
+    {
+        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        var defaults = new Sites.SiteSettingsDefaults
+        {
+            ContactName = " שם ", ContactPhone = "050-1234567", DeliveryFeeText = "משלוח בתוספת תשלום",
+            KashrutText = " ", BackgroundImageUrl = "https://example.com/background.jpg",
+        };
+        await using (var db = _factory.CreateDbContext())
+        {
+            // The factory's start applied its (empty) defaults; this is a database that hasn't had them yet.
+            var row = await db.Settings.SingleAsync();
+            Assert.True(row.SiteDefaultsApplied);
+            row.SiteDefaultsApplied = false;
+            row.DeliveryAreaText = "של האדמין";
+            await db.SaveChangesAsync();
+            await Data.DatabaseInitializer.SeedSiteSettingsAsync(db, defaults, logger);
+        }
+
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Equal("משלוח בתוספת תשלום", settings.DeliveryFeeText);
+        Assert.Equal("של האדמין", settings.DeliveryAreaText);
+        Assert.Null(settings.KashrutText);
+        Assert.Equal("https://example.com/background.jpg", settings.BackgroundImageUrl);
+        var site = await _factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal(new Controllers.PublicController.ContactDto("שם", "050-1234567", null, null, null), site.Contact);
+
+        // Cleared by the admin: a restart leaves it empty.
+        (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).EnsureSuccessStatusCode();
+        await using (var db = _factory.CreateDbContext())
+            await Data.DatabaseInitializer.SeedSiteSettingsAsync(db, defaults, logger);
+        Assert.Null((await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).DeliveryFeeText);
     }
 
     [Fact]

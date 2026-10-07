@@ -58,6 +58,8 @@ jobs:
           # One line per non-canary site: its folder and the secret holding its deploy hook.
           - site: grape-leaves-eliel
             hook: RENDER_DEPLOY_HOOK_GRAPE_LEAVES
+          - site: cigars-shiraz
+            hook: RENDER_DEPLOY_HOOK_CIGARS_SHIRAZ
     steps:
       - name: Trigger the deploy hook
         env:

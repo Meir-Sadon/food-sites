@@ -1,0 +1,36 @@
+{
+  "categories": [
+    {
+      "name": "סיגרים",
+      "dishes": [
+        {
+          "name": "סיגרים בשר (מגש 50 יח')",
+          "description": "ממולאים בבשר טחון מתובל.",
+          "sellBy": "Units",
+          "unitPrice": 120,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סיגרים תפוחי אדמה (מגש 50 יח')",
+          "description": "ממולאים בפירה תפוחי אדמה ועשבי תיבול.",
+          "sellBy": "Units",
+          "unitPrice": 120,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סיגרים כבד (מגש 50 יח')",
+          "description": "ממולאים בכבד מתובל.",
+          "sellBy": "Units",
+          "unitPrice": 120,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    }
+  ]
+}

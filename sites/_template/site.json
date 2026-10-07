@@ -12,5 +12,9 @@
     "recommendations": true,
     "favorites": true
   },
+  "settings": {
+    "contactName": "",
+    "contactPhone": ""
+  },
   "seed": []
 }
