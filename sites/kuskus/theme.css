@@ -1,4 +1,4 @@
-/* The site's colour palette. Every --color-* variable used by the shared CSS is defined here. */
+/* The site's colour palette. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
 :root {
   --color-bg: #f7f4ef;
   --color-surface: #ffffff;
@@ -12,4 +12,9 @@
   --color-error: #b42318;
   --color-success: #166534;
   --color-soft: #eef3f0;
+  --color-shadow: #101828;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(200 150 62 / 0.18);
+  --color-badge-text: #7a5614;
+  --gradient-hero: linear-gradient(135deg, var(--color-accent) 0%, #1b8a73 60%, var(--color-gold) 140%);
 }

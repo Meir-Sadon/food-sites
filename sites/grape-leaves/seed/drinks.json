@@ -1,0 +1,20 @@
+{
+  "categories": [
+    {
+      "name": "שתיה",
+      "dishes": [
+        {"name": "קוקה קולה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/cola.svg"]},
+        {"name": "קוקה קולה זירו", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/cola-zero.svg"]},
+        {"name": "ספרייט", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/sprite.svg"]},
+        {"name": "פאנטה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/fanta.svg"]},
+        {"name": "שוופס", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/schweppes.svg"]},
+        {"name": "פיוז טי אפרסק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/fuze-peach.svg"]},
+        {"name": "פיוז טי לימון", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/fuze-lemon.svg"]},
+        {"name": "מים מינרליים", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/water.svg"]},
+        {"name": "סודה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/soda.svg"]},
+        {"name": "מיץ תפוזים", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/orange-juice.svg"]},
+        {"name": "מיץ ענבים", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["/drinks/grape-juice.svg"]}
+      ]
+    }
+  ]
+}

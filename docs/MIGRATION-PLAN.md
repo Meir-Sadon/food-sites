@@ -108,10 +108,18 @@ How it was built, where it differs from the outline above:
 - Without `SITE`, local runs and tests use `_template`; the Docker images refuse to build without it.
 - The delivery cities (hard-coded Ashkelon before) are an admin setting, a comma-separated list. `site.json` → `serviceCities` gives the first value; an empty list means every city is served.
 
-### Phase 3 — Grape leaves as the second site
-- [ ] Create `sites/grape-leaves/` from `grape-leaves-eliel`: palette (vine green and grape plum, plus its extra `--color-grape` variable), `logo.svg`, favicon, 🍇, and its three Hebrew texts.
-- [ ] Any CSS that hard-codes a colour (the gradient and button shadow that differ between the repos) moves to a variable, so `theme.css` alone defines a site's look.
-- [ ] Both sites build, and a screenshot of each order page looks like the original repo's.
+### Phase 3 — Grape leaves as the second site (done)
+- [x] Create `sites/grape-leaves/` from `grape-leaves-eliel`: palette (vine green and grape plum, plus its extra `--color-grape` variable), `logo.svg`, favicon, 🍇, and its three Hebrew texts.
+- [x] Any CSS that hard-codes a colour (the gradient and button shadow that differ between the repos) moves to a variable, so `theme.css` alone defines a site's look.
+- [x] Both sites build, and a screenshot of each order page looks like the original repo's.
+
+How it was built:
+- The colours that differed between the repos became theme variables: `--color-shadow` (the tint of every shadow), `--color-highlight` (a category's side stripe), `--color-badge` and `--color-badge-text` (the "default" option badge) and `--gradient-hero` (the order page's banner). The active top-bar link's shadow is now mixed from `--color-accent`, so it needed no variable.
+- `check-sites` also fails when a site's `theme.css` leaves out a variable the shared CSS uses but doesn't define.
+- Only two of the three texts are overrides (`app.name` and the tagline): the WhatsApp message is built from `app.name`.
+- `grape-leaves` keeps its original WhatsApp template names and Ashkelon as its delivery city, and seeds the same drinks as kuskus (the original repo seeded them too, without pictures; they now have kuskus's drink pictures).
+- CI builds the frontend of every folder under `sites/`.
+- Checked by building the old and new frontends against the same API and comparing full-page phone screenshots: kuskus is pixel-identical, and grape leaves differs only in the drink pictures it gained.
 
 ### Phase 4 — Feature flags
 - [ ] Defaults come from `site.json` → `features`. A `FeatureFlags` table in the site's own database overrides them; the console writes there through the ops API (Phase 6).

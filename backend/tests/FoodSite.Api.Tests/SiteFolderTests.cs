@@ -40,14 +40,14 @@ public sealed class SiteFolderTests : IDisposable
     [Fact]
     public void Site_json_and_the_site_name_are_loaded_under_Site()
     {
-        Write("site.json", """{ "id": "grape-leaves", "timeZone": "Europe/London", "seed": ["seed/menu.json"] }""");
+        Write("site.json", """{ "id": "sample-site", "timeZone": "Europe/London", "seed": ["seed/menu.json"] }""");
         Write("i18n/he.json", """{ "app": { "name": "עלי גפן" } }""");
         var config = Configuration(new() { ["Site:Directory"] = _directory });
 
         SiteFolder.AddTo(config, "/");
 
         var site = config.GetSection(SiteOptions.Section).Get<SiteOptions>()!;
-        Assert.Equal("grape-leaves", site.Id);
+        Assert.Equal("sample-site", site.Id);
         Assert.Equal("עלי גפן", site.Name);
         Assert.Equal("Europe/London", site.TimeZone);
         Assert.Equal(["seed/menu.json"], site.Seed);
@@ -56,13 +56,13 @@ public sealed class SiteFolderTests : IDisposable
     [Fact]
     public void Environment_variables_still_win_over_site_json()
     {
-        Write("site.json", """{ "id": "grape-leaves", "timeZone": "Europe/London" }""");
+        Write("site.json", """{ "id": "sample-site", "timeZone": "Europe/London" }""");
         var config = Configuration(new() { ["Site:Directory"] = _directory, ["Site:TimeZone"] = "Asia/Jerusalem" });
 
         SiteFolder.AddTo(config, "/");
 
         Assert.Equal("Asia/Jerusalem", config["Site:TimeZone"]);
-        Assert.Equal("grape-leaves", config["Site:Id"]);
+        Assert.Equal("sample-site", config["Site:Id"]);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public sealed class SiteFolderTests : IDisposable
     [Fact]
     public void Cookies_issuer_and_templates_are_built_from_the_site_id_unless_configured()
     {
-        var site = new SiteOptions { Id = "grape-leaves", WhatsApp = { NewOrderTemplate = "grapes_alert" } };
+        var site = new SiteOptions { Id = "sample-site", WhatsApp = { NewOrderTemplate = "sample_alert" } };
 
         var cookies = new Auth.CookieOptions { UserName = "custom_user" };
         cookies.UseSiteDefaults(site);
@@ -84,11 +84,11 @@ public sealed class SiteFolderTests : IDisposable
         var whatsApp = new WhatsAppOptions();
         whatsApp.UseSiteDefaults(site);
 
-        Assert.Equal("grape-leaves_admin", cookies.Name);
+        Assert.Equal("sample-site_admin", cookies.Name);
         Assert.Equal("custom_user", cookies.UserName);
-        Assert.Equal("grape-leaves", jwt.Issuer);
-        Assert.Equal("grape_leaves_order_confirmation", whatsApp.OrderConfirmationTemplate);
-        Assert.Equal("grapes_alert", whatsApp.NewOrderTemplate);
+        Assert.Equal("sample-site", jwt.Issuer);
+        Assert.Equal("sample_site_order_confirmation", whatsApp.OrderConfirmationTemplate);
+        Assert.Equal("sample_alert", whatsApp.NewOrderTemplate);
     }
 
     [Fact]
@@ -105,11 +105,11 @@ public sealed class SiteFolderTests : IDisposable
 
     [Theory]
     [InlineData("kitchen", true)]
-    [InlineData("grape-leaves", true)]
+    [InlineData("sample-site", true)]
     [InlineData("", false)]
     [InlineData("Grape", false)]
-    [InlineData("-grape", false)]
-    [InlineData("grape_leaves", false)]
+    [InlineData("-sample", false)]
+    [InlineData("sample_site", false)]
     public void Site_ids_are_lowercase_words_joined_by_dashes(string id, bool valid) =>
         Assert.Equal(valid, SiteOptions.IsValidId(id));
 }

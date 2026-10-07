@@ -10,7 +10,7 @@ public partial class SiteOptions
 {
     public const string Section = "Site";
 
-    /// <summary>Lowercase letters, digits and dashes, e.g. "grape-leaves". Names cookies, image folders and templates.</summary>
+    /// <summary>Lowercase letters, digits and dashes, e.g. "sample-site". Names cookies, image folders and templates.</summary>
     public string Id { get; set; } = "";
 
     /// <summary>The business's display name (<c>app.name</c> in the site's <c>i18n/he.json</c>), shown in WhatsApp messages.</summary>

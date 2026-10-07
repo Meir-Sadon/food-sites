@@ -1,0 +1,12 @@
+{
+  "id": "grape-leaves",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אשקלון",
+  "emoji": "🍇",
+  "whatsApp": {
+    "orderConfirmationTemplate": "grape_leaves_eliel_order_confirmation",
+    "newOrderTemplate": "grape_leaves_eliel_new_order"
+  },
+  "seed": ["seed/drinks.json"]
+}

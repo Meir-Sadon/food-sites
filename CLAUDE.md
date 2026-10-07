@@ -6,20 +6,20 @@ One codebase for the Hebrew (RTL) ordering sites of several home food businesses
 
 ## Platform status and rules
 
-This repo started as a copy of `kuskus-shel-ima` (history imported) and is being made generic. **Read `docs/MIGRATION-PLAN.md` first**: it lists the phases, which are done, and the target layout (`sites/<site-id>/` per business). Phase 1 renamed the projects to `FoodSite.*`; Phase 2 moved each business's identity into `sites/<site-id>/` (`site.json`, `theme.css`, logo, `public/`, `i18n/he.json` overrides, `seed/`), chosen by `SITE` at build time, with `sites/_template/` for a new one. Cookie names, the JWT issuer, WhatsApp template names, Cloudinary folders and the order-draft key are built from the site id. Update this file in the same PR that changes any of this.
+This repo started as a copy of `kuskus-shel-ima` (history imported) and is being made generic. **Read `docs/MIGRATION-PLAN.md` first**: it lists the phases, which are done, and the target layout (`sites/<site-id>/` per business). Phase 1 renamed the projects to `FoodSite.*`; Phase 2 moved each business's identity into `sites/<site-id>/` (`site.json`, `theme.css`, logo, `public/`, `i18n/he.json` overrides, `seed/`), chosen by `SITE` at build time, with `sites/_template/` for a new one. Phase 3 added `sites/grape-leaves/` as the second site and moved every colour that differed between the sites into `theme.css` variables. Cookie names, the JWT issuer, WhatsApp template names, Cloudinary folders and the order-draft key are built from the site id. Update this file in the same PR that changes any of this.
 
 - Shared code never names a business or checks which site it runs as (`if (siteId == ...)`). Business-specific values (name, texts, palette, logo, WhatsApp template names, seeds) belong in `sites/<site-id>/`; behaviour only some businesses want goes behind a feature flag, off by default.
 - Every migration reaches every site: make it backward compatible (expand, then contract), and keep `AppDbContextModelSnapshot.cs` in sync.
 - This repo is public. Never commit secrets, client data, or a business's photos and texts collected for a demo; those go to Cloudinary or stay local.
 - Mark a phase's checkboxes in `docs/MIGRATION-PLAN.md` in the PR that completes them.
-- `node scripts/check-sites.mjs` (run in CI) fails when a site folder is incomplete, a site overrides a `he.json` key the shared file lacks, or a site's id, name, emoji or template names appear in shared code.
+- `node scripts/check-sites.mjs` (run in CI) fails when a site folder is incomplete, a site's `theme.css` lacks a variable the shared CSS uses, a site overrides a `he.json` key the shared file lacks, or a site's id, name, emoji or template names appear in shared code.
 
 ## Commands
 
 Frontend (`cd frontend`):
 - `SITE=<site-id>` picks the site folder for `dev`, `build` and `test` (default `_template`; the Docker images require it)
 - `npm run dev` — Vite on :5173, proxies `/api` to `localhost:5000` (override with `API_PROXY_TARGET`)
-- `npm run build` — `tsc -b && vite build`; this is also the typecheck
+- `npm run build` — `tsc -b && vite build`; this is also the typecheck (CI builds every site)
 - `npm run lint` — oxlint (`.oxlintrc.json`)
 - `npm test` — vitest once; single file: `npx vitest run src/order/model.test.ts`; single test: add `-t "<name>"`
 
