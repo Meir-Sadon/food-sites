@@ -1,5 +1,5 @@
 import type { Profile } from '../api/account'
-import { emptyAddress, SERVICE_CITY, type AddressParts } from './addressParts'
+import { emptyAddress, type AddressParts } from './addressParts'
 
 /** The personal details shared by registration and the profile page. The phone has its own field. */
 export interface ProfileForm extends AddressParts {
@@ -19,7 +19,7 @@ export const emptyProfileForm = (): ProfileForm => ({
 
 export const formFromProfile = (profile: Profile): ProfileForm => ({
   fullName: profile.fullName,
-  city: profile.city || SERVICE_CITY,
+  city: profile.city,
   street: profile.street,
   houseNumber: profile.houseNumber,
   apartment: profile.apartment,

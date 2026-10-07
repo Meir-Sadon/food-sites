@@ -68,19 +68,33 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
-    public async Task Drinks_are_seeded_once_into_their_own_category()
+    public async Task A_menu_seed_is_applied_once_and_never_undoes_admin_changes()
     {
+        var seed = new MenuSeed([
+            new("שתיה", [
+                new("קולה", UnitPrice: 12m, Images: ["/drinks/cola.svg"]),
+                new("מים", UnitPrice: 8m),
+            ]),
+        ]);
         await using var db = _factory.CreateDbContext();
 
-        await DatabaseInitializer.SeedDrinksAsync(db, NullLogger.Instance);
-        await DatabaseInitializer.SeedDrinksAsync(db, NullLogger.Instance);
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+        var water = await db.Dishes.SingleAsync(d => d.Name == "מים");
+        water.IsHidden = true;
+        water.UnitPrice = 9m;
+        await db.SaveChangesAsync();
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
 
         db.ChangeTracker.Clear();
         var category = await db.Categories.Include(c => c.Dishes).ThenInclude(d => d.Images).SingleAsync();
-        Assert.Equal(DatabaseInitializer.DrinksCategoryName, category.Name);
-        Assert.Equal(11, category.Dishes.Count);
-        Assert.All(category.Dishes, d => Assert.Equal(DatabaseInitializer.DrinkPrice, d.UnitPrice));
-        Assert.All(category.Dishes, d => Assert.StartsWith("/drinks/", Assert.Single(d.Images).Url));
+        Assert.Equal("שתיה", category.Name);
+        Assert.Equal(2, category.Dishes.Count);
+        var cola = category.Dishes.Single(d => d.Name == "קולה");
+        Assert.Equal(12m, cola.UnitPrice);
+        Assert.Equal("/drinks/cola.svg", Assert.Single(cola.Images).Url);
+        var keptWater = category.Dishes.Single(d => d.Name == "מים");
+        Assert.True(keptWater.IsHidden);
+        Assert.Equal(9m, keptWater.UnitPrice);
     }
 
     [Fact]
@@ -96,7 +110,7 @@ public sealed class DatabaseTests : IDisposable
                 SellBy = SellBy.Units,
                 ChoiceMode = ChoiceMode.Fixed,
                 Options = [new DishOption { Label = "חצי עוף", Amount = 0.5m, Price = 45m, IsDefault = true }],
-                Images = [new DishImage { Url = "https://example.com/a.jpg", PublicId = "kuskus/dishes/a", DisplayOrder = 0 }],
+                Images = [new DishImage { Url = "https://example.com/a.jpg", PublicId = "test-site/dishes/a", DisplayOrder = 0 }],
             };
             var leg = new Dish
             {

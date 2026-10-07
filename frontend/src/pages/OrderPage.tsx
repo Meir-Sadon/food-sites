@@ -6,7 +6,7 @@ import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
 import { AddressFields } from '../account/AddressFields'
-import { addressOf, noAddress, SERVICE_CITY } from '../account/addressParts'
+import { addressOf, noAddress } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useSite, useSiteFailed } from '../site/useSite'
@@ -34,7 +34,7 @@ import {
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
-import logo from '../assets/logo.jpg'
+import { siteLogo } from '../site/config'
 
 function formatCutoff(iso: string) {
   const [date, time] = iso.split('T')
@@ -49,6 +49,7 @@ export function OrderPage() {
   const { user } = useAccount()
   const site = useSite()
   const siteFailed = useSiteFailed()
+  const defaultCity = site?.serviceCities[0]
   const errorMessage = useErrorMessage()
   const [menu, setMenu] = useState<Menu | null>(null)
   const [failed, setFailed] = useState(false)
@@ -82,8 +83,8 @@ export function OrderPage() {
       ...current,
       name: current.name || user.fullName,
       phone: current.phone || user.phone,
-      // The city starts as the service city, so the saved one only replaces that default.
-      city: current.city === SERVICE_CITY ? user.city || SERVICE_CITY : current.city,
+      // The city may already hold the first service city as a default, which the saved one replaces.
+      city: current.city && current.city !== defaultCity ? current.city : user.city || current.city,
       street: current.street || user.street,
       houseNumber: current.houseNumber || user.houseNumber,
       apartment: current.apartment || user.apartment,
@@ -237,7 +238,7 @@ export function OrderPage() {
   return (
     <div className="order-page">
       <header className="order-hero">
-        <img className="order-hero__logo" src={logo} alt="" />
+        {siteLogo && <img className="order-hero__logo" src={siteLogo} alt="" />}
         <h1>{t('pages.order.title')}</h1>
         <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
         <ul className="order-hero__chips">

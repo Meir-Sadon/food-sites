@@ -6,13 +6,19 @@ export interface AddressParts {
   apartment: string
 }
 
-/** The only city the kitchen delivers to; the city field starts with it. */
-export const SERVICE_CITY = 'אשקלון'
+/**
+ * Whether the kitchen delivers to this city (the admin's service cities, from /api/site).
+ * An empty list means every city is served.
+ */
+export const isServiceCity = (city: string, serviceCities: readonly string[]) =>
+  serviceCities.length === 0 || serviceCities.includes(city.trim())
 
-export const isServiceCity = (city: string) => city.trim() === SERVICE_CITY
+/** "אשקלון", "אשקלון ואשדוד", "אשקלון, אשדוד ושדרות". */
+export const formatCities = (cities: readonly string[], language: string) =>
+  new Intl.ListFormat(language, { type: 'conjunction' }).format(cities)
 
-/** A new address: the service city, the rest empty. */
-export const emptyAddress = (): AddressParts => ({ city: SERVICE_CITY, street: '', houseNumber: '', apartment: '' })
+/** A new address, all empty. The address fields fill in the first service city once it is known. */
+export const emptyAddress = (): AddressParts => ({ city: '', street: '', houseNumber: '', apartment: '' })
 
 /** No address at all, for an order that is picked up. */
 export const noAddress = (): AddressParts => ({ city: '', street: '', houseNumber: '', apartment: '' })

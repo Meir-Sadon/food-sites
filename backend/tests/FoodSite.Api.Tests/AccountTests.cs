@@ -72,7 +72,7 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     private HttpClient WithSession(HttpResponseMessage response)
     {
         Assert.True(response.IsSuccessStatusCode, Describe(response));
-        var cookie = response.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("kuskus_user=")).Split(';')[0];
+        var cookie = response.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith(ApiFactory.SiteId + "_user=")).Split(';')[0];
         var client = _factory.CreateApiClient();
         client.DefaultRequestHeaders.Add("Cookie", cookie);
         return client;
@@ -382,6 +382,6 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
         var response = await client.PostAsync("/api/account/logout", null);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-        Assert.Contains(response.Headers.GetValues("Set-Cookie"), c => c.StartsWith("kuskus_user=;"));
+        Assert.Contains(response.Headers.GetValues("Set-Cookie"), c => c.StartsWith(ApiFactory.SiteId + "_user=;"));
     }
 }

@@ -2,14 +2,16 @@ using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Images;
 using FoodSite.Api.Orders;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using static FoodSite.Api.Controllers.Admin.Ordering;
 
 namespace FoodSite.Api.Controllers.Admin;
 
 [Route("api/admin/dishes")]
-public class DishesController(AppDbContext db, IImageStore images, SiteClock clock) : AdminControllerBase
+public class DishesController(AppDbContext db, IImageStore images, SiteClock clock, IOptions<SiteOptions> site) : AdminControllerBase
 {
     public const int AllergenMaxLength = 500;
     public const int OptionLabelMaxLength = 50;
@@ -177,7 +179,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         try
         {
             await using var stream = file!.OpenReadStream();
-            stored = await images.UploadAsync(stream, file.FileName, "kuskus/dishes", ct);
+            stored = await images.UploadAsync(stream, file.FileName, site.Value.ImageFolder("dishes"), ct);
         }
         catch (ImageStoreUnavailableException)
         {

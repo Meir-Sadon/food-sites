@@ -3,14 +3,18 @@ using FoodSite.Api.Data.Entities;
 
 namespace FoodSite.Api.Orders;
 
-/// <summary>The texts of the WhatsApp messages. They become Meta message templates once approved.</summary>
+/// <summary>
+/// The texts of the WhatsApp messages. They become Meta message templates once approved.
+/// Each starts with the business's name, so messages from a number several sites share stay clear.
+/// </summary>
 public static class OrderMessages
 {
-    public static string ClientConfirmation(Order order, string? paymentPhone)
+    public static string ClientConfirmation(
+        Order order, string? paymentPhone, string? siteName = null, IReadOnlyList<string>? serviceCities = null)
     {
-        var text = $"תודה, ההזמנה שלך התקבלה!\n{Details(order)}";
+        var text = $"{Heading(siteName)}תודה, ההזמנה שלך התקבלה!\n{Details(order)}";
         if (order.NeedsReview)
-            text += $"\nאנחנו משלוחים רק ב{AddressFormat.ServiceCity}. ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור.";
+            text += $"\nאנחנו משלוחים רק ב{ServiceArea.Describe(serviceCities ?? [])}. ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור.";
         if (order.PaymentMethod == PaymentMethod.Transfer && !string.IsNullOrWhiteSpace(paymentPhone))
             text += $"\nלהעברת התשלום ב־Bit / PayBox: {paymentPhone}";
         else if (order.PaymentMethod == PaymentMethod.OnDelivery)
@@ -18,9 +22,12 @@ public static class OrderMessages
         return text;
     }
 
-    public static string AdminNotification(Order order) =>
-        $"הזמנה חדשה #{order.Id}\n{Details(order)}"
+    public static string AdminNotification(Order order, string? siteName = null) =>
+        $"{Heading(siteName)}הזמנה חדשה #{order.Id}\n{Details(order)}"
         + (order.NeedsReview ? "\nהכתובת מחוץ לאזור השירות: ההזמנה ממתינה לאישור שלך." : "");
+
+    private static string Heading(string? siteName) =>
+        string.IsNullOrWhiteSpace(siteName) ? "" : $"{siteName.Trim()}\n";
 
     private static string Details(Order order)
     {

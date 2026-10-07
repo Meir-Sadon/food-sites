@@ -1,4 +1,5 @@
-# Local development stack: `docker compose up --build`, then open http://localhost:8080
+# Local development stack: `SITE=<folder under sites/> docker compose up --build`, then open http://localhost:8080
+# (without SITE it runs sites/_template).
 # Admin area: http://localhost:8080/admin  (dev password: "admin")
 #
 # The defaults below are for local use only. Override them in a .env file next to this one
@@ -23,7 +24,11 @@ services:
       retries: 30
 
   api:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        SITE: ${SITE:-_template}
     depends_on:
       db:
         condition: service_healthy
@@ -44,7 +49,11 @@ services:
       - "5000:8080"
 
   web:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        SITE: ${SITE:-_template}
     depends_on:
       api:
         condition: service_started

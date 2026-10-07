@@ -2,8 +2,10 @@ using System.Globalization;
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Reports;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace FoodSite.Api.Controllers.Admin;
 
@@ -12,7 +14,7 @@ namespace FoodSite.Api.Controllers.Admin;
 /// Cancelled orders and orders waiting for approval are never counted. Every filter is optional.
 /// </summary>
 [Route("api/admin/reports")]
-public class ReportsController(AppDbContext db) : AdminControllerBase
+public class ReportsController(AppDbContext db, IOptions<SiteOptions> site) : AdminControllerBase
 {
     public record DishSalesDto(int DishId, string DishName, decimal Quantity, decimal Sales);
 
@@ -45,7 +47,7 @@ public class ReportsController(AppDbContext db) : AdminControllerBase
             ["מנה", "כמות", "מכירות (₪)"],
             report.Dishes.Select(d => new object?[] { d.DishName, d.Quantity, d.Sales }).ToList());
 
-        return File(XlsxWriter.Write([totals, weeks, dishes]), XlsxWriter.ContentType, "kuskus-report.xlsx");
+        return File(XlsxWriter.Write([totals, weeks, dishes]), XlsxWriter.ContentType, $"{site.Value.Id}-report.xlsx");
     }
 
     private async Task<List<Line>> LoadAsync(DateOnly? from, DateOnly? to, int? dishId, int? categoryId, PaymentMethod? paymentMethod)

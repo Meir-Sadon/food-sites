@@ -22,6 +22,8 @@ export interface Site {
   contact: Contact
   /** The phones that can be chatted with on WhatsApp (the admin's notify list). */
   whatsAppPhones: string[]
+  /** The cities deliveries go to; a delivery elsewhere waits for the admin. Empty: every city. */
+  serviceCities: string[]
 }
 
 export interface MenuOption {

@@ -1,14 +1,17 @@
 using System.Text.RegularExpressions;
 using FoodSite.Api.Data;
 using FoodSite.Api.Images;
+using FoodSite.Api.Orders;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using static FoodSite.Api.Controllers.Admin.Ordering;
 
 namespace FoodSite.Api.Controllers.Admin;
 
 [Route("api/admin/settings")]
-public partial class SettingsController(AppDbContext db, IImageStore images) : AdminControllerBase
+public partial class SettingsController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site) : AdminControllerBase
 {
     public const int TextMaxLength = 1000;
     public const decimal MaxMinimumOrder = 100_000;
@@ -21,7 +24,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         string? DeliveryFeeText,
         string? KashrutText,
         string? PaymentPhone,
-        decimal? MinimumOrderAmount);
+        decimal? MinimumOrderAmount,
+        string ServiceCities);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -30,7 +34,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         string? DeliveryFeeText,
         string? KashrutText,
         string? PaymentPhone,
-        decimal? MinimumOrderAmount);
+        decimal? MinimumOrderAmount,
+        string? ServiceCities = null);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -48,6 +53,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
             errors.Add(nameof(input.PaymentPhone), "phone");
         if (input.MinimumOrderAmount is < 0m or > MaxMinimumOrder)
             errors.Add(nameof(input.MinimumOrderAmount), "invalid");
+        var serviceCities = ServiceArea.Format(ServiceArea.Parse(input.ServiceCities));
+        if (serviceCities.Length > ServiceArea.MaxLength
+            || ServiceArea.Parse(serviceCities).Any(c => c.Length > AddressFormat.PartMaxLength))
+            errors.Add(nameof(input.ServiceCities), "tooLong");
         if (errors.Any)
             return Invalid(errors);
 
@@ -60,6 +69,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         settings.PaymentPhone = Clean(input.PaymentPhone);
         // Zero (or empty) means no minimum.
         settings.MinimumOrderAmount = input.MinimumOrderAmount is > 0m ? decimal.Round(input.MinimumOrderAmount.Value, 2) : null;
+        // Missing (an older client) keeps the cities; an empty list is kept as "", meaning every city is served.
+        if (input.ServiceCities is not null)
+            settings.ServiceCities = serviceCities;
         await db.SaveChangesAsync();
         return ToDto(settings);
     }
@@ -76,7 +88,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         try
         {
             await using var stream = file!.OpenReadStream();
-            stored = await images.UploadAsync(stream, file.FileName, "kuskus/background", ct);
+            stored = await images.UploadAsync(stream, file.FileName, site.Value.ImageFolder("background"), ct);
         }
         catch (ImageStoreUnavailableException)
         {
@@ -110,7 +122,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
 
     private static SettingsDto ToDto(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
-        s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount);
+        s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
+        s.ServiceCities ?? "");
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]

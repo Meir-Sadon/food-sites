@@ -33,6 +33,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci --no-audit --no-fund
+      - name: Site folders (scripts/check-sites.mjs)
+        run: node ../scripts/check-sites.mjs
       - run: npm run lint
       - run: npm run build
       - run: npm test
@@ -53,6 +55,7 @@ jobs:
         env:
           # Design-time only: Program.cs needs these to start, nothing connects.
           Jwt__Secret: ci-design-time-secret-at-least-32-characters
+          Site__Id: ci
           ConnectionStrings__Default: Host=localhost;Database=ci;Username=ci;Password=ci
         run: |
           dotnet tool install --global dotnet-ef --version 10.0.12
@@ -64,4 +67,4 @@ jobs:
     # Becomes a matrix over sites/* in Phase 5.
     steps:
       - uses: actions/checkout@v5
-      - run: docker build --file Dockerfile --tag food-site:ci .
+      - run: docker build --file Dockerfile --build-arg SITE=kuskus --tag food-site:ci .

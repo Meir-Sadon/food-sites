@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Favorite, HistoryOrder, Profile } from '../api/account'
 import { publicApi } from '../test/catalogData'
 import { fakeApi, invalid } from '../test/fakeApi'
@@ -116,7 +116,7 @@ describe('Login', () => {
     await screen.findByRole('heading', { name: 'הרשמה' })
 
     const city = screen.getByLabelText('עיר')
-    expect(city).toHaveValue('אשקלון')
+    await vi.waitFor(() => expect(city).toHaveValue('אשקלון'))
     expect(screen.queryByText(/אנחנו עובדים רק באשקלון/)).not.toBeInTheDocument()
     await user.clear(city)
     await user.type(city, 'חיפה')

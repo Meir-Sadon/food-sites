@@ -2,6 +2,7 @@ import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Confirmation } from '../api/site'
+import { DRAFT_KEY } from '../order/draft'
 import { menu, menuDish, publicApi, site } from '../test/catalogData'
 import { fakeApi, invalid } from '../test/fakeApi'
 import { renderAt } from '../test/render'
@@ -169,12 +170,35 @@ describe('Order page', () => {
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
   })
 
+  it('starts with the first of several service cities, offers them all, and names them in the warning', async () => {
+    const { user } = await openOrderPage({ 'GET /api/site': () => site({ serviceCities: ['אשדוד', 'אשקלון', 'שדרות'] }) })
+    const city = screen.getByLabelText('עיר')
+    await vi.waitFor(() => expect(city).toHaveValue('אשדוד'))
+    const options = [...(city as HTMLInputElement).list!.options].map((o) => o.value)
+    expect(options).toEqual(['אשדוד', 'אשקלון', 'שדרות'])
+
+    await user.clear(city)
+    await user.type(city, 'אשקלון')
+    expect(screen.queryByText(/אנחנו עובדים רק ב/)).not.toBeInTheDocument()
+    await user.clear(city)
+    await user.type(city, 'חיפה')
+    expect(screen.getByText(/אנחנו עובדים רק באשדוד, אשקלון ושדרות\./)).toBeInTheDocument()
+  })
+
+  it('never warns when every city is served', async () => {
+    const { user } = await openOrderPage({ 'GET /api/site': () => site({ serviceCities: [] }) })
+    const city = screen.getByLabelText('עיר')
+    expect(city).toHaveValue('')
+    await user.type(city, 'חיפה')
+    expect(screen.queryByText(/אנחנו עובדים רק ב/)).not.toBeInTheDocument()
+  })
+
   it('starts the city as אשקלון and warns when another city is typed', async () => {
     const { api, user } = await openOrderPage({
       'POST /api/orders': () => ({ ...confirmation, needsReview: true }),
     })
     const city = screen.getByLabelText('עיר')
-    expect(city).toHaveValue('אשקלון')
+    await vi.waitFor(() => expect(city).toHaveValue('אשקלון'))
     expect(screen.queryByText(/אנחנו עובדים רק באשקלון/)).not.toBeInTheDocument()
 
     await user.clear(city)
@@ -268,7 +292,7 @@ describe('Order page', () => {
       const dialog = await screen.findByRole('dialog', { name: 'ההזמנה עוד לא נשלחה' })
       await user.click(within(dialog).getByRole('button', { name: 'שמירה ויציאה' }))
       expect(await screen.findByRole('heading', { level: 1, name: 'המלצות' })).toBeInTheDocument()
-      expect(localStorage.getItem('kuskus.orderDraft')).toContain('"quantity":2')
+      expect(localStorage.getItem(DRAFT_KEY)).toContain('"quantity":2')
 
       await user.click(screen.getByRole('link', { name: 'הזמנה' }))
       expect(await screen.findByText('שחזרנו הזמנה שהתחלתם ושמרתם.')).toBeInTheDocument()
@@ -276,14 +300,14 @@ describe('Order page', () => {
     })
 
     it('discards the draft when leaving without saving', async () => {
-      localStorage.setItem('kuskus.orderDraft', JSON.stringify({ selections: { 1: { optionId: 11, quantity: 1, addOns: {} } } }))
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ selections: { 1: { optionId: 11, quantity: 1, addOns: {} } } }))
       const { user } = await openOrderPage()
 
       await user.click(screen.getByRole('link', { name: 'פרופיל' }))
       await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'יציאה בלי לשמור' }))
 
       expect(await screen.findByRole('heading', { level: 1, name: 'פרופיל' })).toBeInTheDocument()
-      expect(localStorage.getItem('kuskus.orderDraft')).toBeNull()
+      expect(localStorage.getItem(DRAFT_KEY)).toBeNull()
     })
 
     it('stays on the page when the client changes their mind', async () => {
@@ -305,7 +329,7 @@ describe('Order page', () => {
 
     it('tells the client when saved dishes are gone', async () => {
       localStorage.setItem(
-        'kuskus.orderDraft',
+        DRAFT_KEY,
         JSON.stringify({
           selections: { 1: { optionId: 11, quantity: 1, addOns: {} }, 99: { optionId: 1, quantity: 1, addOns: {} } },
         }),

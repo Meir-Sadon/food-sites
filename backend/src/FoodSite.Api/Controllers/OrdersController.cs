@@ -4,9 +4,11 @@ using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Phones;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using static FoodSite.Api.Controllers.Admin.Ordering;
 
 namespace FoodSite.Api.Controllers;
@@ -17,6 +19,7 @@ public class OrdersController(
     AppDbContext db,
     SiteClock clock,
     IWhatsAppSender whatsApp,
+    IOptions<SiteOptions> site,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
@@ -109,6 +112,7 @@ public class OrdersController(
         // The order is added to that phone's account, if there is one.
         var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);
 
+        var serviceCities = ServiceArea.Parse(settings.ServiceCities);
         var order = new Order
         {
             UserId = userId,
@@ -120,7 +124,7 @@ public class OrdersController(
             Notes = Clean(input.Notes),
             PaymentMethod = input.PaymentMethod,
             Status = OrderStatus.New,
-            NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery && !AddressFormat.IsServiceCity(input.City),
+            NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery && !ServiceArea.Serves(serviceCities, input.City),
             Total = OrderBuilder.Total(items),
             CreatedAt = DateTimeOffset.UtcNow,
         };
@@ -129,7 +133,7 @@ public class OrdersController(
         db.Orders.Add(order);
         await db.SaveChangesAsync(ct);
 
-        await NotifyAsync(order, settings.PaymentPhone, ct);
+        await NotifyAsync(order, settings.PaymentPhone, serviceCities, ct);
 
         return new ConfirmationDto(
             order.Id, order.SupplyDate, order.FulfillmentMethod, order.PaymentMethod, order.Total,
@@ -173,12 +177,12 @@ public class OrdersController(
     /// Tells the client and everyone on the admin's list. A failed message never fails the
     /// order: it is already saved and shows in the admin's Orders tab.
     /// </summary>
-    private async Task NotifyAsync(Order order, string? paymentPhone, CancellationToken ct)
+    private async Task NotifyAsync(Order order, string? paymentPhone, IReadOnlyList<string> serviceCities, CancellationToken ct)
     {
         var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
         var messages = admins
-            .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order)))
-            .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone)));
+            .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name)))
+            .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone, site.Value.Name, serviceCities)));
         foreach (var (phone, template, text) in messages)
         {
             try

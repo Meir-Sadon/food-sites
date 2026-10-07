@@ -1,17 +1,6 @@
-/* Mobile-first. Logical properties (inline-start/end) keep the layout correct in RTL. */
+/* Mobile-first. Logical properties (inline-start/end) keep the layout correct in RTL.
+   The colour palette (--color-*) comes from the site's theme.css (sites/<id>/theme.css), loaded after this file. */
 :root {
-  --color-bg: #f7f4ef;
-  --color-surface: #ffffff;
-  --color-text: #1f2a37;
-  --color-muted: #5b6676;
-  --color-accent: #0f5c4d;
-  --color-accent-hover: #0b4a3e;
-  --color-accent-contrast: #ffffff;
-  --color-gold: #c8963e;
-  --color-border: #e3ded5;
-  --color-error: #b42318;
-  --color-success: #166534;
-  --color-soft: #eef3f0;
   --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.08);
   --shadow-md: 0 4px 12px rgb(16 24 40 / 0.08), 0 2px 4px rgb(16 24 40 / 0.05);
   --radius: 0.75rem;
