@@ -1,12 +1,12 @@
 {
-  "id": "kuskus",
+  "id": "grape-leaves-eliel",
   "timeZone": "Asia/Jerusalem",
   "language": "he",
   "serviceCities": "אשקלון",
-  "emoji": "🥘",
+  "emoji": "🍇",
   "whatsApp": {
-    "orderConfirmationTemplate": "kuskus_order_confirmation",
-    "newOrderTemplate": "kuskus_new_order"
+    "orderConfirmationTemplate": "grape_leaves_eliel_order_confirmation",
+    "newOrderTemplate": "grape_leaves_eliel_new_order"
   },
   "features": {
     "recommendations": true,

@@ -56,7 +56,7 @@ jobs:
       matrix:
         include:
           # One line per non-canary site: its folder and the secret holding its deploy hook.
-          - site: grape-leaves
+          - site: grape-leaves-eliel
             hook: RENDER_DEPLOY_HOOK_GRAPE_LEAVES
     steps:
       - name: Trigger the deploy hook

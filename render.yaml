@@ -19,7 +19,7 @@ services:
     autoDeployTrigger: checksPass
     envVars:
       - key: SITE
-        value: kuskus
+        value: kuskus-shel-ima
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
       - key: ConnectionStrings__Default
         sync: false
@@ -59,7 +59,7 @@ services:
     autoDeployTrigger: "off"
     envVars:
       - key: SITE
-        value: grape-leaves
+        value: grape-leaves-eliel
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
       - key: ConnectionStrings__Default
         sync: false

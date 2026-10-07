@@ -74,7 +74,7 @@ Comparing the two repos shows exactly what has to move into `sites/<id>/`:
 | `assets/logo.jpg`, `public/favicon.svg`, top-bar emoji | `sites/<id>/logo.*`, `public/favicon.svg`, `site.json` → `emoji` |
 | `site.name`, the tagline and the WhatsApp text in `he.json` | `sites/<id>/i18n/he.json`, merged over the shared file |
 | `<title>` in `index.html` | Set at build time from the site's `site.name` |
-| Drinks seed in `DatabaseInitializer` and its pictures in `frontend/public/drinks/` | `sites/kuskus/seed/drinks.json` (pictures in `sites/kuskus/public/drinks/`), applied only when `site.json` lists it |
+| Drinks seed in `DatabaseInitializer` and its pictures in `frontend/public/drinks/` | `sites/kuskus-shel-ima/seed/drinks.json` (pictures in `sites/kuskus-shel-ima/public/drinks/`), applied only when `site.json` lists it |
 | Render service and database names | One `render.yaml` entry per site |
 | `docs/PLAN.md` (written for kuskus) | Becomes `docs/PRODUCT.md`, the shared product spec |
 
@@ -97,7 +97,7 @@ Each phase is its own pull request and leaves the repo green: frontend lint, bui
 - [x] **Frontend:** a `SITE` variable chooses `sites/<SITE>` at build time (Vite alias `@site`). `main.tsx` imports `@site/theme.css` after `index.css`; the order page imports `@site/logo`; `TopBar` takes the emoji from the site config; `i18n/index.ts` deep-merges `@site/i18n/he.json` over the shared `he.json`; the draft key gets the site id; a small Vite plugin sets `<title>` and the favicon.
 - [x] **Seeds:** `DatabaseInitializer` applies the seed files listed in `site.json`, and stays idempotent.
 - [x] **Docker:** the root `Dockerfile` takes `ARG SITE` and fails the build when `sites/$SITE` is missing.
-- [x] Move the kuskus branding into `sites/kuskus/` and create `sites/_template/`.
+- [x] Move the kuskus branding into `sites/kuskus-shel-ima/` and create `sites/_template/`.
 - [x] **Guard rail:** `scripts/check-sites` fails CI when a business name or site-specific value appears outside `sites/`, and when a site folder is missing a required file or a `he.json` key it overrides doesn't exist in the shared file.
 
 How it was built, where it differs from the outline above:
@@ -109,7 +109,7 @@ How it was built, where it differs from the outline above:
 - The delivery cities (hard-coded Ashkelon before) are an admin setting, a comma-separated list. `site.json` → `serviceCities` gives the first value; an empty list means every city is served.
 
 ### Phase 3 — Grape leaves as the second site (done)
-- [x] Create `sites/grape-leaves/` from `grape-leaves-eliel`: palette (vine green and grape plum, plus its extra `--color-grape` variable), `logo.svg`, favicon, 🍇, and its three Hebrew texts.
+- [x] Create `sites/grape-leaves-eliel/` from `grape-leaves-eliel`: palette (vine green and grape plum, plus its extra `--color-grape` variable), `logo.svg`, favicon, 🍇, and its three Hebrew texts.
 - [x] Any CSS that hard-codes a colour (the gradient and button shadow that differ between the repos) moves to a variable, so `theme.css` alone defines a site's look.
 - [x] Both sites build, and a screenshot of each order page looks like the original repo's.
 
@@ -142,6 +142,8 @@ How it was built:
 - [x] **Migrations:** expand, then contract. Add new columns as nullable or with defaults, ship the code that uses them, and only drop the old ones in a later release. CI keeps running `dotnet ef migrations has-pending-model-changes`.
 - [x] Update `docs/DEPLOY.md`: deploying a new site is a new `render.yaml` entry, a Neon project, and its secrets.
 - [x] Before adding a third site, check Render's and Neon's current free-tier limits: free Render services share a monthly allowance of instance hours, and Neon limits the number of free projects.
+
+- The sites were renamed to `kuskus-shel-ima` and `grape-leaves-eliel` (folders and ids) to match their Render services and leave room for later businesses. Admins and logged-in clients sign in again once (cookie names and the JWT issuer come from the id); existing pictures keep their URLs, new uploads go to the `<siteId>/` Cloudinary folder.
 
 ### Phase 6 — Ops API (the console's view into each site)
 - [ ] A third authentication scheme for the console: a per-site service token (only its hash is stored in the site's settings) in an `Authorization` header. It never works as an admin or client session, and the reverse holds too.

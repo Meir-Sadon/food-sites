@@ -58,7 +58,7 @@ Every command builds or runs **one site**, chosen by the `SITE` variable (a fold
 ### Everything at once (Docker)
 
 ```bash
-SITE=kuskus docker compose up --build
+SITE=kuskus-shel-ima docker compose up --build
 ```
 
 - Site: http://localhost:8080
@@ -101,7 +101,7 @@ dotnet ef migrations add <Name> --project src/FoodSite.Api --output-dir Data/Mig
 cd frontend
 cp .env.example .env.local   # leave VITE_API_URL empty to use the dev proxy
 npm install
-SITE=kuskus npm run dev      # http://localhost:5173, proxies /api to localhost:5000
+SITE=kuskus-shel-ima npm run dev      # http://localhost:5173, proxies /api to localhost:5000
 ```
 
 ### Admin password
