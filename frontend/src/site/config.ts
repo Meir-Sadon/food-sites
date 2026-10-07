@@ -1,9 +1,12 @@
 import siteJson from '@site/site.json'
+import type { Feature } from '../api/site'
 
 /** The active site's `site.json` (`sites/<SITE>/`, chosen at build time). Text lives in its `i18n/he.json`. */
 export interface SiteConfig {
   id: string
   emoji: string
+  /** Which features the site has by default; the API's answer (`/api/site` → `features`) wins once loaded. */
+  features?: Partial<Record<Feature, boolean>>
 }
 
 export const site: SiteConfig = siteJson

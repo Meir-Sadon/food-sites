@@ -33,7 +33,7 @@ public sealed class DatabaseTests : IDisposable
         [
             "Settings", "SupplyDays", "ClosedDates", "Categories", "Dishes", "DishImages",
             "DishOptions", "DishAddOns", "Users", "Orders", "OrderItems", "FavoriteOrders",
-            "Recommendations", "NotifyPhones", "LoginCodes",
+            "Recommendations", "NotifyPhones", "LoginCodes", "FeatureFlags",
         ];
         Assert.Equal(expected.Order(), tables.Order());
     }

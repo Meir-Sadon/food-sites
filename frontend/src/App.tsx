@@ -10,6 +10,7 @@ import { OrdersPage } from './admin/orders/OrdersPage'
 import { ReportsPage } from './admin/reports/ReportsPage'
 import { SettingsPage } from './admin/settings/SettingsPage'
 import { ClientLayout } from './components/ClientLayout'
+import { RequireFeature } from './components/RequireFeature'
 import { AboutPage } from './pages/AboutPage'
 import { LoginPage } from './pages/LoginPage'
 import { OrderPage } from './pages/OrderPage'
@@ -22,7 +23,14 @@ export function App() {
       <Route element={<ClientLayout />}>
         <Route index element={<OrderPage />} />
         <Route path="login" element={<LoginPage />} />
-        <Route path="recommendations" element={<RecommendationsPage />} />
+        <Route
+          path="recommendations"
+          element={
+            <RequireFeature feature="recommendations">
+              <RecommendationsPage />
+            </RequireFeature>
+          }
+        />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="about" element={<AboutPage />} />
       </Route>

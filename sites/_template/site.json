@@ -8,5 +8,9 @@
     "orderConfirmationTemplate": "template_order_confirmation",
     "newOrderTemplate": "template_new_order"
   },
+  "features": {
+    "recommendations": true,
+    "favorites": true
+  },
   "seed": []
 }

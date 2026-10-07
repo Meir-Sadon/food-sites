@@ -38,6 +38,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["Site:Id"] = SiteId,
             ["Site:Name"] = SiteName,
             ["Site:ServiceCities"] = ServiceCity,
+            // Every feature on, as in the sites today; FeatureFlagsTests turns them off.
+            ["Site:Features:recommendations"] = "true",
+            ["Site:Features:favorites"] = "true",
         };
         foreach (var (key, value) in overrides ?? [])
             _settings[key] = value;

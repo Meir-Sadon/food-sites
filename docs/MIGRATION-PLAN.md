@@ -121,11 +121,19 @@ How it was built:
 - CI builds the frontend of every folder under `sites/`.
 - Checked by building the old and new frontends against the same API and comparing full-page phone screenshots: kuskus is pixel-identical, and grape leaves differs only in the drink pictures it gained.
 
-### Phase 4 — Feature flags
-- [ ] Defaults come from `site.json` → `features`. A `FeatureFlags` table in the site's own database overrides them; the console writes there through the ops API (Phase 6).
-- [ ] `GET /api/site` returns the enabled flags; the frontend gets a `useFeature('name')` hook, and the backend checks the same flag on the endpoints it guards.
-- [ ] Rule (in `CLAUDE.md`): new behaviour that not every business wants ships behind a flag that is off by default. Never `if (siteId == "...")`.
-- [ ] Candidates for the first flags: recommendations page, favorites, Bit/PayBox payment, delivery and pickup.
+### Phase 4 — Feature flags (done)
+- [x] Defaults come from `site.json` → `features`. A `FeatureFlags` table in the site's own database overrides them; the console writes there through the ops API (Phase 6).
+- [x] `GET /api/site` returns the enabled flags; the frontend gets a `useFeature('name')` hook, and the backend checks the same flag on the endpoints it guards.
+- [x] Rule (in `CLAUDE.md`): new behaviour that not every business wants ships behind a flag that is off by default. Never `if (siteId == "...")`.
+- [x] Candidates for the first flags: recommendations page, favorites, Bit/PayBox payment, delivery and pickup.
+
+How it was built:
+- Two flags: `recommendations` (the page, its top-bar button and the client's list on the profile page) and `favorites` (saving a past order as a favorite, the profile's list, and the order page's quick fill from a favorite; filling from the last order stays). Both `kuskus` and `grape-leaves` (and `_template`) turn both on, so neither site changes.
+- Payment and delivery got no flag: they already are admin settings in each site's own database. Bit/PayBox is offered only while the admin has set a payment phone, and delivery and pickup each have an on/off setting. A flag on top would be a second switch for the same thing.
+- The known flags are listed in `FoodSite.Api/Sites/Features.cs` and mirrored by the `Feature` type in `frontend/src/api/site.ts`. The API refuses to start when `site.json` (or an environment variable such as `Site__Features__favorites`) names an unknown flag, and a backend test checks every site folder.
+- A row in `FeatureFlags` (name, on/off) wins over `site.json`. Nothing writes it yet; the ops API will (Phase 6).
+- Guarded endpoints carry `[RequireFeature(Features.X)]` and answer 404 `{ code: "featureDisabled" }` while the flag is off.
+- The frontend uses the site's `site.json` until `/api/site` answers, so the top bar doesn't flicker. A disabled page sends the visitor to the order page, and the profile page waits for the site info before deciding which sections to load.
 
 ### Phase 5 — CI and deploys
 - [x] **CI** (`.github/workflows/ci.yml`, added in Phase 0, extended here): one job for the shared code, then a matrix that builds the production image for every folder under `sites/` (excluding `_template`).

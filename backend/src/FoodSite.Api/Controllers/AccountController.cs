@@ -4,6 +4,7 @@ using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Phones;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -207,6 +208,7 @@ public class AccountController(
 
     [HttpGet("favorites")]
     [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    [RequireFeature(Features.Favorites)]
     public async Task<IReadOnlyList<FavoriteDto>> Favorites(CancellationToken ct)
     {
         var userId = CurrentUserId();
@@ -219,6 +221,7 @@ public class AccountController(
     [HttpPost("favorites")]
     [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
     [EnableRateLimiting(WriteRateLimitPolicy)]
+    [RequireFeature(Features.Favorites)]
     public async Task<ActionResult<FavoriteDto>> AddFavorite(FavoriteInput input, CancellationToken ct)
     {
         var userId = CurrentUserId();
@@ -275,6 +278,7 @@ public class AccountController(
 
     [HttpDelete("favorites/{id:int}")]
     [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    [RequireFeature(Features.Favorites)]
     public async Task<IActionResult> RemoveFavorite(int id, CancellationToken ct)
     {
         var userId = CurrentUserId();
@@ -286,6 +290,7 @@ public class AccountController(
 
     [HttpGet("recommendations")]
     [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    [RequireFeature(Features.Recommendations)]
     public async Task<IReadOnlyList<RecommendationDto>> Recommendations(CancellationToken ct)
     {
         var userId = CurrentUserId();
@@ -299,6 +304,7 @@ public class AccountController(
     [HttpPost("recommendations")]
     [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
     [EnableRateLimiting(WriteRateLimitPolicy)]
+    [RequireFeature(Features.Recommendations)]
     public async Task<ActionResult<RecommendationDto>> AddRecommendation(RecommendationInput input, CancellationToken ct)
     {
         var userId = CurrentUserId();

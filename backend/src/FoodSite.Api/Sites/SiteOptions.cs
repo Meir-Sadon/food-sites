@@ -33,6 +33,14 @@ public partial class SiteOptions
     /// <summary>Menu seed files, relative to <see cref="Directory"/>, applied on every start without undoing admin changes.</summary>
     public List<string> Seed { get; set; } = [];
 
+    /// <summary>
+    /// <c>site.json</c> → <c>features</c>: which of <see cref="Sites.Features"/> the site has by default.
+    /// A feature left out is off. <see cref="FeatureFlags"/> applies the database's overrides.
+    /// </summary>
+    public Dictionary<string, bool> Features { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool IsEnabledByDefault(string feature) => Features.GetValueOrDefault(feature);
+
     public static bool IsValidId(string? id) => id is not null && IdPattern().IsMatch(id);
 
     /// <summary>The Cloudinary folder for one kind of picture, so sites sharing an account never mix pictures.</summary>

@@ -242,6 +242,19 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("FavoriteOrders");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.FeatureFlag", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("FeatureFlags");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.LoginCode", b =>
                 {
                     b.Property<int>("Id")

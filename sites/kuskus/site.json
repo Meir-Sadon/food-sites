@@ -8,5 +8,9 @@
     "orderConfirmationTemplate": "kuskus_order_confirmation",
     "newOrderTemplate": "kuskus_new_order"
   },
+  "features": {
+    "recommendations": true,
+    "favorites": true
+  },
   "seed": ["seed/drinks.json"]
 }

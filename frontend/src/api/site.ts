@@ -9,6 +9,9 @@ export interface Contact {
   openingHours: string | null
 }
 
+/** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
+export type Feature = 'recommendations' | 'favorites'
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -24,6 +27,8 @@ export interface Site {
   whatsAppPhones: string[]
   /** The cities deliveries go to; a delivery elsewhere waits for the admin. Empty: every city. */
   serviceCities: string[]
+  /** The features that are on for this site. */
+  features: Feature[]
 }
 
 export interface MenuOption {
