@@ -101,7 +101,8 @@ public class OrdersController(
             .Where(d => ids.Contains(d.Id))
             .ToDictionaryAsync(d => d.Id, ct);
         var items = OrderBuilder.Build(input.Items, dishes, errors);
-        if (!errors.Any && settings.MinimumOrderAmount is { } minimum && OrderBuilder.Total(items) < minimum)
+        var minimumApplies = input.FulfillmentMethod == FulfillmentMethod.Delivery || settings.MinimumOrderAppliesToPickup;
+        if (!errors.Any && minimumApplies && settings.MinimumOrderAmount is { } minimum && OrderBuilder.Total(items) < minimum)
             errors.Add("items", "belowMinimumOrder");
         if (!errors.Any)
             await CheckDishLimitsAsync(input.SupplyDate, items, dishes, errors, ct);

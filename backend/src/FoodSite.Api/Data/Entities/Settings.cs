@@ -20,6 +20,9 @@ public class Settings
     /// <summary>The smallest order total (₪) a client may place; null means no minimum.</summary>
     public decimal? MinimumOrderAmount { get; set; }
 
+    /// <summary>Whether <see cref="MinimumOrderAmount"/> applies to pickup orders too, or only to deliveries.</summary>
+    public bool MinimumOrderAppliesToPickup { get; set; } = true;
+
     /// <summary>Phone number for manual Bit/PayBox transfers.</summary>
     public string? PaymentPhone { get; set; }
 

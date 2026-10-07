@@ -223,6 +223,27 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_minimum_can_apply_to_deliveries_only()
+    {
+        async Task SetMinimum(bool appliesToPickup) =>
+            (await _admin.PutAsJsonAsync("/api/admin/settings", new
+            {
+                deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+                kashrutText = (string?)null, paymentPhone = (string?)null, minimumOrderAmount = 312m,
+                minimumOrderAppliesToPickup = appliesToPickup,
+            })).EnsureSuccessStatusCode();
+        Task<object> Pickup() =>
+            ValidOrder(o => { o["fulfillmentMethod"] = "Pickup"; o["city"] = null; o["street"] = null; o["houseNumber"] = null; });
+
+        await SetMinimum(appliesToPickup: true);
+        await (await Place(await Pickup())).AssertInvalid("items", "belowMinimumOrder");
+
+        await SetMinimum(appliesToPickup: false);
+        Assert.Equal(HttpStatusCode.OK, (await Place(await Pickup())).StatusCode);
+        await (await Place(await ValidOrder())).AssertInvalid("items", "belowMinimumOrder");
+    }
+
+    [Fact]
     public async Task Disabled_fulfillment_is_rejected()
     {
         (await _admin.PutAsJsonAsync("/api/admin/settings", new

@@ -93,6 +93,7 @@
       "paymentPhone": "מספר טלפון ל־Bit / PayBox",
       "minimumOrder": "מינימום להזמנה (₪)",
       "minimumOrderHint": "סכום ההזמנה הנמוך ביותר שאפשר לשלוח. השאירו ריק או 0 כדי לא להגביל.",
+      "minimumOrderAppliesToPickup": "המינימום חל גם על איסוף עצמי",
       "general": "משלוח, כשרות ותשלום"
     },
     "categories": {

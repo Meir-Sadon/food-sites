@@ -40,6 +40,7 @@ describe('General settings', () => {
       kashrutText: 'בהשגחת הרב',
       paymentPhone: '050-1234567',
       minimumOrderAmount: null,
+      minimumOrderAppliesToPickup: true,
       serviceCities: 'אשקלון',
     })
   })
@@ -75,6 +76,23 @@ describe('General settings', () => {
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
     await vi.waitFor(() => expect(api.sent('PUT', '/api/admin/settings')).toHaveLength(2))
     expect(api.sent('PUT', '/api/admin/settings')[1].body).toMatchObject({ minimumOrderAmount: null })
+  })
+
+  it('lets the admin keep the minimum for deliveries only', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    const appliesToPickup = within(form).getByLabelText('המינימום חל גם על איסוף עצמי')
+    expect(appliesToPickup).toBeChecked()
+    await user.click(appliesToPickup)
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await within(form).findByRole('status')).toHaveTextContent('נשמר.')
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ minimumOrderAppliesToPickup: false })
+
+    await user.click(within(form).getByLabelText('איסוף עצמי'))
+    expect(within(form).queryByLabelText('המינימום חל גם על איסוף עצמי')).not.toBeInTheDocument()
   })
 
   it('shows field errors from the server in Hebrew', async () => {

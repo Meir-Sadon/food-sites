@@ -495,6 +495,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<bool>("MinimumOrderAppliesToPickup")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PaymentPhone")
                         .HasColumnType("text");
 
@@ -516,6 +519,7 @@ namespace FoodSite.Api.Data.Migrations
                         {
                             Id = 1,
                             DeliveryEnabled = true,
+                            MinimumOrderAppliesToPickup = true,
                             PickupEnabled = true
                         });
                 });

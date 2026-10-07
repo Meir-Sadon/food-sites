@@ -11,6 +11,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   kashrutText: null,
   paymentPhone: '050-1234567',
   minimumOrderAmount: null,
+  minimumOrderAppliesToPickup: true,
   serviceCities: 'אשקלון',
   ...patch,
 })
@@ -59,6 +60,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   kashrutText: 'בהשגחת הרבנות',
   paymentPhone: '052-9999999',
   minimumOrderAmount: null,
+  minimumOrderAppliesToPickup: true,
   contact: { name: 'אמא', phone: '050-1234567', address: 'חיפה', email: null, openingHours: null },
   whatsAppPhones: [],
   serviceCities: ['אשקלון'],

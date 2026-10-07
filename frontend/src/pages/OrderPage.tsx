@@ -144,7 +144,7 @@ export function OrderPage() {
       : state.fulfillment === 'Pickup' && !site.pickupEnabled
         ? 'Delivery'
         : state.fulfillment
-  const minimum = site.minimumOrderAmount ?? 0
+  const minimum = fulfillment === 'Pickup' && !site.minimumOrderAppliesToPickup ? 0 : (site.minimumOrderAmount ?? 0)
   const belowMinimum = count > 0 && total < minimum
   const payment: Payment = state.payment === 'Transfer' && !site.paymentPhone ? 'OnDelivery' : state.payment
   const normalizedPhone = normalizePhone(state.phone)

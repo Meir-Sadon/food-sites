@@ -25,6 +25,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? KashrutText,
         string? PaymentPhone,
         decimal? MinimumOrderAmount,
+        bool MinimumOrderAppliesToPickup,
         string ServiceCities);
 
     public record SettingsInput(
@@ -35,7 +36,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? KashrutText,
         string? PaymentPhone,
         decimal? MinimumOrderAmount,
-        string? ServiceCities = null);
+        string? ServiceCities = null,
+        bool? MinimumOrderAppliesToPickup = null);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -69,6 +71,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         settings.PaymentPhone = Clean(input.PaymentPhone);
         // Zero (or empty) means no minimum.
         settings.MinimumOrderAmount = input.MinimumOrderAmount is > 0m ? decimal.Round(input.MinimumOrderAmount.Value, 2) : null;
+        // Missing (an older client) keeps the current choice.
+        if (input.MinimumOrderAppliesToPickup is { } appliesToPickup)
+            settings.MinimumOrderAppliesToPickup = appliesToPickup;
         // Missing (an older client) keeps the cities; an empty list is kept as "", meaning every city is served.
         if (input.ServiceCities is not null)
             settings.ServiceCities = serviceCities;
@@ -123,7 +128,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     private static SettingsDto ToDto(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
-        s.ServiceCities ?? "");
+        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "");
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]

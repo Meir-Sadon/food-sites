@@ -190,6 +190,18 @@ describe('Order page', () => {
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
   })
 
+  it('lets a pickup order below the minimum through when the minimum is for deliveries only', async () => {
+    const { user } = await openOrderPage({
+      'GET /api/site': () => site({ minimumOrderAmount: 100, minimumOrderAppliesToPickup: false }),
+    })
+    await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeDisabled()
+
+    await user.click(screen.getByRole('radio', { name: 'איסוף עצמי' }))
+    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
+    expect(screen.queryByText(/המינימום להזמנה הוא/)).not.toBeInTheDocument()
+  })
+
   it('starts with the first of several service cities, offers them all, and names them in the warning', async () => {
     const { user } = await openOrderPage({ 'GET /api/site': () => site({ serviceCities: ['אשדוד', 'אשקלון', 'שדרות'] }) })
     const city = screen.getByLabelText('עיר')

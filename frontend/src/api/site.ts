@@ -22,6 +22,8 @@ export interface Site {
   paymentPhone: string | null
   /** The smallest order total in ₪; null when there is none. */
   minimumOrderAmount: number | null
+  /** False when the minimum is for deliveries only. */
+  minimumOrderAppliesToPickup: boolean
   contact: Contact
   /** The phones that can be chatted with on WhatsApp (the admin's notify list). */
   whatsAppPhones: string[]
