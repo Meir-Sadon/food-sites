@@ -7,7 +7,7 @@ body:
     attributes:
       label: Site id
       description: Short lowercase id used for the folder, service and database
-      placeholder: grape-leaves
+      placeholder: grape-leaves-eliel
     validations:
       required: true
   - type: input

@@ -23,7 +23,7 @@ body:
     id: sites
     attributes:
       label: Sites that want it
-      placeholder: kuskus, grape-leaves
+      placeholder: kuskus-shel-ima, grape-leaves-eliel
   - type: textarea
     id: notes
     attributes:

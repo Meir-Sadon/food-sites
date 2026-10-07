@@ -55,7 +55,7 @@ Without it the site still works, but the admin area can't upload pictures.
 The admin password is never stored as plain text, only as a hash. Create one in either of these ways:
 
 - With .NET installed: `cd backend && dotnet run --project src/FoodSite.Api -- hash-password '<your password>'`
-- With Docker: `docker build --build-arg SITE=kuskus -t kuskus . && docker run --rm kuskus hash-password '<your password>'`
+- With Docker: `docker build --build-arg SITE=kuskus-shel-ima -t kuskus . && docker run --rm kuskus hash-password '<your password>'`
 
 Copy the line it prints (it starts with `AQAAAA`).
 
