@@ -1,0 +1,22 @@
+# Normalise text to LF in the repo; binaries are never diffed or converted.
+* text=auto eol=lf
+
+*.sh      text eol=lf
+*.cmd     text eol=crlf
+*.bat     text eol=crlf
+
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.webp    binary
+*.ico     binary
+*.woff    binary
+*.woff2   binary
+*.xlsx    binary
+*.pdf     binary
+
+# Generated files: collapsed in GitHub diffs and left out of language stats.
+frontend/package-lock.json                       linguist-generated=true -diff
+backend/src/*/Data/Migrations/*.Designer.cs      linguist-generated=true
+backend/src/*/Data/Migrations/AppDbContextModelSnapshot.cs linguist-generated=true

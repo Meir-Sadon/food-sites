@@ -64,3 +64,8 @@ logs/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---------- Site demos (see docs/MIGRATION-PLAN.md) ----------
+# A business's photos and texts collected for a demo stay local or in Cloudinary.
+sites/*/seed/images/
+sites/*/source/
