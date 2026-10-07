@@ -74,7 +74,7 @@ Comparing the two repos shows exactly what has to move into `sites/<id>/`:
 | `assets/logo.jpg`, `public/favicon.svg`, top-bar emoji | `sites/<id>/logo.*`, `favicon.svg`, `site.json` → `emoji` |
 | `site.name`, the tagline and the WhatsApp text in `he.json` | `sites/<id>/i18n/he.json`, merged over the shared file |
 | `<title>` in `index.html` | Set at build time from the site's `site.name` |
-| Drinks seed in `DatabaseInitializer` | `sites/kuskus/seed/drinks.json`, applied only when `site.json` lists it |
+| Drinks seed in `DatabaseInitializer` and its pictures in `frontend/public/drinks/` | `sites/kuskus/seed/drinks.json` (pictures next to it), applied only when `site.json` lists it |
 | Render service and database names | One `render.yaml` entry per site |
 | `docs/PLAN.md` (written for kuskus) | Becomes `docs/PRODUCT.md`, the shared product spec |
 
