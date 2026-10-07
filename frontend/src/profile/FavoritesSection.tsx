@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { Favorite, Recommendation } from '../api/account'
 import { ConfirmRemove } from '../admin/ui'
+import { NavIcon } from '../components/NavIcons'
 
 export function FavoritesSection({ favorites, dishNames, onRemove }: {
   favorites: Favorite[]
@@ -17,8 +18,11 @@ export function FavoritesSection({ favorites, dishNames, onRemove }: {
       ) : (
         <ul className="list">
           {favorites.map((favorite) => (
-            <li key={favorite.id} className="list__row">
-              <span className="list__main">
+            <li key={favorite.id} className="list__row favorite-row">
+              <span className="favorite-row__icon">
+                <NavIcon name="favorite" />
+              </span>
+              <span className="favorite-row__main">
                 <strong>{favorite.name}</strong>
                 <span className="muted">
                   {favorite.items

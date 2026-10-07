@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { Fragment, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { accountApi } from '../api/account'
 import type { Menu } from '../api/site'
 import { useLoad } from '../admin/hooks'
 import { Modal } from '../components/Modal'
+import { NavIcon, type NavIconName } from '../components/NavIcons'
 import { useFeature } from '../site/useSite'
+import { formatMoney, formatSupplyDate } from './format'
 import { selectionsFromFavorite, selectionsFromHistory, type Restored } from './model'
 
 interface Props {
@@ -24,33 +26,46 @@ export function QuickFill({ menu, hasOrder, onApply }: Props) {
   const favoritesOn = useFeature('favorites')
   const favorites = useLoad(favoritesOn ? accountApi.favorites : noFavorites)
   const last = orders.data?.find((o) => o.status !== 'Cancelled')
+  const dishNames = useMemo(() => new Map(menu.dishes.map((d) => [d.id, d.name])), [menu])
   const [pending, setPending] = useState<Restored | null>(null)
 
   const request = (restored: Restored) => (hasOrder ? setPending(restored) : onApply(restored))
 
+  // Nothing to fill from yet (a new client, or still loading): the order page starts with the menu.
+  const favoriteList = favoritesOn ? (favorites.data ?? []) : []
+  if (!last && favoriteList.length === 0) return null
+
   return (
-    <section className="quick-fill" aria-label={t('order.quick.title')}>
-      <button type="button" className="button-quiet" disabled={!last} onClick={() => last && request(selectionsFromHistory(last, menu))}>
-        {t('order.quick.last')}
-      </button>
-      {favoritesOn && (
-        <details className="quick-fill__favorites">
-          <summary className="button-quiet">{t('order.quick.favorites')}</summary>
-          {favorites.data?.length ? (
-            <ul className="list">
-              {favorites.data.map((favorite) => (
-                <li key={favorite.id} className="list__row">
-                  <button type="button" className="button-quiet" onClick={() => request(selectionsFromFavorite(favorite, menu))}>
-                    {favorite.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="hint">{t('order.quick.noFavorites')}</p>
-          )}
-        </details>
-      )}
+    <section className="quick-fill" aria-labelledby="quick-fill-title">
+      <h2 id="quick-fill-title" className="quick-fill__title">
+        {t('order.quick.title')}
+      </h2>
+      <ul className="quick-fill__tiles">
+        {last && (
+          <li>
+            <QuickTile
+              icon="history"
+              title={t('order.quick.last')}
+              meta={[formatSupplyDate(last.supplyDate, t), formatMoney(last.total)]}
+              dishes={last.items.filter((i) => i.parentItemId === null).map((i) => i.dishName)}
+              onClick={() => request(selectionsFromHistory(last, menu))}
+            />
+          </li>
+        )}
+        {favoriteList.map((favorite) => (
+          <li key={favorite.id}>
+            <QuickTile
+              icon="favorite"
+              title={favorite.name}
+              dishes={favorite.items.map((i) => dishNames.get(i.dishId)).filter((name): name is string => !!name)}
+              onClick={() => request(selectionsFromFavorite(favorite, menu))}
+            />
+          </li>
+        ))}
+        {favoritesOn && favorites.data && favoriteList.length === 0 && (
+          <li className="quick-fill__hint">{t('order.quick.noFavorites')}</li>
+        )}
+      </ul>
       {pending && (
         <Modal title={t('order.quick.replaceTitle')} onClose={() => setPending(null)} wide>
           <p>{t('order.quick.replaceText')}</p>
@@ -71,5 +86,43 @@ export function QuickFill({ menu, hasOrder, onApply }: Props) {
         </Modal>
       )}
     </section>
+  )
+}
+
+/** One way to fill the order: its name is the button's label, and what it holds describes it. */
+function QuickTile({ icon, title, meta, dishes, onClick }: {
+  icon: NavIconName
+  title: string
+  /** Short facts (a date, a total) shown on one line when they fit. */
+  meta?: string[]
+  dishes: string[]
+  onClick: () => void
+}) {
+  const id = useId()
+  return (
+    <button type="button" className="quick-tile" aria-labelledby={`${id}-title`} aria-describedby={`${id}-details`} onClick={onClick}>
+      <span className="quick-tile__icon">
+        <NavIcon name={icon} />
+      </span>
+      <span className="quick-tile__text">
+        <span id={`${id}-title`} className="quick-tile__title">
+          {title}
+        </span>
+        <span id={`${id}-details`} className="quick-tile__details">
+          {meta && (
+            <span className="quick-tile__meta">
+              {meta.map((fact, i) => (
+                // The dot stays with the fact after it, so a wrapped line never starts or ends with it alone.
+                <Fragment key={i}>
+                  {i > 0 && ' '}
+                  <span>{i > 0 ? `·\u00a0${fact}` : fact}</span>
+                </Fragment>
+              ))}
+            </span>
+          )}{' '}
+          <span className="quick-tile__dishes">{dishes.join(', ')}</span>
+        </span>
+      </span>
+    </button>
   )
 }
