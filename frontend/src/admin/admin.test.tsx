@@ -43,7 +43,7 @@ describe('admin login', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'הגדרות כלליות' })).toBeInTheDocument()
     const [login] = api.sent('POST', '/api/admin/login')
     expect(login.body).toEqual({ password: 'secret' })
-    expect(login.headers['X-Kuskus-Request']).toBe('1')
+    expect(login.headers['X-Food-Site-Request']).toBe('1')
   })
 
   it('shows an error for a wrong password', async () => {

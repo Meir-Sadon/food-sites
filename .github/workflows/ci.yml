@@ -15,8 +15,8 @@ permissions:
 
 env:
   # Change these with the Phase 1 rename (docs/MIGRATION-PLAN.md).
-  SOLUTION: backend/Kuskus.slnx
-  API_PROJECT: backend/src/Kuskus.Api
+  SOLUTION: backend/FoodSite.slnx
+  API_PROJECT: backend/src/FoodSite.Api
 
 jobs:
   frontend:
