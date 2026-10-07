@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Change these with the Phase 1 rename (docs/MIGRATION-PLAN.md).
+  SOLUTION: backend/Kuskus.slnx
+  API_PROJECT: backend/src/Kuskus.Api
+
+jobs:
+  frontend:
+    name: Frontend (lint, build, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+
+  backend:
+    name: Backend (build, test, migrations)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore "$SOLUTION"
+      - run: dotnet build "$SOLUTION" --no-restore -c Release
+      # Integration tests start PostgreSQL with Testcontainers on the runner's Docker.
+      - run: dotnet test "$SOLUTION" --no-build -c Release
+      - name: Model snapshot matches the entities
+        env:
+          # Design-time only: Program.cs needs these to start, nothing connects.
+          Jwt__Secret: ci-design-time-secret-at-least-32-characters
+          ConnectionStrings__Default: Host=localhost;Database=ci;Username=ci;Password=ci
+        run: |
+          dotnet tool install --global dotnet-ef --version 10.0.12
+          dotnet ef migrations has-pending-model-changes --project "$API_PROJECT" --no-build --configuration Release
+
+  image:
+    name: Production image
+    runs-on: ubuntu-latest
+    # Becomes a matrix over sites/* in Phase 5.
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build --file Dockerfile --tag food-site:ci .

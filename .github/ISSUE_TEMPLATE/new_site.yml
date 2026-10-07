@@ -1,0 +1,43 @@
+name: New site
+description: Add a new business, or a demo for a business owner
+labels: [new-site]
+body:
+  - type: input
+    id: id
+    attributes:
+      label: Site id
+      description: Short lowercase id used for the folder, service and database
+      placeholder: grape-leaves
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Business name (Hebrew)
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Demo (to show the owner; no WhatsApp, not indexed)
+        - Real site
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source material
+      description: >-
+        Facebook post text, menu, prices, supply days, contact phone.
+        Don't attach the business's photos here (this repo is public); keep them for the session.
+  - type: checkboxes
+    id: setup
+    attributes:
+      label: Setup (real sites)
+      options:
+        - label: Neon project created
+        - label: Render service created and secrets set
+        - label: WhatsApp number and templates approved
+        - label: Domain connected

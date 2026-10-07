@@ -1,0 +1,31 @@
+name: Feature request
+description: A new feature or a change for one or more sites
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What and why
+      description: What the feature does and who asked for it
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Who needs it
+      options:
+        - Every site (on for everyone)
+        - Some sites (behind a feature flag, off by default)
+        - One site's branding or texts only
+    validations:
+      required: true
+  - type: input
+    id: sites
+    attributes:
+      label: Sites that want it
+      placeholder: kuskus, grape-leaves
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Screens, texts, data changes, open questions

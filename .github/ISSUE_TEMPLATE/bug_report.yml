@@ -1,0 +1,40 @@
+name: Bug report
+description: Something on a site or in the admin area doesn't work as it should
+labels: [bug]
+body:
+  - type: input
+    id: sites
+    attributes:
+      label: Sites
+      description: Which sites show the problem (for example kuskus, grape-leaves, or all)
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Client site
+        - Admin area
+        - WhatsApp messages
+        - Deploy / infrastructure
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Steps to reproduce, what you expected, and what happened instead. Screenshots help.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: iPhone, Safari
+  - type: input
+    id: source
+    attributes:
+      label: Reported by
+      description: Who found it, for example the business owner, a client, or the console

@@ -1,0 +1,71 @@
+# ---------- Secrets and local config (never commit) ----------
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+secrets.json
+*.pfx
+*.pem
+*.key
+
+# ---------- .NET / C# ----------
+bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+TestResults/
+*.trx
+coverage/
+*.coverage
+*.coveragexml
+project.lock.json
+*.nupkg
+*.snupkg
+artifacts/
+
+# ---------- Node / React / Vite ----------
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+*.local
+*.tsbuildinfo
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------- Local database and uploads ----------
+*.db
+*.sqlite
+*.sqlite3
+pgdata/
+uploads/
+
+# ---------- Logs ----------
+logs/
+*.log
+
+# ---------- Editors and OS ----------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Site demos (see docs/MIGRATION-PLAN.md) ----------
+# A business's photos and texts collected for a demo stay local or in Cloudinary.
+sites/*/seed/images/
+sites/*/source/
