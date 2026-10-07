@@ -178,7 +178,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+// commit lets the deploy workflow tell when the canary runs a new build (Render sets RENDER_GIT_COMMIT).
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok", commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT") }));
 app.MapControllers();
 
 // The production image (Dockerfile at the repo root) puts the built frontend in wwwroot,

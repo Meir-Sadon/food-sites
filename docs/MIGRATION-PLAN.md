@@ -128,12 +128,12 @@ How it was built:
 - [ ] Candidates for the first flags: recommendations page, favorites, Bit/PayBox payment, delivery and pickup.
 
 ### Phase 5 — CI and deploys
-- [ ] **CI** (`.github/workflows/ci.yml`, added in Phase 0, extended here): one job for the shared code, then a matrix that builds the production image for every folder under `sites/` (excluding `_template`).
-- [ ] **Render:** one service per site in `render.yaml`, all from the same `Dockerfile` with a different `SITE` build argument, each with its own environment variables and Neon database.
-- [ ] **Staged rollout:** one site deploys automatically on merge to `main` and is the canary. The others have auto-deploy off and are deployed by a workflow (Render deploy hooks, stored as GitHub secrets) once the canary passes its `/api/health` check after deploying.
-- [ ] **Migrations:** expand, then contract. Add new columns as nullable or with defaults, ship the code that uses them, and only drop the old ones in a later release. CI keeps running `dotnet ef migrations has-pending-model-changes`.
-- [ ] Update `docs/DEPLOY.md`: deploying a new site is a new `render.yaml` entry, a Neon project, and its secrets.
-- [ ] Before adding a third site, check Render's and Neon's current free-tier limits: free Render services share a monthly allowance of instance hours, and Neon limits the number of free projects.
+- [x] **CI** (`.github/workflows/ci.yml`, added in Phase 0, extended here): one job for the shared code, then a matrix that builds the production image for every folder under `sites/` (excluding `_template`).
+- [x] **Render:** one service per site in `render.yaml`, all from the same `Dockerfile` with a different `SITE` build argument, each with its own environment variables and Neon database.
+- [x] **Staged rollout:** one site deploys automatically on merge to `main` and is the canary. The others have auto-deploy off and are deployed by a workflow (Render deploy hooks, stored as GitHub secrets) once the canary passes its `/api/health` check after deploying.
+- [x] **Migrations:** expand, then contract. Add new columns as nullable or with defaults, ship the code that uses them, and only drop the old ones in a later release. CI keeps running `dotnet ef migrations has-pending-model-changes`.
+- [x] Update `docs/DEPLOY.md`: deploying a new site is a new `render.yaml` entry, a Neon project, and its secrets.
+- [x] Before adding a third site, check Render's and Neon's current free-tier limits: free Render services share a monthly allowance of instance hours, and Neon limits the number of free projects.
 
 ### Phase 6 — Ops API (the console's view into each site)
 - [ ] A third authentication scheme for the console: a per-site service token (only its hash is stored in the site's settings) in an `Authorization` header. It never works as an admin or client session, and the reverse holds too.
