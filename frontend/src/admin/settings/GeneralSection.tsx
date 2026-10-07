@@ -109,6 +109,16 @@ export function GeneralSection() {
             </span>
             <FieldError errors={errors} field="minimumOrderAmount" id="settings-minimumOrderAmount-error" />
           </span>
+          {settings.pickupEnabled && (
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={settings.minimumOrderAppliesToPickup}
+                onChange={(e) => change({ minimumOrderAppliesToPickup: e.target.checked })}
+              />
+              {t('admin.settings.minimumOrderAppliesToPickup')}
+            </label>
+          )}
           <div className="row">
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}

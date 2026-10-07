@@ -14,6 +14,8 @@ export interface Settings {
   paymentPhone: string | null
   /** ₪; null means no minimum. */
   minimumOrderAmount: number | null
+  /** False when the minimum is for deliveries only. */
+  minimumOrderAppliesToPickup: boolean
   /** Comma-separated, e.g. "אשקלון, אשדוד"; empty means every city is served. */
   serviceCities: string
 }

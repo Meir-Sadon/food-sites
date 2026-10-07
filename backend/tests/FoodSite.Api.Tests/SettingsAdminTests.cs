@@ -113,7 +113,19 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
         Assert.Null(saved.DeliveryFeeText);
         Assert.Equal("050-1234567", saved.PaymentPhone);
         Assert.Equal(80m, saved.MinimumOrderAmount);
+        Assert.True(saved.MinimumOrderAppliesToPickup);
         Assert.Equal(saved, await (await _admin.GetAsync("/api/admin/settings")).Read<SettingsDto>());
+    }
+
+    [Fact]
+    public async Task The_minimum_for_pickup_is_kept_when_an_older_client_leaves_it_out()
+    {
+        var off = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, minimumOrderAmount = 80m, minimumOrderAppliesToPickup = false })).Read<SettingsDto>();
+        Assert.False(off.MinimumOrderAppliesToPickup);
+
+        var kept = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.False(kept.MinimumOrderAppliesToPickup);
     }
 
     [Fact]

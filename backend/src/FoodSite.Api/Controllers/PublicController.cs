@@ -22,6 +22,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string? KashrutText,
         string? PaymentPhone,
         decimal? MinimumOrderAmount,
+        bool MinimumOrderAppliesToPickup,
         ContactDto Contact,
         IReadOnlyList<string> WhatsAppPhones,
         IReadOnlyList<string> ServiceCities,
@@ -67,7 +68,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Phone).ToListAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
-            s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
+            s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount, s.MinimumOrderAppliesToPickup,
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
             whatsAppPhones,
             ServiceArea.Parse(s.ServiceCities),
