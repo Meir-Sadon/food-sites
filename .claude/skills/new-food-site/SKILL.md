@@ -67,14 +67,15 @@ One PR with the site folder and the deploy files, on a readable branch. Run `/ch
 ## 7. Database and service
 
 - **Neon**: create a project named after the id, region `aws-eu-central-1`, in the same organization as the other sites (`list_projects` shows it). The API needs the Npgsql form of the connection string (`Host=...;Database=neondb;Username=...;Password=...;SSL Mode=Require`). Never post the password in the thread or the repo; pass it straight to Render.
-- **Render** (after the PR is merged, since the service builds from `main`): the services come from `render.yaml`, so the owner syncs the Blueprint in the Render dashboard, which creates the new service and asks for its secrets. Alternatively create it with the Render `create_web_service` tool (runtime docker, region frankfurt, plan free, branch main, auto-deploy off, the env vars from `render.yaml`) once the owner confirms the workspace; don't do both. Then set `ConnectionStrings__Default` and `Cloudinary__Url` (same value as the other sites) with `update_environment_variables`.
+- **Render** (after the PR is merged, since the service builds from `main`): create it with the Render `create_web_service` tool in the workspace the other sites live in (`list_services` shows them): runtime `docker`, region `frankfurt`, plan `free`, branch `main`, `autoDeploy: no`, and the env vars from `render.yaml`: `SITE`, `ConnectionStrings__Default` (the Neon string in Npgsql form, using the host without `-pooler`), `Jwt__Secret` (a random 48+ character string, e.g. `openssl rand -base64 48`), `Database__MigrateOnStartup=true`, `ForwardedHeaders__Enabled=true`, `AuthCookie__SameSite=Lax`, `PORT=8080`. Creating the service starts the first deploy. The tool can't set the health check path, so the owner sets `/api/health` under the service's **Settings → Health Checks**. Don't also sync the Blueprint, or Render creates a second service.
+- **Check the deploy** with `get_deploy` (status `live`) and `list_logs` (type `app`): look for "Site settings defaults applied", "Seeded N dishes" and "Now listening". "No admin password is set" is expected until the owner adds the hash. A `libgssapi_krb5.so.2` error at start is harmless.
 - First start migrates the database, applies `settings` and the seed.
 
 ## 8. What only the owner can do
 
 List these in one reply:
 1. **Admin password**: pick one, run `dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'` (or the Docker variant in `docs/DEPLOY.md`), and paste the hash as the service's `Admin__PasswordHash`.
-2. **Render**: sync the Blueprint (or confirm the workspace for creating the service), and add the service's deploy hook as the GitHub secret named in `deploy.yml`.
+2. **Render**: paste `Cloudinary__Url` (the same value as the other sites; Claude can't read it) and set the health check path to `/api/health`, then add the service's deploy hook (**Settings → Deploy Hook**) as the GitHub secret named in `deploy.yml`.
 3. **Dish photos**, if they couldn't be uploaded: Admin → Dishes → each dish → Pictures.
 4. **Supply days**: Admin → supply days (the order page says there are no open dates until they're set).
 5. **WhatsApp** (optional): `WhatsApp__Token`, `WhatsApp__PhoneNumberId`, and the two templates named in `site.json` approved in Meta; without them messages are only logged.
