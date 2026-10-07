@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import i18n from '../i18n'
 import { publicApi, site } from '../test/catalogData'
 import { fakeApi } from '../test/fakeApi'
 import { renderAt } from '../test/render'
@@ -15,7 +16,7 @@ describe('WhatsApp button', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'שלחו הודעה בוואטסאפ' }))
     const url = open.mock.calls[0][0] as string
     expect(url.startsWith('https://wa.me/972501234567?text=')).toBe(true)
-    expect(decodeURIComponent(url)).toContain('היי, בקשר להזמנות של "הקוסקוס של אמא", רציתי לשאול')
+    expect(decodeURIComponent(url)).toContain(`היי, בקשר להזמנות של "${i18n.t('app.name')}", רציתי לשאול`)
   })
 
   it('is hidden without phones', async () => {

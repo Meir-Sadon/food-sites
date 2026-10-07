@@ -1,0 +1,11 @@
+{
+  "id": "template",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "emoji": "🍽️",
+  "whatsApp": {
+    "orderConfirmationTemplate": "template_order_confirmation",
+    "newOrderTemplate": "template_new_order"
+  },
+  "seed": []
+}

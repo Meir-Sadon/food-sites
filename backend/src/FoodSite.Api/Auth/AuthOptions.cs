@@ -1,3 +1,5 @@
+using FoodSite.Api.Sites;
+
 namespace FoodSite.Api.Auth;
 
 public class JwtOptions
@@ -6,7 +8,14 @@ public class JwtOptions
 
     /// <summary>HMAC signing key. At least 32 bytes.</summary>
     public string Secret { get; set; } = "";
-    public string Issuer { get; set; } = "kuskus-shel-ima";
+    /// <summary>Defaults to the site id.</summary>
+    public string Issuer { get; set; } = "";
+
+    public void UseSiteDefaults(SiteOptions site)
+    {
+        if (string.IsNullOrWhiteSpace(Issuer))
+            Issuer = site.Id;
+    }
 }
 
 public class AdminOptions
@@ -28,16 +37,25 @@ public class CookieOptions
 {
     public const string Section = "AuthCookie";
 
-    public string Name { get; set; } = "kuskus_admin";
+    /// <summary>The admin session's cookie. Defaults to <c>&lt;siteId&gt;_admin</c>.</summary>
+    public string Name { get; set; } = "";
 
-    /// <summary>Cookie of a logged-in client (the admin session uses <see cref="Name"/>).</summary>
-    public string UserName { get; set; } = "kuskus_user";
+    /// <summary>Cookie of a logged-in client (the admin session uses <see cref="Name"/>). Defaults to <c>&lt;siteId&gt;_user</c>.</summary>
+    public string UserName { get; set; } = "";
 
     /// <summary>Send only over HTTPS. Turn off for plain-HTTP local runs.</summary>
     public bool Secure { get; set; } = true;
 
     /// <summary>Lax when site and API share a domain; None when they are on different domains.</summary>
     public SameSiteMode SameSite { get; set; } = SameSiteMode.Lax;
+
+    public void UseSiteDefaults(SiteOptions site)
+    {
+        if (string.IsNullOrWhiteSpace(Name))
+            Name = $"{site.Id}_admin";
+        if (string.IsNullOrWhiteSpace(UserName))
+            UserName = $"{site.Id}_user";
+    }
 }
 
 public class AccountOptions

@@ -37,7 +37,7 @@ Without it the site still works, but the admin area can't upload pictures.
 The admin password is never stored as plain text, only as a hash. Create one in either of these ways:
 
 - With .NET installed: `cd backend && dotnet run --project src/FoodSite.Api -- hash-password '<your password>'`
-- With Docker: `docker build -t kuskus . && docker run --rm kuskus hash-password '<your password>'`
+- With Docker: `docker build --build-arg SITE=kuskus -t kuskus . && docker run --rm kuskus hash-password '<your password>'`
 
 Copy the line it prints (it starts with `AQAAAA`).
 
@@ -53,7 +53,7 @@ Copy the line it prints (it starts with `AQAAAA`).
    | `Admin__PasswordHash` | The hash from step 3 |
    | `Cloudinary__Url` | The Cloudinary value from step 2, or leave it empty |
 
-   Render generates the login-signing secret (`Jwt__Secret`) itself.
+   Render generates the login-signing secret (`Jwt__Secret`) itself. The `SITE` value in `render.yaml` picks the folder under `sites/` the service is built from; Render passes it to the `Dockerfile` as a build argument.
 4. Click **Apply**. The first build takes about 5–10 minutes. When the service shows **Live**, open the address shown at the top of the service page.
 5. Check that the admin area works: go to `/admin` and sign in with your password.
 

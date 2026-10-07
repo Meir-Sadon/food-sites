@@ -1,0 +1,11 @@
+{
+  "id": "kuskus",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "emoji": "🥘",
+  "whatsApp": {
+    "orderConfirmationTemplate": "kuskus_order_confirmation",
+    "newOrderTemplate": "kuskus_new_order"
+  },
+  "seed": ["seed/drinks.json"]
+}

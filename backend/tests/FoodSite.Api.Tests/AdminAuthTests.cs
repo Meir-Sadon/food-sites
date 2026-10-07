@@ -10,7 +10,7 @@ namespace FoodSite.Api.Tests;
 [Collection(PostgresCollection.Name)]
 public sealed class AdminAuthTests(PostgresFixture postgres) : IDisposable
 {
-    private const string CookieName = "kuskus_admin";
+    private const string CookieName = ApiFactory.SiteId + "_admin";
 
     private readonly ApiFactory _factory = new(postgres);
 

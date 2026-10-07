@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../account/useAccount'
+import { site } from '../site/config'
 import { useLeaveCheck } from './leaveGuard'
 import { NavIcon, type NavIconName } from './NavIcons'
 
@@ -24,7 +25,7 @@ export function TopBar() {
   return (
     <header className="top-bar">
       <NavLink to="/" className="top-bar__brand" onClick={(event) => { if (checkLeave('/')) event.preventDefault() }}>
-        <span className="top-bar__logo" aria-hidden="true">🥘</span>
+        <span className="top-bar__logo" aria-hidden="true">{site.emoji}</span>
         {t('app.name')}
       </NavLink>
       <nav aria-label={t('nav.label')}>

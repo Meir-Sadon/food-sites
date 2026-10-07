@@ -139,7 +139,7 @@ export function dishTotals(
   return { main, side, drinks }
 }
 
-/** The category whose ordered units get their own total (matches the backend's seeded drinks category). */
+/** The category whose ordered units get their own total (as named in a site's drinks seed, sites/<id>/seed). */
 export const DRINKS_CATEGORY_NAME = 'שתיה'
 
 export const itemCount = (selections: Record<number, Selection>) => Object.keys(selections).length

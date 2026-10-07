@@ -10,6 +10,9 @@ services:
     dockerContext: .
     healthCheckPath: /api/health
     envVars:
+      # The folder under sites/ this service builds; Render passes it to the Dockerfile as a build argument.
+      - key: SITE
+        value: kuskus
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
       - key: ConnectionStrings__Default
         sync: false

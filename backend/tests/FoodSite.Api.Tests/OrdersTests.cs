@@ -152,9 +152,12 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
 
         var confirmation = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
 
-        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("ההזמנה שלך התקבלה") && m.Contains("₪311"));
+        // Every message opens with the business's name, so a number several sites share stays unambiguous.
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone),
+            m => m.StartsWith(ApiFactory.SiteName + "\n") && m.Contains("ההזמנה שלך התקבלה") && m.Contains("₪311"));
         foreach (var phone in new[] { "0521111111", "0522222222" })
-            Assert.Contains(_factory.WhatsApp.MessagesTo(phone), m => m.Contains($"הזמנה חדשה #{confirmation.Id}") && m.Contains("₪311"));
+            Assert.Contains(_factory.WhatsApp.MessagesTo(phone),
+                m => m.StartsWith(ApiFactory.SiteName + "\n") && m.Contains($"הזמנה חדשה #{confirmation.Id}") && m.Contains("₪311"));
     }
 
     [Fact]

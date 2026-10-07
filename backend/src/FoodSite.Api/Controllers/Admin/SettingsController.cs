@@ -1,14 +1,16 @@
 using System.Text.RegularExpressions;
 using FoodSite.Api.Data;
 using FoodSite.Api.Images;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using static FoodSite.Api.Controllers.Admin.Ordering;
 
 namespace FoodSite.Api.Controllers.Admin;
 
 [Route("api/admin/settings")]
-public partial class SettingsController(AppDbContext db, IImageStore images) : AdminControllerBase
+public partial class SettingsController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site) : AdminControllerBase
 {
     public const int TextMaxLength = 1000;
     public const decimal MaxMinimumOrder = 100_000;
@@ -76,7 +78,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images) : A
         try
         {
             await using var stream = file!.OpenReadStream();
-            stored = await images.UploadAsync(stream, file.FileName, "kuskus/background", ct);
+            stored = await images.UploadAsync(stream, file.FileName, site.Value.ImageFolder("background"), ct);
         }
         catch (ImageStoreUnavailableException)
         {

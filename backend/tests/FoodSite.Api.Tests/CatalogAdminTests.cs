@@ -323,7 +323,7 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
         await (await _admin.PostAsync(url, TestFiles.Upload(TestFiles.Png, "b.png", "image/png"))).Read<DishDto>();
         var three = await (await _admin.PostAsync(url, TestFiles.Upload(TestFiles.Webp, "c.webp", "image/webp"))).Read<DishDto>();
         Assert.Equal([0, 1, 2], three.Images.Select(i => i.DisplayOrder));
-        Assert.All(_factory.Images.Uploads, u => Assert.Equal("kuskus/dishes", u.Folder));
+        Assert.All(_factory.Images.Uploads, u => Assert.Equal(ApiFactory.SiteId + "/dishes", u.Folder));
 
         var last = three.Images[2];
         var moved = await (await _admin.PostAsJsonAsync($"{url}/{last.Id}/move", new { direction = "Up" })).Read<DishDto>();

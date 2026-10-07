@@ -93,7 +93,7 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     public async Task Background_picture_upload_replaces_and_removes_the_old_one()
     {
         var first = await (await _admin.PutAsync("/api/admin/settings/background", TestFiles.Upload(TestFiles.Jpeg))).Read<SettingsDto>();
-        Assert.StartsWith("https://images.test/kuskus/background/", first.BackgroundImageUrl);
+        Assert.StartsWith($"https://images.test/{ApiFactory.SiteId}/background/", first.BackgroundImageUrl);
 
         var second = await (await _admin.PutAsync("/api/admin/settings/background", TestFiles.Upload(TestFiles.Png, "bg.png", "image/png"))).Read<SettingsDto>();
         Assert.NotEqual(first.BackgroundImageUrl, second.BackgroundImageUrl);

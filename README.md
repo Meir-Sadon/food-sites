@@ -9,7 +9,7 @@ Every business gets **its own deployment**: its own server, database, admin pass
 | `kuskus` | הקוסקוס של אמא | Code imported from [kuskus-shel-ima](https://github.com/Meir-Sadon/kuskus-shel-ima) |
 | `grape-leaves` | עלי גפן - אליאל | Branding to be moved in from [grape-leaves-eliel](https://github.com/Meir-Sadon/grape-leaves-eliel) |
 
-> **Migration in progress.** The projects use neutral `FoodSite.*` names, but some defaults (cookie names, WhatsApp template names, image folders) still carry the kuskus values until Phase 2. The phases, decisions and target layout are in [`docs/MIGRATION-PLAN.md`](docs/MIGRATION-PLAN.md).
+> **Migration in progress.** Each business's identity lives in its `sites/<site-id>/` folder, chosen by `SITE` at build time (Phase 2). The phases, decisions and target layout are in [`docs/MIGRATION-PLAN.md`](docs/MIGRATION-PLAN.md).
 
 ## Features
 
@@ -43,8 +43,9 @@ Every business gets **its own deployment**: its own server, database, admin pass
 /frontend    React client site and admin area
 /backend     ASP.NET Core API, EF Core migrations, tests
 /docs        Product spec, migration plan, deploy guide
-/sites       One folder per business: config, theme, logo, texts (from Phase 2)
-Dockerfile   Production image: frontend and API in one container
+/sites       One folder per business: config, theme, logo, texts, seeds; _template for a new one
+/scripts     check-sites.mjs: site folders are complete and shared code names no business
+Dockerfile   Production image for one site (--build-arg SITE=<site-id>): frontend and API in one container
 render.yaml  Render deployment (one service per site, from Phase 5)
 ```
 
@@ -52,10 +53,12 @@ Related repo (planned): `food-sites-console`, a private console for managing all
 
 ## Getting started
 
+Every command builds or runs **one site**, chosen by the `SITE` variable (a folder under `sites/`). Without it, local runs use `sites/_template`.
+
 ### Everything at once (Docker)
 
 ```bash
-docker compose up --build
+SITE=kuskus docker compose up --build
 ```
 
 - Site: http://localhost:8080
@@ -79,7 +82,7 @@ Each cloud session starts in a fresh container with only Node.js pre-installed. 
 ### Backend
 ```bash
 cd backend
-cp appsettings.Example.json src/FoodSite.Api/appsettings.Development.json   # fill in your values
+cp appsettings.Example.json src/FoodSite.Api/appsettings.Development.json   # fill in your values; Site:Directory picks the site
 dotnet run --project src/FoodSite.Api        # http://localhost:5000
 ```
 
@@ -98,7 +101,7 @@ dotnet ef migrations add <Name> --project src/FoodSite.Api --output-dir Data/Mig
 cd frontend
 cp .env.example .env.local   # leave VITE_API_URL empty to use the dev proxy
 npm install
-npm run dev                  # http://localhost:5173, proxies /api to localhost:5000
+SITE=kuskus npm run dev      # http://localhost:5173, proxies /api to localhost:5000
 ```
 
 ### Admin password
@@ -126,22 +129,24 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 | `Admin__SessionHours` | Admin session length (default 12) |
 | `Admin__LoginAttemptsPerMinute` | Admin login attempts allowed per IP per minute (default 5) |
 | `Account__SessionDays` | How long a logged-in client stays logged in (default 30) |
-| `AuthCookie__UserName` | Name of the client session cookie (default `kuskus_user`; the admin cookie is `kuskus_admin`) |
+| `AuthCookie__Name`, `AuthCookie__UserName` | Names of the admin and client session cookies (defaults `<siteId>_admin`, `<siteId>_user`) |
 | `AuthCookie__Secure` | Send the session cookie over HTTPS only (default `true`) |
 | `AuthCookie__SameSite` | `Lax` when site and API share a domain, `None` when they don't |
 | `Database__MigrateOnStartup` | Apply migrations when the API starts |
-| `Database__SeedDrinks` | Add the drinks category and its drinks after migrating (default `true`; the tests turn it off) |
+| `Database__ApplySeeds` | Apply the seed files listed in the site's `site.json` after migrating (default `true`) |
 | `ForwardedHeaders__Enabled` | Trust `X-Forwarded-For` from one reverse proxy in front of the API |
 | `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | WhatsApp Cloud API credentials. When both are set, messages are really sent; otherwise they are only logged (see below) |
-| `WhatsApp__OrderConfirmationTemplate`, `WhatsApp__NewOrderTemplate` | Names of the two approved message templates (defaults `kuskus_order_confirmation`, `kuskus_new_order`) |
+| `WhatsApp__OrderConfirmationTemplate`, `WhatsApp__NewOrderTemplate` | Names of the two approved message templates (defaults from `site.json`, else `<siteId>_order_confirmation`, `<siteId>_new_order`) |
 | `WhatsApp__LanguageCode` | Template language (default `he`) |
-| `Site__TimeZone` | Time zone for supply-day cutoffs (default `Asia/Jerusalem`) |
+| `Site__Directory` | The site folder (`sites/<site-id>`). The production image bundles it as `./site`, so this is only needed for local runs |
+| `Site__Id`, `Site__TimeZone`, `Site__Name` | Normally read from the site folder (`site.json`, and `app.name` in `i18n/he.json`); an environment variable overrides them. `Site:Id` names the cookies, the JWT issuer, the Cloudinary folders and the templates |
+| `Jwt__Issuer` | Token issuer (default: the site id) |
 | `Public__RequestsPerMinute` | Rate limit per IP for login, registration and orders (default 30) |
 | `Cloudinary__Url` | `cloudinary://<api_key>:<api_secret>@<cloud_name>`. Without it, picture uploads are switched off |
 
 ## WhatsApp messages
 
-With `WhatsApp__PhoneNumberId` and `WhatsApp__Token` set, order confirmations and the new-order messages to the admin's phones go out through the WhatsApp Cloud API as template messages. Create two templates in Meta's WhatsApp Manager (language Hebrew), each with a single body variable `{{1}}` that carries the message text (the API joins the lines with ` | `, since template variables cannot hold line breaks), and give them the names above. A failed message never fails an order; it still shows in the admin Orders tab.
+With `WhatsApp__PhoneNumberId` and `WhatsApp__Token` set, order confirmations and the new-order messages to the admin's phones go out through the WhatsApp Cloud API as template messages. Create two templates in Meta's WhatsApp Manager (language Hebrew), each with a single body variable `{{1}}` that carries the message text (the API joins the lines with ` | `, since template variables cannot hold line breaks), and give them the names above. Every message starts with the business's name, so clients can tell sites apart even if two of them share a sending number. A failed message never fails an order; it still shows in the admin Orders tab.
 
 Without those two settings nothing is sent: messages are written to the API log instead (`WhatsApp (simulated, ...) to ...`).
 

@@ -4,9 +4,11 @@ using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Phones;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using static FoodSite.Api.Controllers.Admin.Ordering;
 
 namespace FoodSite.Api.Controllers;
@@ -17,6 +19,7 @@ public class OrdersController(
     AppDbContext db,
     SiteClock clock,
     IWhatsAppSender whatsApp,
+    IOptions<SiteOptions> site,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
@@ -177,8 +180,8 @@ public class OrdersController(
     {
         var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
         var messages = admins
-            .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order)))
-            .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone)));
+            .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name)))
+            .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone, site.Value.Name)));
         foreach (var (phone, template, text) in messages)
         {
             try

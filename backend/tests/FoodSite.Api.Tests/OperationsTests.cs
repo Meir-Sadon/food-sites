@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Reports;
+using FoodSite.Api.Sites;
 using Microsoft.Extensions.Options;
 using static FoodSite.Api.Controllers.Admin.CategoriesController;
 using static FoodSite.Api.Controllers.Admin.DishesController;
@@ -305,12 +306,14 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
     [Fact]
     public void Whatsapp_template_payload_flattens_the_message_and_uses_the_international_number()
     {
-        var sender = new WhatsAppCloudSender(new HttpClient(), Options.Create(new WhatsAppOptions { PhoneNumberId = "1", Token = "t" }));
+        var options = new WhatsAppOptions { PhoneNumberId = "1", Token = "t" };
+        options.UseSiteDefaults(new SiteOptions { Id = "grape-leaves" });
+        var sender = new WhatsAppCloudSender(new HttpClient(), Options.Create(options));
 
         var json = System.Text.Json.JsonSerializer.Serialize(sender.Payload("0501234567", WhatsAppTemplate.NewOrder, "הזמנה #1\nעוף   x2\n"));
 
         Assert.Contains("\"to\":\"972501234567\"", json);
-        Assert.Contains("\"name\":\"kuskus_new_order\"", json);
+        Assert.Contains("\"name\":\"grape_leaves_new_order\"", json);
         Assert.Contains("הזמנה #1 | עוף x2", System.Text.RegularExpressions.Regex.Unescape(json));
     }
 }

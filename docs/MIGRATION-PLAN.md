@@ -27,7 +27,7 @@ This plan turns two copy-pasted repos into one platform. `kuskus-shel-ima` and `
     site.json           identity, time zone, WhatsApp templates, feature flags
     theme.css           colour palette as CSS variables
     logo.(svg|jpg|png)  logo shown on the order page
-    favicon.svg
+    public/             served from the site root: favicon.svg, seed pictures
     i18n/he.json        text overrides (site name, tagline, WhatsApp text…)
     seed/               optional first data (e.g. drinks), applied once
   /grape-leaves
@@ -71,10 +71,10 @@ Comparing the two repos shows exactly what has to move into `sites/<id>/`:
 | WhatsApp template names | `site.json` → `whatsApp` |
 | `kuskus.orderDraft` localStorage key | `<siteId>.orderDraft` |
 | Palette in `frontend/src/index.css` (already CSS variables) | `sites/<id>/theme.css` |
-| `assets/logo.jpg`, `public/favicon.svg`, top-bar emoji | `sites/<id>/logo.*`, `favicon.svg`, `site.json` → `emoji` |
+| `assets/logo.jpg`, `public/favicon.svg`, top-bar emoji | `sites/<id>/logo.*`, `public/favicon.svg`, `site.json` → `emoji` |
 | `site.name`, the tagline and the WhatsApp text in `he.json` | `sites/<id>/i18n/he.json`, merged over the shared file |
 | `<title>` in `index.html` | Set at build time from the site's `site.name` |
-| Drinks seed in `DatabaseInitializer` and its pictures in `frontend/public/drinks/` | `sites/kuskus/seed/drinks.json` (pictures next to it), applied only when `site.json` lists it |
+| Drinks seed in `DatabaseInitializer` and its pictures in `frontend/public/drinks/` | `sites/kuskus/seed/drinks.json` (pictures in `sites/kuskus/public/drinks/`), applied only when `site.json` lists it |
 | Render service and database names | One `render.yaml` entry per site |
 | `docs/PLAN.md` (written for kuskus) | Becomes `docs/PRODUCT.md`, the shared product spec |
 
@@ -92,13 +92,20 @@ Each phase is its own pull request and leaves the repo green: frontend lint, bui
 - [x] Rename the local database and user from `kuskus` to `foodsite` in compose and examples.
 - [x] Nothing changes in behaviour; all tests pass unchanged apart from names.
 
-### Phase 2 — Site folders
-- [ ] **Backend:** add a `SiteOptions` (`Site:Id`, plus the existing `Site:TimeZone`) and build cookie names, the JWT issuer and the WhatsApp template defaults from it. The site's `site.json` is copied into the image and bound as configuration. Environment variables still win, as today.
-- [ ] **Frontend:** a `SITE` variable chooses `sites/<SITE>` at build time (Vite alias `@site`). `main.tsx` imports `@site/theme.css` after `index.css`; the order page imports `@site/logo`; `TopBar` takes the emoji from the site config; `i18n/index.ts` deep-merges `@site/i18n/he.json` over the shared `he.json`; the draft key gets the site id; a small Vite plugin sets `<title>` and the favicon.
-- [ ] **Seeds:** `DatabaseInitializer` applies the seed files listed in `site.json`, and stays idempotent.
-- [ ] **Docker:** the root `Dockerfile` takes `ARG SITE` and fails the build when `sites/$SITE` is missing.
-- [ ] Move the kuskus branding into `sites/kuskus/` and create `sites/_template/`.
-- [ ] **Guard rail:** `scripts/check-sites` fails CI when a business name or site-specific value appears outside `sites/`, and when a site folder is missing a required file or a `he.json` key it overrides doesn't exist in the shared file.
+### Phase 2 — Site folders (done)
+- [x] **Backend:** add a `SiteOptions` (`Site:Id`, plus the existing `Site:TimeZone`) and build cookie names, the JWT issuer and the WhatsApp template defaults from it. The site's `site.json` is copied into the image and bound as configuration. Environment variables still win, as today.
+- [x] **Frontend:** a `SITE` variable chooses `sites/<SITE>` at build time (Vite alias `@site`). `main.tsx` imports `@site/theme.css` after `index.css`; the order page imports `@site/logo`; `TopBar` takes the emoji from the site config; `i18n/index.ts` deep-merges `@site/i18n/he.json` over the shared `he.json`; the draft key gets the site id; a small Vite plugin sets `<title>` and the favicon.
+- [x] **Seeds:** `DatabaseInitializer` applies the seed files listed in `site.json`, and stays idempotent.
+- [x] **Docker:** the root `Dockerfile` takes `ARG SITE` and fails the build when `sites/$SITE` is missing.
+- [x] Move the kuskus branding into `sites/kuskus/` and create `sites/_template/`.
+- [x] **Guard rail:** `scripts/check-sites` fails CI when a business name or site-specific value appears outside `sites/`, and when a site folder is missing a required file or a `he.json` key it overrides doesn't exist in the shared file.
+
+How it was built, where it differs from the outline above:
+- The favicon and the pictures a seed refers to live in `sites/<id>/public/`, which Vite uses as its `publicDir`, so they are served from the site root as before (`/favicon.svg`, `/drinks/cola.svg`).
+- The logo can be `.svg`, `.jpg`, `.png` or `.webp`; the frontend finds it with `import.meta.glob`.
+- The image folders (`<siteId>/dishes`, `<siteId>/background`) and the report file name also come from the site id.
+- The API reads the business name from the site's `i18n/he.json` (`app.name`) and starts every WhatsApp message with it.
+- Without `SITE`, local runs and tests use `_template`; the Docker images refuse to build without it.
 
 ### Phase 3 — Grape leaves as the second site
 - [ ] Create `sites/grape-leaves/` from `grape-leaves-eliel`: palette (vine green and grape plum, plus its extra `--color-grape` variable), `logo.svg`, favicon, 🍇, and its three Hebrew texts.

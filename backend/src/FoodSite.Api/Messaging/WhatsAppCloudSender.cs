@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using FoodSite.Api.Phones;
+using FoodSite.Api.Sites;
 using Microsoft.Extensions.Options;
 
 namespace FoodSite.Api.Messaging;
@@ -19,10 +20,19 @@ public class WhatsAppOptions
     public string LanguageCode { get; set; } = "he";
 
     // Template names as approved by Meta. Each has one body variable, {{1}}, that carries the message text.
-    public string OrderConfirmationTemplate { get; set; } = "kuskus_order_confirmation";
-    public string NewOrderTemplate { get; set; } = "kuskus_new_order";
+    // Unless set here, they come from the site's site.json, else <siteId>_order_confirmation / <siteId>_new_order.
+    public string OrderConfirmationTemplate { get; set; } = "";
+    public string NewOrderTemplate { get; set; } = "";
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(PhoneNumberId) && !string.IsNullOrWhiteSpace(Token);
+
+    public void UseSiteDefaults(SiteOptions site)
+    {
+        if (string.IsNullOrWhiteSpace(OrderConfirmationTemplate))
+            OrderConfirmationTemplate = site.WhatsApp.OrderConfirmationTemplate ?? $"{site.TemplatePrefix}_order_confirmation";
+        if (string.IsNullOrWhiteSpace(NewOrderTemplate))
+            NewOrderTemplate = site.WhatsApp.NewOrderTemplate ?? $"{site.TemplatePrefix}_new_order";
+    }
 
     public string TemplateName(WhatsAppTemplate template) => template switch
     {

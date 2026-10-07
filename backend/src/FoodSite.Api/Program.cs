@@ -6,6 +6,7 @@ using FoodSite.Api.Http;
 using FoodSite.Api.Images;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Orders;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,19 @@ if (args.Length > 0 && args[0] == "hash-password")
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
+// The business this deployment serves: sites/<id>/site.json, copied into the image as ./site.
+SiteFolder.AddTo(config, builder.Environment.ContentRootPath);
+var site = config.GetSection(SiteOptions.Section).Get<SiteOptions>() ?? new SiteOptions();
+if (!SiteOptions.IsValidId(site.Id))
+    throw new InvalidOperationException(
+        "Site:Id must be set (from sites/<id>/site.json via Site:Directory, or Site__Id) "
+        + "and use only lowercase letters, digits and dashes.");
+builder.Services.Configure<SiteOptions>(config.GetSection(SiteOptions.Section));
+// Cookie names, the JWT issuer and the WhatsApp template names are built from the site id unless configured.
+builder.Services.PostConfigure<JwtOptions>(o => o.UseSiteDefaults(site));
+builder.Services.PostConfigure<FoodSite.Api.Auth.CookieOptions>(o => o.UseSiteDefaults(site));
+builder.Services.PostConfigure<WhatsAppOptions>(o => o.UseSiteDefaults(site));
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(config.GetConnectionString("Default")));
 
@@ -47,10 +61,12 @@ else
     builder.Services.AddSingleton<IWhatsAppSender, SimulatedWhatsAppSender>();
 
 var jwt = config.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
+jwt.UseSiteDefaults(site);
 if (System.Text.Encoding.UTF8.GetByteCount(jwt.Secret) < 32)
     throw new InvalidOperationException("Jwt:Secret must be set and at least 32 bytes long.");
 var cookies = config.GetSection(FoodSite.Api.Auth.CookieOptions.Section).Get<FoodSite.Api.Auth.CookieOptions>()
     ?? new FoodSite.Api.Auth.CookieOptions();
+cookies.UseSiteDefaults(site);
 var cookieName = cookies.Name;
 var userCookieName = cookies.UserName;
 
@@ -178,7 +194,7 @@ if (Directory.Exists(app.Environment.WebRootPath))
 await DatabaseInitializer.InitializeAsync(
     app.Services,
     migrate: config.GetValue<bool>("Database:MigrateOnStartup"),
-    seedDrinks: config.GetValue("Database:SeedDrinks", true));
+    applySeeds: config.GetValue("Database:ApplySeeds", true));
 
 app.Run();
 return 0;

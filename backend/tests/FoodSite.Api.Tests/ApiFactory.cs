@@ -16,6 +16,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 {
     public const string AdminPassword = "correct-horse-battery";
     public const string JwtSecret = "test-secret-test-secret-test-secret-123";
+    public const string SiteId = "test-site";
+    public const string SiteName = "המטבח של הבדיקות";
 
     private readonly string _connectionString;
     private readonly Dictionary<string, string?> _settings;
@@ -31,8 +33,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["Admin:LoginAttemptsPerMinute"] = "1000",
             ["Public:RequestsPerMinute"] = "1000",
             ["Database:MigrateOnStartup"] = "true",
-            // Tests start from an empty catalog; DatabaseTests covers the drinks seed directly.
-            ["Database:SeedDrinks"] = "false",
+            // No site folder: tests start from an empty catalog, and DatabaseTests covers seeding directly.
+            ["Site:Id"] = SiteId,
+            ["Site:Name"] = SiteName,
         };
         foreach (var (key, value) in overrides ?? [])
             _settings[key] = value;
