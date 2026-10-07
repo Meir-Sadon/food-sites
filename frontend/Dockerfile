@@ -11,7 +11,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN SITE="$SITE" npm run build
 
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /repo/frontend/dist /usr/share/nginx/html
 EXPOSE 80
