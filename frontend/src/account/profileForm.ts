@@ -1,5 +1,5 @@
-import type { Profile } from '../api/account'
-import { emptyAddress, type AddressParts } from './addressParts'
+import type { Profile, ProfileInput } from '../api/account'
+import { addressOf, emptyAddress, type AddressParts } from './addressParts'
 
 /** The personal details shared by registration and the profile page. The phone has its own field. */
 export interface ProfileForm extends AddressParts {
@@ -26,4 +26,16 @@ export const formFromProfile = (profile: Profile): ProfileForm => ({
   email: profile.email ?? '',
   birthday: profile.birthday ?? '',
   ethnicBackground: profile.ethnicBackground ?? '',
+})
+
+/**
+ * What registration and the profile page send. An empty date input is "", which the server
+ * cannot read as a date, so a missing birthday goes as null.
+ */
+export const profileInput = (phone: string, form: ProfileForm): ProfileInput => ({
+  phone,
+  ...form,
+  fullName: form.fullName.trim(),
+  ...addressOf(form),
+  birthday: form.birthday || null,
 })

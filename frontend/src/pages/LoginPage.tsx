@@ -6,8 +6,7 @@ import { ApiError, type FieldErrors } from '../api/client'
 import { Loading, Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { ProfileFields } from '../account/ProfileFields'
-import { emptyProfileForm } from '../account/profileForm'
-import { addressOf } from '../account/addressParts'
+import { emptyProfileForm, profileInput } from '../account/profileForm'
 import { useAccount } from '../account/useAccount'
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
@@ -77,12 +76,7 @@ export function LoginPage() {
         setUser(await accountApi.login(normalized))
       } else {
         setUser(
-          await accountApi.register({
-            phone: normalized,
-            ...form,
-            fullName: form.fullName.trim(),
-            ...addressOf(form),
-          }),
+          await accountApi.register(profileInput(normalized, form)),
         )
       }
       navigate('/')

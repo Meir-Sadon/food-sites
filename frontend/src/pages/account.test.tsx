@@ -140,7 +140,8 @@ describe('Login', () => {
     await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
 
     await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
-    expect(api.sent('POST', '/api/account/register')[0].body).toMatchObject({ phone: '0501234567', fullName: 'דנה' })
+    // An empty date input is "", which the server cannot read as a date.
+    expect(api.sent('POST', '/api/account/register')[0].body).toMatchObject({ phone: '0501234567', fullName: 'דנה', birthday: null })
   })
 
   it('says so when the phone already has an account', async () => {
@@ -317,7 +318,7 @@ describe('Profile', () => {
     await user.click(screen.getByRole('button', { name: 'שמירה' }))
 
     await screen.findByText('נשמר.')
-    expect(api.sent('PUT', '/api/account/me')[0].body).toMatchObject({ phone: '0501234567', fullName: 'דנה לוי' })
+    expect(api.sent('PUT', '/api/account/me')[0].body).toMatchObject({ phone: '0501234567', fullName: 'דנה לוי', birthday: null })
   })
 
   it('saves a new phone number', async () => {
