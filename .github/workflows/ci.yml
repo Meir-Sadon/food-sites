@@ -26,7 +26,7 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -44,7 +44,7 @@ jobs:
     name: Backend (build, test, migrations)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -68,7 +68,7 @@ jobs:
     outputs:
       sites: ${{ steps.list.outputs.sites }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - id: list
         run: echo "sites=$(ls sites | grep -vxE "_template|_shared" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
 
@@ -81,5 +81,5 @@ jobs:
       matrix:
         site: ${{ fromJSON(needs.sites.outputs.sites) }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: docker build --file Dockerfile --build-arg SITE=${{ matrix.site }} --tag food-site-${{ matrix.site }}:ci .
