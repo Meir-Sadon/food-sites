@@ -1954,3 +1954,84 @@ label {
   border-color: #1f8f4e;
   color: #ffffff;
 }
+
+/* The client's own reviews on the profile page. */
+.my-reviews {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.my-review p {
+  margin: 0;
+}
+
+.my-review__comment {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.my-review__status--approved {
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+}
+
+.my-review__status--blocked {
+  color: var(--color-muted);
+}
+
+.my-review__images {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.my-review__images img {
+  inline-size: 5rem;
+  block-size: 5rem;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+/* Every approved review on the recommendations page. */
+.all-reviews h2 {
+  margin: 0;
+}
+
+.all-reviews__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.all-reviews__grid .review-card__comment {
+  -webkit-line-clamp: unset;
+  line-clamp: none;
+}
+
+@media (min-width: 40rem) {
+  .all-reviews__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 64rem) {
+  .all-reviews__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

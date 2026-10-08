@@ -105,7 +105,27 @@ export function SendMessage({ order, onClose }: { order: AdminOrder; onClose: ()
           ) : (
             <span className="field">
               <label htmlFor={`${id}-text`}>{t('admin.messages.preview')}</label>
-              <textarea id={`${id}-text`} rows={6} value={text} onChange={(e) => template && setEdits({ ...edits, [template.id]: e.target.value })} />
+              <textarea
+                id={`${id}-text`}
+                rows={6}
+                value={text}
+                aria-describedby={`${id}-text-hint`}
+                onChange={(e) => template && setEdits({ ...edits, [template.id]: e.target.value })}
+              />
+              <span id={`${id}-text-hint`} className="hint">
+                {t('admin.messages.previewHint')}
+              </span>
+              {template && edits[template.id] !== undefined && (
+                <span>
+                  <button
+                    type="button"
+                    className="button-quiet"
+                    onClick={() => setEdits(Object.fromEntries(Object.entries(edits).filter(([key]) => Number(key) !== template.id)))}
+                  >
+                    {t('admin.messages.resetText')}
+                  </button>
+                </span>
+              )}
             </span>
           )}
           {error && <Status message={error} error />}

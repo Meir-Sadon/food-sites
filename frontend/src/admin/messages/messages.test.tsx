@@ -56,7 +56,7 @@ describe('Admin WhatsApp messages', () => {
     const card = await screen.findByRole('article', { name: 'הזמנה #7' })
     await user.click(within(card).getByRole('button', { name: /וואטסאפ/ }))
 
-    const text = await within(card).findByLabelText('ההודעה (אפשר לערוך לפני השליחה)')
+    const text = await within(card).findByLabelText('ההודעה שתישלח')
     expect(within(card).getByLabelText('תבנית')).toHaveValue('2')
     const message = `דנה,\nנשמח לשמוע איך היה:\n${window.location.origin}/r/abcdefghij`
     await waitFor(() => expect(text).toHaveValue(message))
@@ -72,6 +72,10 @@ describe('Admin WhatsApp messages', () => {
     expect(text).toHaveValue('דנה,\nהזמנה 7 ל־06/01/2030 אושרה (₪176).')
     await user.type(text, ' תודה!')
     expect(within(card).getByRole('link', { name: 'פתיחה בוואטסאפ' }).getAttribute('href')).toContain(encodeURIComponent('תודה!'))
+
+    // The edit is for this message only: going back to the template's text undoes it.
+    await user.click(within(card).getByRole('button', { name: 'חזרה לנוסח התבנית' }))
+    expect(text).toHaveValue('דנה,\nהזמנה 7 ל־06/01/2030 אושרה (₪176).')
   })
 
   it('picks the message for the order status, and makes no review link for it', async () => {
@@ -85,7 +89,7 @@ describe('Admin WhatsApp messages', () => {
     const card = await screen.findByRole('article', { name: 'הזמנה #7' })
     await user.click(within(card).getByRole('button', { name: /וואטסאפ/ }))
 
-    expect(await within(card).findByLabelText('ההודעה (אפשר לערוך לפני השליחה)')).toHaveValue('דנה,\nהזמנה 7 ל־06/01/2030 אושרה (₪176).')
+    expect(await within(card).findByLabelText('ההודעה שתישלח')).toHaveValue('דנה,\nהזמנה 7 ל־06/01/2030 אושרה (₪176).')
     expect(within(card).getByLabelText('תבנית')).toHaveValue('1')
     expect(api.sent('POST', '/api/admin/reviews/for-order/7')).toHaveLength(0)
   })

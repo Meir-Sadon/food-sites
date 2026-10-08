@@ -19,8 +19,8 @@ namespace FoodSite.Api.Controllers;
 [RequireFeature(Features.Reviews)]
 public class ReviewsController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site, TimeProvider time) : PublicControllerBase
 {
-    /// <summary>How many approved reviews the home page shows, newest first.</summary>
-    public const int ShownLimit = 30;
+    /// <summary>How many approved reviews the site shows, newest first.</summary>
+    public const int ShownLimit = 100;
 
     public record ReviewDto(int Id, string? Name, int Rating, string? Comment, IReadOnlyList<string> Images, DateTimeOffset SubmittedAt);
 

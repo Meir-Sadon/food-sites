@@ -16,7 +16,7 @@ namespace FoodSite.Api.Controllers;
 
 /// <summary>
 /// Client accounts: login and registration by phone number, the
-/// profile, order history, favorites and recommendations. Everything except login,
+/// profile, order history, favorites, recommendations and the client's reviews. Everything except login,
 /// registration and logout needs the client's session cookie.
 /// </summary>
 [Route("api/account")]
@@ -80,6 +80,11 @@ public class AccountController(
     public record RecommendationInput(string? Text);
 
     public record RecommendationDto(int Id, string Text, DateTimeOffset CreatedAt, bool IsHandled);
+
+    /// <summary>A review the client sent on one of their orders, and whether it is shown on the site.</summary>
+    public record MyReviewDto(
+        int Id, int OrderId, DateOnly SupplyDate, int Rating, string? Comment, string? Name, IReadOnlyList<string> Images,
+        ReviewStatus Status, DateTimeOffset SubmittedAt);
 
     // ---------- Login, registration, session ----------
 
@@ -322,6 +327,25 @@ public class AccountController(
         db.Recommendations.Add(recommendation);
         await db.SaveChangesAsync(ct);
         return new RecommendationDto(recommendation.Id, recommendation.Text, recommendation.CreatedAt, recommendation.IsHandled);
+    }
+
+    // ---------- Reviews ----------
+
+    /// <summary>The reviews the client sent on their orders, newest first.</summary>
+    [HttpGet("reviews")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    [RequireFeature(Features.Reviews)]
+    public async Task<IReadOnlyList<MyReviewDto>> Reviews(CancellationToken ct)
+    {
+        var userId = CurrentUserId();
+        var reviews = await db.Reviews.AsNoTracking()
+            .Where(r => r.Order!.UserId == userId && r.SubmittedAt != null)
+            .Include(r => r.Order).Include(r => r.Images)
+            .OrderByDescending(r => r.SubmittedAt).ThenByDescending(r => r.Id)
+            .ToListAsync(ct);
+        return reviews.Select(r => new MyReviewDto(
+            r.Id, r.OrderId, r.Order!.SupplyDate, r.Rating ?? 0, r.Comment, r.Name,
+            r.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(), r.Status, r.SubmittedAt!.Value)).ToList();
     }
 
     // ---------- Helpers ----------
