@@ -1,0 +1,27 @@
+{
+  "id": "home-food-mary",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אשקלון",
+  "emoji": "🥪",
+  "whatsApp": {
+    "orderConfirmationTemplate": "home_food_mary_order_confirmation",
+    "newOrderTemplate": "home_food_mary_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true
+  },
+  "settings": {
+    "contactName": "מרי פדידה",
+    "contactPhone": "053-5280884",
+    "contactAddress": "איסוף משכונת אגמים, אשקלון",
+    "deliveryAreaText": "משלוחים באשקלון והסביבה",
+    "deliveryFeeText": "משלוח באשקלון והסביבה, או איסוף עצמי משכונת אגמים",
+    "backgroundImageUrl": "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791462755/home-food-mary/background/background-1.jpg"
+  },
+  "seed": [
+    "seed/menu.json"
+  ]
+}

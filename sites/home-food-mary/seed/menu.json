@@ -1,0 +1,335 @@
+{
+  "categories": [
+    {
+      "name": "כריכים בלחם בית",
+      "dishes": [
+        {
+          "name": "כריך שניצל קריספי",
+          "description": "שניצל קריספי בלחם בית. תוספות בכריך ללא תשלום: מטבוחה, חציל, כרוב סגול, פלפל חריף מטוגן. כתבו בהערות להזמנה מה לשים.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "כריך קציצות פרגית עם אפונה",
+          "description": "קציצות פרגית ברוטב עם אפונה, בלחם בית. תוספות בכריך ללא תשלום: מטבוחה, חציל, כרוב סגול, פלפל חריף מטוגן. כתבו בהערות להזמנה מה לשים.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "כריך קציצות ירק",
+          "description": "קציצות ירק בלחם בית. תוספות בכריך ללא תשלום: מטבוחה, חציל, כרוב סגול, פלפל חריף מטוגן. כתבו בהערות להזמנה מה לשים.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "כריך שניצל וקציצות ירק",
+          "description": "שניצל קריספי וקציצות ירק בלחם בית. תוספות בכריך ללא תשלום: מטבוחה, חציל, כרוב סגול, פלפל חריף מטוגן. כתבו בהערות להזמנה מה לשים.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "עסקית: כריך, צ'יפס ופחית",
+          "description": "כריך בלחם בית, צ'יפס ופחית שתייה. כתבו בהערות להזמנה איזה כריך, אילו תוספות ואיזו פחית.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 55,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "מנות בחמגשית",
+      "dishes": [
+        {
+          "name": "שניצל קריספי בחמגשית",
+          "description": "שניצל קריספי עם אורז או ספגטי. כתבו בהערות להזמנה מה לבחור.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קציצות פרגית עם אפונה בחמגשית",
+          "description": "קציצות פרגית ברוטב עם אפונה, עם אורז או ספגטי. כתבו בהערות להזמנה מה לבחור.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 55,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קציצות ירק בחמגשית",
+          "description": "קציצות ירק עם אורז או ספגטי. כתבו בהערות להזמנה מה לבחור.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "מנות ילדים",
+      "dishes": [
+        {
+          "name": "שניצל וצ'יפס",
+          "description": "מנת ילדים: שניצל עם צ'יפס.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "שניצלונים וצ'יפס",
+          "description": "מנת ילדים: שניצלונים עם צ'יפס.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "נאגטס וצ'יפס",
+          "description": "מנת ילדים: נאגטס עם צ'יפס.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "המטוגנים שלנו",
+      "dishes": [
+        {
+          "name": "צ'יפס",
+          "description": "צ'יפס בצד, למנה או בנפרד.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isSideDish": true,
+          "addOnOf": [
+            "כריך שניצל קריספי",
+            "כריך קציצות פרגית עם אפונה",
+            "כריך קציצות ירק",
+            "כריך שניצל וקציצות ירק",
+            "שניצל קריספי בחמגשית",
+            "קציצות פרגית עם אפונה בחמגשית",
+            "קציצות ירק בחמגשית"
+          ]
+        },
+        {
+          "name": "צ'יפס בטטה",
+          "description": "צ'יפס בטטה, למנה או בנפרד.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 20,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isSideDish": true,
+          "addOnOf": [
+            "כריך שניצל קריספי",
+            "כריך קציצות פרגית עם אפונה",
+            "כריך קציצות ירק",
+            "כריך שניצל וקציצות ירק",
+            "שניצל קריספי בחמגשית",
+            "קציצות פרגית עם אפונה בחמגשית",
+            "קציצות ירק בחמגשית"
+          ]
+        },
+        {
+          "name": "טבעות בצל",
+          "description": "טבעות בצל מטוגנות, למנה או בנפרד.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 20,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isSideDish": true,
+          "addOnOf": [
+            "כריך שניצל קריספי",
+            "כריך קציצות פרגית עם אפונה",
+            "כריך קציצות ירק",
+            "כריך שניצל וקציצות ירק",
+            "שניצל קריספי בחמגשית",
+            "קציצות פרגית עם אפונה בחמגשית",
+            "קציצות ירק בחמגשית"
+          ]
+        },
+        {
+          "name": "כדורי פירה",
+          "description": "כדורי פירה מטוגנים, למנה או בנפרד.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 20,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isSideDish": true,
+          "addOnOf": [
+            "כריך שניצל קריספי",
+            "כריך קציצות פרגית עם אפונה",
+            "כריך קציצות ירק",
+            "כריך שניצל וקציצות ירק",
+            "שניצל קריספי בחמגשית",
+            "קציצות פרגית עם אפונה בחמגשית",
+            "קציצות ירק בחמגשית"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "שתיה",
+      "dishes": [
+        {
+          "name": "קוקה קולה",
+          "description": "פחית.",
+          "sellBy": "Units",
+          "unitName": "פחית",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406043/tin-cocaCola-coke.jpg"
+          ]
+        },
+        {
+          "name": "קוקה קולה זירו",
+          "description": "פחית.",
+          "sellBy": "Units",
+          "unitName": "פחית",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406044/tin-cocaCola-coke-zero.jpg"
+          ]
+        },
+        {
+          "name": "ספרייט",
+          "description": "פחית.",
+          "sellBy": "Units",
+          "unitName": "פחית",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406105/tin-sprite.jpg"
+          ]
+        },
+        {
+          "name": "פאנטה",
+          "description": "פחית.",
+          "sellBy": "Units",
+          "unitName": "פחית",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406054/tin-fanta-orange.jpg"
+          ]
+        },
+        {
+          "name": "מנגו",
+          "description": "פחית.",
+          "sellBy": "Units",
+          "unitName": "פחית",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פיוז טי",
+          "sellBy": "Units",
+          "unitName": "בקבוק",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405983/bottle-fuzetea-peach.jpg"
+          ]
+        },
+        {
+          "name": "קוקה קולה - בקבוק גדול",
+          "sellBy": "Units",
+          "unitName": "בקבוק",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קוקה קולה זירו - בקבוק גדול",
+          "sellBy": "Units",
+          "unitName": "בקבוק",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "נסטי - בקבוק גדול",
+          "sellBy": "Units",
+          "unitName": "בקבוק",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "הקפואים שלנו",
+      "dishes": [
+        {
+          "name": "קובה עבודת יד",
+          "description": "קובה קפוא בעבודת יד, לטיגון בבית.",
+          "sellBy": "Units",
+          "unitName": "יחידה",
+          "unitPrice": 7,
+          "minAmount": 1,
+          "maxAmount": 50,
+          "amountStep": 1
+        }
+      ]
+    }
+  ]
+}

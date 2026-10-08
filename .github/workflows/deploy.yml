@@ -72,6 +72,8 @@ jobs:
             hook: RENDER_DEPLOY_HOOK_CIGARS_SHIRAZ
           - site: kuskus-liel
             hook: RENDER_DEPLOY_HOOK_KUSKUS_LIEL
+          - site: home-food-mary
+            hook: RENDER_DEPLOY_HOOK_HOME_FOOD_MARY
     steps:
       - name: Trigger the deploy hook
         env:
