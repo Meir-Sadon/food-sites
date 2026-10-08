@@ -58,7 +58,6 @@ export function OrderPage() {
   const [failed, setFailed] = useState(false)
 
   const [state, setState] = useState<OrderState>(emptyOrder)
-  const [notice, setNotice] = useState<string | null>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
   // Bumped by a quick fill: once the filled order renders, the page scrolls to the submit button.
   const [quickFills, setQuickFills] = useState(0)
