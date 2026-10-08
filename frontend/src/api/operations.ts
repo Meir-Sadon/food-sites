@@ -4,6 +4,17 @@ import type { Fulfillment, Payment } from './site'
 export type OrderStatus = 'New' | 'Confirmed' | 'Ready' | 'Delivered' | 'Cancelled'
 export const orderStatuses: OrderStatus[] = ['New', 'Confirmed', 'Ready', 'Delivered', 'Cancelled']
 
+/** How a paid order was paid. Unknown is only on orders marked paid before this was recorded. */
+export type PaidWith = 'Unknown' | 'Cash' | 'Bit' | 'PayBox' | 'BankTransfer' | 'CreditCard' | 'Other'
+/** What the admin can pick when marking an order paid. */
+export const paidWithChoices: PaidWith[] = ['Cash', 'Bit', 'PayBox', 'BankTransfer', 'CreditCard', 'Other']
+
+export interface PaidInput {
+  isPaid: boolean
+  paidWith?: PaidWith
+  paymentComment?: string
+}
+
 export interface AdminOrderItem {
   id: number
   parentItemId: number | null
@@ -25,6 +36,9 @@ export interface AdminOrder {
   notes: string | null
   paymentMethod: Payment
   isPaid: boolean
+  /** Set while the order is paid. */
+  paidWith: PaidWith | null
+  paymentComment: string | null
   status: OrderStatus
   total: number
   createdAt: string
@@ -100,7 +114,7 @@ export const ordersAdminApi = {
   summary: (date: string) => apiJson<CookingSummary>(`${orders}/summary?date=${date}`),
   setStatus: (id: number, status: OrderStatus) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status })),
   approve: (id: number) => apiJson<void>(`${orders}/${id}/approve`, send('PUT')),
-  setPaid: (id: number, isPaid: boolean) => apiJson<void>(`${orders}/${id}/paid`, send('PUT', { isPaid })),
+  setPaid: (id: number, input: PaidInput) => apiJson<void>(`${orders}/${id}/paid`, send('PUT', input)),
   update: (id: number, input: AdminOrderInput) => apiJson<AdminOrder>(`${orders}/${id}`, send('PUT', input)),
 }
 

@@ -348,6 +348,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
+                    b.Property<string>("PaidWith")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentComment")
+                        .HasColumnType("text");
+
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("text");

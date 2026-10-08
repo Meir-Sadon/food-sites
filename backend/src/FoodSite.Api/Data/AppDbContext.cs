@@ -29,6 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<ChoiceMode>().HaveConversion<string>();
         builder.Properties<FulfillmentMethod>().HaveConversion<string>();
         builder.Properties<PaymentMethod>().HaveConversion<string>();
+        builder.Properties<PaidWith>().HaveConversion<string>();
         builder.Properties<OrderStatus>().HaveConversion<string>();
 
         // Money in shekels and agorot; amounts that can be weights get grams precision.

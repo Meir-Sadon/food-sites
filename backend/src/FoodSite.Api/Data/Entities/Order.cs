@@ -19,6 +19,12 @@ public class Order
     public PaymentMethod PaymentMethod { get; set; }
     public bool IsPaid { get; set; }
 
+    /// <summary>Set together with IsPaid: how the order was paid. Empty while it is unpaid.</summary>
+    public PaidWith? PaidWith { get; set; }
+
+    /// <summary>The admin's note on the payment (a reference, who paid). Empty while it is unpaid.</summary>
+    public string? PaymentComment { get; set; }
+
     /// <summary>
     /// A delivery outside the service city: the admin has to approve it. Until then it is not a safe order
     /// and its dishes are not taken out of the quantity left for the supply date.
