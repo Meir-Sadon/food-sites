@@ -91,34 +91,36 @@ export function GeneralSection() {
           {text('deliveryFeeText', t('admin.settings.deliveryFee'))}
           {text('kashrutText', t('admin.settings.kashrut'))}
           {text('paymentPhone', t('admin.settings.paymentPhone'), false)}
-          <span className="field field--narrow-input">
+          <span className="field">
             <label htmlFor="settings-minimumOrderAmount">{t('admin.settings.minimumOrder')}</label>
-            <input
-              id="settings-minimumOrderAmount"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step="any"
-              dir="ltr"
-              value={settings.minimumOrderAmount ?? ''}
-              aria-describedby="settings-minimumOrderAmount-hint settings-minimumOrderAmount-error"
-              onChange={(e) => change({ minimumOrderAmount: e.target.value === '' ? null : Number(e.target.value) })}
-            />
+            <span className="field__inline">
+              <input
+                id="settings-minimumOrderAmount"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="any"
+                dir="ltr"
+                value={settings.minimumOrderAmount ?? ''}
+                aria-describedby="settings-minimumOrderAmount-hint settings-minimumOrderAmount-error"
+                onChange={(e) => change({ minimumOrderAmount: e.target.value === '' ? null : Number(e.target.value) })}
+              />
+              {settings.pickupEnabled && (
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={settings.minimumOrderAppliesToPickup}
+                    onChange={(e) => change({ minimumOrderAppliesToPickup: e.target.checked })}
+                  />
+                  {t('admin.settings.minimumOrderAppliesToPickup')}
+                </label>
+              )}
+            </span>
             <span id="settings-minimumOrderAmount-hint" className="hint">
               {t('admin.settings.minimumOrderHint')}
             </span>
             <FieldError errors={errors} field="minimumOrderAmount" id="settings-minimumOrderAmount-error" />
           </span>
-          {settings.pickupEnabled && (
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={settings.minimumOrderAppliesToPickup}
-                onChange={(e) => change({ minimumOrderAppliesToPickup: e.target.checked })}
-              />
-              {t('admin.settings.minimumOrderAppliesToPickup')}
-            </label>
-          )}
           <div className="row">
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}

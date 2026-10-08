@@ -233,10 +233,6 @@ textarea {
   margin: 0;
 }
 
-.field--narrow-input {
-  max-inline-size: 14rem;
-}
-
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -343,6 +339,19 @@ legend {
 .field select,
 .field textarea {
   inline-size: 100%;
+}
+
+/* A field's input with a related option beside it; the option wraps below when they don't fit. */
+.field__inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.75rem;
+}
+
+.field__inline > input {
+  inline-size: 14rem;
+  max-inline-size: 100%;
 }
 
 label {
