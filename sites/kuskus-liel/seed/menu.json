@@ -11,8 +11,7 @@
           "unitPrice": 50,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1,
-          "maxPerSupplyDate": 30
+          "amountStep": 1
         },
         {
           "name": "קוסקוס עם עוף",
@@ -22,8 +21,7 @@
           "unitPrice": 60,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1,
-          "maxPerSupplyDate": 30
+          "amountStep": 1
         },
         {
           "name": "קוסקוס עם 2 קציצות",
@@ -33,8 +31,7 @@
           "unitPrice": 60,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1,
-          "maxPerSupplyDate": 30
+          "amountStep": 1
         }
       ]
     },

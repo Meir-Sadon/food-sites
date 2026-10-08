@@ -14,6 +14,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   minimumOrderAppliesToPickup: true,
   serviceCities: 'אשקלון',
   ordersPerHour: null,
+  portionsPerSupplyDate: null,
   ...patch,
 })
 

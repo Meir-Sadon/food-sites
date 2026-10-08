@@ -125,12 +125,19 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         return new HourAvailabilityDto(HourCapacity.IsFull(taken, limit));
     }
 
-    /// <summary>For each limited dish, how much is still free on each open supply date (cancelled orders and orders waiting for the admin's approval don't count).</summary>
+    /// <summary>
+    /// For each limited dish, how much is still free on each open supply date (cancelled orders and orders waiting for
+    /// the admin's approval don't count). With a site-wide portion limit, every dish it counts is limited by what is left of it too.
+    /// </summary>
     private async Task<Dictionary<int, IReadOnlyDictionary<string, decimal>>> RemainingAsync(
         List<Dish> dishes, List<DateOnly> dates)
     {
+        if (dates.Count == 0)
+            return [];
+        var portions = await db.Settings.AsNoTracking().Select(s => s.PortionsPerSupplyDate).SingleAsync();
         var limits = dishes.Where(d => d.MaxPerSupplyDate is not null).ToDictionary(d => d.Id, d => d.MaxPerSupplyDate!.Value);
-        if (limits.Count == 0 || dates.Count == 0)
+        var counted = portions is null ? [] : dishes.Where(DailyPortions.Counts).Select(d => d.Id).ToHashSet();
+        if (limits.Count == 0 && counted.Count == 0)
             return [];
 
         var ids = limits.Keys.ToList();
@@ -139,13 +146,26 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             .GroupBy(i => new { i.DishId, i.Order!.SupplyDate })
             .Select(g => new { g.Key.DishId, g.Key.SupplyDate, Quantity = g.Sum(i => i.Quantity) })
             .ToListAsync();
+        var portionsTaken = counted.Count == 0 ? [] : await DailyPortions.TakenAsync(db, dates);
 
-        return limits.ToDictionary(
-            l => l.Key,
-            l => (IReadOnlyDictionary<string, decimal>)dates.ToDictionary(
+        decimal? Free(int dishId, DateOnly date)
+        {
+            decimal? free = limits.TryGetValue(dishId, out var limit)
+                ? limit - taken.Where(t => t.DishId == dishId && t.SupplyDate == date).Sum(t => t.Quantity)
+                : null;
+            if (counted.Contains(dishId))
+            {
+                var portionsFree = portions!.Value - portionsTaken.GetValueOrDefault(date);
+                free = free is null ? portionsFree : Math.Min(free.Value, portionsFree);
+            }
+            return free is null ? null : Math.Max(0, free.Value);
+        }
+
+        return limits.Keys.Union(counted).ToDictionary(
+            id => id,
+            id => (IReadOnlyDictionary<string, decimal>)dates.ToDictionary(
                 date => date.ToString("yyyy-MM-dd"),
-                date => Math.Max(0, l.Value - taken
-                    .Where(t => t.DishId == l.Key && t.SupplyDate == date).Sum(t => t.Quantity))));
+                date => Free(id, date)!.Value));
     }
 
     private async Task<IReadOnlyList<SupplyCalendar.OpenDate>> OpenDatesAsync()

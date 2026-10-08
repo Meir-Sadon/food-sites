@@ -259,6 +259,16 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task Portions_per_supply_date_is_saved_and_zero_means_no_limit()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Null(settings.PortionsPerSupplyDate);
+        Assert.Equal(30, (await (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { PortionsPerSupplyDate = 30 })).Read<SettingsDto>()).PortionsPerSupplyDate);
+        Assert.Null((await (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { PortionsPerSupplyDate = 0 })).Read<SettingsDto>()).PortionsPerSupplyDate);
+        await (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { PortionsPerSupplyDate = -1 })).AssertInvalid("PortionsPerSupplyDate", "invalid");
+    }
+
+    [Fact]
     public async Task Supply_days_need_each_weekday_once()
     {
         var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();

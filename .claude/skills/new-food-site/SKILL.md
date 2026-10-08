@@ -38,7 +38,7 @@ Copy `sites/_template/` to `sites/<site-id>/` (lowercase letters, digits, dashes
 | `logo.svg` | A simple round SVG logo drawn by hand (see the existing sites), in the palette. |
 | `public/favicon.svg` | A 32x32 version of the logo. |
 | `i18n/he.json` | `app.name` and `order.hero.tagline`; override `order.hero.kosher` (a hero badge) when the business makes no kashrut claim. Only keys that exist in `frontend/src/i18n/he.json`. |
-| `seed/<name>.json` | Categories and dishes (format: `backend/src/FoodSite.Api/Data/MenuSeed.cs`). A pack sold as one item (50 cigars for 120 ₪) is `sellBy: Units`, `unitPrice: 120`, with the pack size in the name, since the order page shows "₪120 ליחידה" (or set `unitName`, e.g. `"מנה"` → "₪50 למנה"). A daily limit per dish is `maxPerSupplyDate`. A side that is sold on its own and also offered under main dishes is `isSideDish: true` with `addOnOf: ["<main dish name>", ...]`. |
+| `seed/<name>.json` | Categories and dishes (format: `backend/src/FoodSite.Api/Data/MenuSeed.cs`). A pack sold as one item (50 cigars for 120 ₪) is `sellBy: Units`, `unitPrice: 120`, with the pack size in the name, since the order page shows "₪120 ליחידה" (or set `unitName`, e.g. `"מנה"` → "₪50 למנה"). A daily limit per dish is `maxPerSupplyDate`; a daily limit on all portions together is the admin setting **מנות ליום אספקה** (`Settings.PortionsPerSupplyDate`), set with the business defaults below. A side that is sold on its own and also offered under main dishes is `isSideDish: true` with `addOnOf: ["<main dish name>", ...]`. |
 
 Leave `images` out of the seed unless the pictures are already in Cloudinary (see step 3).
 
@@ -88,6 +88,7 @@ One PR with the site folder and the deploy files, on a readable branch. Run `/ch
   UPDATE "Settings" SET "PaymentPhone" = "ContactPhone" WHERE "PaymentPhone" IS NULL;
   INSERT INTO "NotifyPhones" ("Phone", "Name") VALUES ('<contact phone, digits only>', '<contact name>') ON CONFLICT ("Phone") DO NOTHING;
   ```
+  If the business limits its portions per day across all dishes, also `UPDATE "Settings" SET "PortionsPerSupplyDate" = <n>;`. Use the business's real supply days and cutoff instead of the defaults when it gave them.
   Read the rows back to check them.
 - **Admin password**: set it to the default `admin`: run `dotnet run --project backend/src/FoodSite.Api -- hash-password 'admin'` and add the output as the service's `Admin__PasswordHash` with `update_environment_variables`. The owner changes it after signing in, under **הגדרות כלליות** (the password section).
 

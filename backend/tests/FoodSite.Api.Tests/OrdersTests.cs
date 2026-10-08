@@ -316,6 +316,35 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_site_s_portions_per_supply_date_are_shared_by_its_dishes()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { PortionsPerSupplyDate = 3 })).EnsureSuccessStatusCode();
+        var category = (await _admin.GetAsync($"/api/admin/dishes/{_chicken}").Read<DishDto>()).CategoryId;
+        var schnitzel = (await CreateDish(new DishInput(
+            "שניצל", category, null, null, SellBy.Units, ChoiceMode.Free, 1, 5, 1, 30m, false, false, null, []))).Id;
+
+        // ValidOrder holds 2 chickens (portions), 3 add-on thighs and 1.5 kg of meat (neither counts).
+        (await Place(await ValidOrder())).EnsureSuccessStatusCode();
+
+        // Each counted dish shows what is left of the shared portions; the meat is not limited.
+        var menu = await Menu();
+        var date = menu.SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        var otherDate = menu.SupplyDates[1].Date.ToString("yyyy-MM-dd");
+        Assert.Equal(1m, menu.Dishes.Single(d => d.Id == _chicken).Remaining![date]);
+        Assert.Equal(1m, menu.Dishes.Single(d => d.Id == schnitzel).Remaining![date]);
+        Assert.Equal(3m, menu.Dishes.Single(d => d.Id == schnitzel).Remaining![otherDate]);
+        Assert.Null(menu.Dishes.Single(d => d.Id == _thigh).Remaining);
+        Assert.Null(menu.Dishes.Single(d => d.Id == _meat).Remaining);
+
+        // 2 schnitzels don't fit in the 1 portion left, though the schnitzel has no limit of its own; 1 does.
+        object Schnitzels(decimal quantity) => new[] { new { dishId = schnitzel, optionId = (int?)null, quantity, addOns = Array.Empty<object>() } };
+        await (await Place(await ValidOrder(o => o["items"] = Schnitzels(2)))).AssertInvalid("items", "portionLimitReached");
+        (await Place(await ValidOrder(o => o["items"] = Schnitzels(1)))).EnsureSuccessStatusCode();
+        (await Place(await ValidOrder(o => { o["items"] = Schnitzels(2); o["supplyDate"] = otherDate; }))).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
     public async Task A_delivery_outside_the_service_city_waits_for_approval_and_holds_no_quantity()
     {
         var dish = await (await _admin.GetAsync($"/api/admin/dishes/{_chicken}")).Read<DishDto>();
