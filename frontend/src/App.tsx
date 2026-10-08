@@ -10,6 +10,7 @@ import { OrdersPage } from './admin/orders/OrdersPage'
 import { MessagesPage } from './admin/messages/MessagesPage'
 import { ReportsPage } from './admin/reports/ReportsPage'
 import { ReviewsPage } from './admin/reviews/ReviewsPage'
+import { RoutePage } from './admin/route/RoutePage'
 import { SettingsPage } from './admin/settings/SettingsPage'
 import { ClientLayout } from './components/ClientLayout'
 import { RequireFeature } from './components/RequireFeature'
@@ -66,6 +67,7 @@ export function App() {
           <Route path="dishes/:id" element={<DishFormPage key="edit" />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders/route" element={<RoutePage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route
