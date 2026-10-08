@@ -6,12 +6,13 @@ import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
 import { AddressFields } from '../account/AddressFields'
-import { addressOf, noAddress } from '../account/addressParts'
+import { addressOf, formatAddress, hasAddress, isServiceCity, noAddress } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
 import { useSite, useSiteFailed } from '../site/useSite'
+import { DetailsBlock } from '../order/DetailsBlock'
 import { DishCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { formatMoney, formatSupplyDate } from '../order/format'
@@ -44,6 +45,9 @@ function formatCutoff(iso: string) {
   return `${d}/${m} ${time.slice(0, 5)}`
 }
 
+/** The fields of the contact and address block, as the server names them (lower-cased). */
+const CONTACT_FIELDS = ['name', 'phone', 'city', 'street', 'housenumber', 'apartment']
+
 export function OrderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -67,6 +71,7 @@ export function OrderPage() {
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [leaveTo, setLeaveTo] = useState<{ to: string; proceed?: () => void | Promise<void> } | null>(null)
   const [prefilledFor, setPrefilledFor] = useState<number | null>(null)
+  const [blocksOpen, setBlocksOpen] = useState({ contact: true, payment: true })
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const total = orderTotal(state.selections, dishes)
@@ -82,8 +87,11 @@ export function OrderPage() {
 
   // A logged-in client's details are prefilled once the menu (and any draft) is in, and the login
   // already confirmed their phone. Adjusting state during render is React's way to derive it from props.
-  if (user && menu && prefilledFor !== user.id) {
+  // A client whose saved address is one the kitchen delivers to has nothing to fill in, so the contact
+  // and payment blocks start closed.
+  if (user && menu && site && prefilledFor !== user.id) {
     setPrefilledFor(user.id)
+    if (hasAddress(user) && isServiceCity(user.city, site.serviceCities)) setBlocksOpen({ contact: false, payment: false })
     setState((current) => ({
       ...current,
       name: current.name || user.fullName,
@@ -190,6 +198,15 @@ export function OrderPage() {
     clearDraft()
   }
 
+  // A block with a field the server (or the phone check) refused opens, so the message is seen.
+  function openBlocksWith(fieldErrors: FieldErrors) {
+    const fields = Object.keys(fieldErrors)
+    setBlocksOpen((current) => ({
+      contact: current.contact || fields.some((field) => CONTACT_FIELDS.includes(field)),
+      payment: current.payment || fields.includes('paymentmethod'),
+    }))
+  }
+
   function applyQuickFill({ selections, skipped }: Restored) {
     setState((current) => ({ ...current, selections }))
     toast(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
@@ -214,6 +231,7 @@ export function OrderPage() {
     setSubmitError(null)
     if (!normalizedPhone) {
       setErrors({ phone: ['phone'] })
+      openBlocksWith({ phone: ['phone'] })
       setSubmitError(t('errors.checkFields'))
       return
     }
@@ -234,7 +252,9 @@ export function OrderPage() {
       clearDraft()
       setConfirmation(result)
     } catch (err) {
-      setErrors(fieldErrorsOf(err))
+      const fieldErrors = fieldErrorsOf(err)
+      setErrors(fieldErrors)
+      openBlocksWith(fieldErrors)
       setSubmitError(errorMessage(err))
     } finally {
       setSubmitting(false)
@@ -338,49 +358,70 @@ export function OrderPage() {
           <FieldError errors={errors} field="fulfillmentMethod" id="order-fulfillment-error" />
         </fieldset>
 
-        <span className="field">
-          <label htmlFor="order-name">{t('order.name')}</label>
-          <input
-            id="order-name"
-            autoComplete="name"
-            value={state.name}
-            maxLength={100}
-            required
-            aria-describedby="order-name-error"
-            onChange={(e) => change({ name: e.target.value })}
-          />
-          <FieldError errors={errors} field="name" id="order-name-error" />
-        </span>
+        <DetailsBlock
+          title={t(fulfillment === 'Delivery' ? 'order.blocks.contactAndAddress' : 'order.blocks.contact')}
+          summary={[
+            state.name.trim(),
+            state.phone.trim(),
+            fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment })),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          open={blocksOpen.contact}
+          onToggle={(open) => setBlocksOpen((current) => ({ ...current, contact: open }))}
+        >
+          <span className="field">
+            <label htmlFor="order-name">{t('order.name')}</label>
+            <input
+              id="order-name"
+              autoComplete="name"
+              value={state.name}
+              maxLength={100}
+              required
+              aria-describedby="order-name-error"
+              onChange={(e) => change({ name: e.target.value })}
+            />
+            <FieldError errors={errors} field="name" id="order-name-error" />
+          </span>
 
-        <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
+          <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
 
-        {fulfillment === 'Delivery' && (
-          <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" context="order" />
-        )}
+          {fulfillment === 'Delivery' && (
+            <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" context="order" />
+          )}
+        </DetailsBlock>
+
+        <DetailsBlock
+          title={t('order.payment')}
+          summary={t(payment === 'Transfer' ? 'order.payTransfer' : 'order.payOnDelivery')}
+          open={blocksOpen.payment}
+          onToggle={(open) => setBlocksOpen((current) => ({ ...current, payment: open }))}
+        >
+          <fieldset>
+            <legend className="visually-hidden">{t('order.payment')}</legend>
+            <div className="row">
+              <label className="checkbox">
+                <input type="radio" name="payment" checked={payment === 'OnDelivery'} onChange={() => change({ payment: 'OnDelivery' })} />
+                {t('order.payOnDelivery')}
+              </label>
+              {site.paymentPhone && (
+                <label className="checkbox">
+                  <input type="radio" name="payment" checked={payment === 'Transfer'} onChange={() => change({ payment: 'Transfer' })} />
+                  {t('order.payTransfer')}
+                </label>
+              )}
+            </div>
+            {payment === 'Transfer' && <p className="hint">{t('order.transferHint')}</p>}
+            <FieldError errors={errors} field="paymentMethod" id="order-payment-error" />
+          </fieldset>
+          {payment === 'OnDelivery' && <p className="pay-note">{t('order.payOnDeliveryNote')}</p>}
+        </DetailsBlock>
 
         <span className="field">
           <label htmlFor="order-notes">{t('order.notes')}</label>
           <textarea id="order-notes" rows={2} maxLength={500} value={state.notes} onChange={(e) => change({ notes: e.target.value })} />
         </span>
 
-        <fieldset>
-          <legend>{t('order.payment')}</legend>
-          <div className="row">
-            <label className="checkbox">
-              <input type="radio" name="payment" checked={payment === 'OnDelivery'} onChange={() => change({ payment: 'OnDelivery' })} />
-              {t('order.payOnDelivery')}
-            </label>
-            {site.paymentPhone && (
-              <label className="checkbox">
-                <input type="radio" name="payment" checked={payment === 'Transfer'} onChange={() => change({ payment: 'Transfer' })} />
-                {t('order.payTransfer')}
-              </label>
-            )}
-          </div>
-          {payment === 'Transfer' && <p className="hint">{t('order.transferHint')}</p>}
-        </fieldset>
-
-        {payment === 'OnDelivery' && <p className="pay-note">{t('order.payOnDeliveryNote')}</p>}
         {site.contact.phone && (
           <p className="muted">
             {t('order.callToChange')} <span dir="ltr">{site.contact.phone}</span>

@@ -342,6 +342,7 @@
     "street": "רחוב",
     "houseNumber": "מספר בית",
     "apartment": "דירה (לא חובה)",
+    "apartmentShort": "דירה {{apartment}}",
     "outsideOrder": "אנחנו עובדים רק ב{{cities}}. הזמנה לעיר אחרת תעבור בדיקה של המנהל ואינה הזמנה בטוחה: הכמות לא נשמרת לה עד שהמנהל יאשר אותה.",
     "outsideProfile": "אנחנו עובדים רק ב{{cities}}. הזמנה לכתובת בעיר אחרת תעבור בדיקה של המנהל ואינה הזמנה בטוחה."
   },
@@ -412,6 +413,11 @@
     "phone": "טלפון",
     "address": "כתובת למשלוח",
     "notes": "הערות (לא חובה)",
+    "blocks": {
+      "contact": "פרטי קשר",
+      "contactAndAddress": "פרטי קשר וכתובת",
+      "change": "שינוי"
+    },
     "payment": "תשלום",
     "payOnDelivery": "תשלום במעמד המסירה",
     "payTransfer": "העברה ב־Bit / PayBox",

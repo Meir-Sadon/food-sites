@@ -216,6 +216,36 @@ describe('Order page for a logged-in client', () => {
     expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ phone: '0501234567', name: 'דנה כהן' })
   })
 
+  it('folds the contact and payment blocks for a client with a served address, and opens one the server refuses', async () => {
+    const served = { ...profile, city: 'אשקלון', apartment: '4' }
+    const { user } = open('/', {
+      ...loggedIn,
+      'GET /api/account/me': () => served,
+      'POST /api/orders': () => invalid({ Street: ['required'] }),
+    })
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+
+    const contact = await screen.findByText('פרטי קשר וכתובת')
+    const contactBlock = contact.closest('details')!
+    expect(contactBlock).not.toHaveAttribute('open')
+    expect(within(contactBlock).getByText('דנה כהן · 0501234567 · הרצל 1, דירה 4, אשקלון')).toBeInTheDocument()
+    const paymentBlock = screen.getByText('תשלום', { selector: '.details-block__title' }).closest('details')!
+    expect(paymentBlock).not.toHaveAttribute('open')
+    expect(within(paymentBlock).getByText('תשלום במעמד המסירה', { selector: '.details-block__summary' })).toBeInTheDocument()
+
+    await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+
+    await waitFor(() => expect(contactBlock).toHaveAttribute('open'))
+    expect(paymentBlock).not.toHaveAttribute('open')
+  })
+
+  it('keeps the contact block open when the saved city is not served, so the warning shows', async () => {
+    open('/', loggedIn)
+    await waitFor(() => expect(screen.getByLabelText('עיר')).toHaveValue('חיפה'))
+    expect(screen.getByText('פרטי קשר וכתובת').closest('details')).toHaveAttribute('open')
+  })
+
   it('logs out from the top bar even with an order in progress', async () => {
     const { api, user } = open('/', { ...loggedIn, 'POST /api/account/logout': () => ({ status: 204 }) })
     await screen.findByRole('heading', { level: 2, name: 'עופות' })
