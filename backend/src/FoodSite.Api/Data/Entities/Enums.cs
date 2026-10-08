@@ -44,3 +44,11 @@ public enum OrderStatus
     Delivered,
     Cancelled,
 }
+
+/// <summary>Whether a submitted review shows on the home page. New reviews wait for the admin.</summary>
+public enum ReviewStatus
+{
+    Pending,
+    Approved,
+    Blocked,
+}

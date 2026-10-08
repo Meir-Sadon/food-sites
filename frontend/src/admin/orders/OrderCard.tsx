@@ -7,12 +7,14 @@ import { useErrorMessage } from '../hooks'
 import { ConfirmRemove, Status } from '../ui'
 import { OrderEditor } from './OrderEditor'
 import { PaidForm } from './PaidForm'
+import { SendMessage } from './SendMessage'
 
 export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (order: AdminOrder) => void }) {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
   const [editing, setEditing] = useState(false)
   const [markingPaid, setMarkingPaid] = useState(false)
+  const [messaging, setMessaging] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   /** Shows the change at once and undoes it when saving fails. */
@@ -118,6 +120,10 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
           {t('admin.edit')}
           <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
         </button>
+        <button type="button" className="button-quiet" onClick={() => setMessaging(!messaging)} aria-expanded={messaging}>
+          {t('admin.messages.send')}
+          <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+        </button>
         {!cancelled && (
           <ConfirmRemove
             name={t('admin.orders.orderN', { id: order.id })}
@@ -140,6 +146,8 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
           }}
         />
       )}
+
+      {messaging && <SendMessage order={order} onClose={() => setMessaging(false)} />}
 
       {editing && (
         <OrderEditor

@@ -21,6 +21,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
     public DbSet<NotifyPhone> NotifyPhones => Set<NotifyPhone>();
     public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
+    public DbSet<MessageTemplate> MessageTemplates => Set<MessageTemplate>();
+    public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<ReviewImage> ReviewImages => Set<ReviewImage>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -31,6 +34,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<PaymentMethod>().HaveConversion<string>();
         builder.Properties<PaidWith>().HaveConversion<string>();
         builder.Properties<OrderStatus>().HaveConversion<string>();
+        builder.Properties<ReviewStatus>().HaveConversion<string>();
 
         // Money in shekels and agorot; amounts that can be weights get grams precision.
         builder.Properties<decimal>().HavePrecision(10, 2);
@@ -162,6 +166,32 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasIndex(c => c.Phone);
             e.HasIndex(c => c.ExpiresAt);
+        });
+
+        model.Entity<MessageTemplate>(e =>
+        {
+            e.Property(t => t.Name).HasMaxLength(MessageTemplate.NameMaxLength);
+            e.Property(t => t.Text).HasMaxLength(MessageTemplate.TextMaxLength);
+        });
+
+        model.Entity<Review>(e =>
+        {
+            e.HasIndex(r => r.Token).IsUnique();
+            e.HasIndex(r => r.OrderId).IsUnique();
+            e.HasIndex(r => r.Status);
+            e.Property(r => r.Token).HasMaxLength(Review.TokenLength);
+            e.Property(r => r.Name).HasMaxLength(Review.NameMaxLength);
+            e.Property(r => r.Comment).HasMaxLength(Review.CommentMaxLength);
+            e.HasOne(r => r.Order).WithMany()
+                .HasForeignKey(r => r.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<ReviewImage>(e =>
+        {
+            e.HasOne(i => i.Review).WithMany(r => r.Images)
+                .HasForeignKey(i => i.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

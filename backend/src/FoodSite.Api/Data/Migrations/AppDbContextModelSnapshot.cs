@@ -293,6 +293,32 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("LoginCodes");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.MessageTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IncludeReviewLink")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MessageTemplates");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.NotifyPhone", b =>
                 {
                     b.Property<int>("Id")
@@ -460,6 +486,85 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("Recommendations");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.ReviewImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PublicId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ReviewId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewId");
+
+                    b.ToTable("ReviewImages");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Settings", b =>
                 {
                     b.Property<int>("Id")
@@ -530,7 +635,8 @@ namespace FoodSite.Api.Data.Migrations
                             Id = 1,
                             DeliveryEnabled = true,
                             MinimumOrderAppliesToPickup = true,
-                            PickupEnabled = true
+                            PickupEnabled = true,
+                            SiteDefaultsApplied = false
                         });
                 });
 
@@ -779,6 +885,28 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.Review", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.ReviewImage", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Review", "Review")
+                        .WithMany("Images")
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Review");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Category", b =>
                 {
                     b.Navigation("Dishes");
@@ -803,6 +931,11 @@ namespace FoodSite.Api.Data.Migrations
             modelBuilder.Entity("FoodSite.Api.Data.Entities.OrderItem", b =>
                 {
                     b.Navigation("AddOnItems");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.Review", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.User", b =>

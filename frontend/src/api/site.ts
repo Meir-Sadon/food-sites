@@ -10,7 +10,7 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites'
+export type Feature = 'recommendations' | 'favorites' | 'reviews'
 
 export interface Site {
   backgroundImageUrl: string | null

@@ -1,19 +1,24 @@
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { adminLogout } from '../api/admin'
+import type { Feature } from '../api/site'
+import { useFeatures } from '../site/useSite'
 
-const tabs = [
+const tabs: { to: string; key: string; feature?: Feature }[] = [
   { to: '/admin/orders', key: 'admin.nav.orders' },
+  { to: '/admin/messages', key: 'admin.nav.messages' },
+  { to: '/admin/reviews', key: 'admin.nav.reviews', feature: 'reviews' },
   { to: '/admin/settings', key: 'admin.nav.settings' },
   { to: '/admin/categories', key: 'admin.nav.categories' },
   { to: '/admin/dishes', key: 'admin.nav.dishes' },
   { to: '/admin/contacts', key: 'admin.nav.contacts' },
   { to: '/admin/reports', key: 'admin.nav.reports' },
-] as const
+]
 
 export function AdminLayout() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const hasFeature = useFeatures()
 
   async function handleLogout() {
     await adminLogout().catch(() => undefined)
@@ -28,7 +33,7 @@ export function AdminLayout() {
         </span>
         <nav aria-label={t('admin.nav.label')}>
           <ul className="top-bar__links">
-            {tabs.map((tab) => (
+            {tabs.filter((tab) => !tab.feature || hasFeature(tab.feature)).map((tab) => (
               <li key={tab.to}>
                 <NavLink to={tab.to} className="top-bar__link">
                   {t(tab.key)}

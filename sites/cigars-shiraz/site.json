@@ -10,7 +10,8 @@
   },
   "features": {
     "recommendations": true,
-    "favorites": true
+    "favorites": true,
+    "reviews": true
   },
   "settings": {
     "contactName": "שירז ניסני",

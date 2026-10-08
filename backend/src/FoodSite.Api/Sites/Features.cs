@@ -13,7 +13,13 @@ public static class Features
     /// <summary>Saving a past order as a favorite, the favorites list, and filling an order from one.</summary>
     public const string Favorites = "favorites";
 
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites];
+    /// <summary>
+    /// Review links in the admin's WhatsApp messages, the client's review page, the admin Reviews tab, and the
+    /// approved reviews on the home page.
+    /// </summary>
+    public const string Reviews = "reviews";
+
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }
