@@ -1,0 +1,20 @@
+/* The site's colour palette: warm cream, tomato red and fried gold. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #fbf3e6;
+  --color-surface: #fffdf8;
+  --color-text: #3a1f17;
+  --color-muted: #765a4c;
+  --color-accent: #b0301c;
+  --color-accent-hover: #8e2514;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #e0a020;
+  --color-border: #eadbc6;
+  --color-error: #b42318;
+  --color-success: #3f6b35;
+  --color-soft: #f6e8d3;
+  --color-shadow: #3a1f17;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(224 160 32 / 0.2);
+  --color-badge-text: #7a4a0c;
+  --gradient-hero: linear-gradient(135deg, var(--color-accent-hover) 0%, var(--color-accent) 50%, var(--color-gold) 135%);
+}
