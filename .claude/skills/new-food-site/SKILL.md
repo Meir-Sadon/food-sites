@@ -84,7 +84,10 @@ One PR with the site folder and the deploy files, on a readable branch. Run `/ch
   - Bit/PayBox phone: the main contact's phone.
   - New-order WhatsApp alerts: the main contact's phone first (in its normalized form, digits only, e.g. `0545776707`).
   ```sql
-  UPDATE "SupplyDays" SET "Enabled" = ("Weekday" <> 6), "CutoffDay" = ("Weekday" + 6) % 7, "CutoffTime" = '15:00';
+  -- A new database has no SupplyDays rows (the admin creates them on first save), so insert all seven.
+  INSERT INTO "SupplyDays" ("Weekday", "Enabled", "CutoffDay", "CutoffTime")
+  SELECT w, w <> 6, (w + 6) % 7, '15:00' FROM generate_series(0, 6) AS w
+  ON CONFLICT ("Weekday") DO UPDATE SET "Enabled" = EXCLUDED."Enabled", "CutoffDay" = EXCLUDED."CutoffDay", "CutoffTime" = EXCLUDED."CutoffTime";
   UPDATE "Settings" SET "PaymentPhone" = "ContactPhone" WHERE "PaymentPhone" IS NULL;
   INSERT INTO "NotifyPhones" ("Phone", "Name") VALUES ('<contact phone, digits only>', '<contact name>') ON CONFLICT ("Phone") DO NOTHING;
   ```
