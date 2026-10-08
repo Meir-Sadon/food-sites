@@ -6,6 +6,7 @@ import type { FieldErrors } from '../api/client'
 import { FieldError, Loading, Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { useAccount } from '../account/useAccount'
+import { useToast } from '../components/toast'
 
 export function RecommendationsPage() {
   const { t } = useTranslation()
@@ -13,21 +14,22 @@ export function RecommendationsPage() {
   const { user, loading } = useAccount()
   const [text, setText] = useState('')
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
   const [busy, setBusy] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setErrors({})
-    setMessage(null)
+    setError(null)
     setBusy(true)
     try {
       await accountApi.addRecommendation(text.trim())
       setText('')
-      setMessage({ text: t('recommendations.thanks') })
+      toast(t('recommendations.thanks'))
     } catch (err) {
       setErrors(fieldErrorsOf(err))
-      setMessage({ text: formError(err), error: true })
+      setError(formError(err))
     } finally {
       setBusy(false)
     }
@@ -58,7 +60,7 @@ export function RecommendationsPage() {
             />
             <FieldError errors={errors} field="text" id="recommendation-error" />
           </span>
-          {message && <Status message={message.text} error={message.error} />}
+          {error && <Status message={error} error />}
           <div className="row">
             <button type="submit" disabled={busy || text.trim() === ''}>
               {busy ? t('recommendations.sending') : t('recommendations.send')}

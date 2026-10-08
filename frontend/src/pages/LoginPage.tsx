@@ -11,6 +11,7 @@ import { addressOf } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
+import { useToast } from '../components/toast'
 
 type Mode = 'login' | 'register'
 
@@ -24,7 +25,8 @@ export function LoginPage() {
   const [phone, setPhone] = useState('')
   const [form, setForm] = useState(emptyProfileForm)
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
   const [busy, setBusy] = useState(false)
 
   if (loading)
@@ -57,17 +59,17 @@ export function LoginPage() {
   const switchTo = (next: Mode) => {
     setMode(next)
     setErrors({})
-    setMessage(null)
+    setError(null)
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setErrors({})
-    setMessage(null)
+    setError(null)
     const normalized = normalizePhone(phone)
     if (!normalized) {
       setErrors({ phone: ['phone'] })
-      setMessage({ text: t('errors.checkFields'), error: true })
+      setError(t('errors.checkFields'))
       return
     }
 
@@ -90,10 +92,10 @@ export function LoginPage() {
       if (mode === 'login' && err instanceof ApiError && err.code === 'notRegistered') {
         // Nothing to log in to yet: go on to registering with the same number.
         setMode('register')
-        setMessage({ text: t('account.notRegistered') })
+        toast(t('account.notRegistered'))
       } else {
         setErrors(fieldErrorsOf(err))
-        setMessage({ text: formError(err), error: true })
+        setError(formError(err))
       }
     } finally {
       setBusy(false)
@@ -115,7 +117,7 @@ export function LoginPage() {
           </>
         )}
 
-        {message && <Status message={message.text} error={message.error} />}
+        {error && <Status message={error} error />}
 
         <div className="row">
           {mode === 'login' ? (

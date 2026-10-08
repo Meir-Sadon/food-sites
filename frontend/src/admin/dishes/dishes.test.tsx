@@ -139,7 +139,7 @@ describe('Dish form', () => {
     await user.click(screen.getByRole('button', { name: 'שמירה' }))
 
     expect(await screen.findByText('המנה נוצרה. אפשר להוסיף תמונות.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'עריכת מנה: רוטב' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'עריכת מנה: רוטב' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'תמונות' })).toBeInTheDocument()
     const body = api.sent('POST', '/api/admin/dishes')[0].body as DishInput
     expect(body).toEqual({

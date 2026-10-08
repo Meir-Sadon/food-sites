@@ -31,7 +31,7 @@ describe('General settings', () => {
     await user.type(within(form).getByLabelText('טקסט כשרות'), 'בהשגחת הרב')
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
 
-    expect(await within(form).findByRole('status')).toHaveTextContent('נשמר.')
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toEqual({
       deliveryEnabled: true,
       pickupEnabled: false,
@@ -55,7 +55,7 @@ describe('General settings', () => {
     expect(cities).toHaveValue('אשקלון')
     await user.type(cities, ', אשדוד')
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
-    expect(await within(form).findByRole('status')).toHaveTextContent('נשמר.')
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ serviceCities: 'אשקלון, אשדוד' })
   })
 
@@ -69,7 +69,7 @@ describe('General settings', () => {
     expect(minimum).toHaveValue(null)
     await user.type(minimum, '120')
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
-    expect(await within(form).findByRole('status')).toHaveTextContent('נשמר.')
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ minimumOrderAmount: 120 })
 
     await user.clear(minimum)
@@ -88,7 +88,7 @@ describe('General settings', () => {
     expect(appliesToPickup).toBeChecked()
     await user.click(appliesToPickup)
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
-    expect(await within(form).findByRole('status')).toHaveTextContent('נשמר.')
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ minimumOrderAppliesToPickup: false })
 
     await user.click(within(form).getByLabelText('איסוף עצמי'))
@@ -120,7 +120,7 @@ describe('General settings', () => {
     await user.click(within(days).getByLabelText('שלישי'))
     await user.click(within(days).getByRole('button', { name: 'שמירה' }))
 
-    await within(days).findByText('נשמר.')
+    await screen.findByText('נשמר.')
     const sent = api.sent('PUT', '/api/admin/supply-days')[0].body as SupplyDay[]
     expect(sent.find((d) => d.weekday === 'Friday')).toMatchObject({ enabled: true, cutoffDay: 'Wednesday', cutoffTime: '20:00:00' })
     expect(sent.find((d) => d.weekday === 'Tuesday')?.enabled).toBe(true)

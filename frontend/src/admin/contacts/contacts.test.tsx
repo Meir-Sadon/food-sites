@@ -47,7 +47,7 @@ describe('Admin Contacts', () => {
     await user.type(within(form).getByLabelText('שעות פעילות (לא חובה)'), 'א׳–ה׳ 9:00–17:00')
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
 
-    expect(await within(form).findByRole('status')).toHaveTextContent('נשמר.')
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/contact')[0].body).toEqual(
       contact({ address: 'חיפה', openingHours: 'א׳–ה׳ 9:00–17:00' }),
     )
