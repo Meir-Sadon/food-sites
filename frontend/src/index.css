@@ -941,6 +941,63 @@ label {
   font-size: 1.25rem;
 }
 
+/* The contact/address and payment blocks: each folds to a one-line summary. */
+.details-block {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+/* Title, "change" and the arrow on the first line; the summary on its own line under them. */
+.details-block > summary {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+}
+
+.details-block[open] > summary {
+  border-block-end: 1px solid var(--color-border);
+}
+
+.details-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.details-block > summary::after {
+  content: '▾';
+  grid-column: 3;
+  color: var(--color-muted);
+  transition: transform 0.15s;
+}
+
+.details-block:not([open]) > summary::after {
+  transform: rotate(90deg);
+}
+
+.details-block__title {
+  font-weight: 600;
+}
+
+.details-block__summary {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  color: var(--color-muted);
+  overflow-wrap: break-word;
+}
+
+.details-block__change {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.details-block__body {
+  padding: 0.75rem 1rem 1rem;
+}
+
 .total-bar {
   position: fixed;
   inset-inline: 0;
