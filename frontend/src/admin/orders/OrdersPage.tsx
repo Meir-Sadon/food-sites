@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ordersAdminApi, orderStatuses, type AdminOrder, type OrderStatus } from '../../api/operations'
 import { formatDate } from '../format'
@@ -87,10 +88,18 @@ export function OrdersPage() {
                   <h2 id={`day-${date}`}>
                     {formatDate(date)} <span className="muted">({t('admin.orders.dayCount', { count: ofDay.length })})</span>
                   </h2>
-                  <button type="button" className="button-quiet no-print" aria-expanded={open} onClick={() => setSummaryDate(open ? null : date)}>
-                    {t('admin.orders.cookingSummary')}
-                    <span className="visually-hidden"> {formatDate(date)}</span>
-                  </button>
+                  <span className="row no-print">
+                    <button type="button" className="button-quiet" aria-expanded={open} onClick={() => setSummaryDate(open ? null : date)}>
+                      {t('admin.orders.cookingSummary')}
+                      <span className="visually-hidden"> {formatDate(date)}</span>
+                    </button>
+                    {ofDay.some((o) => o.fulfillmentMethod === 'Delivery' && o.status !== 'Cancelled') && (
+                      <Link className="button-quiet" to={`/admin/orders/route?date=${date}`}>
+                        {t('admin.route.open')}
+                        <span className="visually-hidden"> {formatDate(date)}</span>
+                      </Link>
+                    )}
+                  </span>
                 </div>
                 {open && <CookingSummary date={date} />}
                 <div className="stack">

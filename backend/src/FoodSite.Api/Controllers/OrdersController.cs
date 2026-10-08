@@ -36,7 +36,8 @@ public class OrdersController(
         FulfillmentMethod FulfillmentMethod,
         PaymentMethod PaymentMethod,
         string? Notes,
-        List<OrderLineInput>? Items);
+        List<OrderLineInput>? Items,
+        TimeOnly? DeliveryHour = null);
 
     public record ConfirmationItemDto(
         string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn);
@@ -49,7 +50,9 @@ public class OrdersController(
         decimal Total,
         string? PaymentPhone,
         bool NeedsReview,
-        IReadOnlyList<ConfirmationItemDto> Items);
+        IReadOnlyList<ConfirmationItemDto> Items,
+        TimeOnly? DeliveryHour = null,
+        bool HourFull = false);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
@@ -89,8 +92,18 @@ public class OrdersController(
 
         var days = await db.SupplyDays.AsNoTracking().ToListAsync(ct);
         var closed = await db.ClosedDates.AsNoTracking().Select(c => c.Date).ToListAsync(ct);
-        if (!SupplyCalendar.IsOpen(input.SupplyDate, clock.NowLocal(), days, closed))
+        var openDate = SupplyCalendar.Find(input.SupplyDate, clock.NowLocal(), days, closed);
+        if (openDate is null)
             errors.Add(nameof(input.SupplyDate), "supplyDateUnavailable");
+        // A day with supply hours needs one of them; on a day without, any hour sent is dropped.
+        var hour = openDate is { Hours.Count: > 0 } ? input.DeliveryHour : null;
+        if (openDate is { Hours.Count: > 0 })
+        {
+            if (input.DeliveryHour is null)
+                errors.Add(nameof(input.DeliveryHour), "required");
+            else if (openDate.Hours.All(h => h.From != input.DeliveryHour))
+                errors.Add(nameof(input.DeliveryHour), "deliveryHourUnavailable");
+        }
 
         var ids = (input.Items ?? [])
             .SelectMany(i => (i.AddOns ?? []).Select(a => a.DishId).Append(i.DishId))
@@ -110,6 +123,10 @@ public class OrdersController(
         if (errors.Any)
             return Invalid(errors);
 
+        // A full hour is still taken: the client was told the admin may call to move it.
+        var hourFull = hour is { } slot && HourCapacity.IsFull(
+            await db.Orders.AsNoTracking().InSlot(input.SupplyDate, slot).CountAsync(ct), settings.OrdersPerHour);
+
         // The order is added to that phone's account, if there is one.
         var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);
 
@@ -121,6 +138,7 @@ public class OrdersController(
             Name = input.Name!.Trim(),
             Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment),
             SupplyDate = input.SupplyDate,
+            DeliveryHour = hour,
             FulfillmentMethod = input.FulfillmentMethod,
             Notes = Clean(input.Notes),
             PaymentMethod = input.PaymentMethod,
@@ -134,7 +152,7 @@ public class OrdersController(
         db.Orders.Add(order);
         await db.SaveChangesAsync(ct);
 
-        await NotifyAsync(order, settings.PaymentPhone, serviceCities, ct);
+        await NotifyAsync(order, settings.PaymentPhone, serviceCities, hourFull, ct);
 
         return new ConfirmationDto(
             order.Id, order.SupplyDate, order.FulfillmentMethod, order.PaymentMethod, order.Total,
@@ -142,7 +160,9 @@ public class OrdersController(
             order.NeedsReview,
             order.Items
                 .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null))
-                .ToList());
+                .ToList(),
+            order.DeliveryHour,
+            hourFull);
     }
 
     /// <summary>
@@ -178,12 +198,13 @@ public class OrdersController(
     /// Tells the client and everyone on the admin's list. A failed message never fails the
     /// order: it is already saved and shows in the admin's Orders tab.
     /// </summary>
-    private async Task NotifyAsync(Order order, string? paymentPhone, IReadOnlyList<string> serviceCities, CancellationToken ct)
+    private async Task NotifyAsync(
+        Order order, string? paymentPhone, IReadOnlyList<string> serviceCities, bool hourFull, CancellationToken ct)
     {
         var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
         var messages = admins
-            .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name)))
-            .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone, site.Value.Name, serviceCities)));
+            .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name, hourFull)))
+            .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone, site.Value.Name, serviceCities, hourFull)));
         foreach (var (phone, template, text) in messages)
         {
             try

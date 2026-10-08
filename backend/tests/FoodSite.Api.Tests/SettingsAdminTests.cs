@@ -233,6 +233,32 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task Supply_days_save_hours_that_are_both_set_and_in_order()
+    {
+        var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();
+        days[5] = days[5] with { Enabled = true, DeliveryFrom = new TimeOnly(8, 0), DeliveryTo = new TimeOnly(18, 0) };
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
+        Assert.Equal((new TimeOnly(8, 0), new TimeOnly(18, 0)), (saved[5].DeliveryFrom, saved[5].DeliveryTo));
+
+        var halfSet = days.ToList();
+        halfSet[5] = days[5] with { DeliveryTo = null };
+        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", halfSet, TestFiles.Json)).AssertInvalid("days[5].deliveryTo", "deliveryHoursInvalid");
+        var backwards = days.ToList();
+        backwards[5] = days[5] with { DeliveryFrom = new TimeOnly(18, 0), DeliveryTo = new TimeOnly(8, 0) };
+        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", backwards, TestFiles.Json)).AssertInvalid("days[5].deliveryTo", "deliveryHoursInvalid");
+    }
+
+    [Fact]
+    public async Task Orders_per_hour_is_saved_and_zero_means_no_limit()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Null(settings.OrdersPerHour);
+        Assert.Equal(3, (await (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHour = 3 })).Read<SettingsDto>()).OrdersPerHour);
+        Assert.Null((await (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHour = 0 })).Read<SettingsDto>()).OrdersPerHour);
+        await (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHour = -1 })).AssertInvalid("OrdersPerHour", "invalid");
+    }
+
+    [Fact]
     public async Task Supply_days_need_each_weekday_once()
     {
         var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();

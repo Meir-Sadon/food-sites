@@ -18,6 +18,8 @@ export interface Settings {
   minimumOrderAppliesToPickup: boolean
   /** Comma-separated, e.g. "אשקלון, אשדוד"; empty means every city is served. */
   serviceCities: string
+  /** How many orders can be supplied in one hour; null means no limit. */
+  ordersPerHour: number | null
 }
 export type SettingsInput = Omit<Settings, 'backgroundImageUrl'>
 
@@ -27,6 +29,9 @@ export interface SupplyDay {
   cutoffDay: Weekday
   /** "HH:mm:ss" */
   cutoffTime: string
+  /** The day's supply hours, "HH:mm:ss"; both null when the client picks no hour. */
+  deliveryFrom: string | null
+  deliveryTo: string | null
 }
 
 export interface ClosedDate {

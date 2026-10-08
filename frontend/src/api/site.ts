@@ -73,11 +73,19 @@ export interface MenuCategory {
   name: string
 }
 
+/** One hour a client can ask for, "HH:mm:ss" (the last of a day may be shorter). */
+export interface HourSlot {
+  from: string
+  to: string
+}
+
 export interface SupplyDate {
   /** "yyyy-MM-dd" */
   date: string
   /** Local time ordering for this date closes, "yyyy-MM-ddTHH:mm:ss" */
   cutoff: string
+  /** The hours to pick from; empty (or absent) when the day has no supply hours. */
+  hours?: HourSlot[] | null
 }
 
 export interface Menu {
@@ -108,6 +116,8 @@ export interface OrderInput {
   paymentMethod: Payment
   notes: string
   items: OrderLineInput[]
+  /** The start of the picked hour ("HH:mm:ss"); required when the date has hours. */
+  deliveryHour: string | null
 }
 
 export interface Confirmation {
@@ -127,11 +137,17 @@ export interface Confirmation {
     lineTotal: number
     isAddOn: boolean
   }[]
+  deliveryHour?: string | null
+  /** The picked hour was already full: the admin may call to move it. */
+  hourFull?: boolean
 }
 
 export const siteApi = {
   get: () => apiJson<Site>('/api/site'),
   menu: () => apiJson<Menu>('/api/menu'),
+  /** Whether an hour is already full; asked only once the client picks it. */
+  hourAvailability: (date: string, hour: string) =>
+    apiJson<{ full: boolean }>(`/api/hour-availability?date=${date}&hour=${encodeURIComponent(hour)}`),
 }
 
 export const ordersApi = {

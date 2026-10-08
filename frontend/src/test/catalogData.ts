@@ -13,6 +13,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   minimumOrderAmount: null,
   minimumOrderAppliesToPickup: true,
   serviceCities: 'אשקלון',
+  ordersPerHour: null,
   ...patch,
 })
 
@@ -22,6 +23,8 @@ export const supplyDays = (): SupplyDay[] =>
     enabled: weekday === 'Friday',
     cutoffDay: weekdays[(i + 6) % 7],
     cutoffTime: '20:00:00',
+    deliveryFrom: null,
+    deliveryTo: null,
   }))
 
 export const category = (id: number, name: string, dishCount = 0): Category => ({ id, name, displayOrder: id, dishCount })

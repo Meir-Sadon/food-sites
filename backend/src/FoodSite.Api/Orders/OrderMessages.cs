@@ -10,11 +10,14 @@ namespace FoodSite.Api.Orders;
 public static class OrderMessages
 {
     public static string ClientConfirmation(
-        Order order, string? paymentPhone, string? siteName = null, IReadOnlyList<string>? serviceCities = null)
+        Order order, string? paymentPhone, string? siteName = null, IReadOnlyList<string>? serviceCities = null,
+        bool hourFull = false)
     {
         var text = $"{Heading(siteName)}תודה, ההזמנה שלך התקבלה!\n{Details(order)}";
         if (order.NeedsReview)
             text += $"\nאנחנו משלוחים רק ב{ServiceArea.Describe(serviceCities ?? [])}. ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור.";
+        if (hourFull)
+            text += "\nהשעה שבחרת כבר מלאה: ניצור איתך קשר כדי לתאם שעה אחרת.";
         if (order.PaymentMethod == PaymentMethod.Transfer && !string.IsNullOrWhiteSpace(paymentPhone))
             text += $"\nלהעברת התשלום ב־Bit / PayBox: {paymentPhone}";
         else if (order.PaymentMethod == PaymentMethod.OnDelivery)
@@ -22,9 +25,10 @@ public static class OrderMessages
         return text;
     }
 
-    public static string AdminNotification(Order order, string? siteName = null) =>
+    public static string AdminNotification(Order order, string? siteName = null, bool hourFull = false) =>
         $"{Heading(siteName)}הזמנה חדשה #{order.Id}\n{Details(order)}"
-        + (order.NeedsReview ? "\nהכתובת מחוץ לאזור השירות: ההזמנה ממתינה לאישור שלך." : "");
+        + (order.NeedsReview ? "\nהכתובת מחוץ לאזור השירות: ההזמנה ממתינה לאישור שלך." : "")
+        + (hourFull ? "\nהשעה שנבחרה כבר מלאה: כדאי לתאם שעה אחרת עם הלקוח." : "");
 
     private static string Heading(string? siteName) =>
         string.IsNullOrWhiteSpace(siteName) ? "" : $"{siteName.Trim()}\n";
@@ -34,6 +38,7 @@ public static class OrderMessages
         var lines = new List<string>
         {
             $"הזמנה #{order.Id} · {order.SupplyDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)} · "
+                + (order.DeliveryHour is { } hour ? $"{Time(hour)} · " : "")
                 + (order.FulfillmentMethod == FulfillmentMethod.Delivery ? "משלוח" : "איסוף עצמי"),
             $"{order.Name}, {order.Phone}",
         };
@@ -56,6 +61,8 @@ public static class OrderMessages
         $"{prefix}{Number(item.Quantity)} × {item.DishName}"
         + (string.IsNullOrEmpty(item.OptionLabel) ? "" : $" ({item.OptionLabel})")
         + $" – ₪{Money(item.LineTotal)}";
+
+    private static string Time(TimeOnly value) => value.ToString("HH:mm", CultureInfo.InvariantCulture);
 
     private static string Number(decimal value) => value.ToString("0.###", CultureInfo.InvariantCulture);
 

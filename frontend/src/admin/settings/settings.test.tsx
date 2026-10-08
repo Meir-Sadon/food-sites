@@ -42,6 +42,7 @@ describe('General settings', () => {
       minimumOrderAmount: null,
       minimumOrderAppliesToPickup: true,
       serviceCities: 'אשקלון',
+      ordersPerHour: null,
     })
   })
 
@@ -124,6 +125,35 @@ describe('General settings', () => {
     const sent = api.sent('PUT', '/api/admin/supply-days')[0].body as SupplyDay[]
     expect(sent.find((d) => d.weekday === 'Friday')).toMatchObject({ enabled: true, cutoffDay: 'Wednesday', cutoffTime: '20:00:00' })
     expect(sent.find((d) => d.weekday === 'Tuesday')?.enabled).toBe(true)
+  })
+
+  it('saves supply hours for a day', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/supply-days': (_, body) => body })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const days = await section('ימי אספקה')
+
+    await user.type(within(days).getByLabelText('שעת התחלה לשישי'), '08:00')
+    await user.type(within(days).getByLabelText('שעת סיום לשישי'), '14:00')
+    await user.click(within(days).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    const sent = api.sent('PUT', '/api/admin/supply-days')[0].body as SupplyDay[]
+    expect(sent.find((d) => d.weekday === 'Friday')).toMatchObject({ deliveryFrom: '08:00:00', deliveryTo: '14:00:00' })
+    expect(sent.find((d) => d.weekday === 'Sunday')).toMatchObject({ deliveryFrom: null, deliveryTo: null })
+  })
+
+  it('saves how many orders can be supplied in an hour', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    await user.type(within(form).getByLabelText('הזמנות בשעה'), '3')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ordersPerHour: 3 })
   })
 
   it('adds and removes closed dates', async () => {

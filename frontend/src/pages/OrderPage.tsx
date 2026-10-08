@@ -15,7 +15,7 @@ import { useFeature, useSite, useSiteFailed } from '../site/useSite'
 import { DetailsBlock } from '../order/DetailsBlock'
 import { DishCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
-import { formatMoney, formatSupplyDate } from '../order/format'
+import { formatMoney, formatSlot, formatSupplyDate } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
 import { QuickFill } from '../order/QuickFill'
 import { ReviewsCarousel } from '../order/ReviewsCarousel'
@@ -49,6 +49,8 @@ function formatCutoff(iso: string) {
 /** The fields of the contact and address block, as the server names them (lower-cased). */
 const CONTACT_FIELDS = ['name', 'phone', 'city', 'street', 'housenumber', 'apartment']
 
+const slotKey = (date: string, hour: string) => `${date} ${hour}`
+
 export function OrderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -74,6 +76,8 @@ export function OrderPage() {
   const [leaveTo, setLeaveTo] = useState<{ to: string; proceed?: () => void | Promise<void> } | null>(null)
   const [prefilledFor, setPrefilledFor] = useState<number | null>(null)
   const [blocksOpen, setBlocksOpen] = useState({ contact: true, payment: true })
+  // The picked hours the server said are already full ("date hour").
+  const [fullSlots, setFullSlots] = useState<string[]>([])
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const total = orderTotal(state.selections, dishes)
@@ -167,6 +171,10 @@ export function OrderPage() {
   const minimum = fulfillment === 'Pickup' && !site.minimumOrderAppliesToPickup ? 0 : (site.minimumOrderAmount ?? 0)
   const belowMinimum = count > 0 && total < minimum
   const payment: Payment = state.payment === 'Transfer' && !site.paymentPhone ? 'OnDelivery' : state.payment
+  const hours = supplyDate?.hours ?? []
+  // An hour from a draft that the date no longer offers is dropped.
+  const deliveryHour = hours.some((h) => h.from === state.deliveryHour) ? state.deliveryHour : null
+  const hourIsFull = !!supplyDate && !!deliveryHour && fullSlots.includes(slotKey(supplyDate.date, deliveryHour))
   const normalizedPhone = normalizePhone(state.phone)
 
   const change = (patch: Partial<OrderState>) => {
@@ -175,6 +183,31 @@ export function OrderPage() {
       return patch.supplyDate ? { ...next, selections: clampToDate(next.selections, dishes, patch.supplyDate) } : next
     })
     setSubmitError(null)
+  }
+
+  /**
+   * Asks whether a picked hour is already full. A full hour can still be sent: the client only gets a note.
+   * Nothing is shown in advance, so the client doesn't learn how busy the other hours are.
+   */
+  function checkHour(date: string, hour: string | null) {
+    if (!hour) return
+    const key = slotKey(date, hour)
+    siteApi
+      .hourAvailability(date, hour)
+      .then(({ full }) => setFullSlots((current) => (full ? [...current, key] : current.filter((k) => k !== key))))
+      .catch(() => undefined)
+  }
+
+  function changeDate(date: string) {
+    const offered = menu?.supplyDates.find((d) => d.date === date)?.hours ?? []
+    const hour = offered.some((h) => h.from === deliveryHour) ? deliveryHour : null
+    change({ supplyDate: date, deliveryHour: hour })
+    checkHour(date, hour)
+  }
+
+  function changeHour(hour: string | null) {
+    change({ deliveryHour: hour })
+    if (supplyDate) checkHour(supplyDate.date, hour)
   }
 
   const setSelection = (dishId: number, selection: Selection | undefined) =>
@@ -238,6 +271,11 @@ export function OrderPage() {
       return
     }
     if (!supplyDate) return
+    if (hours.length > 0 && !deliveryHour) {
+      setErrors({ deliveryhour: ['required'] })
+      setSubmitError(t('errors.checkFields'))
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -246,6 +284,7 @@ export function OrderPage() {
         name: state.name.trim(),
         ...(fulfillment === 'Delivery' ? addressOf(state) : noAddress()),
         supplyDate: supplyDate.date,
+        deliveryHour,
         fulfillmentMethod: fulfillment,
         paymentMethod: payment,
         notes: state.notes.trim(),
@@ -313,7 +352,7 @@ export function OrderPage() {
               id="order-date"
               value={supplyDate.date}
               aria-describedby="order-date-hint order-date-error"
-              onChange={(e) => change({ supplyDate: e.target.value })}
+              onChange={(e) => changeDate(e.target.value)}
             >
               {menu.supplyDates.map((d) => (
                 <option key={d.date} value={d.date}>
@@ -333,6 +372,32 @@ export function OrderPage() {
           )}
           <FieldError errors={errors} field="supplyDate" id="order-date-error" />
         </span>
+
+        {supplyDate && hours.length > 0 && (
+          <span className="field">
+            <label htmlFor="order-hour">{t('order.deliveryHour')}</label>
+            <select
+              id="order-hour"
+              value={deliveryHour ?? ''}
+              required
+              aria-describedby="order-hour-note order-hour-error"
+              onChange={(e) => changeHour(e.target.value || null)}
+            >
+              <option value="">{t('order.chooseHour')}</option>
+              {hours.map((slot) => (
+                <option key={slot.from} value={slot.from}>
+                  {formatSlot(slot, t)}
+                </option>
+              ))}
+            </select>
+            {hourIsFull && (
+              <span id="order-hour-note" role="status" className="notice notice--warning hour-tooltip">
+                {t('order.hourFull')}
+              </span>
+            )}
+            <FieldError errors={errors} field="deliveryHour" id="order-hour-error" />
+          </span>
+        )}
 
         <fieldset>
           <legend>{t('order.fulfillment')}</legend>

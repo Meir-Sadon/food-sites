@@ -46,6 +46,10 @@ export interface AdminOrder {
   /** Delivery outside the service city, waiting for the admin's approval. */
   needsReview: boolean
   items: AdminOrderItem[]
+  /** The start of the hour the client asked for, "HH:mm:ss", or null. */
+  deliveryHour: string | null
+  /** The order came after its hour was already full: call the client to move it. */
+  hourFull: boolean
 }
 
 export interface AdminOrderInput {
@@ -57,6 +61,7 @@ export interface AdminOrderInput {
   paymentMethod: Payment
   notes: string
   items: { id: number; quantity: number }[]
+  deliveryHour: string | null
 }
 
 export interface OrderFilter {

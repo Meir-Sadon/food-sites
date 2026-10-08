@@ -262,6 +262,59 @@ describe('Order page', () => {
     expect(api.sent('POST', '/api/orders')).toHaveLength(0)
   })
 
+  describe('supply hours', () => {
+    const withHours = () =>
+      menu({
+        supplyDates: [
+          {
+            date: '2026-10-09',
+            cutoff: '2026-10-07T20:00:00',
+            hours: [
+              { from: '08:00:00', to: '09:00:00' },
+              { from: '09:00:00', to: '09:30:00' },
+            ],
+          },
+          { date: '2026-10-16', cutoff: '2026-10-14T20:00:00', hours: [] },
+        ],
+      })
+
+    it('offers the date\'s hours and needs one before sending', async () => {
+      const { api, user } = await openOrderPage({ 'GET /api/menu': withHours })
+      const hour = screen.getByLabelText('שעת אספקה מועדפת')
+      expect([...hour.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['בחרו שעה', '08:00 עד 09:00', '09:00 עד 09:30'])
+
+      await fillAndSubmit(user)
+      expect(hour).toHaveAccessibleDescription(/שדה חובה/)
+      expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+
+      // A date without hours asks for none.
+      await user.selectOptions(screen.getByLabelText('יום אספקה'), '2026-10-16')
+      expect(screen.queryByLabelText('שעת אספקה מועדפת')).not.toBeInTheDocument()
+    })
+
+    it('says nothing about a free hour, and notes a full one without blocking the order', async () => {
+      const { api, user } = await openOrderPage({
+        'GET /api/menu': withHours,
+        'GET /api/hour-availability\\?date=[\\d-]+&hour=(\\d\\d).*': (match: RegExpMatchArray) => ({ full: match[1] === '08' }),
+        'POST /api/orders': () => ({ ...confirmation, deliveryHour: '08:00:00', hourFull: true }),
+      })
+      const hour = screen.getByLabelText('שעת אספקה מועדפת')
+
+      await user.selectOptions(hour, '09:00:00')
+      await vi.waitFor(() => expect(api.calls.filter((c) => c.path.includes('hour-availability'))).toHaveLength(1))
+      expect(screen.queryByText(/השעה הזאת כבר מלאה/)).not.toBeInTheDocument()
+
+      await user.selectOptions(hour, '08:00:00')
+      expect(await screen.findByText(/השעה הזאת כבר מלאה/)).toBeInTheDocument()
+
+      await fillAndSubmit(user)
+      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ deliveryHour: '08:00:00' })
+      const dialog = await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+      expect(within(dialog).getByText(/בשעה 08:00/)).toBeInTheDocument()
+      expect(within(dialog).getByText(/ניצור איתכם קשר כדי לתאם שעה אחרת/)).toBeInTheDocument()
+    })
+  })
+
   it('sends the order, then shows the success popup with the summary', async () => {
     const { api, user } = await openOrderPage({ 'POST /api/orders': () => confirmation })
     await fillAndSubmit(user)
@@ -280,6 +333,7 @@ describe('Order page', () => {
       houseNumber: '1',
       apartment: '',
       supplyDate: '2026-10-09',
+      deliveryHour: null,
       fulfillmentMethod: 'Delivery',
       paymentMethod: 'OnDelivery',
       notes: '',

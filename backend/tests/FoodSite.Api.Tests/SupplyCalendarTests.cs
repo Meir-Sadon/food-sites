@@ -69,4 +69,40 @@ public class SupplyCalendarTests
         // Monday's own cutoff (Sunday 20:00) has passed, so the first open day is Tuesday.
         Assert.Equal(new DateOnly(2026, 10, 6), open[0].Date);
     }
+
+    [Fact]
+    public void Hours_are_cut_into_one_hour_slots_with_a_shorter_last_one()
+    {
+        var day = FridayRule();
+        day.DeliveryFrom = new TimeOnly(8, 0);
+        day.DeliveryTo = new TimeOnly(10, 30);
+        Assert.Equal(
+            [new(new(8, 0), new(9, 0)), new(new(9, 0), new(10, 0)), new SupplyCalendar.HourSlot(new(10, 0), new(10, 30))],
+            SupplyCalendar.HourSlots(day));
+
+        day.DeliveryTo = new TimeOnly(23, 59);
+        day.DeliveryFrom = new TimeOnly(23, 0);
+        Assert.Equal([new SupplyCalendar.HourSlot(new(23, 0), new(23, 59))], SupplyCalendar.HourSlots(day));
+    }
+
+    [Fact]
+    public void A_day_without_valid_hours_has_no_slots()
+    {
+        var day = FridayRule();
+        Assert.Empty(SupplyCalendar.HourSlots(day));
+        day.DeliveryFrom = new TimeOnly(10, 0);
+        Assert.Empty(SupplyCalendar.HourSlots(day));
+        day.DeliveryTo = new TimeOnly(9, 0);
+        Assert.Empty(SupplyCalendar.HourSlots(day));
+    }
+
+    [Fact]
+    public void Open_dates_carry_their_day_s_hours()
+    {
+        var day = FridayRule();
+        day.DeliveryFrom = new TimeOnly(12, 0);
+        day.DeliveryTo = new TimeOnly(14, 0);
+        var open = SupplyCalendar.Find(Friday, new DateTime(2026, 10, 5, 9, 0, 0), [day], []);
+        Assert.Equal([new TimeOnly(12, 0), new TimeOnly(13, 0)], open!.Hours.Select(h => h.From));
+    }
 }

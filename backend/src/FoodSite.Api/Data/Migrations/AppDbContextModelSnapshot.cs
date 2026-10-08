@@ -360,6 +360,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<TimeOnly?>("DeliveryHour")
+                        .HasColumnType("time without time zone");
+
                     b.Property<string>("FulfillmentMethod")
                         .IsRequired()
                         .HasColumnType("text");
@@ -616,6 +619,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("MinimumOrderAppliesToPickup")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("OrdersPerHour")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PaymentPhone")
                         .HasColumnType("text");
 
@@ -655,6 +661,12 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<TimeOnly>("CutoffTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("DeliveryFrom")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("DeliveryTo")
                         .HasColumnType("time without time zone");
 
                     b.Property<bool>("Enabled")

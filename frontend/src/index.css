@@ -2035,3 +2035,83 @@ label {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* The note under the hour picker when the picked hour is full: a small bubble pointing up at the field. */
+.hour-tooltip {
+  position: relative;
+  margin-block-start: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.hour-tooltip::before {
+  content: '';
+  position: absolute;
+  inset-block-start: -0.4rem;
+  inset-inline-start: 1rem;
+  inline-size: 0.7rem;
+  block-size: 0.7rem;
+  background: inherit;
+  /* The top and left edges meet in the corner that points up once the square is turned. */
+  border-top: inherit;
+  border-left: inherit;
+  transform: rotate(45deg);
+}
+
+/* The driver's report: one card per stop, numbered in driving order; big tap targets on a phone. */
+.route-stops {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-stop {
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.route-stop p {
+  margin: 0.25rem 0;
+}
+
+.route-stop__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.route-stop__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.route-stop__times strong,
+.route-stop__collect {
+  font-weight: 700;
+}
+
+.route-summary {
+  font-weight: 600;
+}
+
+@media print {
+  .route-stop {
+    break-inside: avoid;
+    border-color: #000;
+  }
+
+  .route-stop__number {
+    border: 1px solid #000;
+    color: #000;
+    background: none;
+  }
+}

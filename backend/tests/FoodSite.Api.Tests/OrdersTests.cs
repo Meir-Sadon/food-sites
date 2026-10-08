@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Orders;
 using Microsoft.EntityFrameworkCore;
 using static FoodSite.Api.Controllers.Admin.CategoriesController;
 using static FoodSite.Api.Controllers.Admin.DishesController;
@@ -353,6 +354,94 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         var haifa = await (await Place(await ValidOrder(o => o["city"] = "חיפה"))).Read<ConfirmationDto>();
         Assert.True(haifa.NeedsReview);
         Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("משלוחים רק באשקלון, אשדוד ושדרות"));
+    }
+
+    // ---------- Supply hours ----------
+
+    private async Task SetHours(TimeOnly from, TimeOnly to, int? ordersPerHour)
+    {
+        var days = Enum.GetValues<DayOfWeek>().Select(d =>
+            new SupplyDayDto(d, true, (DayOfWeek)(((int)d + 6) % 7), new TimeOnly(0, 0), from, to));
+        (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).EnsureSuccessStatusCode();
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHour = ordersPerHour })).EnsureSuccessStatusCode();
+    }
+
+    private async Task<bool> HourFull(string date, string hour) =>
+        (await _client.GetAsync($"/api/hour-availability?date={date}&hour={hour}").Read<HourAvailabilityDto>()).Full;
+
+    [Fact]
+    public async Task The_menu_offers_each_date_s_hours()
+    {
+        Assert.Empty((await Menu()).SupplyDates[0].Hours!);
+
+        await SetHours(new TimeOnly(8, 0), new TimeOnly(10, 30), 3);
+        Assert.Equal(
+            [new(new(8, 0), new(9, 0)), new(new(9, 0), new(10, 0)), new SupplyCalendar.HourSlot(new(10, 0), new(10, 30))],
+            (await Menu()).SupplyDates[0].Hours);
+    }
+
+    [Fact]
+    public async Task A_day_with_hours_needs_one_of_them()
+    {
+        await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);
+
+        await (await Place(await ValidOrder())).AssertInvalid("DeliveryHour", "required");
+        await (await Place(await ValidOrder(o => o["deliveryHour"] = "07:00"))).AssertInvalid("DeliveryHour", "deliveryHourUnavailable");
+        await (await Place(await ValidOrder(o => o["deliveryHour"] = "09:30"))).AssertInvalid("DeliveryHour", "deliveryHourUnavailable");
+
+        var placed = await (await Place(await ValidOrder(o => o["deliveryHour"] = "09:00"))).Read<ConfirmationDto>();
+        Assert.Equal((new TimeOnly(9, 0), false), (placed.DeliveryHour, placed.HourFull));
+        await using var db = _factory.CreateDbContext();
+        Assert.Equal(new TimeOnly(9, 0), (await db.Orders.SingleAsync()).DeliveryHour);
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("09:00 · משלוח"));
+    }
+
+    [Fact]
+    public async Task A_day_without_hours_drops_an_hour_that_was_sent()
+    {
+        var placed = await (await Place(await ValidOrder(o => o["deliveryHour"] = "09:00"))).Read<ConfirmationDto>();
+        Assert.Null(placed.DeliveryHour);
+    }
+
+    [Fact]
+    public async Task A_full_hour_can_still_be_picked_and_the_admin_sees_which_order_to_move()
+    {
+        await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), 2);
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        async Task<ConfirmationDto> PlaceAt(string hour) =>
+            await (await Place(await ValidOrder(o => o["deliveryHour"] = hour))).Read<ConfirmationDto>();
+
+        Assert.False(await HourFull(date, "08:00"));
+        Assert.False((await PlaceAt("08:00")).HourFull);
+        var second = await PlaceAt("08:00");
+        Assert.False(second.HourFull);
+        Assert.True(await HourFull(date, "08:00"));
+        Assert.False(await HourFull(date, "09:00"));
+
+        var third = await PlaceAt("08:00");
+        Assert.True(third.HourFull);
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("השעה שבחרת כבר מלאה"));
+
+        var orders = await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>();
+        Assert.Equal([third.Id], orders.Where(o => o.HourFull).Select(o => o.Id));
+
+        // A cancelled order frees its place: the third now fits, and the hour is full again with two.
+        (await _admin.PutAsJsonAsync($"/api/admin/orders/{second.Id}/status", new StatusInput(OrderStatus.Cancelled), TestFiles.Json)).EnsureSuccessStatusCode();
+        Assert.DoesNotContain(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>(), o => o.HourFull);
+        Assert.True(await HourFull(date, "08:00"));
+        (await _admin.PutAsJsonAsync($"/api/admin/orders/{third.Id}/status", new StatusInput(OrderStatus.Cancelled), TestFiles.Json)).EnsureSuccessStatusCode();
+        Assert.False(await HourFull(date, "08:00"));
+    }
+
+    [Fact]
+    public async Task Without_a_limit_no_hour_is_ever_full()
+    {
+        await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        for (var i = 0; i < 3; i++)
+            Assert.False((await (await Place(await ValidOrder(o => o["deliveryHour"] = "08:00"))).Read<ConfirmationDto>()).HourFull);
+        Assert.False(await HourFull(date, "08:00"));
     }
 
     [Fact]

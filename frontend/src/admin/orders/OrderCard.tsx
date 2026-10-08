@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ordersAdminApi, orderStatuses, type AdminOrder, type OrderStatus } from '../../api/operations'
-import { formatMoney } from '../../order/format'
+import { formatMoney, formatTime } from '../../order/format'
 import { formatNumber } from '../format'
 import { useErrorMessage } from '../hooks'
 import { ConfirmRemove, Status } from '../ui'
@@ -53,12 +53,18 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
       <p className="muted">
         <a href={`tel:${order.phone}`}>{order.phone}</a>
         {' · '}
+        {order.deliveryHour && <>{t('admin.orders.hourAt', { hour: formatTime(order.deliveryHour) })} · </>}
         {t(order.fulfillmentMethod === 'Delivery' ? 'admin.orders.delivery' : 'admin.orders.pickup')}
         {order.fulfillmentMethod === 'Delivery' && order.address ? `: ${order.address}` : ''}
         {' · '}
         {t(order.paymentMethod === 'Transfer' ? 'admin.orders.transfer' : 'admin.orders.onDelivery')}
         {order.isGuest && <span className="badge">{t('admin.orders.guest')}</span>}
       </p>
+      {order.hourFull && (
+        <p role="status" className="notice notice--warning">
+          {t('admin.orders.hourFull')}
+        </p>
+      )}
       {order.needsReview && (
         <p role="status" className="notice notice--warning">
           {t('admin.orders.needsReview')}{' '}

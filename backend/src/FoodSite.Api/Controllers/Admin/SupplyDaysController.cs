@@ -8,7 +8,10 @@ namespace FoodSite.Api.Controllers.Admin;
 [Route("api/admin/supply-days")]
 public class SupplyDaysController(AppDbContext db) : AdminControllerBase
 {
-    public record SupplyDayDto(DayOfWeek Weekday, bool Enabled, DayOfWeek CutoffDay, TimeOnly CutoffTime);
+    /// <summary>DeliveryFrom and DeliveryTo are the day's supply hours: both empty, or From before To.</summary>
+    public record SupplyDayDto(
+        DayOfWeek Weekday, bool Enabled, DayOfWeek CutoffDay, TimeOnly CutoffTime,
+        TimeOnly? DeliveryFrom = null, TimeOnly? DeliveryTo = null);
 
     /// <summary>All seven weekdays, Sunday first. Days never saved come back disabled.</summary>
     [HttpGet]
@@ -16,7 +19,7 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
     {
         var saved = await db.SupplyDays.ToDictionaryAsync(d => d.Weekday);
         return Enum.GetValues<DayOfWeek>().Select(day => saved.TryGetValue(day, out var s)
-            ? new SupplyDayDto(s.Weekday, s.Enabled, s.CutoffDay, s.CutoffTime)
+            ? new SupplyDayDto(s.Weekday, s.Enabled, s.CutoffDay, s.CutoffTime, s.DeliveryFrom, s.DeliveryTo)
             : Default(day));
     }
 
@@ -30,6 +33,8 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
         {
             if (!Enum.IsDefined(day.Weekday)) errors.Add($"days[{i}].weekday", "invalid");
             if (!Enum.IsDefined(day.CutoffDay)) errors.Add($"days[{i}].cutoffDay", "invalid");
+            if (day.DeliveryFrom is null != day.DeliveryTo is null || day.DeliveryTo <= day.DeliveryFrom)
+                errors.Add($"days[{i}].deliveryTo", "deliveryHoursInvalid");
         }
         if (errors.Any)
             return Invalid(errors);
@@ -42,6 +47,8 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
             entity.Enabled = day.Enabled;
             entity.CutoffDay = day.CutoffDay;
             entity.CutoffTime = day.CutoffTime;
+            entity.DeliveryFrom = day.DeliveryFrom;
+            entity.DeliveryTo = day.DeliveryTo;
         }
         await db.SaveChangesAsync();
         return Ok(await Get());

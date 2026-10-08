@@ -54,8 +54,14 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
 
     public record MenuCategoryDto(int Id, string Name);
 
-    /// <summary>A date the client can order for, and when ordering for it closes (local time).</summary>
-    public record SupplyDateDto(DateOnly Date, DateTime Cutoff);
+    /// <summary>
+    /// A date the client can order for, when ordering for it closes (local time), and the hours they can ask for
+    /// (empty when the day has no supply hours). How full an hour is stays hidden until one is picked.
+    /// </summary>
+    public record SupplyDateDto(DateOnly Date, DateTime Cutoff, IReadOnlyList<SupplyCalendar.HourSlot>? Hours = null);
+
+    /// <summary>Whether an hour already has as many orders as the site supplies in an hour. Picking it is still allowed.</summary>
+    public record HourAvailabilityDto(bool Full);
 
     public record MenuDto(
         IReadOnlyList<MenuCategoryDto> Categories,
@@ -105,7 +111,18 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, d.UnitName))
             .ToList();
 
-        return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff)).ToList());
+        return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList());
+    }
+
+    /// <summary>Asked when the client picks an hour, so a full one gets a note; the menu never says which hours are full.</summary>
+    [HttpGet("hour-availability")]
+    public async Task<HourAvailabilityDto> HourAvailability(DateOnly date, TimeOnly hour)
+    {
+        var limit = await db.Settings.AsNoTracking().Select(s => s.OrdersPerHour).SingleAsync();
+        if (limit is null)
+            return new HourAvailabilityDto(false);
+        var taken = await db.Orders.AsNoTracking().InSlot(date, hour).CountAsync();
+        return new HourAvailabilityDto(HourCapacity.IsFull(taken, limit));
     }
 
     /// <summary>For each limited dish, how much is still free on each open supply date (cancelled orders and orders waiting for the admin's approval don't count).</summary>

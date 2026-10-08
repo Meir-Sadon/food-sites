@@ -20,6 +20,8 @@ export interface Selection {
 export interface OrderState extends AddressParts {
   selections: Record<number, Selection>
   supplyDate: string | null
+  /** The start of the picked hour ("HH:mm:ss") on the supply date, when it has hours. */
+  deliveryHour: string | null
   fulfillment: Fulfillment
   payment: Payment
   notes: string
@@ -30,6 +32,7 @@ export interface OrderState extends AddressParts {
 export const emptyOrder = (): OrderState => ({
   selections: {},
   supplyDate: null,
+  deliveryHour: null,
   fulfillment: 'Delivery',
   payment: 'OnDelivery',
   notes: '',
