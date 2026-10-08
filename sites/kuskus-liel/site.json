@@ -1,0 +1,25 @@
+{
+  "id": "kuskus-liel",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "רמות הרכס",
+  "emoji": "🍲",
+  "whatsApp": {
+    "orderConfirmationTemplate": "kuskus_liel_order_confirmation",
+    "newOrderTemplate": "kuskus_liel_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true
+  },
+  "settings": {
+    "contactName": "ליאל אמירגולוב",
+    "contactPhone": "054-5275154",
+    "contactAddress": "איסוף מרמות הרכס",
+    "deliveryAreaText": "משלוחים ברמות הרכס",
+    "deliveryFeeText": "משלוח בעלות 30 ₪, או איסוף עצמי מרמות הרכס",
+    "backgroundImageUrl": "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791455925/kuskus-liel/background/background-1.jpg"
+  },
+  "seed": ["seed/menu.json"]
+}

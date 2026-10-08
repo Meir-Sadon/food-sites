@@ -1,0 +1,69 @@
+{
+  "categories": [
+    {
+      "name": "עיקריות",
+      "dishes": [
+        {
+          "name": "קוסקוס צמחוני",
+          "description": "קוסקוס ביתי עם מרק ירקות וחומוס. המנה מגיעה עם 4 סלטים מפנקים: חמוצי הבית, כרוב לבן חמוץ, פלפל חריף חמוץ וכרוב סגול במיונז.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "maxPerSupplyDate": 30
+        },
+        {
+          "name": "קוסקוס עם עוף",
+          "description": "קוסקוס ביתי עם מרק ירקות, חומוס ועוף. המנה מגיעה עם 4 סלטים מפנקים: חמוצי הבית, כרוב לבן חמוץ, פלפל חריף חמוץ וכרוב סגול במיונז.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 60,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "maxPerSupplyDate": 30
+        },
+        {
+          "name": "קוסקוס עם 2 קציצות",
+          "description": "קוסקוס ביתי עם מרק ירקות, חומוס ושתי קציצות. המנה מגיעה עם 4 סלטים מפנקים: חמוצי הבית, כרוב לבן חמוץ, פלפל חריף חמוץ וכרוב סגול במיונז.",
+          "sellBy": "Units",
+          "unitName": "מנה",
+          "unitPrice": 60,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "maxPerSupplyDate": 30
+        }
+      ]
+    },
+    {
+      "name": "תוספות",
+      "dishes": [
+        {
+          "name": "קציצה",
+          "description": "קציצה ביתית, לתוספת למנה או בנפרד.",
+          "sellBy": "Units",
+          "unitPrice": 5,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "isSideDish": true,
+          "addOnOf": ["קוסקוס צמחוני", "קוסקוס עם עוף", "קוסקוס עם 2 קציצות"]
+        },
+        {
+          "name": "תוספת עוף",
+          "description": "עוף, לתוספת למנה או בנפרד.",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isSideDish": true,
+          "addOnOf": ["קוסקוס צמחוני", "קוסקוס עם עוף", "קוסקוס עם 2 קציצות"]
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ namespace FoodSite.Api.Data;
 /// <summary>
 /// A site's first menu data (<c>sites/&lt;id&gt;/seed/*.json</c>): categories with their dishes.
 /// Pictures are URLs, either absolute or served from the site root (the site's <c>public/</c> folder).
+/// <c>AddOnOf</c> names the dishes (from any category, this seed or the database) a dish is offered under as an add-on.
 /// </summary>
 public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
 {
@@ -21,7 +22,10 @@ public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
         decimal MaxAmount = 10,
         decimal AmountStep = 1,
         IReadOnlyList<string>? Images = null,
-        string? UnitName = null);
+        string? UnitName = null,
+        decimal? MaxPerSupplyDate = null,
+        bool IsSideDish = false,
+        IReadOnlyList<string>? AddOnOf = null);
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {

@@ -38,7 +38,7 @@ Copy `sites/_template/` to `sites/<site-id>/` (lowercase letters, digits, dashes
 | `logo.svg` | A simple round SVG logo drawn by hand (see the existing sites), in the palette. |
 | `public/favicon.svg` | A 32x32 version of the logo. |
 | `i18n/he.json` | `app.name` and `order.hero.tagline`; override `order.hero.kosher` (a hero badge) when the business makes no kashrut claim. Only keys that exist in `frontend/src/i18n/he.json`. |
-| `seed/<name>.json` | Categories and dishes (format: `backend/src/FoodSite.Api/Data/MenuSeed.cs`). A pack sold as one item (50 cigars for 120 ₪) is `sellBy: Units`, `unitPrice: 120`, with the pack size in the name, since the order page shows "₪120 ליחידה". |
+| `seed/<name>.json` | Categories and dishes (format: `backend/src/FoodSite.Api/Data/MenuSeed.cs`). A pack sold as one item (50 cigars for 120 ₪) is `sellBy: Units`, `unitPrice: 120`, with the pack size in the name, since the order page shows "₪120 ליחידה" (or set `unitName`, e.g. `"מנה"` → "₪50 למנה"). A daily limit per dish is `maxPerSupplyDate`. A side that is sold on its own and also offered under main dishes is `isSideDish: true` with `addOnOf: ["<main dish name>", ...]`. |
 
 Leave `images` out of the seed unless the pictures are already in Cloudinary (see step 3).
 
@@ -89,13 +89,13 @@ One PR with the site folder and the deploy files, on a readable branch. Run `/ch
   INSERT INTO "NotifyPhones" ("Phone", "Name") VALUES ('<contact phone, digits only>', '<contact name>') ON CONFLICT ("Phone") DO NOTHING;
   ```
   Read the rows back to check them.
-- **Admin password**: set it to the default `admin`: run `dotnet run --project backend/src/FoodSite.Api -- hash-password 'admin'` and add the output as the service's `Admin__PasswordHash` with `update_environment_variables`. The admin has no password-change screen. When the owner sends a new password, hash it, clear the stored one in the site's Neon database (`UPDATE "Settings" SET "AdminPasswordHash" = NULL;` with `run_sql`), and set the new hash as `Admin__PasswordHash`. That restarts the service, and the start copies it in.
+- **Admin password**: set it to the default `admin`: run `dotnet run --project backend/src/FoodSite.Api -- hash-password 'admin'` and add the output as the service's `Admin__PasswordHash` with `update_environment_variables`. The owner changes it after signing in, under **הגדרות כלליות** (the password section).
 
 ## 8. Tell the owner how to activate the site
 
 End with one reply that gives the site's address and a numbered checklist of exactly what the owner has to do, with where to click. Mark what's required and what's optional, and say which steps Claude does once they answer. Fill in the real names (site id, secret name, address):
 
-1. **Change the admin password** (required): the site is public and the password is `admin`, so anyone who guesses it can see the orders and the clients' phone numbers. Send Claude a new password and Claude sets it.
+1. **Change the admin password** (required): the site is public and the password is `admin`, so anyone who guesses it can see the orders and the clients' phone numbers. Sign in to the admin and change it under **הגדרות כלליות**.
 2. **Cloudinary key** (required for pictures): Cloudinary → **Settings → API Keys → Generate New API Key**, named `<site-id>`. Then Render → the `<site-id>` service → **Environment** → add `Cloudinary__Url` = `cloudinary://<key>:<secret>@<cloud_name>` → **Save**.
 3. **Health check** (required): Render → the service → **Settings → Health Check Path** → `/api/health`.
 4. **Deploy hook** (required for later updates): Render → the service → **Settings → Deploy Hook** → copy. GitHub → the repo → **Settings → Secrets and variables → Actions → New repository secret**, named `RENDER_DEPLOY_HOOK_<ID_UPPER>`, with the hook as the value.
