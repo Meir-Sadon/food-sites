@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ordersApi, siteApi, type Confirmation, type Menu, type MenuDish, type Fulfillment, type Payment } from '../api/site'
@@ -9,6 +9,7 @@ import { AddressFields } from '../account/AddressFields'
 import { addressOf, noAddress } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
+import { scrollBehavior } from '../components/motion'
 import { useSite, useSiteFailed } from '../site/useSite'
 import { DishCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
@@ -56,6 +57,9 @@ export function OrderPage() {
 
   const [state, setState] = useState<OrderState>(emptyOrder)
   const [notice, setNotice] = useState<string | null>(null)
+  const submitRef = useRef<HTMLButtonElement>(null)
+  // Bumped by a quick fill: once the filled order renders, the page scrolls to the submit button.
+  const [quickFills, setQuickFills] = useState(0)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -90,6 +94,11 @@ export function OrderPage() {
       apartment: current.apartment || user.apartment,
     }))
   }
+
+  // After a quick fill the order is ready to send: bring the client to the submit button.
+  useEffect(() => {
+    if (quickFills > 0) submitRef.current?.scrollIntoView?.({ behavior: scrollBehavior(), block: 'center' })
+  }, [quickFills])
 
   // Load the menu, then bring back a draft saved in this browser: the menu is needed first so
   // dishes that have vanished since can be skipped.
@@ -186,6 +195,7 @@ export function OrderPage() {
     setNotice(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
     setErrors({})
     setSubmitError(null)
+    setQuickFills((n) => n + 1)
   }
 
   function leave(save: boolean) {
@@ -391,7 +401,7 @@ export function OrderPage() {
           </p>
         )}
         <div className="row">
-          <button type="submit" disabled={submitting || count === 0 || !supplyDate || belowMinimum}>
+          <button ref={submitRef} type="submit" disabled={submitting || count === 0 || !supplyDate || belowMinimum}>
             {submitting ? t('order.submitting') : t('order.submit')}
           </button>
           <button type="button" className="button-quiet" onClick={reset}>
