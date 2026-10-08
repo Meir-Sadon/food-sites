@@ -80,13 +80,15 @@ describe('admin login', () => {
 })
 
 describe('admin layout', () => {
-  it('has tabs for orders, settings, categories, dishes, contacts reports and a link home', async () => {
+  it('has tabs for orders, messages, reviews, settings, categories, dishes, contacts, reports and a link home', async () => {
     fakeApi({ 'GET /api/admin/me': () => ({}), ...settingsRoutes })
     renderAt('/admin')
 
     const nav = await screen.findByRole('navigation', { name: 'תפריט ניהול' })
     expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual([
       'הזמנות',
+      'הודעות וואטסאפ',
+      'חוות דעת',
       'הגדרות כלליות',
       'קטגוריות',
       'מנות',

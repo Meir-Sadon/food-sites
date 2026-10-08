@@ -7,7 +7,9 @@ import { ContactsPage } from './admin/contacts/ContactsPage'
 import { DishFormPage } from './admin/dishes/DishFormPage'
 import { DishesPage } from './admin/dishes/DishesPage'
 import { OrdersPage } from './admin/orders/OrdersPage'
+import { MessagesPage } from './admin/messages/MessagesPage'
 import { ReportsPage } from './admin/reports/ReportsPage'
+import { ReviewsPage } from './admin/reviews/ReviewsPage'
 import { SettingsPage } from './admin/settings/SettingsPage'
 import { ClientLayout } from './components/ClientLayout'
 import { RequireFeature } from './components/RequireFeature'
@@ -17,6 +19,7 @@ import { LoginPage } from './pages/LoginPage'
 import { OrderPage } from './pages/OrderPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RecommendationsPage } from './pages/RecommendationsPage'
+import { ReviewPage } from './pages/ReviewPage'
 
 export function App() {
   return (
@@ -30,6 +33,14 @@ export function App() {
             element={
               <RequireFeature feature="recommendations">
                 <RecommendationsPage />
+              </RequireFeature>
+            }
+          />
+          <Route
+            path="r/:token"
+            element={
+              <RequireFeature feature="reviews">
+                <ReviewPage />
               </RequireFeature>
             }
           />
@@ -56,6 +67,15 @@ export function App() {
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route
+            path="reviews"
+            element={
+              <RequireFeature feature="reviews" to="/admin/orders">
+                <ReviewsPage />
+              </RequireFeature>
+            }
+          />
           <Route path="*" element={<Navigate to="settings" replace />} />
         </Route>
 

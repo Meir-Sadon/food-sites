@@ -270,6 +270,16 @@ button:disabled {
   .top-bar__links {
     overflow: visible;
   }
+
+  /* The admin has many tabs: they wrap onto a second line instead of pushing the page sideways. */
+  .admin-bar nav {
+    min-inline-size: 0;
+  }
+
+  .admin-bar .top-bar__links {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 }
 
 /* ---------- Admin ---------- */
@@ -1558,4 +1568,389 @@ label {
   .toast {
     animation: none;
   }
+}
+
+/* ---------- Reviews ---------- */
+
+.stars {
+  display: inline-flex;
+  gap: 0.125rem;
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.stars__on {
+  color: var(--color-highlight);
+}
+
+.stars__off {
+  color: var(--color-border);
+}
+
+/* Approved reviews on the home page: a row of cards that swipes, snapping one card at a time. */
+.reviews {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-inline-size: 0;
+}
+
+.reviews__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.reviews__head h2 {
+  margin: 0;
+  font-size: 1.375rem;
+}
+
+.reviews__arrows {
+  display: none;
+  gap: 0.5rem;
+}
+
+.reviews__arrows .button-icon {
+  border-radius: 50%;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.reviews__track {
+  position: relative;
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.25rem 0.125rem 0.5rem;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.reviews__track::-webkit-scrollbar {
+  display: none;
+}
+
+.review-card {
+  position: relative;
+  flex: 0 0 85%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius) * 1.5);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  scroll-snap-align: start;
+}
+
+/* A large quote mark in the corner, in the site's accent. */
+.review-card::before {
+  content: '”';
+  position: absolute;
+  inset-block-start: -0.25rem;
+  inset-inline-end: 0.875rem;
+  font-family: Georgia, serif;
+  font-size: 4rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  pointer-events: none;
+}
+
+.review-card__comment {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  overflow: hidden;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.review-card__images {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.review-card__images--1 {
+  grid-template-columns: 1fr;
+}
+
+.review-card__images img {
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+.review-card__images--1 img {
+  aspect-ratio: 16 / 9;
+  max-block-size: 12rem;
+}
+
+.review-card__by {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: auto 0 0;
+  font-weight: 600;
+}
+
+.review-card__avatar {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 50%;
+  background: var(--color-soft);
+  color: var(--color-accent);
+}
+
+.reviews__dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.reviews__dot {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-border);
+  transition: inline-size 0.2s, background-color 0.2s;
+}
+
+.reviews__dot--on {
+  inline-size: 1.25rem;
+  background: var(--color-accent);
+}
+
+@media (min-width: 40rem) {
+  .reviews__arrows {
+    display: flex;
+  }
+
+  .review-card {
+    flex-basis: calc((100% - 0.75rem) / 2);
+  }
+}
+
+@media (min-width: 64rem) {
+  .review-card {
+    flex-basis: calc((100% - 1.5rem) / 3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reviews__dot {
+    transition: none;
+  }
+}
+
+/* The client's review page. */
+.review-page {
+  max-inline-size: 36rem;
+  margin-inline: auto;
+}
+
+.review-page__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.review-page__header h1 {
+  margin: 0;
+}
+
+.review-page__logo {
+  inline-size: 5rem;
+  block-size: 5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: var(--shadow-md);
+}
+
+.review-page__thanks {
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  background: var(--color-soft);
+  color: var(--color-success);
+  text-align: center;
+  font-weight: 600;
+}
+
+.star-picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  text-align: center;
+}
+
+.star-picker legend {
+  margin-inline: auto;
+  font-weight: 600;
+}
+
+.star-picker__stars {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.star-picker__star {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--color-border);
+  cursor: pointer;
+  transition: transform 0.15s, color 0.15s;
+}
+
+.star-picker__star input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.star-picker__star--on {
+  color: var(--color-highlight);
+}
+
+.star-picker__star:hover {
+  transform: scale(1.1);
+}
+
+.star-picker__star:focus-within {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.star-picker__label {
+  margin: 0.25rem 0 0;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star-picker__star {
+    transition: none;
+  }
+
+  .star-picker__star:hover {
+    transform: none;
+  }
+}
+
+.review-form__label {
+  font-weight: 600;
+}
+
+.review-form__images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-form__images li {
+  position: relative;
+}
+
+.review-form__images img {
+  display: block;
+  inline-size: 7rem;
+  block-size: 7rem;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+.review-form__images .button-icon {
+  position: absolute;
+  inset-block-start: 0.25rem;
+  inset-inline-end: 0.25rem;
+  min-inline-size: 2rem;
+  min-block-size: 2rem;
+  border-radius: 50%;
+}
+
+.review-form__add {
+  align-self: flex-start;
+}
+
+/* Admin: the reviews tab and the WhatsApp message panel on an order. */
+.review-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.review-admin--blocked {
+  opacity: 0.7;
+}
+
+.review-admin__comment {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.review-admin__images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-admin__images img {
+  display: block;
+  inline-size: 6rem;
+  block-size: 6rem;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+.send-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  background: var(--color-soft);
+}
+
+.send-message textarea {
+  white-space: pre-wrap;
+}
+
+.whatsapp-link {
+  background: #1f8f4e;
+  border-color: #1f8f4e;
+  color: #ffffff;
 }

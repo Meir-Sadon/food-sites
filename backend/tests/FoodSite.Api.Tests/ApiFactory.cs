@@ -41,6 +41,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             // Every feature on, as in the sites today; FeatureFlagsTests turns them off.
             ["Site:Features:recommendations"] = "true",
             ["Site:Features:favorites"] = "true",
+            ["Site:Features:reviews"] = "true",
         };
         foreach (var (key, value) in overrides ?? [])
             _settings[key] = value;

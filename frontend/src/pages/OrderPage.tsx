@@ -11,13 +11,14 @@ import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
-import { useSite, useSiteFailed } from '../site/useSite'
+import { useFeature, useSite, useSiteFailed } from '../site/useSite'
 import { DetailsBlock } from '../order/DetailsBlock'
 import { DishCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { formatMoney, formatSupplyDate } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
 import { QuickFill } from '../order/QuickFill'
+import { ReviewsCarousel } from '../order/ReviewsCarousel'
 import {
   DRINKS_CATEGORY_NAME,
   dishMap,
@@ -55,6 +56,7 @@ export function OrderPage() {
   const { user } = useAccount()
   const site = useSite()
   const siteFailed = useSiteFailed()
+  const reviewsOn = useFeature('reviews')
   const defaultCity = site?.serviceCities[0]
   const errorMessage = useErrorMessage()
   const toast = useToast()
@@ -277,6 +279,8 @@ export function OrderPage() {
           <li>{t('order.hero.kosher')}</li>
         </ul>
       </header>
+
+      {reviewsOn && <ReviewsCarousel />}
 
       {user && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 
