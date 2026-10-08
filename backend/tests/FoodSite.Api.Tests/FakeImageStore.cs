@@ -9,11 +9,14 @@ public sealed class FakeImageStore : IImageStore
     public List<(string Folder, string FileName)> Uploads { get; } = [];
     public List<string> Deleted { get; } = [];
     public bool Unavailable { get; set; }
+    public bool Refuses { get; set; }
 
     public Task<StoredImage> UploadAsync(Stream content, string fileName, string folder, CancellationToken ct = default)
     {
         if (Unavailable)
             throw new ImageStoreUnavailableException("test");
+        if (Refuses)
+            throw new ImageStoreUnavailableException("test", ImageStoreUnavailableException.UploadFailed);
         Uploads.Add((folder, fileName));
         var id = $"{folder}/img{Interlocked.Increment(ref _next)}";
         return Task.FromResult(new StoredImage($"https://images.test/{id}.jpg", id));
