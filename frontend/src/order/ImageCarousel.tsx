@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { prefersReducedMotion } from '../components/motion'
 
 const INTERVAL_MS = 4500
-
-const prefersReducedMotion = () =>
-  typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** Dish pictures that rotate every few seconds (not at all for people who asked for less motion). */
 export function ImageCarousel({ images, name }: { images: string[]; name: string }) {
