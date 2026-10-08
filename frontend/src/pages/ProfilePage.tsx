@@ -12,6 +12,7 @@ import { emptyOrder, selectionsFromHistory } from '../order/model'
 import { DetailsSection } from '../profile/DetailsSection'
 import { FavoritesSection, RecommendationsSection } from '../profile/FavoritesSection'
 import { HistorySection } from '../profile/HistorySection'
+import { ReviewsSection } from '../profile/ReviewsSection'
 
 /** Stands in for a list the site's features leave out. */
 const nothing = () => Promise.resolve([])
@@ -45,6 +46,8 @@ function ProfileContent({ user, onSaved }: { user: Profile; onSaved: (profile: P
   const recommendationsOn = useFeature('recommendations')
   const favorites = useLoad(favoritesOn ? accountApi.favorites : nothing)
   const recommendations = useLoad(recommendationsOn ? accountApi.recommendations : nothing)
+  const reviewsOn = useFeature('reviews')
+  const reviews = useLoad(reviewsOn ? accountApi.reviews : nothing)
   const [dishNames, setDishNames] = useState(() => new Map<number, string>())
 
   // Dish names for the favorites' descriptions come from the current menu.
@@ -83,6 +86,7 @@ function ProfileContent({ user, onSaved }: { user: Profile; onSaved: (profile: P
         <Loading failed={orders.failed} />
       )}
       {favoritesOn && favorites.data && <FavoritesSection favorites={favorites.data} dishNames={dishNames} onRemove={removeFavorite} />}
+      {reviewsOn && reviews.data && <ReviewsSection reviews={reviews.data} />}
       {recommendationsOn && recommendations.data && <RecommendationsSection recommendations={recommendations.data} />}
     </>
   )

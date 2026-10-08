@@ -7,6 +7,8 @@ import { FieldError, Loading, Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { useAccount } from '../account/useAccount'
 import { useToast } from '../components/toast'
+import { useFeature } from '../site/useSite'
+import { AllReviews } from '../order/AllReviews'
 
 export function RecommendationsPage() {
   const { t } = useTranslation()
@@ -35,9 +37,13 @@ export function RecommendationsPage() {
     }
   }
 
+  const reviewsOn = useFeature('reviews')
+
   return (
     <section className="stack">
       <h1>{t('pages.recommendations.title')}</h1>
+      {reviewsOn && <AllReviews />}
+      {reviewsOn && <h2>{t('recommendations.suggestTitle')}</h2>}
       {loading ? (
         <Loading />
       ) : !user ? (

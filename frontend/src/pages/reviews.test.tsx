@@ -122,3 +122,45 @@ describe('Review page', () => {
     expect(await screen.findByText('הטקסט ארוך מדי.')).toBeInTheDocument()
   })
 })
+
+describe('Reviews on the recommendations and profile pages', () => {
+  it('lists every approved review above the recommendation form', async () => {
+    fakeApi({
+      ...publicApi,
+      ...withReviews,
+      'GET /api/site': () => site({ features: ['reviews', 'recommendations'] }),
+      'GET /api/account/me': () => ({ status: 401, body: {} }),
+      'GET /api/reviews': () => Array.from({ length: 15 }, (_, i) => review(i + 1)),
+    } as Routes)
+    renderAt('/recommendations')
+
+    const section = await screen.findByRole('region', { name: 'מה הלקוחות אומרים' })
+    expect(await within(section).findAllByRole('listitem')).toHaveLength(15)
+    expect(screen.getByRole('heading', { name: 'שליחת המלצה' })).toBeInTheDocument()
+  })
+
+  it('shows the client the reviews they sent and whether each is on the site', async () => {
+    fakeApi({
+      ...publicApi,
+      'GET /api/site': () => site({ features: ['reviews'] }),
+      'GET /api/account/me': () => ({
+        id: 1, phone: '0501234567', fullName: 'דנה כהן', city: 'חיפה', street: 'הרצל', houseNumber: '1', apartment: '',
+        address: 'הרצל 1, חיפה', email: null, birthday: null, ethnicBackground: null,
+      }),
+      'GET /api/account/orders': () => [],
+      'GET /api/account/reviews': () => [
+        { id: 1, orderId: 7, supplyDate: '2030-01-06', rating: 5, comment: 'מעולה', name: 'דנה', images: [], status: 'Approved', submittedAt: '2030-01-07T10:00:00Z' },
+        { id: 2, orderId: 9, supplyDate: '2030-01-13', rating: 3, comment: null, name: 'דנה', images: [], status: 'Pending', submittedAt: '2030-01-14T10:00:00Z' },
+      ],
+    } as Routes)
+    renderAt('/profile')
+
+    const section = await screen.findByRole('region', { name: 'חוות הדעת שלי' })
+    const items = within(section).getAllByRole('listitem')
+    expect(items).toHaveLength(2)
+    expect(within(items[0]).getByText('מופיעה באתר')).toBeInTheDocument()
+    expect(within(items[0]).getByText('מעולה')).toBeInTheDocument()
+    expect(within(items[1]).getByText('ממתינה לאישור')).toBeInTheDocument()
+    expect(within(items[1]).getByRole('img', { name: '3 מתוך 5 כוכבים' })).toBeInTheDocument()
+  })
+})

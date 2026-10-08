@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using FoodSite.Api.Data.Entities;
+using Microsoft.EntityFrameworkCore;
+using static FoodSite.Api.Controllers.AccountController;
 using static FoodSite.Api.Controllers.Admin.MessageTemplatesController;
 using static FoodSite.Api.Controllers.Admin.ReviewsAdminController;
 using static FoodSite.Api.Controllers.ReviewsController;
@@ -27,11 +29,12 @@ public sealed class ReviewsTests(PostgresFixture postgres) : IAsyncLifetime
         return Task.CompletedTask;
     }
 
-    private async Task<int> SeedOrder(string name = "דנה כהן")
+    private async Task<int> SeedOrder(string name = "דנה כהן", int? userId = null)
     {
         await using var db = _factory.CreateDbContext();
         var order = new Order
         {
+            UserId = userId,
             Phone = "0501234567", Name = name, Address = "אשקלון", SupplyDate = new DateOnly(2030, 1, 6),
             PaymentMethod = PaymentMethod.OnDelivery, Total = 100, CreatedAt = DateTimeOffset.UtcNow,
         };
@@ -177,5 +180,33 @@ public sealed class ReviewsTests(PostgresFixture postgres) : IAsyncLifetime
         }
         // The message templates are not part of the feature.
         Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("/api/admin/message-templates")).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_client_sees_the_reviews_they_sent_on_their_own_orders()
+    {
+        var register = await _guest.PostAsJsonAsync("/api/account/register", new
+        {
+            phone = "0501234567", fullName = "דנה כהן", city = "אשקלון", street = "הרצל", houseNumber = "1",
+        }, TestFiles.Json);
+        Assert.True(register.IsSuccessStatusCode, await register.Content.ReadAsStringAsync());
+        var client = _factory.CreateApiClient();
+        client.DefaultRequestHeaders.Add("Cookie",
+            register.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith(ApiFactory.SiteId + "_user=")).Split(';')[0]);
+        int userId;
+        await using (var db = _factory.CreateDbContext())
+            userId = await db.Users.Where(u => u.Phone == "0501234567").Select(u => u.Id).SingleAsync();
+
+        var mine = await LinkFor(await SeedOrder(userId: userId));
+        var notSent = await LinkFor(await SeedOrder(userId: userId));
+        var someoneElse = await LinkFor(await SeedOrder("גל"));
+        await Submit(mine, 4, "טעים", "דנה");
+        await Submit(someoneElse, 5, "מעולה", "גל");
+
+        var reviews = await client.GetAsync("/api/account/reviews").Read<List<MyReviewDto>>();
+        var review = Assert.Single(reviews);
+        Assert.Equal((4, "טעים", ReviewStatus.Pending), (review.Rating, review.Comment, review.Status));
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _guest.GetAsync("/api/account/reviews")).StatusCode);
+        Assert.NotEqual(mine, notSent);
     }
 }

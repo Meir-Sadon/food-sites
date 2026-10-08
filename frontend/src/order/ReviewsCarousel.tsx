@@ -6,6 +6,34 @@ import { prefersReducedMotion, scrollBehavior } from '../components/motion'
 
 const INTERVAL_MS = 6000
 
+/** How many of the newest approved reviews the home page carousel shows; the recommendations page shows them all. */
+const CAROUSEL_SIZE = 12
+
+/** One approved review: stars, words, pictures and who wrote it. */
+export function ReviewCard({ review, label }: { review: Review; label?: string }) {
+  const { t } = useTranslation()
+  const name = review.name ?? t('reviews.client')
+  return (
+    <li className="review-card" aria-label={label}>
+      <Stars rating={review.rating} />
+      {review.comment && <blockquote className="review-card__comment">{review.comment}</blockquote>}
+      {review.images.length > 0 && (
+        <div className={`review-card__images review-card__images--${review.images.length}`}>
+          {review.images.map((url, n) => (
+            <img key={url} src={url} alt={t('reviews.imageOf', { name, n: n + 1 })} loading="lazy" />
+          ))}
+        </div>
+      )}
+      <p className="review-card__by">
+        <span className="review-card__avatar" aria-hidden="true">
+          {name.slice(0, 1)}
+        </span>
+        <span>{name}</span>
+      </p>
+    </li>
+  )
+}
+
 /**
  * The approved reviews, as a row of cards to swipe through. It moves on by itself every few seconds until the
  * visitor touches it (never for people who asked for less motion), and shows nothing while there are no reviews.
@@ -21,7 +49,7 @@ export function ReviewsCarousel() {
     let current = true
     reviewsApi
       .approved()
-      .then((list) => current && setReviews(list))
+      .then((list) => current && setReviews(list.slice(0, CAROUSEL_SIZE)))
       .catch(() => undefined)
     return () => {
       current = false
@@ -89,23 +117,7 @@ export function ReviewsCarousel() {
       </div>
       <ul className="reviews__track" ref={track} onScroll={handleScroll}>
         {reviews.map((review, index) => (
-          <li key={review.id} className="review-card" aria-label={t('reviews.cardN', { n: index + 1, count: reviews.length })}>
-            <Stars rating={review.rating} />
-            {review.comment && <blockquote className="review-card__comment">{review.comment}</blockquote>}
-            {review.images.length > 0 && (
-              <div className={`review-card__images review-card__images--${review.images.length}`}>
-                {review.images.map((url, n) => (
-                  <img key={url} src={url} alt={t('reviews.imageOf', { name: review.name ?? t('reviews.client'), n: n + 1 })} loading="lazy" />
-                ))}
-              </div>
-            )}
-            <p className="review-card__by">
-              <span className="review-card__avatar" aria-hidden="true">
-                {(review.name ?? t('reviews.client')).slice(0, 1)}
-              </span>
-              <span>{review.name ?? t('reviews.client')}</span>
-            </p>
-          </li>
+          <ReviewCard key={review.id} review={review} label={t('reviews.cardN', { n: index + 1, count: reviews.length })} />
         ))}
       </ul>
       {many && (

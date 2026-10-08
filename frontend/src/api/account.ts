@@ -1,4 +1,5 @@
 import { apiJson, send } from './client'
+import type { ReviewStatus } from './reviews'
 
 export interface Profile {
   id: number
@@ -68,6 +69,20 @@ export interface Recommendation {
   isHandled: boolean
 }
 
+/** A review the client sent on one of their orders. */
+export interface MyReview {
+  id: number
+  orderId: number
+  supplyDate: string
+  rating: number
+  comment: string | null
+  name: string | null
+  images: string[]
+  /** Pending until the business approves it for the site; Blocked is not shown. */
+  status: ReviewStatus
+  submittedAt: string
+}
+
 export const MAX_RECOMMENDATION_LENGTH = 1000
 export const MAX_FAVORITE_NAME_LENGTH = 60
 
@@ -85,4 +100,5 @@ export const accountApi = {
   removeFavorite: (id: number) => apiJson<void>(`${account}/favorites/${id}`, send('DELETE')),
   recommendations: () => apiJson<Recommendation[]>(`${account}/recommendations`),
   addRecommendation: (text: string) => apiJson<Recommendation>(`${account}/recommendations`, send('POST', { text })),
+  reviews: () => apiJson<MyReview[]>(`${account}/reviews`),
 }

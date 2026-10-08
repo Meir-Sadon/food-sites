@@ -280,8 +280,6 @@ export function OrderPage() {
         </ul>
       </header>
 
-      {reviewsOn && <ReviewsCarousel />}
-
       {user && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 
       {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
@@ -452,6 +450,8 @@ export function OrderPage() {
           </p>
         )}
       </form>
+
+      {reviewsOn && <ReviewsCarousel />}
 
       <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
         <span className="total-bar__counts">
