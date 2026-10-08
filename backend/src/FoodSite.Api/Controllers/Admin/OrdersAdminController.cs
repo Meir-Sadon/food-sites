@@ -38,7 +38,9 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         DateTimeOffset CreatedAt,
         bool IsGuest,
         bool NeedsReview,
-        IReadOnlyList<ItemDto> Items);
+        IReadOnlyList<ItemDto> Items,
+        TimeOnly? DeliveryHour = null,
+        bool HourFull = false);
 
     public record StatusInput(OrderStatus Status);
 
@@ -56,7 +58,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         FulfillmentMethod FulfillmentMethod,
         PaymentMethod PaymentMethod,
         string? Notes,
-        List<ItemInput>? Items);
+        List<ItemInput>? Items,
+        TimeOnly? DeliveryHour = null);
 
     public record SummaryRowDto(int DishId, string DishName, string? OptionLabel, decimal Quantity, int Orders);
 
@@ -79,14 +82,35 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         if (status is { } s) query = query.Where(o => o.Status == s);
 
         var orders = await query.OrderBy(o => o.SupplyDate).ThenBy(o => o.CreatedAt).ThenBy(o => o.Id).ToListAsync();
-        return orders.Select(ToDto);
+        var overbooked = await OverbookedAsync(orders.Select(o => o.SupplyDate).Distinct().ToList());
+        return orders.Select(o => ToDto(o, overbooked));
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<OrderDto>> Get(int id) =>
         await db.Orders.AsNoTracking().Include(o => o.Items).SingleOrDefaultAsync(o => o.Id == id) is { } order
-            ? ToDto(order)
+            ? ToDto(order, await OverbookedAsync([order.SupplyDate]))
             : NotFound();
+
+    /// <summary>
+    /// The orders that came after their hour was already full (by the site's orders per hour): the ones the admin
+    /// should call to move. Cancelled orders take no place.
+    /// </summary>
+    private async Task<HashSet<int>> OverbookedAsync(List<DateOnly> dates)
+    {
+        var limit = await db.Settings.AsNoTracking().Select(s => s.OrdersPerHour).SingleAsync();
+        if (limit is not { } perHour || dates.Count == 0)
+            return [];
+        var slotted = await db.Orders.AsNoTracking()
+            .Where(o => dates.Contains(o.SupplyDate) && o.DeliveryHour != null && o.Status != OrderStatus.Cancelled)
+            .Select(o => new { o.Id, o.SupplyDate, o.DeliveryHour, o.CreatedAt })
+            .ToListAsync();
+        return slotted
+            .GroupBy(o => (o.SupplyDate, o.DeliveryHour))
+            .SelectMany(slot => slot.OrderBy(o => o.CreatedAt).ThenBy(o => o.Id).Skip(perHour))
+            .Select(o => o.Id)
+            .ToHashSet();
+    }
 
     /// <summary>The total of each dish and option to cook for one supply day. Cancelled orders and orders still waiting for approval are left out.</summary>
     [HttpGet("summary")]
@@ -217,6 +241,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         order.Phone = phone!;
         order.Address = Clean(input.Address) ?? "";
         order.SupplyDate = input.SupplyDate;
+        // The admin may set any hour (or none) after talking to the client; the site's hours don't bind them.
+        order.DeliveryHour = input.DeliveryHour;
         order.FulfillmentMethod = input.FulfillmentMethod;
         order.PaymentMethod = input.PaymentMethod;
         order.Notes = Clean(input.Notes);
@@ -236,13 +262,15 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
-        return ToDto(await db.Orders.AsNoTracking().Include(o => o.Items).SingleAsync(o => o.Id == id));
+        return ToDto(await db.Orders.AsNoTracking().Include(o => o.Items).SingleAsync(o => o.Id == id), await OverbookedAsync([input.SupplyDate]));
     }
 
-    private static OrderDto ToDto(Order o) => new(
+    private static OrderDto ToDto(Order o, HashSet<int> overbooked) => new(
         o.Id, o.Phone, o.Name, o.Address, o.SupplyDate, o.FulfillmentMethod, o.Notes, o.PaymentMethod, o.IsPaid,
         o.PaidWith, o.PaymentComment, o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
         o.Items.OrderBy(i => i.Id)
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal))
-            .ToList());
+            .ToList(),
+        o.DeliveryHour,
+        overbooked.Contains(o.Id));
 }

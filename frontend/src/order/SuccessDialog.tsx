@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { Confirmation } from '../api/site'
 import { Modal } from '../components/Modal'
-import { formatMoney, formatSupplyDate } from './format'
+import { formatMoney, formatSupplyDate, formatTime } from './format'
 
 const number = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 3 })
 
@@ -19,6 +19,7 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
       <p>{t('order.success.number', { id: confirmation.id })}</p>
       <p>
         {formatSupplyDate(confirmation.supplyDate, t)} ·{' '}
+        {confirmation.deliveryHour && <>{t('order.success.hour', { hour: formatTime(confirmation.deliveryHour) })} · </>}
         {confirmation.fulfillmentMethod === 'Delivery' ? t('order.delivery') : t('order.pickup')}
       </p>
       <ul className="summary">
@@ -42,6 +43,11 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
         </p>
       ) : (
         <p>{t('order.payOnDeliveryNote')}</p>
+      )}
+      {confirmation.hourFull && (
+        <p role="status" className="notice notice--warning">
+          {t('order.success.hourFull')}
+        </p>
       )}
       {confirmation.needsReview && (
         <p role="status" className="notice notice--warning">

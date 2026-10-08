@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import type { MenuDish } from '../api/site'
+import type { HourSlot, MenuDish } from '../api/site'
 import { defaultOption } from './model'
 
 const money = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 2 })
@@ -25,6 +25,13 @@ export function formatSupplyDate(iso: string, t: TFunction): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${t('order.dayPrefix', { day: t(`weekdays.${names[weekday]}`) })}, ${pad(d)}/${pad(m)}/${y}`
 }
+
+/** "08:00" for "08:00:00". */
+export const formatTime = (time: string) => time.slice(0, 5)
+
+/** "08:00 עד 09:00": words between the times, so right-to-left text keeps them in order. */
+export const formatSlot = (slot: HourSlot, t: TFunction) =>
+  t('order.hourRange', { from: formatTime(slot.from), to: formatTime(slot.to) })
 
 /**
  * The unit shown next to an amount when the client picks a free amount: the dish's own unit name,

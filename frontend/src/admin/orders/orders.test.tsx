@@ -22,6 +22,8 @@ const order = (patch: Partial<AdminOrder> = {}): AdminOrder => ({
   createdAt: '2030-01-01T10:00:00Z',
   isGuest: false,
   needsReview: false,
+  deliveryHour: null,
+  hourFull: false,
   items: [
     { id: 1, parentItemId: null, dishName: 'עוף בתנור', optionLabel: 'שלם', quantity: 2, unitPrice: 70, lineTotal: 140 },
     { id: 2, parentItemId: 1, dishName: 'ירך', optionLabel: 'יחידה', quantity: 3, unitPrice: 12, lineTotal: 36 },
@@ -40,6 +42,14 @@ const summary: CookingSummary = {
 }
 
 describe('Admin Orders', () => {
+  it('shows the hour the client asked for and flags an order that came when the hour was full', async () => {
+    fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [order({ deliveryHour: '09:00:00', hourFull: true })] })
+    renderAt('/admin/orders')
+    const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+    expect(within(card).getByText(/בשעה 09:00/)).toBeInTheDocument()
+    expect(within(card).getByRole('status')).toHaveTextContent('השעה שנבחרה כבר הייתה מלאה')
+  })
+
   it('flags an order outside the service city and lets the admin approve it', async () => {
     const api = fakeApi({
       ...adminSession,
@@ -212,6 +222,7 @@ describe('Admin Orders', () => {
       phone: '0501234567',
       address: 'חיפה',
       supplyDate: '2030-01-06',
+      deliveryHour: null,
       fulfillmentMethod: 'Delivery',
       paymentMethod: 'OnDelivery',
       notes: '',

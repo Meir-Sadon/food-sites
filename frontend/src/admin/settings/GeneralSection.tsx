@@ -124,6 +124,25 @@ export function GeneralSection() {
             </span>
             <FieldError errors={errors} field="minimumOrderAmount" id="settings-minimumOrderAmount-error" />
           </span>
+          <span className="field">
+            <label htmlFor="settings-ordersPerHour">{t('admin.settings.ordersPerHour')}</label>
+            <input
+              id="settings-ordersPerHour"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={1}
+              dir="ltr"
+              className="input-narrow"
+              value={settings.ordersPerHour ?? ''}
+              aria-describedby="settings-ordersPerHour-hint settings-ordersPerHour-error"
+              onChange={(e) => change({ ordersPerHour: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+            <span id="settings-ordersPerHour-hint" className="hint">
+              {t('admin.settings.ordersPerHourHint')}
+            </span>
+            <FieldError errors={errors} field="ordersPerHour" id="settings-ordersPerHour-error" />
+          </span>
           <div className="row">
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}

@@ -13,6 +13,9 @@ public class Order
     public required string Address { get; set; }
 
     public DateOnly SupplyDate { get; set; }
+
+    /// <summary>The start of the hour slot the client asked for; empty when the supply day has no hours.</summary>
+    public TimeOnly? DeliveryHour { get; set; }
     public FulfillmentMethod FulfillmentMethod { get; set; }
     public string? Notes { get; set; }
 

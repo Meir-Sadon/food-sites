@@ -75,6 +75,24 @@ export function SupplyDaysSection() {
                       />
                     </span>
                   )}
+                  {day.enabled && (
+                    <span className="row">
+                      <span>{t('admin.settings.hours')}</span>
+                      <input
+                        type="time"
+                        aria-label={t('admin.settings.hoursFrom', { day: name })}
+                        value={day.deliveryFrom?.slice(0, 5) ?? ''}
+                        onChange={(e) => change(day.weekday, { deliveryFrom: e.target.value ? `${e.target.value}:00` : null })}
+                      />
+                      <span>{t('admin.settings.hoursTo')}</span>
+                      <input
+                        type="time"
+                        aria-label={t('admin.settings.hoursToFor', { day: name })}
+                        value={day.deliveryTo?.slice(0, 5) ?? ''}
+                        onChange={(e) => change(day.weekday, { deliveryTo: e.target.value ? `${e.target.value}:00` : null })}
+                      />
+                    </span>
+                  )}
                 </li>
               )
             })}

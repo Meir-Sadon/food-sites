@@ -24,6 +24,8 @@ const order = (patch: Partial<AdminOrder> = {}): AdminOrder => ({
   createdAt: '2030-01-01T10:00:00Z',
   isGuest: false,
   needsReview: false,
+  deliveryHour: null,
+  hourFull: false,
   items: [],
   ...patch,
 })

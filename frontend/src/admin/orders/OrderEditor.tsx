@@ -22,6 +22,7 @@ export function OrderEditor({
   const [phone, setPhone] = useState(order.phone)
   const [address, setAddress] = useState(order.address)
   const [supplyDate, setSupplyDate] = useState(order.supplyDate)
+  const [deliveryHour, setDeliveryHour] = useState(order.deliveryHour?.slice(0, 5) ?? '')
   const [fulfillment, setFulfillment] = useState<Fulfillment>(order.fulfillmentMethod)
   const [payment, setPayment] = useState<Payment>(order.paymentMethod)
   const [notes, setNotes] = useState(order.notes ?? '')
@@ -57,6 +58,7 @@ export function OrderEditor({
         phone,
         address,
         supplyDate,
+        deliveryHour: deliveryHour ? `${deliveryHour}:00` : null,
         fulfillmentMethod: fulfillment,
         paymentMethod: payment,
         notes,
@@ -91,6 +93,10 @@ export function OrderEditor({
       <span className="field">
         <label htmlFor={id('supplyDate')}>{t('admin.orders.supplyDate')}</label>
         <input id={id('supplyDate')} type="date" value={supplyDate} onChange={(e) => setSupplyDate(e.target.value)} />
+      </span>
+      <span className="field">
+        <label htmlFor={id('deliveryHour')}>{t('admin.orders.deliveryHour')}</label>
+        <input id={id('deliveryHour')} type="time" value={deliveryHour} onChange={(e) => setDeliveryHour(e.target.value)} />
       </span>
       <span className="field">
         <label htmlFor={id('fulfillment')}>{t('admin.orders.fulfillment')}</label>

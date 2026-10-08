@@ -2035,3 +2035,24 @@ label {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* The note under the hour picker when the picked hour is full: a small bubble pointing up at the field. */
+.hour-tooltip {
+  position: relative;
+  margin-block-start: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.hour-tooltip::before {
+  content: '';
+  position: absolute;
+  inset-block-start: -0.4rem;
+  inset-inline-start: 1rem;
+  inline-size: 0.7rem;
+  block-size: 0.7rem;
+  background: inherit;
+  /* The top and left edges meet in the corner that points up once the square is turned. */
+  border-top: inherit;
+  border-left: inherit;
+  transform: rotate(45deg);
+}

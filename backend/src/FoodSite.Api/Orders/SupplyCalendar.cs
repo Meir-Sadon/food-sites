@@ -8,7 +8,27 @@ public static class SupplyCalendar
     public const int MaxDates = 6;
     public const int HorizonDays = 60;
 
-    public record OpenDate(DateOnly Date, DateTime Cutoff);
+    /// <summary>One hour a client can ask for: <see cref="From"/> to <see cref="To"/> (the last slot of a day may be shorter).</summary>
+    public record HourSlot(TimeOnly From, TimeOnly To);
+
+    public record OpenDate(DateOnly Date, DateTime Cutoff, IReadOnlyList<HourSlot> Hours);
+
+    /// <summary>The day's supply hours cut into one-hour slots; none when the day has no (valid) hours.</summary>
+    public static IReadOnlyList<HourSlot> HourSlots(SupplyDay day)
+    {
+        if (day.DeliveryFrom is not { } from || day.DeliveryTo is not { } to || to <= from)
+            return [];
+        var slots = new List<HourSlot>();
+        for (var start = from; start < to; start = start.AddHours(1))
+        {
+            var end = to - start <= TimeSpan.FromHours(1) ? to : start.AddHours(1);
+            slots.Add(new HourSlot(start, end));
+            // TimeOnly wraps at midnight; a day's hours never do.
+            if (end == to)
+                break;
+        }
+        return slots;
+    }
 
     /// <summary>The last moment ordering for <paramref name="date"/> is possible (local time).</summary>
     public static DateTime CutoffFor(DateOnly date, SupplyDay day)
@@ -32,14 +52,19 @@ public static class SupplyCalendar
                 continue;
             var cutoff = CutoffFor(date, day);
             if (nowLocal < cutoff)
-                open.Add(new OpenDate(date, cutoff));
+                open.Add(new OpenDate(date, cutoff, HourSlots(day)));
         }
         return open;
     }
 
     public static bool IsOpen(
         DateOnly date, DateTime nowLocal, IEnumerable<SupplyDay> days, IEnumerable<DateOnly> closedDates) =>
-        OpenDates(nowLocal, days, closedDates, int.MaxValue).Any(d => d.Date == date);
+        Find(date, nowLocal, days, closedDates) is not null;
+
+    /// <summary>The open date <paramref name="date"/>, with its hours, or null when it cannot be ordered for.</summary>
+    public static OpenDate? Find(
+        DateOnly date, DateTime nowLocal, IEnumerable<SupplyDay> days, IEnumerable<DateOnly> closedDates) =>
+        OpenDates(nowLocal, days, closedDates, int.MaxValue).FirstOrDefault(d => d.Date == date);
 }
 
 /// <summary>The current time in the business's time zone (Israel unless <c>Site:TimeZone</c> says otherwise).</summary>

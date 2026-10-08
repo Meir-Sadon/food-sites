@@ -32,6 +32,12 @@ public class Settings
     /// </summary>
     public string? ServiceCities { get; set; }
 
+    /// <summary>
+    /// How many orders can be supplied in one hour slot; null means no limit. A full slot can still be picked:
+    /// the client is told the admin may call to move it.
+    /// </summary>
+    public int? OrdersPerHour { get; set; }
+
     public string? AdminPasswordHash { get; set; }
 
     /// <summary>
