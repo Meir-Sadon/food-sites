@@ -4,6 +4,7 @@ import { settingsApi, type Settings } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
 import { FieldError, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
+import { useToast } from '../../components/toast'
 
 type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'paymentPhone'
 
@@ -12,12 +13,13 @@ export function GeneralSection() {
   const errorMessage = useFormErrorMessage()
   const { data: settings, setData, failed } = useLoad(settingsApi.get)
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [status, setStatus] = useState<{ message: string; error?: boolean } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
   const [saving, setSaving] = useState(false)
 
   function change(patch: Partial<Settings>) {
     setData((current) => current && { ...current, ...patch })
-    setStatus(null)
+    setError(null)
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -28,10 +30,11 @@ export function GeneralSection() {
     try {
       const { backgroundImageUrl: _, ...input } = settings
       setData(await settingsApi.save(input))
-      setStatus({ message: t('admin.saved') })
+      setError(null)
+      toast(t('admin.saved'))
     } catch (err) {
       setErrors(fieldErrorsOf(err))
-      setStatus({ message: errorMessage(err), error: true })
+      setError(errorMessage(err))
     } finally {
       setSaving(false)
     }
@@ -125,7 +128,7 @@ export function GeneralSection() {
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
-            {status && <Status message={status.message} error={status.error} />}
+            {error && <Status message={error} error />}
           </div>
         </form>
       )}

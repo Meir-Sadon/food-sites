@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   DESCRIPTION_MAX_LENGTH,
@@ -16,6 +16,7 @@ import type { FieldErrors } from '../../api/client'
 import { FieldError, Loading, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { DishImagesSection } from './DishImagesSection'
+import { useToast } from '../../components/toast'
 
 interface OptionForm {
   key: number
@@ -129,9 +130,9 @@ export function DishFormPage() {
   const { t } = useTranslation()
   const { id } = useParams()
   const dishId = id ? Number(id) : null
-  const location = useLocation()
   const navigate = useNavigate()
   const errorMessage = useFormErrorMessage()
+  const toast = useToast()
 
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [allDishes, setAllDishes] = useState<Dish[] | null>(null)
@@ -139,9 +140,7 @@ export function DishFormPage() {
   const [form, setForm] = useState<DishForm | null>(null)
   const [failed, setFailed] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [status, setStatus] = useState<{ message: string; error?: boolean } | null>(
-    (location.state as { created?: boolean } | null)?.created ? { message: t('admin.dishes.createdSaved') } : null,
-  )
+  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   /** Orders still to be supplied that this save would change; set while the admin decides. */
   const [affected, setAffected] = useState<number | null>(null)
@@ -188,21 +187,22 @@ export function DishFormPage() {
     setAffected(null)
     setSaving(true)
     setErrors({})
-    setStatus(null)
+    setError(null)
     try {
       const input = toInput(form)
       if (dishId === null) {
         const created = await dishesApi.create(input)
-        navigate(`/admin/dishes/${created.id}`, { replace: true, state: { created: true } })
+        toast(t('admin.dishes.createdSaved'))
+        navigate(`/admin/dishes/${created.id}`, { replace: true })
         return
       }
       const saved = await dishesApi.update(dishId, input)
       setDish(saved)
       setForm(toForm(saved, categories!))
-      setStatus({ message: t('admin.saved') })
+      toast(t('admin.saved'))
     } catch (err) {
       setErrors(fieldErrorsOf(err))
-      setStatus({ message: errorMessage(err), error: true })
+      setError(errorMessage(err))
     } finally {
       setSaving(false)
     }
@@ -464,7 +464,7 @@ export function DishFormPage() {
           <button type="submit" disabled={saving}>
             {saving ? t('admin.saving') : t('admin.save')}
           </button>
-          {status && <Status message={status.message} error={status.error} />}
+          {error && <Status message={error} error />}
         </div>
 
         {affected !== null && (

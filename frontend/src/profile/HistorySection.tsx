@@ -5,6 +5,7 @@ import { FieldError, Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { formatMoney, formatSupplyDate } from '../order/format'
 import type { FieldErrors } from '../api/client'
+import { useToast } from '../components/toast'
 
 const number = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 3 })
 
@@ -24,7 +25,8 @@ function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
   const [naming, setNaming] = useState(false)
   const [name, setName] = useState('')
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
   const [busy, setBusy] = useState(false)
   const nameId = `favorite-name-${order.id}`
 
@@ -32,27 +34,27 @@ function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
     event.preventDefault()
     if (!onSaveFavorite) return
     setErrors({})
-    setMessage(null)
+    setError(null)
     setBusy(true)
     try {
       await onSaveFavorite(order, name.trim())
       setNaming(false)
       setName('')
-      setMessage({ text: t('profile.favoriteSaved') })
+      toast(t('profile.favoriteSaved'))
     } catch (err) {
       setErrors(fieldErrorsOf(err))
-      setMessage({ text: formError(err), error: true })
+      setError(formError(err))
     } finally {
       setBusy(false)
     }
   }
 
   async function reorder() {
-    setMessage(null)
+    setError(null)
     try {
       await onReorder(order)
     } catch (err) {
-      setMessage({ text: err instanceof Error && err.message === 'empty' ? t('profile.reorderEmpty') : t('errors.generic'), error: true })
+      setError(err instanceof Error && err.message === 'empty' ? t('profile.reorderEmpty') : t('errors.generic'))
     }
   }
 
@@ -109,7 +111,7 @@ function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
             )}
           </div>
         )}
-        {message && <Status message={message.text} error={message.error} />}
+        {error && <Status message={error} error />}
       </article>
     </li>
   )

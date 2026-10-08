@@ -4,6 +4,7 @@ import { contactsApi, type Contact } from '../../api/site'
 import type { FieldErrors } from '../../api/client'
 import { FieldError, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
+import { useToast } from '../../components/toast'
 
 type Field = keyof Contact
 
@@ -12,12 +13,13 @@ export function MainContactSection() {
   const errorMessage = useFormErrorMessage()
   const { data: contact, setData, failed } = useLoad(contactsApi.get)
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [status, setStatus] = useState<{ message: string; error?: boolean } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
   const [saving, setSaving] = useState(false)
 
   function change(patch: Partial<Contact>) {
     setData((current) => current && { ...current, ...patch })
-    setStatus(null)
+    setError(null)
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -27,10 +29,11 @@ export function MainContactSection() {
     setErrors({})
     try {
       setData(await contactsApi.save(contact))
-      setStatus({ message: t('admin.saved') })
+      setError(null)
+      toast(t('admin.saved'))
     } catch (err) {
       setErrors(fieldErrorsOf(err))
-      setStatus({ message: errorMessage(err), error: true })
+      setError(errorMessage(err))
     } finally {
       setSaving(false)
     }
@@ -71,7 +74,7 @@ export function MainContactSection() {
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
-            {status && <Status message={status.message} error={status.error} />}
+            {error && <Status message={error} error />}
           </div>
         </form>
       )}

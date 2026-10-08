@@ -9,6 +9,7 @@ import { formFromProfile } from '../account/profileForm'
 import { addressOf } from '../account/addressParts'
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
+import { useToast } from '../components/toast'
 
 interface Props {
   user: Profile
@@ -22,18 +23,19 @@ export function DetailsSection({ user, onSaved }: Props) {
   const [form, setForm] = useState(() => formFromProfile(user))
   const [phone, setPhone] = useState(user.phone)
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
   const [busy, setBusy] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setErrors({})
-    setMessage(null)
+    setError(null)
 
     const normalized = normalizePhone(phone)
     if (!normalized) {
       setErrors({ phone: ['phone'] })
-      setMessage({ text: t('errors.checkFields'), error: true })
+      setError(t('errors.checkFields'))
       return
     }
 
@@ -47,10 +49,10 @@ export function DetailsSection({ user, onSaved }: Props) {
       })
       onSaved(saved)
       setPhone(saved.phone)
-      setMessage({ text: t('admin.saved') })
+      toast(t('admin.saved'))
     } catch (err) {
       setErrors(fieldErrorsOf(err))
-      setMessage({ text: formError(err), error: true })
+      setError(formError(err))
     } finally {
       setBusy(false)
     }
@@ -62,7 +64,7 @@ export function DetailsSection({ user, onSaved }: Props) {
       <form className="stack" onSubmit={handleSubmit} noValidate>
         <PhoneField phone={phone} onPhoneChange={setPhone} errors={errors} />
         <ProfileFields form={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} errors={errors} idPrefix="profile" />
-        {message && <Status message={message.text} error={message.error} />}
+        {error && <Status message={error} error />}
         <div className="row">
           <button type="submit" disabled={busy}>
             {busy ? t('admin.saving') : t('admin.save')}

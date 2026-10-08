@@ -9,6 +9,7 @@ import { AddressFields } from '../account/AddressFields'
 import { addressOf, noAddress } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
+import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
 import { useSite, useSiteFailed } from '../site/useSite'
 import { DishCard } from '../order/DishCard'
@@ -52,11 +53,11 @@ export function OrderPage() {
   const siteFailed = useSiteFailed()
   const defaultCity = site?.serviceCities[0]
   const errorMessage = useErrorMessage()
+  const toast = useToast()
   const [menu, setMenu] = useState<Menu | null>(null)
   const [failed, setFailed] = useState(false)
 
   const [state, setState] = useState<OrderState>(emptyOrder)
-  const [notice, setNotice] = useState<string | null>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
   // Bumped by a quick fill: once the filled order renders, the page scrolls to the submit button.
   const [quickFills, setQuickFills] = useState(0)
@@ -113,8 +114,8 @@ export function OrderPage() {
           const { selections, skipped } = restoreSelections(draft.selections, loaded)
           setState({ ...draft, selections })
           if (filledSkipped !== undefined)
-            setNotice(filledSkipped > 0 ? t('order.filledSkipped', { count: filledSkipped }) : t('order.filled'))
-          else setNotice(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
+            toast(filledSkipped > 0 ? t('order.filledSkipped', { count: filledSkipped }) : t('order.filled'))
+          else toast(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
         }
         setMenu(loaded)
       })
@@ -122,7 +123,7 @@ export function OrderPage() {
     return () => {
       active = false
     }
-  }, [t, filledSkipped])
+  }, [t, toast, filledSkipped])
 
   // Ask about saving when leaving by the top bar, and warn when closing the tab.
   useRegisterLeaveGuard((to, proceed) => {
@@ -184,7 +185,6 @@ export function OrderPage() {
       houseNumber: current.houseNumber,
       apartment: current.apartment,
     }))
-    setNotice(null)
     setErrors({})
     setSubmitError(null)
     clearDraft()
@@ -192,7 +192,7 @@ export function OrderPage() {
 
   function applyQuickFill({ selections, skipped }: Restored) {
     setState((current) => ({ ...current, selections }))
-    setNotice(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
+    toast(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
     setErrors({})
     setSubmitError(null)
     setQuickFills((n) => n + 1)
@@ -257,14 +257,6 @@ export function OrderPage() {
           <li>{t('order.hero.kosher')}</li>
         </ul>
       </header>
-      {notice && (
-        <p role="status" className="notice">
-          {notice}{' '}
-          <button type="button" className="button-quiet" onClick={() => setNotice(null)}>
-            {t('order.dismiss')}
-          </button>
-        </p>
-      )}
 
       {user && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 

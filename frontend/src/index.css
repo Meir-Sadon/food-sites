@@ -1426,3 +1426,63 @@ label {
 .scroll-fab:hover {
   background: var(--color-soft);
 }
+
+/* Short passing messages (saved, restored); above the order total bar and the modals. */
+.toasts {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-start: 1rem;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 1rem;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 32rem;
+  margin: 0;
+  padding-block: 0.625rem;
+  padding-inline: 1rem 0.75rem;
+  background: var(--color-text);
+  color: var(--color-surface);
+  border-radius: 0.5rem;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--color-shadow) 25%, transparent);
+  pointer-events: auto;
+  animation: toast-in 0.2s ease-out;
+}
+
+.toast__close {
+  flex: none;
+  padding: 0 0.25rem;
+  background: none;
+  border: none;
+  color: inherit;
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toast__close:hover:not(:disabled) {
+  background: none;
+  opacity: 0.75;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

@@ -2,6 +2,9 @@
   "app": {
     "name": "אוכל ביתי"
   },
+  "toast": {
+    "dismiss": "סגירת ההודעה"
+  },
   "nav": {
     "label": "תפריט ראשי",
     "order": "הזמנה",
@@ -425,7 +428,6 @@
     "sideDishCount_two": "2 מנות צדדיות",
     "sideDishCount_other": "{{count}} מנות צדדיות",
     "sideDishCount_many": "{{count}} מנות צדדיות",
-    "dismiss": "סגירה",
     "draftRestored": "שחזרנו הזמנה שהתחלתם ושמרתם.",
     "draftRestoredSkipped_one": "שחזרנו את ההזמנה שהתחלתם. מנה אחת כבר לא זמינה והוסרה.",
     "draftRestoredSkipped_two": "שחזרנו את ההזמנה שהתחלתם. 2 פריטים כבר לא זמינים והוסרו.",

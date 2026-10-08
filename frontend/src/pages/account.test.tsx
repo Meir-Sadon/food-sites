@@ -383,7 +383,7 @@ describe('Profile', () => {
     await user.type(within(order).getByLabelText('שם למועדף'), 'חג')
     await user.click(within(order).getByRole('button', { name: 'שמירה' }))
 
-    await within(order).findByText('נשמר במועדפים.')
+    await screen.findByText('נשמר במועדפים.')
     expect(api.sent('POST', '/api/account/favorites')[0].body).toEqual({ name: 'חג', orderId: 5 })
     const favorites = screen.getByRole('region', { name: 'המועדפים שלי' })
     expect(within(favorites).getByText('חג')).toBeInTheDocument()

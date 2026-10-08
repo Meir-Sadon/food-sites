@@ -3,17 +3,19 @@ import { useTranslation } from 'react-i18next'
 import { supplyDaysApi, weekdays, type SupplyDay, type Weekday } from '../../api/catalog'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
+import { useToast } from '../../components/toast'
 
 export function SupplyDaysSection() {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
   const { data: days, setData, failed } = useLoad(supplyDaysApi.get)
-  const [status, setStatus] = useState<{ message: string; error?: boolean } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
   const [saving, setSaving] = useState(false)
 
   function change(weekday: Weekday, patch: Partial<SupplyDay>) {
     setData((current) => current && current.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d)))
-    setStatus(null)
+    setError(null)
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -22,9 +24,10 @@ export function SupplyDaysSection() {
     setSaving(true)
     try {
       setData(await supplyDaysApi.save(days))
-      setStatus({ message: t('admin.saved') })
+      setError(null)
+      toast(t('admin.saved'))
     } catch (err) {
-      setStatus({ message: errorMessage(err), error: true })
+      setError(errorMessage(err))
     } finally {
       setSaving(false)
     }
@@ -80,7 +83,7 @@ export function SupplyDaysSection() {
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
-            {status && <Status message={status.message} error={status.error} />}
+            {error && <Status message={error} error />}
           </div>
         </form>
       )}
