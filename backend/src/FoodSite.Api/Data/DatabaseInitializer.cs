@@ -39,10 +39,11 @@ public static class DatabaseInitializer
     /// <summary>
     /// Adds the seed's categories and dishes. A category is matched by name and created when missing; a dish
     /// that already exists in its category (removed ones included) is left alone, so this is safe to run on
-    /// every start and never undoes an admin's changes.
+    /// every start and never undoes an admin's changes. Add-on links are made only for the dishes added now.
     /// </summary>
     public static async Task ApplySeedAsync(AppDbContext db, MenuSeed seed, ILogger logger)
     {
+        var addedAddOns = new List<(Entities.Dish Dish, IReadOnlyList<string> Parents)>();
         foreach (var seedCategory in seed.Categories)
         {
             var category = await db.Categories.FirstOrDefaultAsync(c => c.Name == seedCategory.Name);
@@ -60,7 +61,7 @@ public static class DatabaseInitializer
             var added = 0;
             foreach (var dish in seedCategory.Dishes.Where(d => !existing.Contains(d.Name)))
             {
-                category.Dishes.Add(new Entities.Dish
+                var entity = new Entities.Dish
                 {
                     Name = dish.Name,
                     Description = dish.Description,
@@ -71,6 +72,8 @@ public static class DatabaseInitializer
                     AmountStep = dish.AmountStep,
                     UnitPrice = dish.UnitPrice,
                     UnitName = dish.UnitName,
+                    MaxPerSupplyDate = dish.MaxPerSupplyDate,
+                    IsSideDish = dish.IsSideDish,
                     Images = (dish.Images ?? []).Select((url, i) => new Entities.DishImage
                     {
                         Url = url,
@@ -78,7 +81,10 @@ public static class DatabaseInitializer
                         PublicId = "static" + Path.ChangeExtension(url, null),
                         DisplayOrder = i,
                     }).ToList(),
-                });
+                };
+                category.Dishes.Add(entity);
+                if (dish.AddOnOf is { Count: > 0 } parents)
+                    addedAddOns.Add((entity, parents));
                 added++;
             }
 
@@ -88,6 +94,24 @@ public static class DatabaseInitializer
             await db.SaveChangesAsync();
             logger.LogInformation("Seeded {Count} dishes into the '{Category}' category.", added, seedCategory.Name);
         }
+
+        if (addedAddOns.Count == 0)
+            return;
+
+        var parentNames = addedAddOns.SelectMany(a => a.Parents).Distinct().ToList();
+        var parentsByName = await db.Dishes
+            .Where(d => parentNames.Contains(d.Name) && !d.IsHidden && !d.IsAddOnOnly)
+            .ToListAsync();
+        foreach (var (dish, parents) in addedAddOns)
+        {
+            foreach (var name in parents)
+            {
+                var parent = parentsByName.FirstOrDefault(d => d.Name == name)
+                    ?? throw new InvalidDataException($"Seed dish '{dish.Name}' is an add-on of '{name}', which is not a dish.");
+                db.DishAddOns.Add(new Entities.DishAddOn { ParentDishId = parent.Id, AddOnDishId = dish.Id });
+            }
+        }
+        await db.SaveChangesAsync();
     }
 
     /// <summary>Copies the site's service cities into Settings once; the admin's value wins afterwards.</summary>

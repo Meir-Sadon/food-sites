@@ -98,6 +98,34 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
+    public async Task A_menu_seed_sets_limits_side_dishes_and_add_ons()
+    {
+        var seed = new MenuSeed([
+            new("עיקריות", [
+                new("קוסקוס עם עוף", UnitPrice: 60m, MaxPerSupplyDate: 30m),
+                new("קוסקוס צמחוני", UnitPrice: 50m),
+            ]),
+            new("תוספות", [
+                new("קציצה", UnitPrice: 5m, IsSideDish: true, AddOnOf: ["קוסקוס עם עוף", "קוסקוס צמחוני"]),
+            ]),
+        ]);
+        await using var db = _factory.CreateDbContext();
+
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+
+        db.ChangeTracker.Clear();
+        var chicken = await db.Dishes.SingleAsync(d => d.Name == "קוסקוס עם עוף");
+        Assert.Equal(30m, chicken.MaxPerSupplyDate);
+        var patty = await db.Dishes.Include(d => d.AddOnOf).ThenInclude(a => a.ParentDish).SingleAsync(d => d.Name == "קציצה");
+        Assert.True(patty.IsSideDish);
+        Assert.False(patty.IsAddOnOnly);
+        Assert.Equal(
+            new[] { "קוסקוס עם עוף", "קוסקוס צמחוני" }.Order(StringComparer.Ordinal),
+            patty.AddOnOf.Select(a => a.ParentDish!.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
     public async Task Dish_with_options_images_and_add_ons_round_trips()
     {
         await using (var db = _factory.CreateDbContext())

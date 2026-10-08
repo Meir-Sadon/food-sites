@@ -20,6 +20,8 @@ export interface Settings {
   serviceCities: string
   /** How many orders can be supplied in one hour; null means no limit. */
   ordersPerHour: number | null
+  /** How many portions (dishes sold by units, not sides or add-ons) can be ordered per supply date, across all dishes; null means no limit. */
+  portionsPerSupplyDate: number | null
 }
 export type SettingsInput = Omit<Settings, 'backgroundImageUrl'>
 

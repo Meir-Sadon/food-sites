@@ -119,6 +119,8 @@ public class OrdersController(
             errors.Add("items", "belowMinimumOrder");
         if (!errors.Any)
             await CheckDishLimitsAsync(input.SupplyDate, items, dishes, errors, ct);
+        if (!errors.Any && settings.PortionsPerSupplyDate is { } portions)
+            await CheckPortionLimitAsync(input.SupplyDate, items, dishes, portions, errors, ct);
 
         if (errors.Any)
             return Invalid(errors);
@@ -192,6 +194,20 @@ public class OrdersController(
                 return;
             }
         }
+    }
+
+    /// <summary>The site's portions per supply date are shared by all dishes, so the whole order has to fit in what is left.</summary>
+    private async Task CheckPortionLimitAsync(
+        DateOnly supplyDate, List<OrderItem> items, Dictionary<int, Dish> dishes, int portions, Errors errors, CancellationToken ct)
+    {
+        var requested = items.SelectMany(i => i.AddOnItems.Prepend(i))
+            .Where(i => DailyPortions.Counts(dishes[i.DishId])).Sum(i => i.Quantity);
+        if (requested == 0)
+            return;
+
+        var taken = (await DailyPortions.TakenAsync(db, [supplyDate], ct)).GetValueOrDefault(supplyDate);
+        if (taken + requested > portions)
+            errors.Add("items", "portionLimitReached");
     }
 
     /// <summary>

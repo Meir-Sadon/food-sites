@@ -628,6 +628,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("PickupEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("PortionsPerSupplyDate")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");
 

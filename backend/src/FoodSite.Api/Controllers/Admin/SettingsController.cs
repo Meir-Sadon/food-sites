@@ -16,6 +16,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     public const int TextMaxLength = 1000;
     public const decimal MaxMinimumOrder = 100_000;
     public const int MaxOrdersPerHour = 1000;
+    public const int MaxPortionsPerSupplyDate = 100_000;
 
     public record SettingsDto(
         string? BackgroundImageUrl,
@@ -28,7 +29,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         decimal? MinimumOrderAmount,
         bool MinimumOrderAppliesToPickup,
         string ServiceCities,
-        int? OrdersPerHour);
+        int? OrdersPerHour,
+        int? PortionsPerSupplyDate);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -40,7 +42,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         decimal? MinimumOrderAmount,
         string? ServiceCities = null,
         bool? MinimumOrderAppliesToPickup = null,
-        int? OrdersPerHour = null);
+        int? OrdersPerHour = null,
+        int? PortionsPerSupplyDate = null);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -60,6 +63,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.MinimumOrderAmount), "invalid");
         if (input.OrdersPerHour is < 0 or > MaxOrdersPerHour)
             errors.Add(nameof(input.OrdersPerHour), "invalid");
+        if (input.PortionsPerSupplyDate is < 0 or > MaxPortionsPerSupplyDate)
+            errors.Add(nameof(input.PortionsPerSupplyDate), "invalid");
         var serviceCities = ServiceArea.Format(ServiceArea.Parse(input.ServiceCities));
         if (serviceCities.Length > ServiceArea.MaxLength
             || ServiceArea.Parse(serviceCities).Any(c => c.Length > AddressFormat.PartMaxLength))
@@ -81,6 +86,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.MinimumOrderAppliesToPickup = appliesToPickup;
         // Zero (or empty) means no limit.
         settings.OrdersPerHour = input.OrdersPerHour is > 0 ? input.OrdersPerHour : null;
+        settings.PortionsPerSupplyDate = input.PortionsPerSupplyDate is > 0 ? input.PortionsPerSupplyDate : null;
         // Missing (an older client) keeps the cities; an empty list is kept as "", meaning every city is served.
         if (input.ServiceCities is not null)
             settings.ServiceCities = serviceCities;
@@ -135,7 +141,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     private static SettingsDto ToDto(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
-        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour);
+        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate);
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]

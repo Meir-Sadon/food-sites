@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="65%">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="1" stop-color="#efe2c8"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#bg)"/>
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#c39236" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/>
+  <!-- plate -->
+  <ellipse cx="100" cy="128" rx="70" ry="26" fill="#ffffff" stroke="#2f4a2a" stroke-width="4"/>
+  <ellipse cx="100" cy="124" rx="50" ry="16" fill="#f3dfa8" stroke="#c39236" stroke-width="2"/>
+  <!-- couscous grains -->
+  <g fill="#d9a948">
+    <circle cx="70" cy="124" r="2.2"/><circle cx="80" cy="130" r="2.2"/><circle cx="88" cy="119" r="2.2"/>
+    <circle cx="112" cy="131" r="2.2"/><circle cx="122" cy="120" r="2.2"/><circle cx="131" cy="127" r="2.2"/>
+    <circle cx="96" cy="133" r="2.2"/><circle cx="106" cy="117" r="2.2"/>
+  </g>
+  <!-- heart rising from the plate -->
+  <path d="M100 116 C 74 98 62 82 66 66 C 70 50 92 48 100 64 C 108 48 130 50 134 66 C 138 82 126 98 100 116 Z" fill="#b9472e" stroke="#7d2a19" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M80 66 C 82 60 88 58 92 62" fill="none" stroke="#f6c9a8" stroke-width="3" stroke-linecap="round"/>
+  <!-- parsley -->
+  <g fill="#4f7a33">
+    <ellipse cx="146" cy="112" rx="8" ry="4.5" transform="rotate(-30 146 112)"/>
+    <ellipse cx="154" cy="104" rx="8" ry="4.5" transform="rotate(-70 154 104)"/>
+  </g>
+</svg>

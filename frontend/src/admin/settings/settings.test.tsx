@@ -43,6 +43,7 @@ describe('General settings', () => {
       minimumOrderAppliesToPickup: true,
       serviceCities: 'אשקלון',
       ordersPerHour: null,
+      portionsPerSupplyDate: null,
     })
   })
 
@@ -154,6 +155,19 @@ describe('General settings', () => {
 
     await screen.findByText('נשמר.')
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ordersPerHour: 3 })
+  })
+
+  it('saves how many portions can be ordered per supply date', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    await user.type(within(form).getByLabelText('מנות ליום אספקה'), '30')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ portionsPerSupplyDate: 30 })
   })
 
   it('adds and removes closed dates', async () => {

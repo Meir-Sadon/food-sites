@@ -143,6 +143,25 @@ export function GeneralSection() {
             </span>
             <FieldError errors={errors} field="ordersPerHour" id="settings-ordersPerHour-error" />
           </span>
+          <span className="field">
+            <label htmlFor="settings-portionsPerSupplyDate">{t('admin.settings.portionsPerSupplyDate')}</label>
+            <input
+              id="settings-portionsPerSupplyDate"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={1}
+              dir="ltr"
+              className="input-narrow"
+              value={settings.portionsPerSupplyDate ?? ''}
+              aria-describedby="settings-portionsPerSupplyDate-hint settings-portionsPerSupplyDate-error"
+              onChange={(e) => change({ portionsPerSupplyDate: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+            <span id="settings-portionsPerSupplyDate-hint" className="hint">
+              {t('admin.settings.portionsPerSupplyDateHint')}
+            </span>
+            <FieldError errors={errors} field="portionsPerSupplyDate" id="settings-portionsPerSupplyDate-error" />
+          </span>
           <div className="row">
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}

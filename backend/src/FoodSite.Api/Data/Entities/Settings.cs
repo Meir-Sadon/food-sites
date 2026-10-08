@@ -38,6 +38,12 @@ public class Settings
     /// </summary>
     public int? OrdersPerHour { get; set; }
 
+    /// <summary>
+    /// How many portions can be ordered for one supply date, across all dishes (see <c>DailyPortions</c> for what
+    /// counts); null means no limit.
+    /// </summary>
+    public int? PortionsPerSupplyDate { get; set; }
+
     public string? AdminPasswordHash { get; set; }
 
     /// <summary>

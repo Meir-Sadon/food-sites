@@ -70,6 +70,8 @@ jobs:
             hook: RENDER_DEPLOY_HOOK_GRAPE_LEAVES
           - site: cigars-shiraz
             hook: RENDER_DEPLOY_HOOK_CIGARS_SHIRAZ
+          - site: kuskus-liel
+            hook: RENDER_DEPLOY_HOOK_KUSKUS_LIEL
     steps:
       - name: Trigger the deploy hook
         env:
