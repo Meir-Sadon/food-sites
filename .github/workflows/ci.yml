@@ -37,7 +37,7 @@ jobs:
         run: node ../scripts/check-sites.mjs
       - run: npm run lint
       - name: Build every site (also the typecheck)
-        run: for site in $(ls ../sites); do echo "::group::$site"; SITE=$site npm run build; echo "::endgroup::"; done
+        run: for site in $(ls ../sites | grep -vx _shared); do echo "::group::$site"; SITE=$site npm run build; echo "::endgroup::"; done
       - run: npm test
 
   backend:
