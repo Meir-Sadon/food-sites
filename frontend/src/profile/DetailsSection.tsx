@@ -5,8 +5,7 @@ import type { FieldErrors } from '../api/client'
 import { Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { ProfileFields } from '../account/ProfileFields'
-import { formFromProfile } from '../account/profileForm'
-import { addressOf } from '../account/addressParts'
+import { formFromProfile, profileInput } from '../account/profileForm'
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { useToast } from '../components/toast'
@@ -41,12 +40,7 @@ export function DetailsSection({ user, onSaved }: Props) {
 
     setBusy(true)
     try {
-      const saved = await accountApi.update({
-        phone: normalized,
-        ...form,
-        fullName: form.fullName.trim(),
-        ...addressOf(form),
-      })
+      const saved = await accountApi.update(profileInput(normalized, form))
       onSaved(saved)
       setPhone(saved.phone)
       toast(t('admin.saved'))

@@ -25,7 +25,7 @@ export interface ProfileInput {
   houseNumber: string
   apartment: string
   email: string
-  birthday: string
+  birthday: string | null
   ethnicBackground: string
 }
 
