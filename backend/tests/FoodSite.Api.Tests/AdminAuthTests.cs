@@ -159,6 +159,45 @@ public sealed class AdminAuthTests(PostgresFixture postgres) : IDisposable
         Assert.Equal(HttpStatusCode.NoContent, (await Login(client, "new-password")).StatusCode);
     }
 
+    private static Task<HttpResponseMessage> ChangePassword(HttpClient client, string? current, string? next) =>
+        client.PutAsJsonAsync("/api/admin/password", new { currentPassword = current, newPassword = next });
+
+    [Fact]
+    public async Task Changing_the_password_requires_an_admin_session()
+    {
+        var response = await ChangePassword(Client(), ApiFactory.AdminPassword, "brand-new-password");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Admin_can_change_the_password()
+    {
+        var admin = await _factory.CreateAdminClientAsync();
+
+        var response = await ChangePassword(admin, ApiFactory.AdminPassword, "brand-new-password");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var client = Client();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await Login(client, ApiFactory.AdminPassword)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await Login(client, "brand-new-password")).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("wrong-password", "brand-new-password", "currentPassword", "wrongPassword")]
+    [InlineData(null, "brand-new-password", "currentPassword", "required")]
+    [InlineData(ApiFactory.AdminPassword, null, "newPassword", "required")]
+    [InlineData(ApiFactory.AdminPassword, "short", "newPassword", "passwordTooShort")]
+    public async Task Invalid_password_change_is_rejected_and_keeps_the_old_password(
+        string? current, string? next, string field, string code)
+    {
+        var admin = await _factory.CreateAdminClientAsync();
+
+        var response = await ChangePassword(admin, current, next);
+
+        await response.AssertInvalid(field, code);
+        Assert.Equal(HttpStatusCode.NoContent, (await Login(Client(), ApiFactory.AdminPassword)).StatusCode);
+    }
+
     private sealed class FixedTime(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;

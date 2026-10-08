@@ -4,6 +4,10 @@ export async function adminLogin(password: string): Promise<void> {
   await apiFetch('/api/admin/login', { method: 'POST', body: JSON.stringify({ password }) })
 }
 
+export async function changeAdminPassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiFetch('/api/admin/password', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) })
+}
+
 export async function adminLogout(): Promise<void> {
   await apiFetch('/api/admin/logout', { method: 'POST' })
 }

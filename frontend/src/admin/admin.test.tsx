@@ -25,6 +25,12 @@ describe('admin login', () => {
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
   })
 
+  it('centers the form and links back to the home page', () => {
+    renderAt('/admin/login')
+    expect(screen.getByRole('main')).toHaveClass('admin-login')
+    expect(screen.getByRole('link', { name: 'לדף הבית' })).toHaveAttribute('href', '/')
+  })
+
   it('disables submit until a password is typed', () => {
     renderAt('/admin/login')
     expect(screen.getByRole('button', { name: 'כניסה' })).toBeDisabled()
