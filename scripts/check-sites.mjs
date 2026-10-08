@@ -4,7 +4,8 @@
 //   and "settings" the API doesn't know);
 // - a site's theme.css leaves out a variable the shared CSS uses but doesn't define;
 // - a site's i18n/he.json overrides a key the shared frontend/src/i18n/he.json doesn't have;
-// - a business's id, name, emoji or WhatsApp template names appear in shared code (outside sites/).
+// - a business's id, name, emoji or WhatsApp template names appear in shared code (outside the site folders).
+// sites/_shared/ is not a site: it holds seed files any site can list ("../_shared/seed/<name>.json").
 // Usage: node scripts/check-sites.mjs
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
@@ -13,6 +14,7 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('..', import.meta.url))
 const sitesDir = join(root, 'sites')
 const template = '_template'
+const shared = '_shared'
 const errors = []
 const fail = (message) => errors.push(message)
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'))
@@ -43,7 +45,8 @@ const themeVariables = [...new Set([...sharedCss.matchAll(/var\((--[\w-]+)/g)].m
 // Values that identify one business; none may appear in shared code.
 const businessValues = []
 
-for (const name of readdirSync(sitesDir).filter((n) => statSync(join(sitesDir, n)).isDirectory()).sort()) {
+const siteNames = readdirSync(sitesDir).filter((n) => n !== shared && statSync(join(sitesDir, n)).isDirectory()).sort()
+for (const name of siteNames) {
   const dir = join(sitesDir, name)
   const where = `sites/${name}`
   for (const file of ['site.json', 'theme.css', 'i18n/he.json', 'public/favicon.svg'])
@@ -90,9 +93,9 @@ for (const name of readdirSync(sitesDir).filter((n) => statSync(join(sitesDir, n
   )
 }
 
-// Shared code: everything the sites build from. Docs, deploy files (render.yaml names each service)
+// Shared code: everything the sites build from, and the seeds they share. Docs, deploy files (render.yaml names each service)
 // and the migrations' history are not checked.
-const scanned = ['frontend/src', 'frontend/index.html', 'frontend/vite.config.ts', 'backend/src', 'backend/tests', 'Dockerfile', 'backend/Dockerfile', 'frontend/Dockerfile']
+const scanned = [`sites/${shared}`, 'frontend/src', 'frontend/index.html', 'frontend/vite.config.ts', 'backend/src', 'backend/tests', 'Dockerfile', 'backend/Dockerfile', 'frontend/Dockerfile']
 const skipped = new Set(['node_modules', 'bin', 'obj', 'dist', 'Migrations'])
 const textFile = /\.(ts|tsx|js|mjs|json|css|html|cs|csproj|svg|md)$|Dockerfile$/
 
@@ -119,4 +122,4 @@ if (errors.length > 0) {
   console.error(`check-sites: ${errors.length} problem(s)\n${errors.map((e) => `  ${e}`).join('\n')}`)
   process.exit(1)
 }
-console.log(`check-sites: ${readdirSync(sitesDir).length} site folder(s) OK, shared code names no business.`)
+console.log(`check-sites: ${siteNames.length} site folder(s) OK, shared code names no business.`)

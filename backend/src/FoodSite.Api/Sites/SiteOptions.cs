@@ -36,7 +36,10 @@ public partial class SiteOptions
     /// </summary>
     public SiteSettingsDefaults Settings { get; set; } = new();
 
-    /// <summary>Menu seed files, relative to <see cref="Directory"/>, applied on every start without undoing admin changes.</summary>
+    /// <summary>
+/// Menu seed files, relative to <see cref="Directory"/>, applied on every start without undoing admin changes.
+/// <c>../_shared/seed/&lt;name&gt;.json</c> is a seed every site can list (the image copies <c>sites/_shared</c> next to <c>site</c>).
+/// </summary>
     public List<string> Seed { get; set; } = [];
 
     /// <summary>

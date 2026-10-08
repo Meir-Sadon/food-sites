@@ -1,0 +1,40 @@
+{
+  "categories": [
+    {
+      "name": "שתיה",
+      "dishes": [
+        {"name": "קוקה קולה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406043/tin-cocaCola-coke.jpg"]},
+        {"name": "קוקה קולה זירו", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406044/tin-cocaCola-coke-zero.jpg"]},
+        {"name": "פפסי", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406079/tin-pepsi-coke.jpg"]},
+        {"name": "פפסי זירו", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405187/tin-pepsi-coke-zero.jpg"]},
+        {"name": "ספרייט", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406105/tin-sprite.jpg"]},
+        {"name": "ספרייט זירו", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406111/tin-sprite-zero.jpg"]},
+        {"name": "פאנטה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406054/tin-fanta-orange.jpg"]},
+        {"name": "שוופס ענבים", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406089/tin-schweppes-grapes.jpg"]},
+        {"name": "שוופס תות", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791404829/tin-schweppes-strawberry.jpg"]},
+        {"name": "ספרינג אפרסק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406100/tin-spring-peach.jpg"]},
+        {"name": "נורדיק תפוח נענע", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405171/tin-nordic-apple-mint.jpg"]},
+        {"name": "נורדיק לימונדה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405184/tin-nordic-lemonad.jpg"]},
+        {"name": "נורדיק מנגו", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405178/tin-nordic-mango-ming.jpg"]},
+        {"name": "נורדיק אפרסק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405176/tin-nordic-peach.jpg"]},
+        {"name": "נורדיק סודה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405174/tin-nordic-soda.jpg"]},
+        {"name": "XL אנרגיה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406118/tin-XL.avif"]},
+        {"name": "בלו אנרגיה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405214/tin-blue.jpg"]},
+        {"name": "פיוז טי אפרסק - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405983/bottle-fuzetea-peach.jpg"]},
+        {"name": "סודה קינלי - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405984/bottle-kinley-sodajpg.avif"]},
+        {"name": "מי עדן - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405989/bottle-meyEden-water.jpg"]},
+        {"name": "נביעות בטעם תפוח - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405993/bottle-neviot-water-apple.avif"]},
+        {"name": "נביעות בטעם ענבים - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405995/bottle-neviot-water-grapes.avif"]},
+        {"name": "נביעות בטעם אפרסק - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406000/bottle-neviot-water-peach.avif"]},
+        {"name": "נורדיק תפוח נענע - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791404829/bottle-nordic-apple-mint.jpg"]},
+        {"name": "נורדיק פירות יער ולמון גראס - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405169/bottle-nordic-berries-lemongrass.jpg"]},
+        {"name": "פריגת תפוחים - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406009/bottle-prigat-apple.jpg"]},
+        {"name": "פריגת ענבים - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406015/bottle-prigat-grapes.jpg"]},
+        {"name": "פריגת לימונענע - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406019/bottle-prigat-lemon-mint.avif"]},
+        {"name": "פריגת תפוזים - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406024/bottle-prigat-orange.jpg"]},
+        {"name": "תפוזינה - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406029/bottle-tapuzina-orange.jpg"]},
+        {"name": "תפוזינה תות בננה - בקבוק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406030/bottle-tapuzina-straw-banana.jpg"]}
+      ]
+    }
+  ]
+}

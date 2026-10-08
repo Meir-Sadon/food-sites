@@ -70,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - id: list
-        run: echo "sites=$(ls sites | grep -vx _template | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+        run: echo "sites=$(ls sites | grep -vxE "_template|_shared" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
 
   image:
     name: Production image (${{ matrix.site }})
