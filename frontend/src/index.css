@@ -164,11 +164,27 @@ a {
   padding: 1.5rem 1.25rem;
 }
 
+.admin-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-block-size: 100vh;
+  text-align: center;
+}
+
+.admin-login h1 {
+  margin: 0;
+}
+
 .admin-login form {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  inline-size: 100%;
   max-inline-size: 20rem;
+  text-align: start;
 }
 
 input,

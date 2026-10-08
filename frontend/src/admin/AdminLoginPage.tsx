@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { adminLogin } from '../api/admin'
 import { ApiError } from '../api/client'
@@ -58,6 +58,9 @@ export function AdminLoginPage() {
           {submitting ? t('admin.submitting') : t('admin.submit')}
         </button>
       </form>
+      <Link to="/" className="admin-login__home">
+        {t('admin.home')}
+      </Link>
     </main>
   )
 }

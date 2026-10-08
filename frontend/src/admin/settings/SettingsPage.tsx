@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { BackgroundSection } from './BackgroundSection'
 import { ClosedDatesSection } from './ClosedDatesSection'
 import { GeneralSection } from './GeneralSection'
+import { PasswordSection } from './PasswordSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
 
 export function SettingsPage() {
@@ -13,6 +14,7 @@ export function SettingsPage() {
       <SupplyDaysSection />
       <ClosedDatesSection />
       <GeneralSection />
+      <PasswordSection />
     </>
   )
 }

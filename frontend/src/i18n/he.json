@@ -94,7 +94,13 @@
       "minimumOrder": "מינימום להזמנה (₪)",
       "minimumOrderHint": "סכום ההזמנה הנמוך ביותר שאפשר לשלוח. השאירו ריק או 0 כדי לא להגביל.",
       "minimumOrderAppliesToPickup": "המינימום חל גם על איסוף עצמי",
-      "general": "משלוח, כשרות ותשלום"
+      "general": "משלוח, כשרות ותשלום",
+      "password": "סיסמת מנהל",
+      "passwordHint": "הסיסמה החדשה תחליף את הנוכחית מיד. לפחות 8 תווים.",
+      "currentPassword": "הסיסמה הנוכחית",
+      "newPassword": "סיסמה חדשה",
+      "changePassword": "שינוי סיסמה",
+      "passwordChanged": "הסיסמה שונתה."
     },
     "categories": {
       "title": "קטגוריות",
@@ -323,7 +329,9 @@
     "notRegistered": "המספר הזה עוד לא רשום.",
     "phoneTaken": "המספר הזה כבר רשום. התחברו במקום להירשם.",
     "tooManyFavorites": "אפשר לשמור עד 20 מועדפים. הסירו מועדף כדי להוסיף חדש.",
-    "tooManyRecommendations": "שלחתם הרבה המלצות היום. נסו שוב מחר."
+    "tooManyRecommendations": "שלחתם הרבה המלצות היום. נסו שוב מחר.",
+    "wrongPassword": "הסיסמה שגויה.",
+    "passwordTooShort": "הסיסמה צריכה להכיל לפחות 8 תווים."
   },
   "address": {
     "title": "כתובת",

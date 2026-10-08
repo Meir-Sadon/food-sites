@@ -1,4 +1,5 @@
 using FoodSite.Api.Auth;
+using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,12 @@ public class AdminAuthController(
 {
     public const string LoginRateLimitPolicy = "admin-login";
 
+    public const int MinPasswordLength = 8;
+    public const int MaxPasswordLength = 200;
+
     public record LoginRequest(string Password);
+
+    public record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
 
     [HttpPost("login")]
     [EnableRateLimiting(LoginRateLimitPolicy)]
@@ -42,6 +48,37 @@ public class AdminAuthController(
     [HttpGet("me")]
     [Authorize(Roles = AdminTokenService.AdminRole)]
     public IActionResult Me() => Ok(new { role = AdminTokenService.AdminRole });
+
+    /// <summary>
+    /// Replaces the admin password. Asks for the current one so a session left open
+    /// cannot lock the owner out; rate-limited like login since it checks a password.
+    /// </summary>
+    [HttpPut("password")]
+    [Authorize(Roles = AdminTokenService.AdminRole)]
+    [EnableRateLimiting(LoginRateLimitPolicy)]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+    {
+        var errors = new Errors();
+        if (string.IsNullOrEmpty(request.CurrentPassword))
+            errors.Add("currentPassword", "required");
+        if (string.IsNullOrEmpty(request.NewPassword))
+            errors.Add("newPassword", "required");
+        else if (request.NewPassword.Length < MinPasswordLength)
+            errors.Add("newPassword", "passwordTooShort");
+        else if (request.NewPassword.Length > MaxPasswordLength)
+            errors.Add("newPassword", "tooLong");
+        if (errors.Any)
+            return ValidationProblem(new ValidationProblemDetails(errors.ToDictionary()));
+
+        var settings = await db.Settings.SingleAsync();
+        if (!AdminPasswordHasher.Verify(settings.AdminPasswordHash, request.CurrentPassword!))
+            return ValidationProblem(new ValidationProblemDetails(
+                new Errors().Add("currentPassword", "wrongPassword").ToDictionary()));
+
+        settings.AdminPasswordHash = AdminPasswordHasher.Hash(request.NewPassword!);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
 
     private Microsoft.AspNetCore.Http.CookieOptions CookieFor(DateTimeOffset? expires) => new()
     {

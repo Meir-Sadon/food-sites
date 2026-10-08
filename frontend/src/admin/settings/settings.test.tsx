@@ -191,3 +191,38 @@ describe('General settings', () => {
     expect(await within(background).findByRole('alert')).toHaveTextContent('Cloudinary לא מוגדר')
   })
 })
+
+describe('Admin password', () => {
+  it('changes the password and clears the form', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/password': () => undefined })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('סיסמת מנהל')
+
+    await user.type(within(form).getByLabelText('הסיסמה הנוכחית'), 'old-secret')
+    await user.type(within(form).getByLabelText('סיסמה חדשה'), 'new-secret-1')
+    await user.click(within(form).getByRole('button', { name: 'שינוי סיסמה' }))
+
+    expect(await within(form).findByRole('status')).toHaveTextContent('הסיסמה שונתה.')
+    expect(api.sent('PUT', '/api/admin/password')[0].body).toEqual({
+      currentPassword: 'old-secret',
+      newPassword: 'new-secret-1',
+    })
+    expect(within(form).getByLabelText('הסיסמה הנוכחית')).toHaveValue('')
+    expect(within(form).getByLabelText('סיסמה חדשה')).toHaveValue('')
+  })
+
+  it('shows which field is wrong', async () => {
+    fakeApi({ ...base, 'PUT /api/admin/password': () => invalid({ currentPassword: ['wrongPassword'] }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('סיסמת מנהל')
+
+    await user.type(within(form).getByLabelText('הסיסמה הנוכחית'), 'guess')
+    await user.type(within(form).getByLabelText('סיסמה חדשה'), 'new-secret-1')
+    await user.click(within(form).getByRole('button', { name: 'שינוי סיסמה' }))
+
+    expect(await within(form).findByText('הסיסמה שגויה.')).toBeInTheDocument()
+    expect(within(form).getByLabelText('סיסמה חדשה')).toHaveValue('new-secret-1')
+  })
+})
