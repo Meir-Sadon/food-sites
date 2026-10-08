@@ -183,9 +183,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             await using var stream = file!.OpenReadStream();
             stored = await images.UploadAsync(stream, file.FileName, site.Value.ImageFolder("dishes"), ct);
         }
-        catch (ImageStoreUnavailableException)
+        catch (ImageStoreUnavailableException e)
         {
-            return ImageStoreUnavailable();
+            return ImageStoreUnavailable(e);
         }
 
         var order = dish.Images.Count == 0 ? 0 : dish.Images.Max(i => i.DisplayOrder) + 1;

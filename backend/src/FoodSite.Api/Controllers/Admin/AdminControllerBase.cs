@@ -1,4 +1,5 @@
 using FoodSite.Api.Auth;
+using FoodSite.Api.Images;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,8 +20,13 @@ public abstract class AdminControllerBase : ControllerBase
 
     protected ActionResult Conflict(string code) => Conflict(new { code });
 
-    protected ActionResult ImageStoreUnavailable() =>
-        StatusCode(StatusCodes.Status503ServiceUnavailable, new { code = "imageStoreUnavailable" });
+    protected ActionResult ImageStoreUnavailable(ImageStoreUnavailableException e) => ImageStoreError(this, e);
+
+    /// <summary>503 when no image store is configured, 502 when the store turned the upload down.</summary>
+    public static ActionResult ImageStoreError(ControllerBase controller, ImageStoreUnavailableException e) =>
+        controller.StatusCode(
+            e.Code == ImageStoreUnavailableException.UploadFailed ? StatusCodes.Status502BadGateway : StatusCodes.Status503ServiceUnavailable,
+            new { code = e.Code });
 }
 
 /// <summary>Collects validation error codes per field.</summary>

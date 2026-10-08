@@ -71,9 +71,9 @@ public class ReviewsController(AppDbContext db, IImageStore images, IOptions<Sit
             await using var stream = file!.OpenReadStream();
             stored = await images.UploadAsync(stream, file.FileName, site.Value.ImageFolder("reviews"), ct);
         }
-        catch (ImageStoreUnavailableException)
+        catch (ImageStoreUnavailableException e)
         {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { code = "imageStoreUnavailable" });
+            return AdminControllerBase.ImageStoreError(this, e);
         }
 
         var order = review.Images.Count == 0 ? 0 : review.Images.Max(i => i.DisplayOrder) + 1;

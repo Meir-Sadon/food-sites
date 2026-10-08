@@ -108,9 +108,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             await using var stream = file!.OpenReadStream();
             stored = await images.UploadAsync(stream, file.FileName, site.Value.ImageFolder("background"), ct);
         }
-        catch (ImageStoreUnavailableException)
+        catch (ImageStoreUnavailableException e)
         {
-            return ImageStoreUnavailable();
+            return ImageStoreUnavailable(e);
         }
 
         var settings = await db.Settings.SingleAsync(ct);

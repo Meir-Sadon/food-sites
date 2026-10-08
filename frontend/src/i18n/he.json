@@ -440,6 +440,7 @@
     "imageType": "אפשר להעלות רק JPEG, PNG או WebP.",
     "tooManyImages": "אפשר עד 6 תמונות למנה.",
     "imageStoreUnavailable": "העלאת תמונות לא זמינה כרגע (Cloudinary לא מוגדר).",
+    "imageUploadFailed": "Cloudinary סירב להעלות את התמונה. נסו שוב, ואם זה חוזר בדקו את המפתח ב־Cloudinary__Url.",
     "checkFields": "יש שדות לתיקון. בדקו את ההודעות בטופס.",
     "email": "כתובת האימייל לא תקינה.",
     "supplyDateUnavailable": "יום האספקה שנבחר כבר לא פתוח להזמנה. בחרו תאריך אחר.",

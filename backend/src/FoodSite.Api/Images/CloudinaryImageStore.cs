@@ -18,7 +18,12 @@ public class CloudinaryImageStore(Cloudinary cloudinary, ILogger<CloudinaryImage
         }, ct);
 
         if (result.Error is not null || result.SecureUrl is null)
-            throw new ImageStoreUnavailableException($"Cloudinary upload failed: {result.Error?.Message}");
+        {
+            // Cloudinary is set up but refused the upload (often a wrong key or secret in Cloudinary__Url): log why.
+            logger.LogError("Cloudinary upload to {Folder} failed ({Status}): {Error}", folder, result.StatusCode, result.Error?.Message);
+            throw new ImageStoreUnavailableException(
+                $"Cloudinary upload failed: {result.Error?.Message}", ImageStoreUnavailableException.UploadFailed);
+        }
 
         return new StoredImage(result.SecureUrl.ToString(), result.PublicId);
     }

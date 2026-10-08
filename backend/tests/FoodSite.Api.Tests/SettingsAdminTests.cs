@@ -207,6 +207,16 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task Upload_reports_when_the_image_store_refuses_it()
+    {
+        _factory.Images.Refuses = true;
+        var response = await _admin.PutAsync("/api/admin/settings/background", TestFiles.Upload(TestFiles.Webp, "a.webp", "image/webp"));
+
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
+        Assert.Contains("imageUploadFailed", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
     public async Task Supply_days_list_all_weekdays_from_Sunday_disabled_by_default()
     {
         var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();
