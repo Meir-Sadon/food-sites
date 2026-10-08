@@ -9,14 +9,14 @@ namespace FoodSite.Api.Controllers.Admin;
 [Route("api/admin/message-templates")]
 public class MessageTemplatesController(AppDbContext db) : AdminControllerBase
 {
-    public record TemplateDto(int Id, string Name, string Text, bool IncludeReviewLink);
+    public record TemplateDto(int Id, string Name, string Text, bool IncludeReviewLink, OrderStatus? ForStatus = null);
 
-    public record TemplateInput(string? Name, string? Text, bool IncludeReviewLink);
+    public record TemplateInput(string? Name, string? Text, bool IncludeReviewLink, OrderStatus? ForStatus = null);
 
     [HttpGet]
     public async Task<IReadOnlyList<TemplateDto>> GetAll() =>
         await db.MessageTemplates.AsNoTracking().OrderBy(t => t.Id)
-            .Select(t => new TemplateDto(t.Id, t.Name, t.Text, t.IncludeReviewLink))
+            .Select(t => new TemplateDto(t.Id, t.Name, t.Text, t.IncludeReviewLink, t.ForStatus))
             .ToListAsync();
 
     [HttpPost]
@@ -24,7 +24,10 @@ public class MessageTemplatesController(AppDbContext db) : AdminControllerBase
     {
         if (Validate(input) is { } invalid)
             return invalid;
-        var template = new MessageTemplate { Name = input.Name!.Trim(), Text = input.Text!.Trim(), IncludeReviewLink = input.IncludeReviewLink };
+        var template = new MessageTemplate
+        {
+            Name = input.Name!.Trim(), Text = input.Text!.Trim(), IncludeReviewLink = input.IncludeReviewLink, ForStatus = input.ForStatus,
+        };
         db.MessageTemplates.Add(template);
         await db.SaveChangesAsync();
         return ToDto(template);
@@ -41,6 +44,7 @@ public class MessageTemplatesController(AppDbContext db) : AdminControllerBase
         template.Name = input.Name!.Trim();
         template.Text = input.Text!.Trim();
         template.IncludeReviewLink = input.IncludeReviewLink;
+        template.ForStatus = input.ForStatus;
         await db.SaveChangesAsync();
         return ToDto(template);
     }
@@ -57,8 +61,10 @@ public class MessageTemplatesController(AppDbContext db) : AdminControllerBase
         var errors = new Errors();
         errors.Text(nameof(input.Name), input.Name, MessageTemplate.NameMaxLength, required: true);
         errors.Text(nameof(input.Text), input.Text, MessageTemplate.TextMaxLength, required: true);
+        if (input.ForStatus is { } status && !Enum.IsDefined(status))
+            errors.Add(nameof(input.ForStatus), "invalid");
         return errors.Any ? Invalid(errors) : null;
     }
 
-    private static TemplateDto ToDto(MessageTemplate t) => new(t.Id, t.Name, t.Text, t.IncludeReviewLink);
+    private static TemplateDto ToDto(MessageTemplate t) => new(t.Id, t.Name, t.Text, t.IncludeReviewLink, t.ForStatus);
 }

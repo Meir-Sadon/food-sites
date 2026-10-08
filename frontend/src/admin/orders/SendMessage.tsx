@@ -8,10 +8,9 @@ import { useErrorMessage } from '../hooks'
 import { Loading, Status } from '../ui'
 import { composeMessage, reviewUrl, whatsAppUrl } from '../messages/compose'
 
-/** A delivered order starts with the review request; any other with the first template that has no review link. */
+/** The message for the order's status (e.g. the review request once delivered), else a general one. */
 function suggested(templates: MessageTemplate[], order: AdminOrder) {
-  const wantsLink = order.status === 'Delivered'
-  return templates.find((t) => t.includeReviewLink === wantsLink) ?? templates[0]
+  return templates.find((t) => t.forStatus === order.status) ?? templates.find((t) => t.forStatus === null) ?? templates[0]
 }
 
 /**

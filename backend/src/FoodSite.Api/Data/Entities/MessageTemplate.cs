@@ -13,4 +13,7 @@ public class MessageTemplate
     public required string Name { get; set; }
     public required string Text { get; set; }
     public bool IncludeReviewLink { get; set; }
+
+    /// <summary>The message type: the order status this template is for, picked first on an order with that status. Empty for a general message.</summary>
+    public OrderStatus? ForStatus { get; set; }
 }

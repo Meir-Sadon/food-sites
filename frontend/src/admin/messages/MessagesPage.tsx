@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../../api/client'
+import { orderStatuses, type OrderStatus } from '../../api/operations'
 import {
   TEMPLATE_NAME_MAX_LENGTH,
   TEMPLATE_TEXT_MAX_LENGTH,
@@ -13,7 +14,7 @@ import { fieldErrorsOf, useErrorMessage, useFormErrorMessage, useLoad } from '..
 import { ConfirmRemove, FieldError, Loading, Section, Status } from '../ui'
 import { PLACEHOLDERS } from './compose'
 
-const empty: MessageTemplateInput = { name: '', text: '', includeReviewLink: false }
+const empty: MessageTemplateInput = { name: '', text: '', includeReviewLink: false, forStatus: null }
 
 /** The WhatsApp message templates the admin sends clients from the Orders tab. */
 export function MessagesPage() {
@@ -104,6 +105,7 @@ function TemplateForm({
     name: initial.name,
     text: initial.text,
     includeReviewLink: initial.includeReviewLink,
+    forStatus: initial.forStatus,
   })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [status, setStatus] = useState<{ message: string; error?: boolean } | null>(null)
@@ -137,6 +139,25 @@ function TemplateForm({
           onChange={(e) => setInput({ ...input, name: e.target.value })}
         />
         <FieldError errors={errors} field="name" id={`${idPrefix}-name-error`} />
+      </span>
+      <span className="field">
+        <label htmlFor={`${idPrefix}-type`}>{t('admin.messages.type')}</label>
+        <select
+          id={`${idPrefix}-type`}
+          value={input.forStatus ?? ''}
+          aria-describedby={`${idPrefix}-type-hint`}
+          onChange={(e) => setInput({ ...input, forStatus: (e.target.value || null) as OrderStatus | null })}
+        >
+          <option value="">{t('admin.messages.general')}</option>
+          {orderStatuses.map((status) => (
+            <option key={status} value={status}>
+              {t('admin.messages.forStatus', { status: t(`admin.orders.statuses.${status}`) })}
+            </option>
+          ))}
+        </select>
+        <span id={`${idPrefix}-type-hint`} className="hint">
+          {t('admin.messages.typeHint')}
+        </span>
       </span>
       <span className="field">
         <label htmlFor={`${idPrefix}-text`}>{t('admin.messages.text')}</label>

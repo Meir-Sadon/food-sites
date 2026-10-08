@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import { queryString } from './operations'
+import { queryString, type OrderStatus } from './operations'
 
 export const MAX_REVIEW_IMAGES = 2
 export const REVIEW_COMMENT_MAX_LENGTH = 1000
@@ -62,6 +62,8 @@ export interface MessageTemplate {
   name: string
   text: string
   includeReviewLink: boolean
+  /** The message type: the order status it is picked first for; null for a general message. */
+  forStatus: OrderStatus | null
 }
 
 export type MessageTemplateInput = Omit<MessageTemplate, 'id'>

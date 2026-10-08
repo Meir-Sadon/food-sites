@@ -28,8 +28,8 @@ const order = (patch: Partial<AdminOrder> = {}): AdminOrder => ({
   ...patch,
 })
 
-const confirmed: MessageTemplate = { id: 1, name: 'ההזמנה אושרה', text: 'הזמנה {order} ל־{date} אושרה ({total}).', includeReviewLink: false }
-const feedback: MessageTemplate = { id: 2, name: 'איך היה?', text: 'נשמח לשמוע איך היה:', includeReviewLink: true }
+const confirmed: MessageTemplate = { id: 1, name: 'ההזמנה אושרה', text: 'הזמנה {order} ל־{date} אושרה ({total}).', includeReviewLink: false, forStatus: 'Confirmed' }
+const feedback: MessageTemplate = { id: 2, name: 'איך היה?', text: 'נשמח לשמוע איך היה:', includeReviewLink: true, forStatus: 'Delivered' }
 
 describe('Composing a message', () => {
   it('starts with the first name, fills the order details and ends with the link', () => {
@@ -68,9 +68,26 @@ describe('Admin WhatsApp messages', () => {
 
     // A template without the link doesn't make one, and the admin can edit the text before sending.
     await user.selectOptions(within(card).getByLabelText('תבנית'), '1')
+    expect(api.sent('POST', '/api/admin/reviews/for-order/7')).toHaveLength(1)
     expect(text).toHaveValue('דנה,\nהזמנה 7 ל־06/01/2030 אושרה (₪176).')
     await user.type(text, ' תודה!')
     expect(within(card).getByRole('link', { name: 'פתיחה בוואטסאפ' }).getAttribute('href')).toContain(encodeURIComponent('תודה!'))
+  })
+
+  it('picks the message for the order status, and makes no review link for it', async () => {
+    const api = fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [order({ status: 'Confirmed' })],
+      'GET /api/admin/message-templates': () => [feedback, confirmed],
+    })
+    renderAt('/admin/orders')
+    const user = userEvent.setup()
+    const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+    await user.click(within(card).getByRole('button', { name: /וואטסאפ/ }))
+
+    expect(await within(card).findByLabelText('ההודעה (אפשר לערוך לפני השליחה)')).toHaveValue('דנה,\nהזמנה 7 ל־06/01/2030 אושרה (₪176).')
+    expect(within(card).getByLabelText('תבנית')).toHaveValue('1')
+    expect(api.sent('POST', '/api/admin/reviews/for-order/7')).toHaveLength(0)
   })
 
   it('lets the admin add and edit templates', async () => {
@@ -95,6 +112,7 @@ describe('Admin WhatsApp messages', () => {
       name: 'ההזמנה אושרה',
       text: 'מאושר',
       includeReviewLink: false,
+      forStatus: 'Confirmed',
     }))
 
     await user.click(screen.getByRole('button', { name: 'הוספת תבנית' }))
@@ -104,6 +122,7 @@ describe('Admin WhatsApp messages', () => {
 
     await user.type(within(form).getByLabelText('שם התבנית'), 'מוכן')
     await user.type(within(form).getByLabelText('טקסט ההודעה'), 'ההזמנה מוכנה')
+    await user.selectOptions(within(form).getByLabelText('סוג ההודעה'), 'Ready')
     await user.click(within(form).getByLabelText(/קישור לחוות דעת/))
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
     expect(await screen.findByRole('region', { name: 'מוכן' })).toBeInTheDocument()
@@ -111,6 +130,7 @@ describe('Admin WhatsApp messages', () => {
       name: 'מוכן',
       text: 'ההזמנה מוכנה',
       includeReviewLink: true,
+      forStatus: 'Ready',
     })
   })
 })

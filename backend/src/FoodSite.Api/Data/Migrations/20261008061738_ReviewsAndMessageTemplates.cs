@@ -23,7 +23,8 @@ namespace FoodSite.Api.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
                     Text = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    IncludeReviewLink = table.Column<bool>(type: "boolean", nullable: false)
+                    IncludeReviewLink = table.Column<bool>(type: "boolean", nullable: false),
+                    ForStatus = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -100,16 +101,19 @@ namespace FoodSite.Api.Data.Migrations
                 column: "Token",
                 unique: true);
 
-            // Two templates every site starts with; the admin edits or removes them. Not model seed data,
-            // so a site whose admin deleted them doesn't get them back.
+            // A message for each order status, which every site starts with; the admin edits or removes them.
+            // Not model seed data, so a site whose admin deleted them doesn't get them back.
             migrationBuilder.InsertData(
                 table: "MessageTemplates",
-                columns: ["Name", "Text", "IncludeReviewLink"],
-                columnTypes: ["character varying(60)", "character varying(1000)", "boolean"],
+                columns: ["Name", "Text", "IncludeReviewLink", "ForStatus"],
+                columnTypes: ["character varying(60)", "character varying(1000)", "boolean", "text"],
                 values: new object[,]
                 {
-                    { "ההזמנה אושרה", "ההזמנה שלך (מס׳ {order}) אושרה ✅\nהיא תהיה מוכנה ב־{date}. תודה שהזמנת!", false },
-                    { "איך היה האוכל?", "תודה שהזמנת! נשמח לשמוע איך היה האוכל 😊\nאפשר לדרג ולצרף תמונה כאן:", true },
+                    { "קיבלנו את ההזמנה", "קיבלנו את ההזמנה שלך (מס׳ {order}) ל־{date} 🙏\nנעדכן כאן ברגע שהיא תאושר.", false, "New" },
+                    { "ההזמנה אושרה", "ההזמנה שלך (מס׳ {order}) אושרה ✅\nהיא תהיה מוכנה ב־{date}. תודה שהזמנת!", false, "Confirmed" },
+                    { "ההזמנה מוכנה", "ההזמנה שלך (מס׳ {order}) מוכנה 🍲\nסה״כ לתשלום: {total}. בתיאבון!", false, "Ready" },
+                    { "איך היה האוכל?", "תודה שהזמנת! נשמח לשמוע איך היה האוכל 😊\nאפשר לדרג ולצרף תמונה כאן:", true, "Delivered" },
+                    { "ההזמנה בוטלה", "ההזמנה שלך (מס׳ {order}) ל־{date} בוטלה.\nאם זו טעות או שיש שאלה, כתבו לנו כאן.", false, "Cancelled" },
                 });
         }
 

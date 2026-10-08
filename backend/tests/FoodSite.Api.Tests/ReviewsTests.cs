@@ -47,12 +47,13 @@ public sealed class ReviewsTests(PostgresFixture postgres) : IAsyncLifetime
         _guest.PostAsJsonAsync($"/api/reviews/{token}", new { rating, comment, name });
 
     [Fact]
-    public async Task A_new_site_starts_with_the_two_default_templates()
+    public async Task A_new_site_starts_with_a_default_message_for_each_order_status()
     {
         var templates = await _admin.GetAsync("/api/admin/message-templates").Read<List<TemplateDto>>();
-        Assert.Equal(2, templates.Count);
-        Assert.False(templates[0].IncludeReviewLink);
-        Assert.True(templates[1].IncludeReviewLink);
+        Assert.Equal(Enum.GetValues<OrderStatus>().Cast<OrderStatus?>(), templates.Select(t => t.ForStatus));
+        Assert.All(templates, t => Assert.False(string.IsNullOrWhiteSpace(t.Text)));
+        // Only the after-delivery message asks for a review.
+        Assert.Equal([OrderStatus.Delivered], templates.Where(t => t.IncludeReviewLink).Select(t => t.ForStatus!.Value));
     }
 
     [Fact]
@@ -60,9 +61,9 @@ public sealed class ReviewsTests(PostgresFixture postgres) : IAsyncLifetime
     {
         var created = await _admin.PostAsJsonAsync("/api/admin/message-templates", new { name = "מוכן", text = "ההזמנה מוכנה", includeReviewLink = false })
             .Read<TemplateDto>();
-        var updated = await _admin.PutAsJsonAsync($"/api/admin/message-templates/{created.Id}", new { name = "מוכן!", text = "מוכנה לאיסוף", includeReviewLink = true })
+        var updated = await _admin.PutAsJsonAsync($"/api/admin/message-templates/{created.Id}", new { name = "מוכן!", text = "מוכנה לאיסוף", includeReviewLink = true, forStatus = "Ready" })
             .Read<TemplateDto>();
-        Assert.Equal(new TemplateDto(created.Id, "מוכן!", "מוכנה לאיסוף", true), updated);
+        Assert.Equal(new TemplateDto(created.Id, "מוכן!", "מוכנה לאיסוף", true, OrderStatus.Ready), updated);
 
         Assert.Equal(HttpStatusCode.NoContent, (await _admin.DeleteAsync($"/api/admin/message-templates/{created.Id}")).StatusCode);
         Assert.DoesNotContain(await _admin.GetAsync("/api/admin/message-templates").Read<List<TemplateDto>>(), t => t.Id == created.Id);
