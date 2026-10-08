@@ -5,7 +5,8 @@ using FoodSite.Api.Data.Entities;
 namespace FoodSite.Api.Data;
 
 /// <summary>
-/// A site's first menu data (<c>sites/&lt;id&gt;/seed/*.json</c>): categories with their dishes.
+/// A site's first menu data (<c>sites/&lt;id&gt;/seed/*.json</c>, or one shared by every site in
+/// <c>sites/_shared/seed/</c>): categories with their dishes.
 /// Pictures are URLs, either absolute or served from the site root (the site's <c>public/</c> folder).
 /// </summary>
 public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)

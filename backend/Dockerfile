@@ -18,6 +18,7 @@ ARG SITE
 WORKDIR /app
 COPY --from=build /app .
 COPY --from=site /sites/${SITE}/ ./site/
+COPY --from=site /sites/_shared/ ./_shared/
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 USER $APP_UID

@@ -37,7 +37,7 @@ jobs:
         run: node ../scripts/check-sites.mjs
       - run: npm run lint
       - name: Build every site (also the typecheck)
-        run: for site in $(ls ../sites); do echo "::group::$site"; SITE=$site npm run build; echo "::endgroup::"; done
+        run: for site in $(ls ../sites | grep -vx _shared); do echo "::group::$site"; SITE=$site npm run build; echo "::endgroup::"; done
       - run: npm test
 
   backend:
@@ -70,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - id: list
-        run: echo "sites=$(ls sites | grep -vx _template | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+        run: echo "sites=$(ls sites | grep -vxE "_template|_shared" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
 
   image:
     name: Production image (${{ matrix.site }})

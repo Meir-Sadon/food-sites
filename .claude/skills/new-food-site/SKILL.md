@@ -32,7 +32,7 @@ Copy `sites/_template/` to `sites/<site-id>/` (lowercase letters, digits, dashes
 
 | File | What to put |
 | --- | --- |
-| `site.json` | `id` = folder name; `serviceCities`; an `emoji`; WhatsApp template names `<id_with_underscores>_order_confirmation` / `_new_order`; `features`; `settings` (below); `seed: ["seed/<name>.json"]` |
+| `site.json` | `id` = folder name; `serviceCities`; an `emoji`; WhatsApp template names `<id_with_underscores>_order_confirmation` / `_new_order`; `features`; `settings` (below); `seed: ["seed/<name>.json"]`, plus `"../_shared/seed/drinks.json"` when the business sells the usual drinks (`sites/_shared/README.md`) |
 | `site.json` → `settings` | Copied into the new database once, on first start: `contactName`, `contactPhone`, `contactAddress` (pickup place), `deliveryFeeText`, `deliveryAreaText`, `kashrutText` (only if the business states it), `backgroundImageUrl`. `check-sites` rejects unknown keys. |
 | `theme.css` | Every variable the template defines, in the ad's colours. Keep text dark on a light background. |
 | `logo.svg` | A simple round SVG logo drawn by hand (see the existing sites), in the palette. |

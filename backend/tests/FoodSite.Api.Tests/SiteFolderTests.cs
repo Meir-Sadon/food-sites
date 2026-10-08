@@ -104,6 +104,17 @@ public sealed class SiteFolderTests : IDisposable
     }
 
     [Fact]
+    public void Shared_seeds_have_unique_dish_names_and_a_picture_each()
+    {
+        foreach (var file in Directory.GetFiles(Path.Combine(RepoRoot(), "sites", "_shared", "seed"), "*.json"))
+        {
+            var dishes = MenuSeed.Load(file).Categories.SelectMany(c => c.Dishes).ToList();
+            Assert.Equal(dishes.Count, dishes.Select(d => d.Name).Distinct().Count());
+            Assert.All(dishes, d => Assert.StartsWith("https://", Assert.Single(d.Images!)));
+        }
+    }
+
+    [Fact]
     public void Every_feature_a_site_lists_is_known()
     {
         var sites = Path.Combine(RepoRoot(), "sites");

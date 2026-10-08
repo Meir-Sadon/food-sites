@@ -30,6 +30,8 @@ WORKDIR /app
 COPY --from=backend /app .
 # The API reads ./site/site.json (cookie names, templates, seeds) and the site name from ./site/i18n/he.json.
 COPY --from=site /sites/${SITE}/ ./site/
+# Seeds every site can list, as "../_shared/seed/<name>.json".
+COPY --from=site /sites/_shared/ ./_shared/
 COPY --from=frontend /repo/frontend/dist ./wwwroot
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
