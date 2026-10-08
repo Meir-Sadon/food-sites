@@ -240,6 +240,24 @@ describe('Order page for a logged-in client', () => {
     expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪116/)).toBeInTheDocument()
   })
 
+  it('scrolls to the submit button after a quick fill', async () => {
+    // jsdom has no scrollIntoView.
+    const scrolled = vi.fn()
+    Element.prototype.scrollIntoView = scrolled
+    try {
+      const { user } = open('/', loggedIn)
+      await screen.findByRole('heading', { level: 2, name: 'עופות' })
+      expect(scrolled).not.toHaveBeenCalled()
+
+      await user.click(await screen.findByRole('button', { name: 'שישי' }))
+
+      expect(scrolled).toHaveBeenCalledTimes(1)
+      expect(scrolled.mock.contexts[0]).toBe(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    } finally {
+      delete (Element.prototype as Partial<Element>).scrollIntoView
+    }
+  })
+
   it('fills the order from a favorite, skipping dishes that are gone', async () => {
     const gone: Favorite = { id: 10, name: 'ישן', items: [{ dishId: 99, optionId: null, quantity: 1, addOns: [] }] }
     const { user } = open('/', { ...loggedIn, 'GET /api/account/favorites': () => [favorite, gone] })
