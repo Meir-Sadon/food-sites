@@ -1,0 +1,39 @@
+{
+  "categories": [
+    {
+      "name": "מגשי דגים",
+      "dishes": [
+        {
+          "name": "מגש דגים קטן",
+          "description": "מגש דגים טרי, מגיע עם שתיה.",
+          "sellBy": "Units",
+          "unitName": "מגש",
+          "unitPrice": 150,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מגש דגים בינוני",
+          "description": "מגש דגים טרי, מגיע עם שתיה.",
+          "sellBy": "Units",
+          "unitName": "מגש",
+          "unitPrice": 250,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מגש דגים גדול",
+          "description": "מגש דגים טרי, מגיע עם שתיה.",
+          "sellBy": "Units",
+          "unitName": "מגש",
+          "unitPrice": 350,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    }
+  ]
+}

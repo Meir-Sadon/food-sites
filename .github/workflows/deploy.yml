@@ -72,6 +72,8 @@ jobs:
             hook: RENDER_DEPLOY_HOOK_CIGARS_SHIRAZ
           - site: kuskus-liel
             hook: RENDER_DEPLOY_HOOK_KUSKUS_LIEL
+          - site: fish-trays-rephael
+            hook: RENDER_DEPLOY_HOOK_FISH_TRAYS_REPHAEL
     steps:
       - name: Trigger the deploy hook
         env:
