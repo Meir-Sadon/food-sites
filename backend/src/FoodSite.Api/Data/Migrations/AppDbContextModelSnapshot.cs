@@ -268,6 +268,65 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("DishOptions");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DriverRoute", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("SupplyDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplyDate");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("DriverRoutes");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DriverRouteStop", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DriverRouteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly?>("PlannedArrival")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("DriverRouteId", "OrderId")
+                        .IsUnique();
+
+                    b.ToTable("DriverRouteStops");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.FavoriteOrder", b =>
                 {
                     b.Property<int>("Id")
@@ -407,6 +466,22 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<TimeOnly?>("DeliveryHour")
                         .HasColumnType("time without time zone");
 
+                    b.Property<string>("DeliveryNote")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("DeliveryOutcome")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeliveryProofPublicId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeliveryProofUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeliveryReportedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("FulfillmentMethod")
                         .IsRequired()
                         .HasColumnType("text");
@@ -423,6 +498,9 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
+
+                    b.Property<bool>("PaidByDriver")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("PaidWith")
                         .HasColumnType("text");
@@ -835,6 +913,25 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("Dish");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DriverRouteStop", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.DriverRoute", "DriverRoute")
+                        .WithMany("Stops")
+                        .HasForeignKey("DriverRouteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodSite.Api.Data.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DriverRoute");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.FavoriteOrder", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.User", "User")
@@ -983,6 +1080,11 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("Options");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DriverRoute", b =>
+                {
+                    b.Navigation("Stops");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Order", b =>

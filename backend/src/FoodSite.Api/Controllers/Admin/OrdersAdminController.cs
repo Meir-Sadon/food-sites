@@ -40,7 +40,12 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         bool NeedsReview,
         IReadOnlyList<ItemDto> Items,
         TimeOnly? DeliveryHour = null,
-        bool HourFull = false);
+        bool HourFull = false,
+        bool PaidByDriver = false,
+        DeliveryReportDto? Delivery = null);
+
+    /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
+    public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
 
     public record StatusInput(OrderStatus Status);
 
@@ -200,6 +205,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         order.IsPaid = input.IsPaid;
         order.PaidWith = paidWith;
         order.PaymentComment = comment;
+        // The admin's record takes over from the driver's.
+        order.PaidByDriver = false;
         await db.SaveChangesAsync();
         return NoContent();
     }
@@ -281,5 +288,12 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal))
             .ToList(),
         o.DeliveryHour,
-        overbooked.Contains(o.Id));
+        overbooked.Contains(o.Id),
+        o.PaidByDriver,
+        DeliveryReport(o));
+
+    private static DeliveryReportDto? DeliveryReport(Order o) =>
+        o.DeliveryOutcome is null && o.DeliveryProofUrl is null
+            ? null
+            : new DeliveryReportDto(o.DeliveryOutcome, o.DeliveryReportedAt, o.DeliveryNote, o.DeliveryProofUrl);
 }

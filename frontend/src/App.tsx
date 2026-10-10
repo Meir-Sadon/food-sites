@@ -16,6 +16,8 @@ import { SettingsPage } from './admin/settings/SettingsPage'
 import { ClientLayout } from './components/ClientLayout'
 import { RequireFeature } from './components/RequireFeature'
 import { ToastProvider } from './components/ToastProvider'
+import { DriverPage, DriverStops } from './driver/DriverPage'
+import { DriverStopPage } from './driver/DriverStopPage'
 import { AboutPage } from './pages/AboutPage'
 import { LoginPage } from './pages/LoginPage'
 import { OrderPage } from './pages/OrderPage'
@@ -48,6 +50,12 @@ export function App() {
           />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="about" element={<AboutPage />} />
+        </Route>
+
+        {/* The driver's page behind the link from the driver's report: the link is its only key. */}
+        <Route path="d/:token" element={<DriverPage />}>
+          <Route index element={<DriverStops />} />
+          <Route path=":orderId" element={<DriverStopPage />} />
         </Route>
 
         {/* Admin area: not linked from the client site. */}

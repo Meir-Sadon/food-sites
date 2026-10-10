@@ -1,4 +1,5 @@
 import { apiJson, apiUrl, send } from './client'
+import type { DeliveryOutcome } from './driver'
 import type { Fulfillment, Payment } from './site'
 
 export type OrderStatus = 'New' | 'Confirmed' | 'Ready' | 'Delivered' | 'Cancelled'
@@ -50,6 +51,17 @@ export interface AdminOrder {
   deliveryHour: string | null
   /** The order came after its hour was already full: call the client to move it. */
   hourFull: boolean
+  /** The payment was recorded by the driver through the driver's link. */
+  paidByDriver?: boolean
+  /** What the driver reported; a photo can come before the report. */
+  delivery?: DeliveryReport | null
+}
+
+export interface DeliveryReport {
+  outcome: DeliveryOutcome | null
+  reportedAt: string | null
+  note: string | null
+  proofUrl: string | null
 }
 
 export interface AdminOrderInput {
