@@ -24,6 +24,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         int Id,
         string Name,
         int CategoryId,
+        int DisplayOrder,
         string? Description,
         string? AllergenInfo,
         SellBy SellBy,
@@ -73,10 +74,16 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
 
     public record SoldOutInput(bool IsSoldOut);
 
+    /// <summary>The category's dishes (the ones not removed), in the order the admin wants them shown.</summary>
+    public record DishOrderInput(int CategoryId, List<int>? DishIds);
+
+    /// <summary>The dish's images in the order the admin wants them shown; the first is the main image.</summary>
+    public record ImageOrderInput(List<int>? ImageIds);
+
     /// <summary>Every dish, removed ones included (IsHidden), for the admin lists.</summary>
     [HttpGet]
     public async Task<IEnumerable<DishDto>> GetAll() =>
-        (await WithDetails().OrderBy(d => d.Name).ToListAsync()).Select(ToDto);
+        (await WithDetails().OrderBy(d => d.CategoryId).ThenBy(d => d.DisplayOrder).ThenBy(d => d.Id).ToListAsync()).Select(ToDto);
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<DishDto>> Get(int id) =>
@@ -90,6 +97,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             return invalid;
 
         Apply(input, dish);
+        dish.DisplayOrder = await NextOrderAsync(input.CategoryId);
         db.Dishes.Add(dish);
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = dish.Id }, ToDto(await LoadAsync(dish.Id)));
@@ -104,6 +112,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         if (await Validate(input, dish) is { } invalid)
             return invalid;
 
+        // A dish moved to another category goes last there.
+        if (dish.CategoryId != input.CategoryId)
+            dish.DisplayOrder = await NextOrderAsync(input.CategoryId);
         Apply(input, dish);
         await db.SaveChangesAsync();
         return ToDto(await LoadAsync(id));
@@ -155,6 +166,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             return NotFound();
 
         dish.IsHidden = false;
+        dish.DisplayOrder = await NextOrderAsync(dish.CategoryId);
         if (dish.Category is { IsHidden: true } category)
         {
             category.IsHidden = false;
@@ -162,6 +174,27 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         }
         await db.SaveChangesAsync();
         return ToDto(await LoadAsync(id));
+    }
+
+    /// <summary>
+    /// Sets the order of a category's dishes on the site. The list must name exactly the category's dishes that are
+    /// not removed, or it answers 409 listChanged (another tab changed them). Removed dishes go after them, keeping their order.
+    /// </summary>
+    [HttpPut("order")]
+    public async Task<ActionResult<IEnumerable<DishDto>>> Reorder(DishOrderInput input)
+    {
+        var inCategory = await db.Dishes.Where(d => d.CategoryId == input.CategoryId)
+            .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Id).ToListAsync();
+        var visible = inCategory.Where(d => !d.IsHidden).ToList();
+        if (!SameIds(visible.Select(d => d.Id), input.DishIds))
+            return Conflict("listChanged");
+
+        var ordered = input.DishIds!.Select(id => visible.Single(d => d.Id == id))
+            .Concat(inCategory.Where(d => d.IsHidden)).ToList();
+        Renumber(ordered, (d, n) => d.DisplayOrder = n);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        return Ok(await GetAll());
     }
 
     [HttpPost("{id:int}/images")]
@@ -211,18 +244,23 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         return ToDto(await LoadAsync(id));
     }
 
-    [HttpPost("{id:int}/images/{imageId:int}/move")]
-    public async Task<ActionResult<DishDto>> MoveImage(int id, int imageId, MoveRequest request)
+    /// <summary>Sets the order of the dish's images (all of them, or 409 listChanged); the first one is the dish's main image.</summary>
+    [HttpPut("{id:int}/images/order")]
+    public async Task<ActionResult<DishDto>> ReorderImages(int id, ImageOrderInput input)
     {
-        var ordered = await db.DishImages.Where(i => i.DishId == id).OrderBy(i => i.DisplayOrder).ToListAsync();
-        var image = ordered.SingleOrDefault(i => i.Id == imageId);
-        if (image is null)
+        if (!await db.Dishes.AnyAsync(d => d.Id == id))
             return NotFound();
+        var images = await db.DishImages.Where(i => i.DishId == id).ToListAsync();
+        if (!SameIds(images.Select(i => i.Id), input.ImageIds))
+            return Conflict("listChanged");
 
-        if (Ordering.Move(ordered, image, request.Direction, (i, n) => i.DisplayOrder = n))
-            await db.SaveChangesAsync();
+        Renumber(input.ImageIds!.Select(imageId => images.Single(i => i.Id == imageId)).ToList(), (i, n) => i.DisplayOrder = n);
+        await db.SaveChangesAsync();
         return ToDto(await LoadAsync(id));
     }
+
+    private async Task<int> NextOrderAsync(int categoryId) =>
+        (await db.Dishes.Where(d => d.CategoryId == categoryId).MaxAsync(d => (int?)d.DisplayOrder) ?? -1) + 1;
 
     private async Task<ActionResult?> Validate(DishInput input, Dish dish)
     {
@@ -376,7 +414,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     }
 
     private static DishDto ToDto(Dish d) => new(
-        d.Id, d.Name, d.CategoryId, d.Description, d.AllergenInfo, d.SellBy, d.ChoiceMode,
+        d.Id, d.Name, d.CategoryId, d.DisplayOrder, d.Description, d.AllergenInfo, d.SellBy, d.ChoiceMode,
         d.MinAmount, d.MaxAmount, d.AmountStep, d.UnitPrice, d.IsAddOnOnly, d.IsSoldOut, d.IsHidden,
         d.Options.OrderBy(o => o.Id).Select(o => new OptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
         d.Images.OrderBy(i => i.DisplayOrder).Select(i => new ImageDto(i.Id, i.Url, i.DisplayOrder)).ToList(),
