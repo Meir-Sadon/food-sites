@@ -23,8 +23,13 @@ services:
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
       - key: ConnectionStrings__Default
         sync: false
-      # Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
+      # The site owner's first password. Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
       - key: Admin__PasswordHash
+        sync: false
+      # The master admin: the same two values on every service (see docs/DEPLOY.md, "Master admin")
+      - key: Admin__MasterUsername
+        sync: false
+      - key: Admin__MasterPasswordHash
         sync: false
       # cloudinary://<api_key>:<api_secret>@<cloud_name>; empty disables picture uploads
       - key: Cloudinary__Url
@@ -63,8 +68,13 @@ services:
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
       - key: ConnectionStrings__Default
         sync: false
-      # Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
+      # The site owner's first password. Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
       - key: Admin__PasswordHash
+        sync: false
+      # The master admin: the same two values on every service (see docs/DEPLOY.md, "Master admin")
+      - key: Admin__MasterUsername
+        sync: false
+      - key: Admin__MasterPasswordHash
         sync: false
       # cloudinary://<api_key>:<api_secret>@<cloud_name>; empty disables picture uploads
       - key: Cloudinary__Url
@@ -103,8 +113,13 @@ services:
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
       - key: ConnectionStrings__Default
         sync: false
-      # Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
+      # The site owner's first password. Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
       - key: Admin__PasswordHash
+        sync: false
+      # The master admin: the same two values on every service (see docs/DEPLOY.md, "Master admin")
+      - key: Admin__MasterUsername
+        sync: false
+      - key: Admin__MasterPasswordHash
         sync: false
       # cloudinary://<api_key>:<api_secret>@<cloud_name>; empty disables picture uploads
       - key: Cloudinary__Url
@@ -140,8 +155,13 @@ services:
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
       - key: ConnectionStrings__Default
         sync: false
-      # Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
+      # The site owner's first password. Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
       - key: Admin__PasswordHash
+        sync: false
+      # The master admin: the same two values on every service (see docs/DEPLOY.md, "Master admin")
+      - key: Admin__MasterUsername
+        sync: false
+      - key: Admin__MasterPasswordHash
         sync: false
       # cloudinary://<api_key>:<api_secret>@<cloud_name>; empty disables picture uploads
       - key: Cloudinary__Url
@@ -177,8 +197,13 @@ services:
       # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
       - key: ConnectionStrings__Default
         sync: false
-      # Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
+      # The site owner's first password. Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
       - key: Admin__PasswordHash
+        sync: false
+      # The master admin: the same two values on every service (see docs/DEPLOY.md, "Master admin")
+      - key: Admin__MasterUsername
+        sync: false
+      - key: Admin__MasterPasswordHash
         sync: false
       # cloudinary://<api_key>:<api_secret>@<cloud_name>; empty disables picture uploads
       - key: Cloudinary__Url

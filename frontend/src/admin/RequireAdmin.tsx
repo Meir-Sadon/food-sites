@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { isAdminLoggedIn } from '../api/admin'
+import { getAdminSession, type AdminSession } from '../api/admin'
+import { AdminSessionContext } from './session'
 
-type State = 'checking' | 'in' | 'out'
+type State = 'checking' | 'out' | AdminSession
 
 /** Renders its children only for a logged-in admin; otherwise sends them to the admin login. */
 export function RequireAdmin({ children }: { children: ReactNode }) {
@@ -12,8 +13,8 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true
-    isAdminLoggedIn()
-      .then((loggedIn) => active && setState(loggedIn ? 'in' : 'out'))
+    getAdminSession()
+      .then((session) => active && setState(session ?? 'out'))
       .catch(() => active && setState('out'))
     return () => {
       active = false
@@ -22,5 +23,5 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
 
   if (state === 'checking') return <p role="status">{t('admin.loading')}</p>
   if (state === 'out') return <Navigate to="/admin/login" replace />
-  return children
+  return <AdminSessionContext.Provider value={state}>{children}</AdminSessionContext.Provider>
 }

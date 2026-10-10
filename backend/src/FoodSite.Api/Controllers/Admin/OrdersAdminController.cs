@@ -155,18 +155,25 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     {
         if (!Enum.IsDefined(input.Status))
             return Invalid(nameof(input.Status), "invalid");
-        var updated = await db.Orders.Where(o => o.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, input.Status));
-        return updated == 0 ? NotFound() : NoContent();
+        // Orders are loaded rather than updated in place, so each change reaches the audit trail.
+        var order = await db.Orders.FindAsync(id);
+        if (order is null)
+            return NotFound();
+        order.Status = input.Status;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>The admin accepts an order that was flagged for review: from now on it takes its quantities.</summary>
     [HttpPut("{id:int}/approve")]
     public async Task<ActionResult> Approve(int id)
     {
-        var updated = await db.Orders.Where(o => o.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.NeedsReview, false));
-        return updated == 0 ? NotFound() : NoContent();
+        var order = await db.Orders.FindAsync(id);
+        if (order is null)
+            return NotFound();
+        order.NeedsReview = false;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     [HttpPut("{id:int}/paid")]
@@ -187,12 +194,14 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         // Unpaid clears how it was paid, so the two never disagree.
         var paidWith = input.IsPaid ? input.PaidWith : null;
         var comment = input.IsPaid ? Clean(input.PaymentComment) : null;
-        var updated = await db.Orders.Where(o => o.Id == id)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(o => o.IsPaid, input.IsPaid)
-                .SetProperty(o => o.PaidWith, paidWith)
-                .SetProperty(o => o.PaymentComment, comment));
-        return updated == 0 ? NotFound() : NoContent();
+        var order = await db.Orders.FindAsync(id);
+        if (order is null)
+            return NotFound();
+        order.IsPaid = input.IsPaid;
+        order.PaidWith = paidWith;
+        order.PaymentComment = comment;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>

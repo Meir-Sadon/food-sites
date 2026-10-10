@@ -14,7 +14,11 @@ namespace FoodSite.Api.Tests;
 
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
+    /// <summary>The site owner's password; the owner's user name is the default, <see cref="OwnerUsername"/>.</summary>
     public const string AdminPassword = "correct-horse-battery";
+    public const string OwnerUsername = "admin";
+    public const string MasterUsername = "master";
+    public const string MasterPassword = "master-staple-lantern";
     public const string JwtSecret = "test-secret-test-secret-test-secret-123";
     public const string SiteId = "test-site";
     public const string SiteName = "המטבח של הבדיקות";
@@ -31,6 +35,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["ConnectionStrings:Default"] = _connectionString,
             ["Jwt:Secret"] = JwtSecret,
             ["Admin:PasswordHash"] = AdminPasswordHasher.Hash(AdminPassword),
+            ["Admin:MasterPasswordHash"] = AdminPasswordHasher.Hash(MasterPassword),
             ["Admin:LoginAttemptsPerMinute"] = "1000",
             ["Public:RequestsPerMinute"] = "1000",
             ["Database:MigrateOnStartup"] = "true",
@@ -72,11 +77,16 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         return client;
     }
 
-    /// <summary>A client logged in as the admin.</summary>
-    public async Task<HttpClient> CreateAdminClientAsync()
+    /// <summary>A client logged in as the site owner.</summary>
+    public Task<HttpClient> CreateAdminClientAsync() => CreateAdminClientAsync(OwnerUsername, AdminPassword);
+
+    /// <summary>A client logged in as the master admin.</summary>
+    public Task<HttpClient> CreateMasterClientAsync() => CreateAdminClientAsync(MasterUsername, MasterPassword);
+
+    private async Task<HttpClient> CreateAdminClientAsync(string username, string password)
     {
         var client = CreateApiClient();
-        var login = await client.PostAsJsonAsync("/api/admin/login", new { password = AdminPassword });
+        var login = await client.PostAsJsonAsync("/api/admin/login", new { username, password });
         login.EnsureSuccessStatusCode();
         var cookie = login.Headers.GetValues("Set-Cookie").Single().Split(';')[0];
         client.DefaultRequestHeaders.Add("Cookie", cookie);
