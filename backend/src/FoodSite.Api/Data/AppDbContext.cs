@@ -95,6 +95,7 @@ public class AppDbContext(
         {
             e.Property(s => s.Id).ValueGeneratedNever();
             e.Property(s => s.MinimumOrderAmount).HasPrecision(10, 2);
+            e.Property(s => s.SiteStyle).HasMaxLength(Sites.SiteStyles.MaxLength);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
         });
 

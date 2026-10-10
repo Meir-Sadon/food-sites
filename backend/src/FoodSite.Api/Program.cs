@@ -38,6 +38,9 @@ if (!SiteOptions.IsValidId(site.Id))
 if (site.Features.Keys.FirstOrDefault(name => !Features.IsKnown(name)) is { } unknownFeature)
     throw new InvalidOperationException(
         $"Site:Features:{unknownFeature} is not a feature. Known features: {string.Join(", ", Features.All)}.");
+if (site.Settings.Style is { } style && !SiteStyles.IsKnown(style))
+    throw new InvalidOperationException(
+        $"Site:Settings:Style {style} is not a style. Known styles: {string.Join(", ", SiteStyles.All)}.");
 builder.Services.Configure<SiteOptions>(config.GetSection(SiteOptions.Section));
 builder.Services.AddScoped<FeatureFlags>();
 // Cookie names, the JWT issuer and the WhatsApp template names are built from the site id unless configured.

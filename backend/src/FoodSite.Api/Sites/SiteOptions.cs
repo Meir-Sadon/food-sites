@@ -76,6 +76,12 @@ public class SiteSettingsDefaults
 
     /// <summary>An absolute URL, or a path served from the site root (the site's <c>public/</c> folder).</summary>
     public string? BackgroundImageUrl { get; set; }
+
+    /// <summary>
+    /// The site's default look, one of <see cref="SiteStyles.All"/>. Unlike the other defaults it is not copied
+    /// into Settings: it applies until the admin picks a style.
+    /// </summary>
+    public string? Style { get; set; }
 }
 
 public class SiteWhatsAppTemplates

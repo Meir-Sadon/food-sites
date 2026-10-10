@@ -30,7 +30,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool MinimumOrderAppliesToPickup,
         string ServiceCities,
         int? OrdersPerHour,
-        int? PortionsPerSupplyDate);
+        int? PortionsPerSupplyDate,
+        string Style);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -43,7 +44,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? ServiceCities = null,
         bool? MinimumOrderAppliesToPickup = null,
         int? OrdersPerHour = null,
-        int? PortionsPerSupplyDate = null);
+        int? PortionsPerSupplyDate = null,
+        string? Style = null);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -69,6 +71,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         if (serviceCities.Length > ServiceArea.MaxLength
             || ServiceArea.Parse(serviceCities).Any(c => c.Length > AddressFormat.PartMaxLength))
             errors.Add(nameof(input.ServiceCities), "tooLong");
+        if (input.Style is not null && !SiteStyles.IsKnown(input.Style))
+            errors.Add(nameof(input.Style), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -90,6 +94,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Missing (an older client) keeps the cities; an empty list is kept as "", meaning every city is served.
         if (input.ServiceCities is not null)
             settings.ServiceCities = serviceCities;
+        // Missing (an older client) keeps the style.
+        if (input.Style is not null)
+            settings.SiteStyle = input.Style;
         await db.SaveChangesAsync();
         return ToDto(settings);
     }
@@ -138,10 +145,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         return ToDto(settings);
     }
 
-    private static SettingsDto ToDto(Data.Entities.Settings s) => new(
+    private SettingsDto ToDto(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
-        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate);
+        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate,
+        SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style));
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]
