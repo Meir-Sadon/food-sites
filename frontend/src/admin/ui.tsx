@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useState, type HTMLAttributes, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../api/client'
 
@@ -111,6 +111,16 @@ export function MoveButtons({
       <button type="button" className="button-icon" disabled={last} aria-label={t('admin.moveDown', { name })} onClick={() => onMove('Down')}>
         ▼
       </button>
+    </span>
+  )
+}
+
+/** Grip to drag a row to a new place (see `useDragSort`); keyboard and screen-reader users have the move buttons. */
+export function DragHandle(props: HTMLAttributes<HTMLSpanElement>) {
+  const { t } = useTranslation()
+  return (
+    <span className="drag-handle" aria-hidden="true" title={t('admin.dragToMove')} {...props}>
+      ⠿
     </span>
   )
 }

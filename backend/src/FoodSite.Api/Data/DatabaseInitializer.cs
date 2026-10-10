@@ -57,6 +57,9 @@ public static class DatabaseInitializer
             var existing = category.Id == 0
                 ? []
                 : await db.Dishes.Where(d => d.CategoryId == category.Id).Select(d => d.Name).ToListAsync();
+            var nextDishOrder = category.Id == 0
+                ? 0
+                : (await db.Dishes.Where(d => d.CategoryId == category.Id).MaxAsync(d => (int?)d.DisplayOrder) ?? -1) + 1;
 
             var added = 0;
             foreach (var dish in seedCategory.Dishes.Where(d => !existing.Contains(d.Name)))
@@ -64,6 +67,7 @@ public static class DatabaseInitializer
                 var entity = new Entities.Dish
                 {
                     Name = dish.Name,
+                    DisplayOrder = nextDishOrder++,
                     Description = dish.Description,
                     SellBy = dish.SellBy,
                     ChoiceMode = Entities.ChoiceMode.Free,

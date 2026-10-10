@@ -93,6 +93,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
 
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsAddOnOnly")
                         .HasColumnType("boolean");
 

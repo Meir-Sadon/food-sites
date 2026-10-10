@@ -71,6 +71,8 @@ export interface Dish {
   id: number
   name: string
   categoryId: number
+  /** Position within its category; the menu shows dishes in this order. */
+  displayOrder: number
   description: string | null
   allergenInfo: string | null
   sellBy: SellBy
@@ -171,6 +173,10 @@ export const dishesApi = {
   restore: (id: number) => apiJson<Dish>(`${admin}/dishes/${id}/restore`, send('POST')),
   addImage: (id: number, file: File) => apiJson<Dish>(`${admin}/dishes/${id}/images`, upload(file)),
   removeImage: (id: number, imageId: number) => apiJson<Dish>(`${admin}/dishes/${id}/images/${imageId}`, send('DELETE')),
-  moveImage: (id: number, imageId: number, direction: Direction) =>
-    apiJson<Dish>(`${admin}/dishes/${id}/images/${imageId}/move`, send('POST', { direction })),
+  /** Sets the order of a category's dishes (all that are not removed); answers every dish. */
+  reorder: (categoryId: number, dishIds: number[]) =>
+    apiJson<Dish[]>(`${admin}/dishes/order`, send('PUT', { categoryId, dishIds })),
+  /** Sets the order of all the dish's images; the first is its main image. */
+  reorderImages: (id: number, imageIds: number[]) =>
+    apiJson<Dish>(`${admin}/dishes/${id}/images/order`, send('PUT', { imageIds })),
 }
