@@ -13,6 +13,8 @@ Every business gets **its own deployment**: its own server, database, admin pass
 
 ## Features
 
+**[Bilingual feature guide with screenshots](docs/food-sites-feature-guide.html)** — download the HTML and open it in a browser (Hebrew/RTL by default; English is available). GitHub displays HTML source rather than executing it. See [maintenance and review status](docs/FEATURE-GUIDE.md).
+
 **Client site**
 - Order page with dishes grouped by category, weight/unit options and add-ons
 - Order total always visible, supply-day picker, delivery or pickup
