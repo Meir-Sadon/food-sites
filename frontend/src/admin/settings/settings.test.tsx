@@ -20,6 +20,31 @@ async function section(name: string) {
   return region
 }
 
+describe('Site style', () => {
+  it('saves the picked style with the other settings as saved now', async () => {
+    let saved = settings({ kashrutText: 'נשמר בינתיים' })
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    expect(within(form).getByRole('radio', { name: /קלאסי/ })).toBeChecked()
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    expect(save).toBeDisabled()
+    await user.click(within(form).getByRole('radio', { name: /דוכן רחוב/ }))
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'street', kashrutText: 'נשמר בינתיים', deliveryEnabled: true })
+    expect(within(form).getByRole('radio', { name: /דוכן רחוב/ })).toBeChecked()
+    expect(save).toBeDisabled()
+  })
+})
+
 describe('General settings', () => {
   it('saves delivery, kashrut and payment details', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })

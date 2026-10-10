@@ -15,6 +15,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   serviceCities: 'אשקלון',
   ordersPerHour: null,
   portionsPerSupplyDate: null,
+  style: 'classic',
   ...patch,
 })
 
@@ -71,6 +72,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   whatsAppPhones: [],
   serviceCities: ['אשקלון'],
   features: ['recommendations', 'favorites'],
+  style: 'classic',
   ...patch,
 })
 

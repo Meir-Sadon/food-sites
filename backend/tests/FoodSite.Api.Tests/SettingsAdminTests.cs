@@ -77,6 +77,35 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
         Assert.Null((await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).DeliveryFeeText);
     }
 
+    private static object StyleInput(string? style) =>
+        new { deliveryEnabled = true, pickupEnabled = true, style };
+
+    [Fact]
+    public async Task The_admin_picks_the_site_style()
+    {
+        var client = _factory.CreateApiClient();
+        Assert.Equal("classic", (await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).Style);
+        Assert.Equal("classic", (await client.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).Style);
+
+        Assert.Equal("street", (await (await _admin.PutAsJsonAsync("/api/admin/settings", StyleInput("street"))).Read<SettingsDto>()).Style);
+        Assert.Equal("street", (await client.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).Style);
+
+        // Left out by an older client: unchanged.
+        Assert.Equal("street", (await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>()).Style);
+        await (await _admin.PutAsJsonAsync("/api/admin/settings", StyleInput("neon"))).AssertInvalid("Style", "invalid");
+    }
+
+    [Fact]
+    public async Task The_site_default_style_applies_until_the_admin_picks_one()
+    {
+        using var factory = new ApiFactory(postgres, new() { ["Site:Settings:Style"] = "street" });
+        var admin = await factory.CreateAdminClientAsync();
+        Assert.Equal("street", (await factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).Style);
+
+        (await admin.PutAsJsonAsync("/api/admin/settings", StyleInput("classic"))).EnsureSuccessStatusCode();
+        Assert.Equal("classic", (await factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).Style);
+    }
+
     [Fact]
     public async Task A_service_city_longer_than_an_address_part_is_rejected()
     {

@@ -28,7 +28,8 @@ export function GeneralSection() {
     setSaving(true)
     setErrors({})
     try {
-      const { backgroundImageUrl: _, ...input } = settings
+      // The style is saved by its own section; leaving it out keeps it.
+      const { backgroundImageUrl: _, style: __, ...input } = settings
       setData(await settingsApi.save(input))
       setError(null)
       toast(t('admin.saved'))
