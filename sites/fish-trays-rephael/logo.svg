@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="65%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e3eef2"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#bg)"/>
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#d9a521" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/>
+  <!-- tray -->
+  <rect x="34" y="118" width="132" height="30" rx="10" fill="#ffffff" stroke="#145a7a" stroke-width="4"/>
+  <rect x="44" y="124" width="112" height="16" rx="6" fill="#cfe3ea"/>
+  <!-- fish -->
+  <path d="M52 90 C 70 64 116 62 138 90 C 116 118 70 116 52 90 Z" fill="#1f7ea3" stroke="#0f4560" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M138 90 L 162 72 L 158 90 L 162 108 Z" fill="#1f7ea3" stroke="#0f4560" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="72" cy="86" r="4" fill="#0f2233"/>
+  <path d="M92 76 C 98 84 98 96 92 104" fill="none" stroke="#e3eef2" stroke-width="3" stroke-linecap="round"/>
+  <!-- lemon slice -->
+  <circle cx="148" cy="124" r="13" fill="#f4d35e" stroke="#d9a521" stroke-width="3"/>
+  <path d="M148 113 V135 M137 124 H159" stroke="#d9a521" stroke-width="1.5"/>
+</svg>

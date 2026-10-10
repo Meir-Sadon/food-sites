@@ -1,0 +1,29 @@
+{
+  "id": "fish-trays-rephael",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "ירושלים",
+  "emoji": "🐟",
+  "whatsApp": {
+    "orderConfirmationTemplate": "fish_trays_rephael_order_confirmation",
+    "newOrderTemplate": "fish_trays_rephael_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true
+  },
+  "settings": {
+    "contactName": "רפאל סופר",
+    "contactPhone": "058-6688148",
+    "contactAddress": "מרדכי זר 2, ירושלים",
+    "deliveryAreaText": "משלוחים בירושלים",
+    "deliveryFeeText": "משלוח בתיאום מול רפאל, או איסוף עצמי ממרדכי זר 2, ירושלים",
+    "kashrutText": "דגים בכשרות בד\"ץ בית יוסף, ירקות מהדרין גוש קטיף",
+    "backgroundImageUrl": "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791536559/fish-trays-rephael/background/background-1.jpg"
+  },
+  "seed": [
+    "seed/menu.json",
+    "../_shared/seed/drinks.json"
+  ]
+}
