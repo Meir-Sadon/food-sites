@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { isAdminLoggedIn } from '../api/admin'
+import { excludeThisDevice } from '../usage/track'
 
 type State = 'checking' | 'in' | 'out'
 
@@ -13,7 +14,11 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true
     isAdminLoggedIn()
-      .then((loggedIn) => active && setState(loggedIn ? 'in' : 'out'))
+      .then((loggedIn) => {
+        // The owner's own visits to the site would swell the usage report.
+        if (loggedIn) excludeThisDevice()
+        if (active) setState(loggedIn ? 'in' : 'out')
+      })
       .catch(() => active && setState('out'))
     return () => {
       active = false

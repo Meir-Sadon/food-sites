@@ -13,6 +13,7 @@ const tabs: { to: string; key: string; feature?: Feature }[] = [
   { to: '/admin/dishes', key: 'admin.nav.dishes' },
   { to: '/admin/contacts', key: 'admin.nav.contacts' },
   { to: '/admin/reports', key: 'admin.nav.reports' },
+  { to: '/admin/usage', key: 'admin.nav.usage' },
 ]
 
 export function AdminLayout() {

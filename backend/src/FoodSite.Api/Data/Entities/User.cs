@@ -15,6 +15,9 @@ public class User
     public DateOnly? Birthday { get; set; }
     public string? EthnicBackground { get; set; }
 
+    /// <summary>When the client registered. Empty for accounts made before it was recorded.</summary>
+    public DateTimeOffset? CreatedAt { get; set; }
+
     public List<Order> Orders { get; set; } = [];
     public List<FavoriteOrder> FavoriteOrders { get; set; } = [];
     public List<Recommendation> Recommendations { get; set; } = [];

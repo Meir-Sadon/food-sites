@@ -117,7 +117,7 @@ public class AccountController(
         if (await db.Users.AnyAsync(u => u.Phone == phone, ct))
             return Conflict("phoneTaken");
 
-        var user = new User { Phone = phone!, FullName = "", Address = "" };
+        var user = new User { Phone = phone!, FullName = "", Address = "", CreatedAt = time.GetUtcNow() };
         Apply(user, input);
         db.Users.Add(user);
         try

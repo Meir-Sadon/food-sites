@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet } from 'react-router'
 import { AccountProvider } from '../account/AccountContext'
 import { Footer } from './Footer'
@@ -7,6 +8,7 @@ import { ScrollButtons } from './ScrollButtons'
 import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
 import { useSite } from '../site/useSite'
+import { trackUsage } from '../usage/track'
 
 function Shell() {
   const background = useSite()?.backgroundImageUrl
@@ -26,6 +28,7 @@ function Shell() {
 }
 
 export function ClientLayout() {
+  useEffect(() => trackUsage('Visit'), [])
   return (
     <SiteProvider>
       <AccountProvider>

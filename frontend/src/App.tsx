@@ -12,6 +12,7 @@ import { ReportsPage } from './admin/reports/ReportsPage'
 import { ReviewsPage } from './admin/reviews/ReviewsPage'
 import { RoutePage } from './admin/route/RoutePage'
 import { SettingsPage } from './admin/settings/SettingsPage'
+import { UsagePage } from './admin/usage/UsagePage'
 import { ClientLayout } from './components/ClientLayout'
 import { RequireFeature } from './components/RequireFeature'
 import { ToastProvider } from './components/ToastProvider'
@@ -69,6 +70,7 @@ export function App() {
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/route" element={<RoutePage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="usage" element={<UsagePage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route
             path="reviews"

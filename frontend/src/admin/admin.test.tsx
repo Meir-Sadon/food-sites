@@ -80,7 +80,7 @@ describe('admin login', () => {
 })
 
 describe('admin layout', () => {
-  it('has tabs for orders, messages, reviews, settings, categories, dishes, contacts, reports and a link home', async () => {
+  it('has tabs for orders, messages, reviews, settings, categories, dishes, contacts, reports, site usage and a link home', async () => {
     fakeApi({ 'GET /api/admin/me': () => ({}), ...settingsRoutes })
     renderAt('/admin')
 
@@ -94,6 +94,7 @@ describe('admin layout', () => {
       'מנות',
       'אנשי קשר',
       'דוחות',
+      'שימוש באתר',
       'לדף הבית',
     ])
     expect(await within(nav).findByRole('link', { current: 'page' })).toHaveTextContent('הגדרות כלליות')

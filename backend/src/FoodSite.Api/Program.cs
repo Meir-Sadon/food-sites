@@ -7,6 +7,7 @@ using FoodSite.Api.Images;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Sites;
+using FoodSite.Api.Usage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,11 @@ builder.Services.Configure<AccountOptions>(config.GetSection(AccountOptions.Sect
 builder.Services.AddSingleton<AdminTokenService>();
 builder.Services.AddSingleton<UserTokenService>();
 builder.Services.AddSingleton<SiteClock>();
+// Site usage (visits, started and sent orders): per-device events pruned after Usage:RawEventDays.
+builder.Services.Configure<UsageOptions>(config.GetSection(UsageOptions.Section));
+builder.Services.AddScoped<UsageRecorder>();
+builder.Services.AddScoped<UsageRetention>();
+builder.Services.AddHostedService<UsageRetentionService>();
 // Messages go out through the WhatsApp Cloud API once WhatsApp__PhoneNumberId and WhatsApp__Token are
 // set (after Meta approves the templates); until then they are only written to the log.
 builder.Services.Configure<WhatsAppOptions>(config.GetSection(WhatsAppOptions.Section));
@@ -132,6 +138,15 @@ builder.Services.AddRateLimiter(options =>
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = publicLimit,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+    // Usage reports: a few per page, so a looser limit that never eats into the one for orders.
+    options.AddPolicy(PublicControllerBase.UsageRateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = publicLimit * 4,
                 Window = TimeSpan.FromMinutes(1),
             }));
     options.AddPolicy(AdminAuthController.LoginRateLimitPolicy, context =>

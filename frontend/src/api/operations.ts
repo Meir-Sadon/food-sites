@@ -127,3 +127,54 @@ export const reportsApi = {
   get: (filter: ReportFilter) => apiJson<Report>(`/api/admin/reports${queryString(filter)}`),
   exportUrl: (filter: ReportFilter) => apiUrl(`/api/admin/reports/export${queryString(filter)}`),
 }
+
+// ---------- Site usage ----------
+
+export interface UsageFunnel {
+  /** Devices that opened the site. */
+  visitors: number
+  /** Of them, devices seen for the first time in the range. */
+  newVisitors: number
+  started: number
+  submitted: number
+}
+
+export interface UsageDay {
+  day: string
+  visitors: number
+  started: number
+  submitted: number
+  orders: number
+}
+
+export interface UsageOrders {
+  orders: number
+  sales: number
+  averageOrder: number
+  customers: number
+  /** Customers in the range who have ordered more than once. */
+  returningCustomers: number
+  newCustomerOrders: number
+  returningCustomerOrders: number
+}
+
+export interface UsageReport {
+  from: string
+  to: string
+  /** The range reaches days whose per-device events were pruned: a device seen on several of them counts more than once. */
+  approximate: boolean
+  keptSince: string
+  totalDevices: number
+  funnel: UsageFunnel
+  registered: { total: number; new: number }
+  orders: UsageOrders
+  days: UsageDay[]
+  /** Sunday first. */
+  ordersByWeekday: number[]
+  ordersByHour: number[]
+  topDishes: { dishName: string; quantity: number; sales: number }[]
+}
+
+export const usageApi = {
+  get: (from: string, to: string) => apiJson<UsageReport>(`/api/admin/usage${queryString({ from, to })}`),
+}
