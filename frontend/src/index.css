@@ -2103,6 +2103,191 @@ label {
   font-weight: 600;
 }
 
+/* The driver's page (/d/<token>): a phone in one hand, so one column and big tap targets. */
+.driver-page {
+  max-inline-size: 36rem;
+  margin-inline: auto;
+  padding: 1rem;
+  min-block-size: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.driver-page__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.driver-page__header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.driver-page__logo {
+  inline-size: 3rem;
+  block-size: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.driver-progress,
+.driver-card {
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.driver-progress p,
+.driver-card p {
+  margin: 0.25rem 0;
+}
+
+.driver-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.driver-progress__count {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.driver-progress progress {
+  inline-size: 100%;
+  block-size: 0.75rem;
+  accent-color: var(--color-accent);
+}
+
+.driver-progress__done {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.driver-stop--next {
+  border: 2px solid var(--color-accent);
+}
+
+.driver-stop--done {
+  opacity: 0.75;
+}
+
+.driver-badge {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.driver-badge--ok {
+  color: var(--color-success);
+}
+
+.driver-badge--warn,
+.driver-badge--off {
+  color: var(--color-error);
+}
+
+.driver-actions > * {
+  flex: 1 1 auto;
+}
+
+.driver-card__address {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.driver-card__phone {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.driver-card__notes {
+  margin: 0;
+}
+
+.driver-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.driver-choice legend {
+  margin-block-end: 0.5rem;
+  font-weight: 600;
+}
+
+.driver-choice__option {
+  display: inline-flex;
+  flex: 1 1 8rem;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 3rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.driver-choice__option:has(input:checked) {
+  border-color: var(--color-accent);
+  background: var(--color-soft);
+  font-weight: 600;
+}
+
+.driver-choice__option--Delivered:has(input:checked) {
+  border-color: var(--color-success);
+}
+
+.driver-choice__option--NotDelivered:has(input:checked) {
+  border-color: var(--color-error);
+}
+
+.driver-choice .field {
+  flex-basis: 100%;
+}
+
+.driver-quick-notes .button-quiet {
+  min-block-size: 2.25rem;
+  font-size: 0.875rem;
+}
+
+.driver-report__title {
+  font-weight: 700;
+}
+
+.driver-report--ok .driver-report__title {
+  color: var(--color-success);
+}
+
+.driver-report--warn .driver-report__title {
+  color: var(--color-error);
+}
+
+.driver-proof {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 20rem;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+
+.driver-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.order-delivery__proof {
+  inline-size: 6rem;
+  block-size: 6rem;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
 @media print {
   .route-stop {
     break-inside: avoid;

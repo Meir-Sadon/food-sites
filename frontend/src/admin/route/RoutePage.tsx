@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
+import { driverLinksApi, driverUrl, type DriverLink } from '../../api/driver'
 import { ordersAdminApi, type AdminOrder } from '../../api/operations'
 import { contactsApi } from '../../api/site'
 import { formatMoney } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { useLoad } from '../hooks'
 import { Loading, MoveButtons } from '../ui'
+import { DriverLinks } from './DriverLinks'
 import {
   defaultEstimate,
   formatMinutes,
@@ -50,6 +52,8 @@ export function RoutePage() {
   const [start, setStart] = useState('')
   // The driving order once the admin moved a stop; null follows the suggested order.
   const [manual, setManual] = useState<number[] | null>(null)
+  // The day's driver links, newest first, kept with their date like the orders.
+  const [links, setLinks] = useState<{ date: string; links: DriverLink[] } | null>(null)
 
   useEffect(() => {
     let current = true
@@ -61,6 +65,10 @@ export function RoutePage() {
         setFailed(false)
       })
       .catch(() => current && setFailed(true))
+    driverLinksApi
+      .list(date)
+      .then((result) => current && setLinks({ date, links: result }))
+      .catch(() => current && setLinks({ date, links: [] }))
     return () => {
       current = false
     }
@@ -77,6 +85,9 @@ export function RoutePage() {
   }, [manual, suggested, chosen])
   const stops = schedule(route, kitchen, estimate, start ? toMinutes(start) : null)
   const apartmentPrefix = t('address.apartmentShort', { apartment: '' }).trim()
+  const dayLinks = links?.date === date ? links.links : []
+  // The message to the driver carries the newest link while it still has this route's stops.
+  const sharedLink = dayLinks[0]?.orderIds.join(',') === stops.map((s) => s.order.id).join(',') ? dayLinks[0] : undefined
 
   function changeDate(value: string) {
     if (!value) return
@@ -165,7 +176,7 @@ export function RoutePage() {
               {t('admin.route.print')}
             </button>
             {stops.length > 0 && (
-              <a className="button-quiet" href={shareUrl(stops, date, apartmentPrefix, t)} target="_blank" rel="noreferrer">
+              <a className="button-quiet" href={shareUrl(stops, date, apartmentPrefix, t, sharedLink)} target="_blank" rel="noreferrer">
                 {t('admin.route.share')}
               </a>
             )}
@@ -175,6 +186,8 @@ export function RoutePage() {
               </button>
             )}
           </div>
+
+          <DriverLinks date={date} stops={stops} links={dayLinks} onChange={(next) => setLinks({ date, links: next })} />
 
           {stops.length > 0 && (
             <p className="route-summary">
@@ -227,6 +240,7 @@ function StopCard({
         <h2 className="route-stop__title">
           <span className="route-stop__number">{index + 1}</span> {name} · {order.name}
         </h2>
+        <DeliveryState order={order} />
         <span className="no-print">
           <MoveButtons name={name} first={index === 0} last={index === count - 1} onMove={onMove} />
         </span>
@@ -291,9 +305,26 @@ function StopCard({
   )
 }
 
-/** The route as one WhatsApp message the admin sends the driver: every stop with its times and Waze link. */
-function shareUrl(stops: Stop[], date: string, apartmentPrefix: string, t: TFunction) {
+/** What the driver reported for this stop, through the driver's link. */
+function DeliveryState({ order }: { order: AdminOrder }) {
+  const { t } = useTranslation()
+  const report = order.delivery
+  if (!report?.outcome || !report.reportedAt) return null
+  const time = new Date(report.reportedAt).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+  return report.outcome === 'Delivered' ? (
+    <span className="badge driver-badge driver-badge--ok">{t('admin.route.delivered', { time })}</span>
+  ) : (
+    <span className="badge driver-badge driver-badge--warn">{t('admin.route.notDelivered', { time })}</span>
+  )
+}
+
+/**
+ * The route as one WhatsApp message the admin sends the driver: every stop with its times and Waze link, and with
+ * a driver link, the link to all the stops and to each stop's page for its report.
+ */
+function shareUrl(stops: Stop[], date: string, apartmentPrefix: string, t: TFunction, link?: DriverLink) {
   const lines = [t('admin.route.titleFor', { date: formatDate(date) })]
+  if (link) lines.push(t('admin.route.linkLine', { url: driverUrl(link.token) }))
   stops.forEach((stop, index) => {
     const { order } = stop
     lines.push(
@@ -308,6 +339,7 @@ function shareUrl(stops: Stop[], date: string, apartmentPrefix: string, t: TFunc
         : t(order.paymentMethod === 'Transfer' ? 'admin.route.collectTransfer' : 'admin.route.collect', { total: formatMoney(order.total) }),
       ...(order.notes ? [`${t('admin.orders.notes')}: ${order.notes}`] : []),
       wazeUrl(navigationAddress(order.address, apartmentPrefix)),
+      ...(link ? [t('admin.route.driverPage', { url: driverUrl(link.token, order.id) })] : []),
     )
   })
   return `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`

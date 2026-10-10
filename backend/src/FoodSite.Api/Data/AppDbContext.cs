@@ -24,6 +24,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MessageTemplate> MessageTemplates => Set<MessageTemplate>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<ReviewImage> ReviewImages => Set<ReviewImage>();
+    public DbSet<DriverRoute> DriverRoutes => Set<DriverRoute>();
+    public DbSet<DriverRouteStop> DriverRouteStops => Set<DriverRouteStop>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -35,6 +37,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<PaidWith>().HaveConversion<string>();
         builder.Properties<OrderStatus>().HaveConversion<string>();
         builder.Properties<ReviewStatus>().HaveConversion<string>();
+        builder.Properties<DeliveryOutcome>().HaveConversion<string>();
 
         // Money in shekels and agorot; amounts that can be weights get grams precision.
         builder.Properties<decimal>().HavePrecision(10, 2);
@@ -114,6 +117,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         model.Entity<Order>(e =>
         {
             e.HasIndex(o => o.SupplyDate);
+            e.Property(o => o.DeliveryNote).HasMaxLength(Order.DeliveryNoteMaxLength);
             e.HasOne(o => o.User).WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
@@ -191,6 +195,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasOne(i => i.Review).WithMany(r => r.Images)
                 .HasForeignKey(i => i.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<DriverRoute>(e =>
+        {
+            e.HasIndex(r => r.Token).IsUnique();
+            e.HasIndex(r => r.SupplyDate);
+            e.Property(r => r.Token).HasMaxLength(DriverRoute.TokenLength);
+        });
+
+        model.Entity<DriverRouteStop>(e =>
+        {
+            e.HasIndex(s => new { s.DriverRouteId, s.OrderId }).IsUnique();
+            e.HasOne(s => s.DriverRoute).WithMany(r => r.Stops)
+                .HasForeignKey(s => s.DriverRouteId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(s => s.Order).WithMany()
+                .HasForeignKey(s => s.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

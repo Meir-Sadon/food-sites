@@ -50,6 +50,26 @@ describe('Admin Orders', () => {
     expect(within(card).getByRole('status')).toHaveTextContent('השעה שנבחרה כבר הייתה מלאה')
   })
 
+  it('shows what the driver reported: when, the note, the payment and the photo', async () => {
+    fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [
+        order({
+          status: 'Delivered',
+          isPaid: true,
+          paidWith: 'Cash',
+          paidByDriver: true,
+          delivery: { outcome: 'Delivered', reportedAt: '2030-01-06T10:30:00Z', note: 'הושאר אצל שכן', proofUrl: 'https://images.test/p.jpg' },
+        }),
+      ],
+    })
+    renderAt('/admin/orders')
+    const report = await screen.findByRole('group', { name: 'דיווח השליח' })
+    expect(within(report).getByText(/^השליח מסר ב־.* · הערת השליח: הושאר אצל שכן$/)).toBeInTheDocument()
+    expect(within(report).getByRole('img', { name: 'תמונה מהמסירה של הזמנה #7' })).toHaveAttribute('src', 'https://images.test/p.jpg')
+    expect(screen.getByText('שולם: מזומן · נרשם על ידי השליח')).toBeInTheDocument()
+  })
+
   it('flags an order outside the service city and lets the admin approve it', async () => {
     const api = fakeApi({
       ...adminSession,
