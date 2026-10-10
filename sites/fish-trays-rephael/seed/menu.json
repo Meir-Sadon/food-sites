@@ -4,31 +4,31 @@
       "name": "מגשי דגים",
       "dishes": [
         {
-          "name": "מגש דגים קטן",
-          "description": "מגש דגים טרי, מגיע עם שתיה.",
+          "name": "מגש סטנדרט",
+          "description": "מתאים לכ-10 איש. טונה בעישון חם וקר, סלמון בעישון חם וקר, ונקניק טונה ו/או מרגז טונה/סלמון, על מצע ירקות טריים.",
           "sellBy": "Units",
           "unitName": "מגש",
-          "unitPrice": 150,
+          "unitPrice": 380,
           "minAmount": 1,
           "maxAmount": 10,
           "amountStep": 1
         },
         {
-          "name": "מגש דגים בינוני",
-          "description": "מגש דגים טרי, מגיע עם שתיה.",
+          "name": "מגש גדול",
+          "description": "מתאים לכ-13 איש. טונה בעישון חם וקר, סלמון בעישון חם וקר, ונקניק טונה ו/או מרגז טונה/סלמון, על מצע ירקות טריים.",
           "sellBy": "Units",
           "unitName": "מגש",
-          "unitPrice": 250,
+          "unitPrice": 430,
           "minAmount": 1,
           "maxAmount": 10,
           "amountStep": 1
         },
         {
-          "name": "מגש דגים גדול",
-          "description": "מגש דגים טרי, מגיע עם שתיה.",
+          "name": "מגש ענק",
+          "description": "מתאים לכ-20 איש. טונה בעישון חם וקר, סלמון בעישון חם וקר, ונקניק טונה ו/או מרגז טונה/סלמון, על מצע ירקות טריים.",
           "sellBy": "Units",
           "unitName": "מגש",
-          "unitPrice": 350,
+          "unitPrice": 500,
           "minAmount": 1,
           "maxAmount": 10,
           "amountStep": 1
