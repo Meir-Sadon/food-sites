@@ -143,18 +143,25 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     [HttpPut("{id:int}/sold-out")]
     public async Task<ActionResult> SetSoldOut(int id, SoldOutInput input)
     {
-        var updated = await db.Dishes.Where(d => d.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(d => d.IsSoldOut, input.IsSoldOut));
-        return updated == 0 ? NotFound() : NoContent();
+        // Loaded rather than updated in place, so the change reaches the audit trail.
+        var dish = await db.Dishes.FindAsync(id);
+        if (dish is null)
+            return NotFound();
+        dish.IsSoldOut = input.IsSoldOut;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>Removes a dish from the site. It is hidden, never deleted, so old orders still show it.</summary>
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Remove(int id)
     {
-        var updated = await db.Dishes.Where(d => d.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(d => d.IsHidden, true));
-        return updated == 0 ? NotFound() : NoContent();
+        var dish = await db.Dishes.FindAsync(id);
+        if (dish is null)
+            return NotFound();
+        dish.IsHidden = true;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>Brings a removed dish back, together with its category if that was removed too.</summary>

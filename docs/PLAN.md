@@ -16,7 +16,7 @@ A Hebrew ordering website where clients order admin-configured dishes for config
 | Notifications | WhatsApp to the client and to every phone on the admin's list, at about 2 agorot per message. |
 | Cancel or edit an order | By phone call only. The site shows the main contact number. |
 | Daily capacity | Not needed for now. |
-| Admin access | One admin password, on a separate URL. |
+| Admin access | Two admins per site on a separate URL: the business owner (password in the site's database, changed from the admin) and the master admin (the same on every site, set in the environment). Every change is in an audit trail. |
 | Domain | Paid domain; hosting on free tiers. |
 
 ## Client site
