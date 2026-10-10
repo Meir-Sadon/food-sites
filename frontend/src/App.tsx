@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AdminLayout } from './admin/AdminLayout'
 import { AdminLoginPage } from './admin/AdminLoginPage'
+import { AuditPage } from './admin/audit/AuditPage'
 import { RequireAdmin } from './admin/RequireAdmin'
 import { CategoriesPage } from './admin/categories/CategoriesPage'
 import { ContactsPage } from './admin/contacts/ContactsPage'
@@ -78,6 +79,7 @@ export function App() {
           <Route path="orders/route" element={<RoutePage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="messages" element={<MessagesPage />} />
+          <Route path="audit" element={<AuditPage />} />
           <Route
             path="reviews"
             element={

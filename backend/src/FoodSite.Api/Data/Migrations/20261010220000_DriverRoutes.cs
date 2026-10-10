@@ -9,7 +9,7 @@ namespace FoodSite.Api.Data.Migrations
 {
     /// <inheritdoc />
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261010211047_DriverRoutes")]
+    [Migration("20261010220000_DriverRoutes")]
     public partial class DriverRoutes : Migration
     {
         /// <inheritdoc />

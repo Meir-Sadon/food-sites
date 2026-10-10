@@ -88,5 +88,9 @@ public static class Ordering
             setOrder(ordered[i], i);
     }
 
+    /// <summary>Whether a reorder request lists exactly the current items, each once.</summary>
+    public static bool SameIds(IEnumerable<int> current, IReadOnlyCollection<int>? requested) =>
+        requested is not null && requested.Distinct().Count() == requested.Count && current.Order().SequenceEqual(requested.Order());
+
     public static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

@@ -10,9 +10,12 @@ public class AdminTokenService(IOptions<JwtOptions> jwt, IOptions<AdminOptions> 
 {
     public const string AdminRole = "admin";
 
+    /// <summary>Which admin (<see cref="AdminActor"/>) the session belongs to.</summary>
+    public const string ActorClaim = "actor";
+
     public static SymmetricSecurityKey SigningKey(string secret) => new(Encoding.UTF8.GetBytes(secret));
 
-    public (string Token, DateTimeOffset ExpiresAt) CreateToken()
+    public (string Token, DateTimeOffset ExpiresAt) CreateToken(string actor)
     {
         var now = time.GetUtcNow();
         var expiresAt = now.AddHours(admin.Value.SessionHours);
@@ -20,7 +23,7 @@ public class AdminTokenService(IOptions<JwtOptions> jwt, IOptions<AdminOptions> 
         {
             Issuer = jwt.Value.Issuer,
             Audience = jwt.Value.Issuer,
-            Subject = new ClaimsIdentity([new Claim(ClaimTypes.Role, AdminRole)]),
+            Subject = new ClaimsIdentity([new Claim(ClaimTypes.Role, AdminRole), new Claim(ActorClaim, actor)]),
             IssuedAt = now.UtcDateTime,
             NotBefore = now.UtcDateTime,
             Expires = expiresAt.UtcDateTime,

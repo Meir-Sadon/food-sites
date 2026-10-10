@@ -1,9 +1,15 @@
+using FoodSite.Api.Audit;
 using FoodSite.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FoodSite.Api.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+/// <param name="auditActor">Set in the app (not at design time): changes made by a logged-in admin go to <see cref="AuditEntries"/>.</param>
+/// <param name="time">The clock audit entries are stamped with.</param>
+public class AppDbContext(
+    DbContextOptions<AppDbContext> options,
+    AuditActor? auditActor = null,
+    TimeProvider? time = null) : DbContext(options)
 {
     public DbSet<Settings> Settings => Set<Settings>();
     public DbSet<SupplyDay> SupplyDays => Set<SupplyDay>();
@@ -26,6 +32,45 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ReviewImage> ReviewImages => Set<ReviewImage>();
     public DbSet<DriverRoute> DriverRoutes => Set<DriverRoute>();
     public DbSet<DriverRouteStop> DriverRouteStops => Set<DriverRouteStop>();
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
+    /// <summary>
+    /// Saves, and when an admin made the changes, writes what changed to the audit trail in the same transaction,
+    /// so a change is never saved without its entry.
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken ct = default)
+    {
+        var pending = PendingAudit();
+        if (pending.Count == 0)
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, ct);
+
+        await using var transaction = Database.CurrentTransaction is null ? await Database.BeginTransactionAsync(ct) : null;
+        var saved = await base.SaveChangesAsync(acceptAllChangesOnSuccess, ct);
+        AuditEntries.AddRange(pending.Select(p => p.Complete()));
+        await base.SaveChangesAsync(acceptAllChangesOnSuccess, ct);
+        if (transaction is not null)
+            await transaction.CommitAsync(ct);
+        return saved;
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        var pending = PendingAudit();
+        if (pending.Count == 0)
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+
+        using var transaction = Database.CurrentTransaction is null ? Database.BeginTransaction() : null;
+        var saved = base.SaveChanges(acceptAllChangesOnSuccess);
+        AuditEntries.AddRange(pending.Select(p => p.Complete()));
+        base.SaveChanges(acceptAllChangesOnSuccess);
+        transaction?.Commit();
+        return saved;
+    }
+
+    private List<AuditTrail.Pending> PendingAudit() =>
+        auditActor?.Current is { } actor
+            ? AuditTrail.Collect(ChangeTracker, actor, (time ?? TimeProvider.System).GetUtcNow())
+            : [];
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -38,6 +83,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         builder.Properties<OrderStatus>().HaveConversion<string>();
         builder.Properties<ReviewStatus>().HaveConversion<string>();
         builder.Properties<DeliveryOutcome>().HaveConversion<string>();
+        builder.Properties<AuditAction>().HaveConversion<string>();
 
         // Money in shekels and agorot; amounts that can be weights get grams precision.
         builder.Properties<decimal>().HavePrecision(10, 2);
@@ -189,6 +235,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(r => r.Order).WithMany()
                 .HasForeignKey(r => r.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<AuditEntry>(e =>
+        {
+            e.Property(a => a.Actor).HasMaxLength(20);
+            e.Property(a => a.Action).HasMaxLength(20);
+            e.Property(a => a.EntityType).HasMaxLength(AuditEntry.EntityTypeMaxLength);
+            e.Property(a => a.EntityId).HasMaxLength(100);
+            e.Property(a => a.Label).HasMaxLength(AuditEntry.LabelMaxLength);
+            e.Property(a => a.Changes).HasColumnType("jsonb");
         });
 
         model.Entity<ReviewImage>(e =>

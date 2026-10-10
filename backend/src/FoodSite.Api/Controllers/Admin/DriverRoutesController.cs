@@ -73,8 +73,13 @@ public class DriverRoutesController(AppDbContext db, SiteClock clock, TimeProvid
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var deleted = await db.DriverRoutes.Where(r => r.Id == id).ExecuteDeleteAsync();
-        return deleted == 0 ? NotFound() : NoContent();
+        // Loaded and removed (not ExecuteDelete) so the audit trail records it.
+        var route = await db.DriverRoutes.FindAsync(id);
+        if (route is null)
+            return NotFound();
+        db.DriverRoutes.Remove(route);
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     private static DriverRouteDto ToDto(DriverRoute r)

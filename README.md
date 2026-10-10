@@ -2,7 +2,7 @@
 
 One codebase for the Hebrew ordering websites of small home food businesses. Clients order dishes for the business's supply days; the owner manages the menu, orders and reports in a password-protected admin area.
 
-Every business gets **its own deployment**: its own server, database, admin password and branding, built from this same code. A feature added here reaches every site on its next deploy.
+Every business gets **its own deployment**: its own server, database, owner admin password and branding, built from this same code. A feature added here reaches every site on its next deploy.
 
 | Site | Business | Status |
 | --- | --- | --- |
@@ -12,6 +12,8 @@ Every business gets **its own deployment**: its own server, database, admin pass
 > **Migration in progress.** Each business's identity lives in its `sites/<site-id>/` folder, chosen by `SITE` at build time (Phase 2). The phases, decisions and target layout are in [`docs/MIGRATION-PLAN.md`](docs/MIGRATION-PLAN.md).
 
 ## Features
+
+**[Bilingual feature guide with screenshots](docs/food-sites-feature-guide.html)** — download the HTML and open it in a browser (Hebrew/RTL by default; English is available). GitHub displays HTML source rather than executing it. See [maintenance and review status](docs/FEATURE-GUIDE.md).
 
 **Client site**
 - Order page with dishes grouped by category, weight/unit options and add-ons
@@ -104,14 +106,19 @@ npm install
 SITE=kuskus-shel-ima npm run dev      # http://localhost:5173, proxies /api to localhost:5000
 ```
 
-### Admin password
+### Admin users
 
-There is one admin password. Only its hash is stored, in the `Settings` table. Create a hash with:
+Every site has two admins, who sign in on the same page with a user name and a password:
+
+- **The site owner** (user name `Admin__OwnerUsername`, default `admin`). The password's hash lives in the site's `Settings` table, and the owner changes it from the admin (**הגדרות כלליות**).
+- **The master admin** (user name `Admin__MasterUsername`, default `master`), the same on every site. Its password's hash is only in the `Admin__MasterPasswordHash` environment variable, so nothing done on the site can change or lock it out. The master can set a new owner password for an owner who forgot theirs. Without the variable the master login is off.
+
+Every change made in the admin is written to the audit trail (`AuditEntries`, the **יומן שינויים** tab) with which admin made it and when; nobody can edit or remove an entry. Create a hash with:
 ```bash
 cd backend
 dotnet run --project src/FoodSite.Api -- hash-password '<password>'
 ```
-Put the output in `Admin__PasswordHash`. On startup it is copied into `Settings` if no admin password is set there yet; after that the value in the database wins. To replace a password that is already set, clear `Settings.AdminPasswordHash` and restart with the new hash.
+Put the owner's in `Admin__PasswordHash`: on startup it is copied into `Settings` if no owner password is set there yet; after that the value in the database wins.
 
 ## Deployment
 
@@ -125,7 +132,9 @@ Secrets are never committed. Set them in `appsettings.Development.json` locally 
 | --- | --- |
 | `ConnectionStrings__Default` | PostgreSQL connection string |
 | `Jwt__Secret` | Signing key for session tokens, at least 32 characters |
-| `Admin__PasswordHash` | Hashed admin password, seeded into `Settings` on first start |
+| `Admin__PasswordHash` | Hashed site owner password, seeded into `Settings` on first start |
+| `Admin__OwnerUsername` | The site owner's user name (default `admin`) |
+| `Admin__MasterUsername`, `Admin__MasterPasswordHash` | The master admin's user name (default `master`) and hashed password, the same on every site; no hash turns the master login off |
 | `Admin__SessionHours` | Admin session length (default 12) |
 | `Admin__LoginAttemptsPerMinute` | Admin login attempts allowed per IP per minute (default 5) |
 | `Account__SessionDays` | How long a logged-in client stays logged in (default 30) |

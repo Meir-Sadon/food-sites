@@ -10,6 +10,8 @@
 
 ## Checklist
 
+- [ ] Customer/admin behavior changed? Updated `docs/food-sites-feature-guide.html` in Hebrew and English, with safe screenshots; otherwise explain why no guide update is needed
+
 - [ ] Frontend: `npm run lint`, `npm run build`, `npm test`
 - [ ] Backend: `dotnet build`, `dotnet test` (say if the integration tests could not run)
 - [ ] Migration added? It is backward compatible (expand, then contract) and the model snapshot is updated

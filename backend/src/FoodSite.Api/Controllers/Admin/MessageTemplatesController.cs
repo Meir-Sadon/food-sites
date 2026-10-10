@@ -52,8 +52,13 @@ public class MessageTemplatesController(AppDbContext db) : AdminControllerBase
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var deleted = await db.MessageTemplates.Where(t => t.Id == id).ExecuteDeleteAsync();
-        return deleted == 0 ? NotFound() : NoContent();
+        // Loaded rather than deleted in place, so the removal reaches the audit trail.
+        var template = await db.MessageTemplates.FindAsync(id);
+        if (template is null)
+            return NotFound();
+        db.MessageTemplates.Remove(template);
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     private ActionResult? Validate(TemplateInput input)

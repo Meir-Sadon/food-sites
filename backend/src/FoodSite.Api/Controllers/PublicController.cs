@@ -94,10 +94,14 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             .Include(d => d.Options).Include(d => d.Images).Include(d => d.AddOns)
             .AsSplitQuery()
             .Where(d => !d.IsHidden)
-            .OrderBy(d => d.Id)
+            .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Id)
             .ToListAsync();
-        var shown = dishes.Where(d => visible.Contains(d.CategoryId) || d.IsAddOnOnly).ToList();
+        // Category by category, each in the admin's order; add-on-only dishes of a removed category come last.
+        var categoryPosition = categories.Select((c, i) => (c.Id, i)).ToDictionary(p => p.Id, p => p.i);
+        var shown = dishes.Where(d => visible.Contains(d.CategoryId) || d.IsAddOnOnly)
+            .OrderBy(d => categoryPosition.GetValueOrDefault(d.CategoryId, int.MaxValue)).ToList();
         var shownIds = shown.Select(d => d.Id).ToHashSet();
+        var dishPosition = shown.Select((d, i) => (d.Id, i)).ToDictionary(p => p.Id, p => p.i);
 
         var supplyDates = await OpenDatesAsync();
         var remaining = await RemainingAsync(shown, supplyDates.Select(d => d.Date).ToList());
@@ -107,7 +111,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             d.MinAmount, d.MaxAmount, d.AmountStep, d.UnitPrice, d.IsAddOnOnly, d.IsSoldOut,
             d.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
             d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
-            d.AddOns.Select(a => a.AddOnDishId).Where(shownIds.Contains).Order().ToList(),
+            d.AddOns.Select(a => a.AddOnDishId).Where(shownIds.Contains).OrderBy(id => dishPosition[id]).ToList(),
             remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, d.UnitName))
             .ToList();
 
