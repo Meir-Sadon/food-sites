@@ -60,6 +60,7 @@ public static class OrderMessages
     private static string Line(OrderItem item, string prefix) =>
         $"{prefix}{Number(item.Quantity)} × {item.DishName}"
         + (string.IsNullOrEmpty(item.OptionLabel) ? "" : $" ({item.OptionLabel})")
+        + (string.IsNullOrEmpty(item.Note) ? "" : $" [{item.Note}]")
         + $" – ₪{Money(item.LineTotal)}";
 
     private static string Time(TimeOnly value) => value.ToString("HH:mm", CultureInfo.InvariantCulture);

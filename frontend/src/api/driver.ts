@@ -12,6 +12,7 @@ export interface DriverItem {
   parentItemId: number | null
   dishName: string
   optionLabel: string | null
+  note?: string | null
   quantity: number
 }
 

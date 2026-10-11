@@ -21,6 +21,8 @@ export interface AdminOrderItem {
   parentItemId: number | null
   dishName: string
   optionLabel: string | null
+  /** The client's name or remark for this dish. */
+  note?: string | null
   quantity: number
   unitPrice: number
   lineTotal: number

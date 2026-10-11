@@ -326,6 +326,27 @@ describe('Order page', () => {
     })
   })
 
+  it('lets the client write a name on each ordered dish and sends it with its unit', async () => {
+    const { api, user } = await openOrderPage({ 'POST /api/orders': () => confirmation })
+    const card = dishCard('עוף בתנור')
+    await user.click(within(card).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.type(within(card).getByLabelText('שם או הערה: עוף בתנור'), 'דנה')
+    await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
+    await user.type(within(card).getByLabelText('שם או הערה למנה 2'), 'יוסי')
+    expect(within(card).getByLabelText('שם או הערה למנה 1')).toHaveValue('דנה')
+
+    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
+    await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({
+      items: [{ quantity: 2, addOnUnits: [{ note: 'דנה' }, { note: 'יוסי' }] }],
+    })
+  })
+
   it('sends the order, then shows the success popup with the summary', async () => {
     const { api, user } = await openOrderPage({ 'POST /api/orders': () => confirmation })
     await fillAndSubmit(user)
@@ -348,7 +369,7 @@ describe('Order page', () => {
       fulfillmentMethod: 'Delivery',
       paymentMethod: 'OnDelivery',
       notes: '',
-      items: [{ dishId: 1, optionId: 11, quantity: 1, addOns: [] }],
+      items: [{ dishId: 1, optionId: 11, quantity: 1, addOns: [], addOnUnits: [{ addOns: [] }] }],
     })
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'סגירה' }))

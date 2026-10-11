@@ -23,8 +23,11 @@ import {
   type AddOnOffer,
   type AddOnSelection,
   type Selection,
+  unitNote,
   unitsOf,
+  withNote,
   withUnit,
+  NOTE_MAX_LENGTH,
 } from './model'
 
 interface Props {
@@ -232,34 +235,60 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
             </button>
           </div>
 
-          {addOns.length > 0 &&
-            (units.length === 1 ? (
-              <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={units[0]} onChange={(a, next) => setAddOn(0, a, next)} />
-            ) : (
-              units.map((unit, i) => (
-                <div key={i} className="addon-unit" role="group" aria-label={t('order.unitN', { n: i + 1, name: dish.name })}>
-                  <h4 className="addon-unit__title">{t('order.unitN', { n: i + 1, name: dish.name })}</h4>
-                  <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={unit} onChange={(a, next) => setAddOn(i, a, next)} />
-                  <select
-                    aria-label={t('order.copyAddOnsTo', { n: i + 1 })}
-                    value=""
-                    onChange={(e) => e.target.value !== '' && onChange(withUnit(selection!, i, { ...units[Number(e.target.value)] }))}
-                  >
-                    <option value="">{t('order.copyAddOnsFrom')}</option>
-                    {units.map((_, k) =>
-                      k === i ? null : (
-                        <option key={k} value={k}>
-                          {t('order.unitOption', { n: k + 1 })}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-              ))
-            ))}
+          {units.length > 1 ? (
+            units.map((unit, i) => (
+              <div key={i} className="addon-unit" role="group" aria-label={t('order.unitN', { n: i + 1, name: dish.name })}>
+                <h4 className="addon-unit__title">{t('order.unitN', { n: i + 1, name: dish.name })}</h4>
+                <NoteField label={t('order.unitNote', { n: i + 1 })} value={unitNote(selection, i)} onChange={(note) => onChange(withNote(selection, i, note))} />
+                {addOns.length > 0 && (
+                  <>
+                    <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={unit} onChange={(a, next) => setAddOn(i, a, next)} />
+                    <select
+                      aria-label={t('order.copyAddOnsTo', { n: i + 1 })}
+                      value=""
+                      onChange={(e) => e.target.value !== '' && onChange(withUnit(selection, i, { ...units[Number(e.target.value)] }))}
+                    >
+                      <option value="">{t('order.copyAddOnsFrom')}</option>
+                      {units.map((_, k) =>
+                        k === i ? null : (
+                          <option key={k} value={k}>
+                            {t('order.unitOption', { n: k + 1 })}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </>
+                )}
+              </div>
+            ))
+          ) : (
+            <>
+              {addOns.length > 0 && (
+                <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={units[0]} onChange={(a, next) => setAddOn(0, a, next)} />
+              )}
+              {!yesNo && (
+                <NoteField label={t('order.noteFor', { name: dish.name })} value={unitNote(selection, 0)} onChange={(note) => onChange(withNote(selection, 0, note))} />
+              )}
+            </>
+          )}
         </div>
       )}
     </>
+  )
+}
+
+/** A name or remark the client writes on one ordered dish (who it is for, how they want it). */
+function NoteField({ label, value, onChange }: { label: string; value: string; onChange: (note: string) => void }) {
+  return (
+    <input
+      type="text"
+      className="dish-note"
+      aria-label={label}
+      placeholder={label}
+      maxLength={NOTE_MAX_LENGTH}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   )
 }
 

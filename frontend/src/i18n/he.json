@@ -765,6 +765,8 @@
     "added": "נוסף להזמנה",
     "groupLimit": "עד {{max}}",
     "unitN": "מנה {{n}}: {{name}}",
+    "noteFor": "שם או הערה: {{name}}",
+    "unitNote": "שם או הערה למנה {{n}}",
     "unitOption": "מנה {{n}}",
     "copyAddOnsFrom": "העתקת תוספות מ…",
     "copyAddOnsTo": "העתקת תוספות למנה {{n}}",

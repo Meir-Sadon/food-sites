@@ -620,6 +620,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
                     b.Property<string>("OptionLabel")
                         .HasColumnType("text");
 

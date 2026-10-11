@@ -109,6 +109,7 @@ export function DriverStopPage() {
               {item.parentItemId !== null && <span aria-hidden="true">+ </span>}
               {formatNumber(item.quantity)} × {item.dishName}
               {item.optionLabel ? ` (${item.optionLabel})` : ''}
+              {item.note ? ` · ${item.note}` : ''}
             </li>
           ))}
         </ul>

@@ -235,6 +235,27 @@ public class OrderBuilderTests
     }
 
     [Fact]
+    public void Each_unit_can_carry_a_name_that_keeps_it_on_a_line_of_its_own()
+    {
+        var sandwich = Fixed(1, "כריך", (10, "כריך", 30, true));
+        var menu = Menu(sandwich);
+        UnitAddOnsInput Unit(string? note) => new([], note);
+
+        var (items, errors) = Build(menu, new OrderLineInput(1, null, 3, null, [Unit(" דנה "), Unit("דנה"), Unit(null)]));
+
+        Assert.False(errors.Any);
+        Assert.Equal([("דנה", 2m), (null, 1m)], items.Select(i => (i.Note, i.Quantity)));
+        Assert.Equal(90m, OrderBuilder.Total(items));
+
+        var (single, none) = Build(menu, new OrderLineInput(1, null, 1, [], Note: "יוסי"));
+        Assert.False(none.Any);
+        Assert.Equal("יוסי", single.Single().Note);
+
+        var (_, tooLong) = Build(menu, new OrderLineInput(1, null, 1, [], Note: new string('א', 101)));
+        Assert.True(Has(tooLong, "items[0].note", "tooLong"));
+    }
+
+    [Fact]
     public void Add_on_price_can_be_zero()
     {
         var sandwich = Fixed(1, "כריך", (10, "כריך", 30, true));

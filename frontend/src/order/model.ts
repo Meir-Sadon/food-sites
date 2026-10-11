@@ -17,7 +17,11 @@ export interface Selection {
   addOns: Record<number, AddOnSelection>
   /** The add-ons of the 2nd, 3rd... ordered unit; a unit missing here has none. */
   extraUnits?: Record<number, AddOnSelection>[]
+  /** A name or remark for each ordered unit (the whole line for a dish not sold by units), the first unit's first. */
+  notes?: string[]
 }
+
+export const NOTE_MAX_LENGTH = 100
 
 export interface OrderState extends AddressParts {
   selections: Record<number, Selection>
@@ -159,6 +163,14 @@ export function unitsOf(parent: MenuDish, selection: Selection): Record<number, 
   )
 }
 
+export const unitNote = (selection: Selection, unit: number) => selection.notes?.[unit] ?? ''
+
+/** The selection with one ordered unit's name or remark replaced. */
+export function withNote(selection: Selection, unit: number, note: string): Selection {
+  const notes = Array.from({ length: Math.max(unit + 1, selection.notes?.length ?? 0) }, (_, i) => (i === unit ? note : unitNote(selection, i)))
+  return { ...selection, notes }
+}
+
 /** The selection with one ordered unit's add-ons replaced. */
 export function withUnit(selection: Selection, unit: number, addOns: Record<number, AddOnSelection>): Selection {
   if (unit === 0) return { ...selection, addOns }
@@ -204,9 +216,15 @@ function fitUnit(parent: MenuDish, unit: Record<number, AddOnSelection>, dishes:
 export function fitAddOns(parent: MenuDish, selection: Selection, dishes: Map<number, MenuDish>): Selection {
   const units = unitsOf(parent, selection).map((unit) => fitUnit(parent, unit, dishes))
   const extraUnits = units.slice(1)
-  const { extraUnits: _dropped, ...rest } = selection
+  const { extraUnits: _dropped, notes: _notes, ...rest } = selection
   void _dropped
-  return { ...rest, addOns: units[0], ...(extraUnits.some((u) => Object.keys(u).length > 0) && { extraUnits }) }
+  const notes = units.map((_, i) => unitNote(selection, i))
+  return {
+    ...rest,
+    addOns: units[0],
+    ...(extraUnits.some((u) => Object.keys(u).length > 0) && { extraUnits }),
+    ...(notes.some((n) => n !== '') && { notes }),
+  }
 }
 
 export function orderTotal(selections: Record<number, Selection>, dishes: Map<number, MenuDish>): number {
@@ -263,8 +281,13 @@ export function toLines(selections: Record<number, Selection>, dishes: Map<numbe
   return Object.entries(selections).map(([id, selection]) => {
     const dish = dishes.get(Number(id))
     const line = { dishId: Number(id), optionId: selection.optionId, quantity: selection.quantity }
-    if (!dish || unitCount(dish, selection.quantity) === 1) return { ...line, addOns: toInputs(selection.addOns) }
-    return { ...line, addOns: [], addOnUnits: unitsOf(dish, selection).map((unit) => ({ addOns: toInputs(unit) })) }
+    if (!dish || dish.sellBy !== 'Units' || !Number.isInteger(selection.quantity))
+      return { ...line, addOns: toInputs(selection.addOns), note: unitNote(selection, 0).trim() || undefined }
+    return {
+      ...line,
+      addOns: [],
+      addOnUnits: unitsOf(dish, selection).map((unit, i) => ({ addOns: toInputs(unit), note: unitNote(selection, i).trim() || undefined })),
+    }
   })
 }
 
@@ -355,7 +378,7 @@ export function restoreSelections(saved: Record<number, Selection>, menu: Menu):
       ...(extraUnits.some((u) => Object.keys(u).length > 0) && { extraUnits }),
     }
     // The amount may have been brought to the dish's range: keep add-ons for the units that are left.
-    selections[dish.id] = fitAddOns(dish, selections[dish.id], dishes)
+    selections[dish.id] = fitAddOns(dish, { ...selections[dish.id], ...(selection.notes && { notes: selection.notes }) }, dishes)
   }
   return { selections, skipped }
 }

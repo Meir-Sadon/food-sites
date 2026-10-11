@@ -6,14 +6,14 @@ namespace FoodSite.Api.Orders;
 public record AddOnInput(int DishId, int? OptionId, decimal Quantity);
 
 /// <summary>The add-ons of one ordered unit of a dish.</summary>
-public record UnitAddOnsInput(List<AddOnInput>? AddOns);
+public record UnitAddOnsInput(List<AddOnInput>? AddOns, string? Note = null);
 
 /// <summary>
 /// AddOns are shared by the whole line (their limits grow with the quantity). AddOnUnits, when sent, has one entry
 /// per ordered unit instead, each with add-ons of its own and the limits of one unit; AddOns is then ignored.
 /// </summary>
 public record OrderLineInput(
-    int DishId, int? OptionId, decimal Quantity, List<AddOnInput>? AddOns, List<UnitAddOnsInput>? AddOnUnits = null);
+    int DishId, int? OptionId, decimal Quantity, List<AddOnInput>? AddOns, List<UnitAddOnsInput>? AddOnUnits = null, string? Note = null);
 
 /// <summary>
 /// Turns what the client chose into order lines, taking every name and price from the
@@ -61,6 +61,7 @@ public static class OrderBuilder
             var links = DishRules.AddOnLinks(dish);
             if (line.AddOnUnits is not { } unitInputs)
             {
+                item.Note = NoteOf(line.Note, $"{path}.note", errors);
                 items.Add(item);
                 foreach (var child in AddOnsOf(links, line.AddOns ?? [], path, DishRules.LimitFactor(dish, item.Quantity), dishes, errors))
                     Attach(item, child, items);
@@ -75,18 +76,30 @@ public static class OrderBuilder
 
             // Units with the same add-ons share one order line, so a plain order stays one line.
             var perUnit = unitInputs
-                .Select((unit, u) => AddOnsOf(links, unit.AddOns ?? [], $"{path}.addOnUnits[{u}]", 1, dishes, errors))
+                .Select((unit, u) => (
+                    children: AddOnsOf(links, unit.AddOns ?? [], $"{path}.addOnUnits[{u}]", 1, dishes, errors),
+                    note: NoteOf(unit.Note, $"{path}.addOnUnits[{u}].note", errors)))
                 .ToList();
-            foreach (var group in perUnit.Select((children, u) => (children, u)).GroupBy(x => Signature(x.children)))
+            foreach (var group in perUnit.GroupBy(x => $"{x.note}#{Signature(x.children)}"))
             {
                 var count = group.Count();
                 var parent = Scaled(item, count);
+                parent.Note = group.First().note;
                 items.Add(parent);
                 foreach (var child in group.First().children)
                     Attach(parent, Scaled(child, child.Quantity * count), items);
             }
         }
         return items;
+    }
+
+    /// <summary>The longest name or remark a client can write on a dish.</summary>
+    public const int NoteMaxLength = 100;
+
+    private static string? NoteOf(string? note, string path, Errors errors)
+    {
+        errors.Text(path, note, NoteMaxLength);
+        return string.IsNullOrWhiteSpace(note) ? null : note.Trim();
     }
 
     private static void Attach(OrderItem parent, OrderItem child, List<OrderItem> items)
@@ -106,6 +119,7 @@ public static class OrderBuilder
         DishId = source.DishId,
         DishName = source.DishName,
         OptionLabel = source.OptionLabel,
+        Note = source.Note,
         Quantity = quantity,
         UnitPrice = source.UnitPrice,
         LineTotal = decimal.Round(source.UnitPrice * quantity, 2),
