@@ -1,4 +1,5 @@
 import { act, fireEvent, screen, within } from '@testing-library/react'
+import { confirmNoAdjustments } from '../test/adjust'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Confirmation } from '../api/site'
@@ -33,6 +34,7 @@ const total = () => within(screen.getByRole('region', { name: 'סיכום הזמ
 
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+  await confirmNoAdjustments(user)
   await user.type(screen.getByLabelText('שם מלא'), 'דנה')
   await user.type(screen.getByLabelText('רחוב'), 'הרצל')
   await user.type(screen.getByLabelText('מספר בית'), '1')
@@ -193,11 +195,13 @@ describe('Order page', () => {
   it('blocks sending an order below the admin minimum and says how much is missing', async () => {
     const { user } = await openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }) })
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+    await confirmNoAdjustments(user)
 
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeDisabled()
     expect(screen.getByText(/המינימום להזמנה הוא ₪100\. חסרים עוד ₪30\./)).toBeInTheDocument()
 
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה: עוף בתנור/ }))
+    await confirmNoAdjustments(user)
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
   })
 
@@ -206,6 +210,7 @@ describe('Order page', () => {
       'GET /api/site': () => site({ minimumOrderAmount: 100, minimumOrderAppliesToPickup: false }),
     })
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+    await confirmNoAdjustments(user)
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeDisabled()
 
     await user.click(screen.getByRole('radio', { name: 'איסוף עצמי' }))
@@ -262,6 +267,7 @@ describe('Order page', () => {
   it('needs a valid phone before the order is sent', async () => {
     const { api, user } = await openOrderPage()
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+    await confirmNoAdjustments(user)
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
     await user.type(screen.getByLabelText('מספר בית'), '1')
@@ -334,6 +340,7 @@ describe('Order page', () => {
     await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
     await user.type(within(card).getByLabelText('שם או הערה למנה 2'), 'יוסי')
     expect(within(card).getByLabelText('שם או הערה למנה 1')).toHaveValue('דנה')
+    await confirmNoAdjustments(user)
 
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
@@ -345,6 +352,38 @@ describe('Order page', () => {
     expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({
       items: [{ quantity: 2, addOnUnits: [{ note: 'דנה' }, { note: 'יוסי' }] }],
     })
+  })
+
+  it('blocks sending until every unit of a dish with add-ons is adjusted or confirmed, and can apply one unit to the rest', async () => {
+    const { user } = await openOrderPage()
+    const card = dishCard('עוף בתנור')
+    await user.click(within(card).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
+    await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
+    const submit = screen.getByRole('button', { name: 'שליחת ההזמנה' })
+    expect(submit).toBeDisabled()
+    expect(screen.getByText(/יש להתאים כל מנה/)).toBeInTheDocument()
+    expect(within(card).getAllByText(/נדרשת התאמה/)).toHaveLength(3)
+
+    // One add-on on the first unit, then the same for every unit not set yet.
+    const first = within(card).getByRole('group', { name: 'מנה 1: עוף בתנור' })
+    await user.click(within(first).getByRole('button', { name: 'הוספה: ירך' }))
+    expect(submit).toBeDisabled()
+    await user.click(within(first).getByRole('button', { name: /החלה על כל המנות שלא הותאמו/ }))
+    expect(screen.queryByText(/יש להתאים כל מנה/)).not.toBeInTheDocument()
+    expect(within(card).queryAllByText(/נדרשת התאמה/)).toHaveLength(0)
+    expect(total().getByText('סה"כ: ₪' + String(3 * 70 + 3 * 12))).toBeInTheDocument()
+  })
+
+  it('has one remark for a dish without add-ons, whatever the amount', async () => {
+    const plain = [menuDish(1, 'קוסקוס', 1)]
+    const { user } = await openOrderPage({ 'GET /api/menu': () => menu({ dishes: plain }) })
+    const card = dishCard('קוסקוס')
+    await user.click(within(card).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.click(within(card).getByRole('button', { name: 'הוספה: קוסקוס' }))
+    expect(within(card).getAllByRole('textbox')).toHaveLength(1)
+    expect(within(card).queryByRole('group', { name: /מנה 1/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/יש להתאים כל מנה/)).not.toBeInTheDocument()
   })
 
   it('asks the dish questions for each ordered unit and sends the answers', async () => {

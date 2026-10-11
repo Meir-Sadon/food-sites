@@ -1,4 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react'
+import { confirmNoAdjustments } from '../test/adjust'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Favorite, HistoryOrder, Profile } from '../api/account'
@@ -210,6 +211,8 @@ describe('Order page for a logged-in client', () => {
     expect(screen.getByLabelText('מספר בית')).toHaveValue('1')
 
     await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
+
+    await confirmNoAdjustments(user)
     await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
 
     await screen.findByText('ההזמנה התקבלה')
@@ -234,6 +237,8 @@ describe('Order page for a logged-in client', () => {
     expect(within(paymentBlock).getByText('תשלום במעמד המסירה', { selector: '.details-block__summary' })).toBeInTheDocument()
 
     await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
+
+    await confirmNoAdjustments(user)
     await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
 
     await waitFor(() => expect(contactBlock).toHaveAttribute('open'))
@@ -250,6 +255,7 @@ describe('Order page for a logged-in client', () => {
     const { api, user } = open('/', { ...loggedIn, 'POST /api/account/logout': () => ({ status: 204 }) })
     await screen.findByRole('heading', { level: 2, name: 'עופות' })
     await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
+    await confirmNoAdjustments(user)
 
     await user.click(screen.getByRole('button', { name: 'התנתקות' }))
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'יציאה בלי לשמור' }))
@@ -328,6 +334,7 @@ describe('Order page for a logged-in client', () => {
     const { user } = open('/', loggedIn)
     await screen.findByRole('heading', { level: 2, name: 'עופות' })
     await user.click(within(screen.getByRole('article', { name: 'עוף בתנור' })).getByRole('button', { name: /הוספה להזמנה/ }))
+    await confirmNoAdjustments(user)
     const before = within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪/).textContent
 
     await user.click(await screen.findByRole('button', { name: 'ההזמנה האחרונה' }))

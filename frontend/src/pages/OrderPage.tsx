@@ -32,6 +32,7 @@ import {
   standaloneDishes,
   variantsOf,
   toLines,
+  unadjustedDishes,
   unansweredDishes,
   type OrderState,
   type Restored,
@@ -173,6 +174,7 @@ export function OrderPage() {
         : state.fulfillment
   const minimum = fulfillment === 'Pickup' && !site.minimumOrderAppliesToPickup ? 0 : (site.minimumOrderAmount ?? 0)
   const belowMinimum = count > 0 && total < minimum
+  const unadjusted = unadjustedDishes(state.selections, dishes)
   const payment: Payment = state.payment === 'Transfer' && !site.paymentPhone ? 'OnDelivery' : state.payment
   const hours = supplyDate?.hours ?? []
   // An hour from a draft that the date no longer offers is dropped.
@@ -526,7 +528,7 @@ export function OrderPage() {
           </p>
         )}
         <div className="row">
-          <button ref={submitRef} type="submit" disabled={submitting || count === 0 || !supplyDate || belowMinimum}>
+          <button ref={submitRef} type="submit" disabled={submitting || count === 0 || !supplyDate || belowMinimum || unadjusted.length > 0}>
             {submitting ? t('order.submitting') : t('order.submit')}
           </button>
           <button type="button" className="button-quiet" onClick={reset}>
@@ -534,6 +536,11 @@ export function OrderPage() {
           </button>
         </div>
         {count === 0 && <p className="hint">{t('order.chooseDishes')}</p>}
+        {unadjusted.length > 0 && (
+          <p role="status" className="hint">
+            {t('order.adjustRequired', { names: unadjusted.map((d) => d.name).join(', ') })}
+          </p>
+        )}
         {belowMinimum && (
           <p role="status" className="hint">
             {t('order.belowMinimum', { minimum: formatMoney(minimum), missing: formatMoney(round2(minimum - total)) })}

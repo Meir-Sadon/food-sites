@@ -27,6 +27,10 @@ import {
   type Selection,
   unitAnswers,
   unitNote,
+  unitConfirmed,
+  withConfirmed,
+  isAdjusted,
+  applyToUnadjusted,
   withAnswer,
   ANSWER_MAX_LENGTH,
   unitsOf,
@@ -160,6 +164,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
   const units = selection ? unitsOf(dish, selection) : []
   const options = dish.choiceMode === 'Fixed' && dish.options.length > 1 && !yesNo
   const questions = dish.questions ?? []
+  const customizable = addOns.length > 0 || questions.length > 0
 
   /** Changes one add-on of one ordered unit. */
   function setAddOn(unit: number, addOn: MenuDish, next: AddOnSelection | undefined) {
@@ -247,51 +252,83 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
             </button>
           </div>
 
-          {units.length > 1 ? (
-            units.map((unit, i) => (
-              <div key={i} className="addon-unit" role="group" aria-label={t('order.unitN', { n: i + 1, name: dish.name })}>
-                <h4 className="addon-unit__title">{t('order.unitN', { n: i + 1, name: dish.name })}</h4>
-                <NoteField label={t('order.unitNote', { n: i + 1 })} value={unitNote(selection, i)} onChange={(note) => onChange(withNote(selection, i, note))} />
-                <QuestionFields
-                  questions={questions}
-                  answers={unitAnswers(selection, i)}
-                  onChange={(questionId, answer) => onChange(withAnswer(selection, i, questionId, answer))}
-                />
-                {addOns.length > 0 && (
-                  <>
-                    <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={unit} onChange={(a, next) => setAddOn(i, a, next)} />
-                    <select
-                      aria-label={t('order.copyAddOnsTo', { n: i + 1 })}
-                      value=""
-                      onChange={(e) => e.target.value !== '' && onChange(withUnit(selection, i, { ...units[Number(e.target.value)] }))}
-                    >
-                      <option value="">{t('order.copyAddOnsFrom')}</option>
-                      {units.map((_, k) =>
-                        k === i ? null : (
-                          <option key={k} value={k}>
-                            {t('order.unitOption', { n: k + 1 })}
-                          </option>
-                        ),
+          {customizable ? (
+            <div className="addon-units">
+              {units.map((unit, i) => {
+                const adjusted = isAdjusted(selection, i, unit)
+                const names = Object.keys(unit)
+                  .map((addOnId) => dishes.get(Number(addOnId))?.name)
+                  .filter(Boolean)
+                  .join(', ')
+                const status = addOns.length === 0 ? '' : names || (adjusted ? t('order.noAdjustments') : t('order.needsAdjustment'))
+                const title = units.length > 1 ? t('order.unitN', { n: i + 1, name: dish.name }) : t('order.customize', { name: dish.name })
+                const others = units.map((_, k) => k).filter((k) => k !== i)
+                const waiting = others.some((k) => !isAdjusted(selection, k, units[k]))
+                return (
+                  <details key={i} className="addon-unit">
+                    <summary className="addon-unit__title">
+                      {title}
+                      {status && <span className={adjusted ? 'muted' : 'addon-unit__missing'}> · {status}</span>}
+                    </summary>
+                    <div role="group" aria-label={title} className="stack">
+                      <NoteField
+                        label={units.length > 1 ? t('order.unitNote', { n: i + 1 }) : t('order.noteFor', { name: dish.name })}
+                        value={unitNote(selection, i)}
+                        onChange={(note) => onChange(withNote(selection, i, note))}
+                      />
+                      <QuestionFields
+                        questions={questions}
+                        answers={unitAnswers(selection, i)}
+                        onChange={(questionId, answer) => onChange(withAnswer(selection, i, questionId, answer))}
+                      />
+                      {addOns.length > 0 && (
+                        <>
+                          <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={unit} onChange={(a, next) => setAddOn(i, a, next)} />
+                          <div className="row">
+                            {Object.keys(unit).length === 0 && (
+                              <button
+                                type="button"
+                                className="button-quiet"
+                                aria-pressed={adjusted}
+                                onClick={() => onChange(withConfirmed(selection, i, !unitConfirmed(selection, i)))}
+                              >
+                                {adjusted ? `✓ ${t('order.confirmedNoAdjustments')}` : t('order.confirmNoAdjustments')}
+                              </button>
+                            )}
+                            {others.length > 0 && (
+                              <select
+                                aria-label={t('order.copyAddOnsTo', { n: i + 1 })}
+                                value=""
+                                onChange={(e) =>
+                                  e.target.value !== '' &&
+                                  onChange(withConfirmed(withUnit(selection, i, { ...units[Number(e.target.value)] }), i, true))
+                                }
+                              >
+                                <option value="">{t('order.copyAddOnsFrom')}</option>
+                                {others.map((k) => (
+                                  <option key={k} value={k}>
+                                    {t('order.unitOption', { n: k + 1 })}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            {adjusted && waiting && (
+                              <button type="button" className="button-quiet" onClick={() => onChange(applyToUnadjusted(dish, selection, i))}>
+                                {t('order.applyToRest', { n: i + 1 })}
+                              </button>
+                            )}
+                          </div>
+                        </>
                       )}
-                    </select>
-                  </>
-                )}
-              </div>
-            ))
+                    </div>
+                  </details>
+                )
+              })}
+            </div>
           ) : (
-            <>
-              {addOns.length > 0 && (
-                <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={units[0]} onChange={(a, next) => setAddOn(0, a, next)} />
-              )}
-              {!yesNo && (
-                <NoteField label={t('order.noteFor', { name: dish.name })} value={unitNote(selection, 0)} onChange={(note) => onChange(withNote(selection, 0, note))} />
-              )}
-              <QuestionFields
-                questions={questions}
-                answers={unitAnswers(selection, 0)}
-                onChange={(questionId, answer) => onChange(withAnswer(selection, 0, questionId, answer))}
-              />
-            </>
+            !yesNo && (
+              <NoteField label={t('order.noteFor', { name: dish.name })} value={unitNote(selection, 0)} onChange={(note) => onChange(withNote(selection, 0, note))} />
+            )
           )}
         </div>
       )}
