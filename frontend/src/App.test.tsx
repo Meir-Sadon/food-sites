@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { publicApi } from './test/catalogData'
+import { publicApi, site } from './test/catalogData'
 import { fakeApi } from './test/fakeApi'
 import { renderAt } from './test/render'
 
@@ -69,5 +69,17 @@ describe('client site', () => {
     renderAt('/')
     const hrefs = screen.getAllByRole('link').map((l) => l.getAttribute('href'))
     expect(hrefs.some((h) => h?.startsWith('/admin'))).toBe(false)
+  })
+})
+
+describe('site style', () => {
+  it('marks client pages with the style /api/site names, and stops when they unmount', async () => {
+    fakeApi({ ...publicApi, 'GET /api/site': () => site({ style: 'street' }) })
+    const { unmount } = renderAt('/about')
+    // Until the API answers: the build's site.json, which names none.
+    expect(document.documentElement.dataset.style).toBe('classic')
+    await waitFor(() => expect(document.documentElement.dataset.style).toBe('street'))
+    unmount()
+    expect(document.documentElement.dataset.style).toBeUndefined()
   })
 })

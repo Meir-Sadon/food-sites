@@ -52,6 +52,9 @@ public class Settings
     /// </summary>
     public bool SiteDefaultsApplied { get; set; }
 
+    /// <summary>The look the admin picked (see <c>SiteStyles</c>); null means the site's default.</summary>
+    public string? SiteStyle { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }

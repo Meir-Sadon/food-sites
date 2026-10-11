@@ -1,4 +1,5 @@
 import { apiJson, send } from './client'
+import type { SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -22,8 +23,11 @@ export interface Settings {
   ordersPerHour: number | null
   /** How many portions (dishes sold by units, not sides or add-ons) can be ordered per supply date, across all dishes; null means no limit. */
   portionsPerSupplyDate: number | null
+  /** The look the client site shows. */
+  style: SiteStyle
 }
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl'>
+/** Leaving out the style keeps it. */
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style'> & { style?: SiteStyle }
 
 export interface SupplyDay {
   weekday: Weekday

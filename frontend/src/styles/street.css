@@ -1,0 +1,422 @@
+/* The "street" style (FoodSite.Api SiteStyles.Street): thick dark outlines, hard offset shadows, sticker labels and big
+   picture cards. Only shapes, fonts and layout change; every colour still comes from the site's theme.css.
+   Applies on client pages only: ClientLayout sets <html data-style>, the admin never does. */
+@import '@fontsource/rubik/hebrew-400.css';
+@import '@fontsource/rubik/latin-400.css';
+@import '@fontsource/rubik/hebrew-500.css';
+@import '@fontsource/rubik/latin-500.css';
+@import '@fontsource/rubik/hebrew-700.css';
+@import '@fontsource/rubik/latin-700.css';
+@import '@fontsource/rubik/hebrew-800.css';
+@import '@fontsource/rubik/latin-800.css';
+@import '@fontsource/secular-one/hebrew-400.css';
+@import '@fontsource/secular-one/latin-400.css';
+
+:root[data-style='street'] {
+  --ink: var(--color-text);
+  --line: 2.5px solid var(--ink);
+  --line-thin: 2px solid var(--ink);
+  /* The shadow falls toward the reading direction's end, down and to the left in RTL. */
+  --hard: -4px 4px 0 var(--ink);
+  --hard-sm: -2px 2px 0 var(--ink);
+  --shadow-sm: var(--hard-sm);
+  --shadow-md: var(--hard);
+  --radius: 1.25rem;
+  --display: 'Secular One', 'Rubik', 'Assistant', Arial, sans-serif;
+
+  font-family: 'Rubik', 'Assistant', 'Segoe UI', Arial, sans-serif;
+  line-height: 1.55;
+}
+
+:root[data-style='street'] body,
+[data-style='street'] .client-shell {
+  background-color: color-mix(in srgb, var(--color-gold) 26%, var(--color-bg));
+}
+
+[data-style='street'] :is(h1, h2) {
+  font-family: var(--display);
+  font-weight: 400;
+}
+
+[data-style='street'] :focus-visible {
+  outline-color: var(--ink);
+}
+
+/* ---------- Top bar ---------- */
+
+[data-style='street'] .top-bar {
+  background: var(--color-surface);
+  backdrop-filter: none;
+  border-block-end: var(--line);
+  box-shadow: none;
+}
+
+[data-style='street'] .top-bar__brand {
+  color: var(--ink);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.35rem;
+}
+
+[data-style='street'] .top-bar__logo {
+  border: var(--line-thin);
+}
+
+[data-style='street'] .top-bar__link {
+  color: var(--ink);
+}
+
+[data-style='street'] .top-bar__link:hover {
+  transform: none;
+  background: color-mix(in srgb, var(--color-gold) 30%, var(--color-surface));
+  color: var(--ink);
+}
+
+[data-style='street'] .top-bar__link[href='/'] {
+  box-shadow: inset 0 0 0 2.5px var(--ink);
+}
+
+[data-style='street'] .top-bar__link.active {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  box-shadow: inset 0 0 0 2.5px var(--ink), var(--hard-sm);
+}
+
+[data-style='street'] .top-bar__link--logout {
+  border: var(--line-thin);
+  color: var(--ink);
+}
+
+/* ---------- Buttons and fields ---------- */
+
+[data-style='street'] button:not(.link-button, .top-bar__link, .fab, .button-icon, .toast__close, .quick-tile) {
+  border: var(--line);
+  border-radius: 999px;
+  box-shadow: var(--hard-sm);
+  font-weight: 700;
+  transition: transform 0.1s, box-shadow 0.1s, background-color 0.15s;
+}
+
+[data-style='street'] button:not(.link-button, .top-bar__link, .fab, .button-icon, .toast__close, .quick-tile):active:not(:disabled) {
+  transform: translate(-2px, 2px);
+  box-shadow: none;
+}
+
+[data-style='street'] :is(.button-quiet, .button-file) {
+  background: var(--color-surface);
+  color: var(--ink);
+}
+
+[data-style='street'] .button-quiet:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-gold) 25%, var(--color-surface));
+}
+
+[data-style='street'] .button-icon {
+  border: var(--line-thin);
+  border-radius: 50%;
+  color: var(--ink);
+}
+
+[data-style='street'] :is(input:not([type='checkbox'], [type='radio']), select, textarea) {
+  border: var(--line-thin);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+[data-style='street'] :is(input[type='checkbox'], input[type='radio']) {
+  accent-color: var(--color-accent);
+}
+
+[data-style='street'] :is(.notice, .pay-note) {
+  border: var(--line-thin);
+  border-radius: 0.75rem;
+}
+
+[data-style='street'] .badge {
+  border: 1.5px solid var(--ink);
+  background: var(--color-gold);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ---------- Order page ---------- */
+
+[data-style='street'] .order-hero {
+  border: var(--line);
+  border-radius: 1.75rem;
+  box-shadow: var(--hard);
+}
+
+/* A big round sticker behind the text, in the site's second colour. */
+[data-style='street'] .order-hero::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: -4rem;
+  inset-block-end: -5rem;
+  z-index: 0;
+  inline-size: 13rem;
+  block-size: 13rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-gold) 55%, transparent);
+  pointer-events: none;
+}
+
+[data-style='street'] .order-hero > :not(.order-hero__logo) {
+  position: relative;
+  z-index: 1;
+}
+
+[data-style='street'] .order-hero__logo {
+  border: 4px solid #fff;
+  box-shadow: var(--hard);
+  rotate: -7deg;
+}
+
+[data-style='street'] .order-hero h1 {
+  font-size: clamp(2.5rem, 9vw, 4.25rem);
+  line-height: 1.05;
+}
+
+[data-style='street'] .order-hero__chips li {
+  border: var(--line-thin);
+  border-radius: 0.625rem;
+  background: var(--color-gold);
+  backdrop-filter: none;
+  color: var(--ink);
+  font-weight: 700;
+  rotate: -2deg;
+}
+
+[data-style='street'] .order-hero__chips li:nth-child(2n) {
+  background: #fff;
+  rotate: 2deg;
+}
+
+/* The category title is a black sticker; its dishes sit straight on the page. */
+[data-style='street'] .category {
+  overflow: visible;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+[data-style='street'] .category > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block-end: 0.25rem;
+  padding: 0.25rem 1.25rem 0.375rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--color-surface);
+  rotate: -1.5deg;
+}
+
+[data-style='street'] .category > summary h2 {
+  font-size: 1.5rem;
+}
+
+[data-style='street'] .category__dishes {
+  gap: 1.25rem;
+  padding: 1rem 0 0.5rem;
+}
+
+/* Each dish is a picture card: the photo across the top, the details under it. */
+[data-style='street'] .dish {
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border: var(--line);
+  border-radius: 1.375rem;
+  background: var(--color-surface);
+  box-shadow: var(--hard);
+}
+
+[data-style='street'] .dish--chosen {
+  border-color: var(--color-accent);
+  box-shadow: -4px 4px 0 var(--color-accent);
+  background: var(--color-surface);
+}
+
+[data-style='street'] .dish > .carousel {
+  border-block-end: var(--line);
+}
+
+[data-style='street'] .dish > .carousel img {
+  aspect-ratio: 16 / 10;
+  border-radius: 0;
+}
+
+[data-style='street'] .dish__body {
+  gap: 0.5rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+[data-style='street'] .dish__body h3 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.4rem;
+  line-height: 1.15;
+}
+
+[data-style='street'] .dish__price {
+  padding: 0.125rem 0.75rem;
+  border: var(--line-thin);
+  border-radius: 999px;
+  background: var(--color-gold);
+  color: var(--ink);
+  font-weight: 800;
+  rotate: -2deg;
+}
+
+[data-style='street'] .option-card,
+[data-style='street'] .addon {
+  border: var(--line-thin);
+  border-radius: 1rem;
+}
+
+[data-style='street'] .option-card:has(input:checked) {
+  background: color-mix(in srgb, var(--color-gold) 35%, var(--color-surface));
+  box-shadow: var(--hard-sm);
+}
+
+[data-style='street'] .option-card__default {
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+}
+
+[data-style='street'] .amount {
+  padding: 0.25rem;
+  border: var(--line-thin);
+  border-radius: 999px;
+  background: var(--color-surface);
+}
+
+[data-style='street'] .amount .button-icon {
+  border: 0;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+[data-style='street'] .amount__value {
+  font-weight: 800;
+  font-size: 1.125rem;
+}
+
+/* Cards: the order details, quick fill, about, profile, reviews and dialogs. */
+[data-style='street'] :is(.order-form, .quick-fill, .about-card, .account-section, .review-card, .modal) {
+  border: var(--line);
+  border-radius: 1.5rem;
+  box-shadow: var(--hard);
+}
+
+[data-style='street'] .about-card.kashrut {
+  border-inline-start: var(--line);
+  background: color-mix(in srgb, var(--color-gold) 22%, var(--color-surface));
+}
+
+[data-style='street'] :is(.order-form, .quick-fill, .account-section) h2 {
+  font-size: 1.5rem;
+}
+
+[data-style='street'] .details-block {
+  border: var(--line-thin);
+  border-radius: 1rem;
+}
+
+[data-style='street'] .details-block[open] > summary {
+  border-block-end: var(--line-thin);
+}
+
+[data-style='street'] .quick-tile {
+  border: var(--line-thin);
+  border-radius: 1rem;
+  box-shadow: var(--hard-sm);
+}
+
+[data-style='street'] .quick-tile:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-gold) 22%, var(--color-surface));
+  box-shadow: var(--hard-sm);
+}
+
+[data-style='street'] .quick-tile__icon {
+  border: var(--line-thin);
+  background: var(--color-gold);
+  color: var(--ink);
+}
+
+[data-style='street'] .quick-fill__hint {
+  border: 2px dashed var(--ink);
+  border-radius: 1rem;
+}
+
+/* The total floats as a pill above the page instead of a bar across it. */
+[data-style='street'] .total-bar {
+  inset-inline: 0.75rem;
+  inset-block-end: 0.75rem;
+  padding: 0.5rem 0.625rem;
+  padding-inline-start: 1.25rem;
+  border: var(--line);
+  border-radius: 999px;
+  box-shadow: var(--hard);
+}
+
+[data-style='street'] .total-bar strong {
+  font-weight: 800;
+}
+
+[data-style='street'] .client-shell:has(.total-bar) .fabs {
+  inset-block-end: 5.75rem;
+}
+
+[data-style='street'] .scroll-fab {
+  border: var(--line-thin);
+  color: var(--ink);
+}
+
+[data-style='street'] .fab {
+  box-shadow: var(--hard-sm);
+}
+
+[data-style='street'] .site-footer {
+  border-block-start: var(--line);
+}
+
+[data-style='street'] .modal-backdrop {
+  background: color-mix(in srgb, var(--ink) 60%, transparent);
+}
+
+[data-style='street'] .review-card::before {
+  font-family: var(--display);
+  color: var(--color-gold);
+}
+
+/* On wider screens the dishes become a grid of cards rather than full-width rows. */
+@media (min-width: 40rem) {
+  [data-style='street'] .category__dishes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    align-items: start;
+  }
+
+  [data-style='street'] .dish {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  [data-style='street'] .dish > .carousel {
+    flex: none;
+  }
+
+  [data-style='street'] .total-bar {
+    /* At the start side, away from the floating buttons. */
+    inset-inline: 1.5rem auto;
+    min-inline-size: 22rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-style='street'] button {
+    transition: none;
+  }
+}

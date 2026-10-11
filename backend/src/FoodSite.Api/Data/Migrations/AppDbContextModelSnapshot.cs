@@ -759,6 +759,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("SiteDefaultsApplied")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("SiteStyle")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Settings");

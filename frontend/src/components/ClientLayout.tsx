@@ -9,9 +9,23 @@ import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
 import { useSite } from '../site/useSite'
 import { trackUsage } from '../usage/track'
+import { useSite, useSiteStyle } from '../site/useSite'
+
+/** Marks the page with the site's style (`<html data-style>`), which `styles/*.css` select on; the admin keeps its own look. */
+function useStyleAttribute() {
+  const style = useSiteStyle()
+  useEffect(() => {
+    const root = document.documentElement
+    root.dataset.style = style
+    return () => {
+      delete root.dataset.style
+    }
+  }, [style])
+}
 
 function Shell() {
   const background = useSite()?.backgroundImageUrl
+  useStyleAttribute()
   return (
     <div className="client-shell" style={background ? { backgroundImage: `url("${background}")` } : undefined}>
       <TopBar />
