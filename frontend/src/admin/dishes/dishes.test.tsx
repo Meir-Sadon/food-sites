@@ -216,6 +216,7 @@ describe('Dish form', () => {
       mainDishId: null,
       useMainDishPrice: false,
       isYesNo: false,
+      adjustmentOptional: false,
       addOnGroups: [],
       addOns: [],
       questions: [],
@@ -233,6 +234,19 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).openByDefault).toBe(true)
+  })
+
+  it('saves a dish whose adjustment is optional', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    await user.click(screen.getByLabelText('התאמת המנות אינה חובה'))
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).adjustmentOptional).toBe(true)
   })
 
   it('saves a per-supply-date limit on a dish', async () => {

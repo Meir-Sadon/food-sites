@@ -203,11 +203,14 @@ export function applyToUnadjusted(parent: MenuDish, selection: Selection, from: 
   return next
 }
 
-/** The dishes in the order that offer add-ons and have a unit the client has not adjusted or confirmed. */
+/**
+ * The dishes in the order that offer add-ons and have a unit the client has not adjusted or confirmed,
+ * except those whose adjustment the admin made optional.
+ */
 export function unadjustedDishes(selections: Record<number, Selection>, dishes: Map<number, MenuDish>): MenuDish[] {
   return Object.entries(selections).flatMap(([id, selection]) => {
     const dish = dishes.get(Number(id))
-    if (!dish || dish.isYesNo || addOnsOf(dish, dishes).length === 0) return []
+    if (!dish || dish.isYesNo || dish.adjustmentOptional || addOnsOf(dish, dishes).length === 0) return []
     return unitsOf(dish, selection).some((unit, i) => !isAdjusted(selection, i, unit)) ? [dish] : []
   })
 }

@@ -55,6 +55,7 @@ interface DishForm {
   mainDishId: string
   useMainDishPrice: boolean
   isYesNo: boolean
+  adjustmentOptional: boolean
   groups: GroupForm[]
   addOns: AddOnForm[]
   questions: QuestionForm[]
@@ -72,6 +73,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       mainDishId: main ? String(main.id) : '',
       useMainDishPrice: !!main,
       isYesNo: false,
+      adjustmentOptional: false,
       groups: [],
       addOns: [],
       questions: [],
@@ -136,12 +138,13 @@ function copyForm(source: Dish, categories: Category[], name: string): DishForm 
   }
 }
 
-function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice' | 'isYesNo' | 'groups' | 'addOns'> {
+function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice' | 'isYesNo' | 'adjustmentOptional' | 'groups' | 'addOns'> {
   const groups = dish.addOnGroups.map((g) => ({ key: formKey(), id: g.id, name: g.name, maxUnits: str(g.maxUnits) }))
   return {
     mainDishId: dish.mainDishId === null ? '' : String(dish.mainDishId),
     useMainDishPrice: dish.useMainDishPrice,
     isYesNo: dish.isYesNo,
+    adjustmentOptional: dish.adjustmentOptional,
     groups,
     addOns: dish.addOns.map((a) => ({
       key: formKey(),
@@ -176,6 +179,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
     mainDishId: form.mainDishId === '' ? null : Number(form.mainDishId),
     useMainDishPrice: form.mainDishId !== '' && form.useMainDishPrice,
     isYesNo: form.isYesNo,
+    adjustmentOptional: form.mainDishId === '' && form.adjustmentOptional,
     name: form.name,
     categoryId: Number(form.categoryId),
     description: form.description || null,
@@ -581,6 +585,22 @@ export function DishFormPage() {
             <input type="checkbox" checked={form.isYesNo} onChange={(e) => set({ isYesNo: e.target.checked })} />
             {t('admin.dishes.yesNoLabel')}
           </label>
+        )}
+        {(advanced || form.adjustmentOptional) && form.mainDishId === '' && (
+          <>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={form.adjustmentOptional}
+                onChange={(e) => set({ adjustmentOptional: e.target.checked })}
+                aria-describedby="dish-adjustmentOptional-hint"
+              />
+              {t('admin.dishes.adjustmentOptionalLabel')}
+            </label>
+            <span id="dish-adjustmentOptional-hint" className="hint">
+              {t('admin.dishes.adjustmentOptionalHint')}
+            </span>
+          </>
         )}
         <label className="checkbox">
           <input type="checkbox" checked={form.isSoldOut} onChange={(e) => set({ isSoldOut: e.target.checked })} />
