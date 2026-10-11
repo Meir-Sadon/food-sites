@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IMAGE_TYPES, MAX_DISH_IMAGES, MAX_IMAGE_BYTES, dishesApi, type Dish } from '../../api/catalog'
-import { ConfirmRemove, DragHandle, MoveButtons, Section, Status } from '../ui'
+import { ConfirmRemove, DragHandle, FormBlock, MoveButtons, Status } from '../ui'
 import { useErrorMessage } from '../hooks'
 import { moved, useDragSort } from '../sortable'
 
@@ -51,7 +51,8 @@ export function DishImagesSection({ dish, onChange }: { dish: Dish; onChange: (d
   }
 
   return (
-    <Section title={t('admin.dishes.images')} hint={t('admin.settings.imageHint')}>
+    <FormBlock title={t('admin.dishes.images')} about={t('admin.dishes.blocks.imagesAbout')}>
+      <p className="hint">{t('admin.settings.imageHint')}</p>
       {dish.images.length > 1 && <p className="hint">{t('admin.dishes.imagesOrderHint')}</p>}
       <ol className="image-list">
         {sort.items.map((image, index) => {
@@ -90,6 +91,6 @@ export function DishImagesSection({ dish, onChange }: { dish: Dish; onChange: (d
       )}
       {busy && <p role="status">{t('admin.settings.uploading')}</p>}
       {error && <Status message={error} error />}
-    </Section>
+    </FormBlock>
   )
 }
