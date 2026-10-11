@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react'
+import { confirmNoAdjustments } from '../test/adjust'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { UsageReport } from '../api/operations'
@@ -66,6 +67,7 @@ describe('Usage tracking', () => {
     const card = screen.getByRole('article', { name: 'עוף בתנור' })
     await user.click(within(card).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
+    await confirmNoAdjustments(user)
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
     await user.type(screen.getByLabelText('רחוב'), 'הרצל')
     await user.type(screen.getByLabelText('מספר בית'), '1')

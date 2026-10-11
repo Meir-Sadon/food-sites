@@ -2689,3 +2689,29 @@ label {
   border-radius: 0.625rem;
   box-shadow: -2px 2px 0 var(--color-text);
 }
+
+/* One ordered unit's choices (add-ons, name, questions): closed until opened, with its state in the heading. */
+.addon-units {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.addon-unit {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+}
+
+.addon-unit__title {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.addon-unit[open] > .addon-unit__title {
+  margin-block-end: 0.5rem;
+}
+
+.addon-unit__missing {
+  color: #6b4a0b;
+  font-weight: 700;
+}

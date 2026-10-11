@@ -21,6 +21,8 @@ export interface Selection {
   notes?: string[]
   /** Each ordered unit's answers to the dish's questions, by question id, the first unit's first. */
   answers?: Answers[]
+  /** Which units the client confirmed without add-ons ("no changes"), the first unit's first. */
+  confirmed?: boolean[]
 }
 
 export const NOTE_MAX_LENGTH = 100
@@ -178,6 +180,38 @@ export function withNote(selection: Selection, unit: number, note: string): Sele
   return { ...selection, notes }
 }
 
+export const unitConfirmed = (selection: Selection, unit: number) => selection.confirmed?.[unit] ?? false
+
+/** The selection with one ordered unit confirmed (or not) as it is, without add-ons. */
+export function withConfirmed(selection: Selection, unit: number, confirmed: boolean): Selection {
+  const flags = Array.from({ length: Math.max(unit + 1, selection.confirmed?.length ?? 0) }, (_, i) => (i === unit ? confirmed : unitConfirmed(selection, i)))
+  return { ...selection, confirmed: flags }
+}
+
+/** A unit is adjusted once the client picked an add-on for it or confirmed it as it is. */
+export const isAdjusted = (selection: Selection, unit: number, add: Record<number, AddOnSelection>) =>
+  Object.keys(add).length > 0 || unitConfirmed(selection, unit)
+
+/** Gives every unit that is not adjusted yet the same add-ons as the given unit. */
+export function applyToUnadjusted(parent: MenuDish, selection: Selection, from: number): Selection {
+  const units = unitsOf(parent, selection)
+  let next = selection
+  units.forEach((unit, i) => {
+    if (i === from || isAdjusted(selection, i, unit)) return
+    next = withConfirmed(withUnit(next, i, { ...units[from] }), i, true)
+  })
+  return next
+}
+
+/** The dishes in the order that offer add-ons and have a unit the client has not adjusted or confirmed. */
+export function unadjustedDishes(selections: Record<number, Selection>, dishes: Map<number, MenuDish>): MenuDish[] {
+  return Object.entries(selections).flatMap(([id, selection]) => {
+    const dish = dishes.get(Number(id))
+    if (!dish || dish.isYesNo || addOnsOf(dish, dishes).length === 0) return []
+    return unitsOf(dish, selection).some((unit, i) => !isAdjusted(selection, i, unit)) ? [dish] : []
+  })
+}
+
 export const unitAnswers = (selection: Selection, unit: number): Answers => selection.answers?.[unit] ?? {}
 
 /** The selection with one ordered unit's answer to one question replaced. */
@@ -257,16 +291,18 @@ function fitUnit(parent: MenuDish, unit: Record<number, AddOnSelection>, dishes:
 export function fitAddOns(parent: MenuDish, selection: Selection, dishes: Map<number, MenuDish>): Selection {
   const units = unitsOf(parent, selection).map((unit) => fitUnit(parent, unit, dishes))
   const extraUnits = units.slice(1)
-  const { extraUnits: _dropped, notes: _notes, answers: _answers, ...rest } = selection
+  const { extraUnits: _dropped, notes: _notes, answers: _answers, confirmed: _confirmed, ...rest } = selection
   void _dropped
   const notes = units.map((_, i) => unitNote(selection, i))
   const answers = units.map((_, i) => unitAnswers(selection, i))
+  const confirmed = units.map((_, i) => unitConfirmed(selection, i))
   return {
     ...rest,
     addOns: units[0],
     ...(extraUnits.some((u) => Object.keys(u).length > 0) && { extraUnits }),
     ...(notes.some((n) => n !== '') && { notes }),
     ...(answers.some((a) => Object.keys(a).length > 0) && { answers }),
+    ...(confirmed.some(Boolean) && { confirmed }),
   }
 }
 
@@ -329,7 +365,10 @@ export function toLines(selections: Record<number, Selection>, dishes: Map<numbe
       const inputs = answerInputs(questions, unitAnswers(selection, unit))
       return inputs.length > 0 ? inputs : undefined
     }
-    if (!dish || dish.sellBy !== 'Units' || !Number.isInteger(selection.quantity))
+    // Units get lines of their own only when there is something to choose for each (add-ons or questions); otherwise the
+    // dish has one remark for the whole line.
+    const perUnit = !!dish && (addOnsOf(dish, dishes).length > 0 || questions.length > 0)
+    if (!dish || !perUnit || dish.sellBy !== 'Units' || !Number.isInteger(selection.quantity))
       return { ...line, addOns: toInputs(selection.addOns), note: unitNote(selection, 0).trim() || undefined, answers: answers(0) }
     return {
       ...line,
@@ -433,7 +472,12 @@ export function restoreSelections(saved: Record<number, Selection>, menu: Menu):
     const answers = selection.answers?.map((unit) => keepAnswers(dish.questions ?? [], unit))
     selections[dish.id] = fitAddOns(
       dish,
-      { ...selections[dish.id], ...(selection.notes && { notes: selection.notes }), ...(answers && { answers }) },
+      {
+        ...selections[dish.id],
+        ...(selection.notes && { notes: selection.notes }),
+        ...(answers && { answers }),
+        ...(selection.confirmed && { confirmed: selection.confirmed }),
+      },
       dishes,
     )
   }
@@ -486,7 +530,9 @@ function selectionsFromLines(lines: SavedLine[], dishes: Map<number, MenuDish>):
   for (const [id, selection] of Object.entries(saved)) {
     const all = units[Number(id)]
     const extraUnits = all.slice(1)
-    saved[Number(id)] = { ...selection, addOns: all[0] ?? {}, ...(extraUnits.some((u) => Object.keys(u).length > 0) && { extraUnits }) }
+    // A past order was ordered as it was: every unit counts as adjusted.
+    const confirmed = all.map(() => true)
+    saved[Number(id)] = { ...selection, addOns: all[0] ?? {}, confirmed, ...(extraUnits.some((u) => Object.keys(u).length > 0) && { extraUnits }) }
   }
   return saved
 }
