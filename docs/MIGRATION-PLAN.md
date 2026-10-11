@@ -145,11 +145,19 @@ How it was built:
 
 - The sites were renamed to `kuskus-shel-ima` and `grape-leaves-eliel` (folders and ids) to match their Render services and leave room for later businesses. Admins and logged-in clients sign in again once (cookie names and the JWT issuer come from the id); existing pictures keep their URLs, new uploads go to the `<siteId>/` Cloudinary folder.
 
-### Phase 6 — Ops API (the console's view into each site)
-- [ ] A third authentication scheme for the console: a per-site service token (only its hash is stored in the site's settings) in an `Authorization` header. It never works as an admin or client session, and the reverse holds too.
-- [ ] `/api/ops/*`: `version` (commit, migration level), `summary` (orders and sales per period), `recommendations` (list and mark handled), `feedback` (see below), `features` (read and write).
-- [ ] A **"Report a problem / comment"** form in the admin area, and optionally for clients, storing feedback in the site's own database for the console to collect.
-- [ ] The ops DTOs are written up in `docs/OPS-API.md`; the console keeps its client types in sync with it.
+### Phase 6 — Ops API (the console's view into each site) (done)
+- [x] A third authentication scheme for the console: a per-site service token (only its hash is stored in the site's settings) in an `Authorization` header. It never works as an admin or client session, and the reverse holds too.
+- [x] `/api/ops/*`: `version` (commit, migration level), `summary` (orders and sales per period), `recommendations` (list and mark handled), `feedback` (see below), `features` (read and write).
+- [x] A **"Report a problem / comment"** form in the admin area, and optionally for clients, storing feedback in the site's own database for the console to collect.
+- [x] The ops DTOs are written up in `docs/OPS-API.md`; the console keeps its client types in sync with it.
+
+How it was built:
+- The master makes the token in the admin (**הגדרות כלליות → חיבור למסוף הניהול**, shown to the master only). It is shown once; the site keeps its SHA-256 hash in `Settings.OpsTokenHash`. A new token replaces the old one, and it can be revoked. The owner cannot see or change it.
+- The scheme (`Ops/OpsToken.cs`) is asked for only by `/api/ops`, which asks for nothing else, so admin and client sessions and the console token never stand in for each other.
+- Changes made through the ops API are audited as `console` ("מסוף הניהול" in the audit trail).
+- `summary` counts by supply date and leaves out cancelled orders and orders waiting for approval, like the admin's statistics; periods are days, weeks (Sunday to Saturday) or months.
+- The report form is an admin page (**הגדרות אתר → דיווח על בעיה**): a problem or a comment, optionally the screen it is about, and the admin's earlier reports with "טופל" once the console marks them handled. The optional client form was left out: clients already have recommendations, and the owner can pass on what clients say.
+- Writes to `/api/ops` send `X-Food-Site-Request: 1` like every other write; the console sets it once in its client.
 
 ### Phase 7 — Retire the old repos
 - [ ] Both sites deployed from this repo and checked by hand: order, admin login, WhatsApp (simulated), picture upload.

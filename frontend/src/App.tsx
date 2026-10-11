@@ -7,6 +7,7 @@ import { CategoriesPage } from './admin/categories/CategoriesPage'
 import { ContactsPage } from './admin/contacts/ContactsPage'
 import { DishFormPage } from './admin/dishes/DishFormPage'
 import { DishesPage } from './admin/dishes/DishesPage'
+import { FeedbackPage } from './admin/feedback/FeedbackPage'
 import { OrdersPage } from './admin/orders/OrdersPage'
 import { MessagesPage } from './admin/messages/MessagesPage'
 import { ReportsPage } from './admin/reports/ReportsPage'
@@ -86,6 +87,7 @@ export function App() {
           <Route path="usage" element={<UsagePage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="audit" element={<AuditPage />} />
+          <Route path="feedback" element={<FeedbackPage />} />
           <Route
             path="reviews"
             element={

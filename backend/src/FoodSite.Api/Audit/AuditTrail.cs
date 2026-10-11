@@ -11,8 +11,9 @@ namespace FoodSite.Api.Audit;
 public record AuditChange(string Field, string? From, string? To, bool Secret = false);
 
 /// <summary>
-/// Who is changing data in this request: the logged-in admin, for requests to the admin API only. Anything else
-/// (a client's order, startup seeding) is not audited.
+/// Who is changing data in this request: the logged-in admin, for requests to the admin API, or the console
+/// (<see cref="Ops.OpsToken.Actor"/>), for requests to the ops API. Anything else (a client's order, startup seeding)
+/// is not audited.
 /// </summary>
 public class AuditActor(IHttpContextAccessor http)
 {
@@ -21,9 +22,13 @@ public class AuditActor(IHttpContextAccessor http)
         get
         {
             var context = http.HttpContext;
-            if (context is null || !context.Request.Path.StartsWithSegments("/api/admin"))
+            if (context is null)
                 return null;
             var user = context.User;
+            if (context.Request.Path.StartsWithSegments("/api/ops"))
+                return user.IsInRole(Ops.OpsToken.Role) ? Ops.OpsToken.Actor : null;
+            if (!context.Request.Path.StartsWithSegments("/api/admin"))
+                return null;
             if (!user.IsInRole(AdminTokenService.AdminRole))
                 return null;
             var actor = user.FindFirst(AdminTokenService.ActorClaim)?.Value;
@@ -48,7 +53,7 @@ public static class AuditTrail
         ["DisplayOrder", "PublicId", "BackgroundImagePublicId", "Token", nameof(Settings.SiteDefaultsApplied)];
 
     /// <summary>Recorded as changed, never with their values.</summary>
-    private static readonly HashSet<string> SecretFields = [nameof(Settings.AdminPasswordHash)];
+    private static readonly HashSet<string> SecretFields = [nameof(Settings.AdminPasswordHash), nameof(Settings.OpsTokenHash)];
 
     /// <summary>Properties that name an entity, tried in order.</summary>
     private static readonly string[] LabelFields = ["Name", "Label", "DishName", "Phone", "Date", "Weekday"];
