@@ -10,6 +10,8 @@ When you're done, a site lives at an address like `https://kuskus-shel-ima.onren
 2. `.github/workflows/deploy.yml` deploys the **canary** (the first service in `render.yaml`) at that commit through its Render **deploy hook**.
 3. It waits until the canary's `/api/health` reports the new commit, then deploys every other site at the same commit through its deploy hook. If the canary never comes up, the others keep running the previous version.
 
+Each merge to `main` gets its own CI and Deploy run. Several merges in quick succession can still leave one of them with a skipped or cancelled run (GitHub keeps at most one waiting run per workflow); that is harmless, because the next merge's run deploys its code too. To check, compare each site's `/api/health` `commit` with `main`; to redeploy `main` on every site, run the Deploy workflow by hand (**Actions → Deploy → Run workflow**).
+
 The workflow needs, in GitHub **Settings → Secrets and variables → Actions**:
 - variable `CANARY_URL`: the canary's address, e.g. `https://kuskus-shel-ima.onrender.com`
 - secret `RENDER_DEPLOY_HOOK_CANARY`: the canary's deploy hook (Render: service → **Settings → Deploy Hook**)

@@ -8,7 +8,9 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # A new push to a PR supersedes its older run. On main every merge runs to the end, so each merge
+  # gets its own result and Deploy run instead of a cancelled CI and a skipped deploy.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
