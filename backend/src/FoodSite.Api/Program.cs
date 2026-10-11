@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-// `dotnet run -- hash-password [password]` prints a hash for Admin__PasswordHash.
+// `dotnet run -- hash-password [password]` prints a hash for Admin__PasswordHash or Admin__MasterPasswordHash.
 if (args.Length > 0 && args[0] == "hash-password")
 {
     var password = args.Length > 1 ? args[1] : Console.ReadLine();
@@ -38,6 +38,9 @@ if (!SiteOptions.IsValidId(site.Id))
 if (site.Features.Keys.FirstOrDefault(name => !Features.IsKnown(name)) is { } unknownFeature)
     throw new InvalidOperationException(
         $"Site:Features:{unknownFeature} is not a feature. Known features: {string.Join(", ", Features.All)}.");
+if (site.Settings.Style is { } style && !SiteStyles.IsKnown(style))
+    throw new InvalidOperationException(
+        $"Site:Settings:Style {style} is not a style. Known styles: {string.Join(", ", SiteStyles.All)}.");
 builder.Services.Configure<SiteOptions>(config.GetSection(SiteOptions.Section));
 builder.Services.AddScoped<FeatureFlags>();
 // Cookie names, the JWT issuer and the WhatsApp template names are built from the site id unless configured.
@@ -45,6 +48,8 @@ builder.Services.PostConfigure<JwtOptions>(o => o.UseSiteDefaults(site));
 builder.Services.PostConfigure<FoodSite.Api.Auth.CookieOptions>(o => o.UseSiteDefaults(site));
 builder.Services.PostConfigure<WhatsAppOptions>(o => o.UseSiteDefaults(site));
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<FoodSite.Api.Audit.AuditActor>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(config.GetConnectionString("Default")));
 
@@ -72,6 +77,10 @@ var cookies = config.GetSection(FoodSite.Api.Auth.CookieOptions.Section).Get<Foo
     ?? new FoodSite.Api.Auth.CookieOptions();
 cookies.UseSiteDefaults(site);
 var cookieName = cookies.Name;
+var adminOptions = config.GetSection(AdminOptions.Section).Get<AdminOptions>() ?? new AdminOptions();
+if (string.IsNullOrWhiteSpace(adminOptions.OwnerUsername) || string.IsNullOrWhiteSpace(adminOptions.MasterUsername)
+    || string.Equals(adminOptions.OwnerUsername.Trim(), adminOptions.MasterUsername.Trim(), StringComparison.OrdinalIgnoreCase))
+    throw new InvalidOperationException("Admin:OwnerUsername and Admin:MasterUsername must be set and different.");
 var userCookieName = cookies.UserName;
 
 builder.Services
@@ -93,6 +102,14 @@ builder.Services
             OnMessageReceived = context =>
             {
                 context.Token = context.Request.Cookies[cookieName];
+                return Task.CompletedTask;
+            },
+            // Every change is audited by who made it, so a session that does not say which admin it is
+            // (one from before there were two) has to log in again.
+            OnTokenValidated = context =>
+            {
+                if (!AdminActor.IsKnown(context.Principal?.FindFirst(AdminTokenService.ActorClaim)?.Value))
+                    context.Fail("The admin session does not name its admin.");
                 return Task.CompletedTask;
             },
         };
@@ -119,8 +136,7 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
-var loginLimit = config.GetSection(AdminOptions.Section).Get<AdminOptions>()?.LoginAttemptsPerMinute
-    ?? new AdminOptions().LoginAttemptsPerMinute;
+var loginLimit = adminOptions.LoginAttemptsPerMinute;
 var publicLimit = config.GetValue<int?>("Public:RequestsPerMinute") ?? 30;
 builder.Services.AddRateLimiter(options =>
 {

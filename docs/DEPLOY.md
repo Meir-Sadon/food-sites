@@ -55,14 +55,16 @@ Before adding a third site, check the free tiers: free Render services share a m
 
 Without it the site still works, but the admin area can't upload pictures.
 
-## 3. Admin password hash
+## 3. Admin password hashes
 
-The admin password is never stored as plain text, only as a hash. Create one in either of these ways:
+Each site has two admins: the business owner, and you as the master admin, with the same user name and password on every site. Passwords are never stored as plain text, only as hashes. Create one for the owner's first password, and (once, for all sites) one for your master password, in either of these ways:
 
 - With .NET installed: `cd backend && dotnet run --project src/FoodSite.Api -- hash-password '<your password>'`
 - With Docker: `docker build --build-arg SITE=kuskus-shel-ima -t kuskus . && docker run --rm kuskus hash-password '<your password>'`
 
 Copy the line it prints (it starts with `AQAAAA`).
+
+Pick a long passphrase for the master password (four or five random words). The same password opens every site, so if it leaks, every site is open until you change it.
 
 ## 4. Hosting: Render
 
@@ -73,19 +75,23 @@ Copy the line it prints (it starts with `AQAAAA`).
    | Setting | What to paste |
    | --- | --- |
    | `ConnectionStrings__Default` | The connection string from step 1 |
-   | `Admin__PasswordHash` | The hash from step 3 |
+   | `Admin__PasswordHash` | The owner's hash from step 3 |
+   | `Admin__MasterUsername` | Your master user name, the same on every site |
+   | `Admin__MasterPasswordHash` | Your master hash from step 3, the same on every site |
    | `Cloudinary__Url` | The Cloudinary value from step 2, or leave it empty |
    | `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | From Meta's WhatsApp Cloud API, or leave both empty (messages are only logged) |
 
    Render generates the login-signing secret (`Jwt__Secret`) itself. The `SITE` value in `render.yaml` picks the folder under `sites/` the service is built from; Render passes it to the `Dockerfile` as a build argument.
 4. Click **Apply**. The first build takes about 5–10 minutes. When the service shows **Live**, open the address shown at the top of the service page.
-5. Check that the admin area works: go to `/admin` and sign in with your password.
+5. Check that the admin area works: go to `/admin` and sign in with your master user name and password, then with `admin` and the owner's password.
 
 ## Good to know
 
 - **Sleeping:** a free Render service goes to sleep after 15 minutes with no visitors. The next visit wakes it up, which takes about a minute. After that it's fast again.
 - **Changing a setting:** on Render, open the service, then **Environment**, then edit the value and save. The service restarts by itself.
-- **Changing the admin password:** the hash is copied into the database only on the first start. To change it later, see "Admin password" in the README.
+- **Changing the owner's password:** the owner changes it in the admin, under **הגדרות כלליות**. If they forgot it, sign in as the master and set a new one in the same place.
+- **Master admin:** to add it to a site or change its password, open each service on Render, then **Environment**, and set `Admin__MasterUsername` and `Admin__MasterPasswordHash` (a new hash from step 3). Use the same two values on every service. Sessions already open stay open until they expire (12 hours).
+- **Who changed what:** the admin's **יומן שינויים** tab lists every change and login, with whether the master or the owner made it.
 - **Logs:** if something breaks, open the service on Render and look at **Logs**.
 
 ## Later: your own domain

@@ -40,7 +40,12 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         bool NeedsReview,
         IReadOnlyList<ItemDto> Items,
         TimeOnly? DeliveryHour = null,
-        bool HourFull = false);
+        bool HourFull = false,
+        bool PaidByDriver = false,
+        DeliveryReportDto? Delivery = null);
+
+    /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
+    public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
 
     public record StatusInput(OrderStatus Status);
 
@@ -155,18 +160,25 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     {
         if (!Enum.IsDefined(input.Status))
             return Invalid(nameof(input.Status), "invalid");
-        var updated = await db.Orders.Where(o => o.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, input.Status));
-        return updated == 0 ? NotFound() : NoContent();
+        // Orders are loaded rather than updated in place, so each change reaches the audit trail.
+        var order = await db.Orders.FindAsync(id);
+        if (order is null)
+            return NotFound();
+        order.Status = input.Status;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>The admin accepts an order that was flagged for review: from now on it takes its quantities.</summary>
     [HttpPut("{id:int}/approve")]
     public async Task<ActionResult> Approve(int id)
     {
-        var updated = await db.Orders.Where(o => o.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.NeedsReview, false));
-        return updated == 0 ? NotFound() : NoContent();
+        var order = await db.Orders.FindAsync(id);
+        if (order is null)
+            return NotFound();
+        order.NeedsReview = false;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     [HttpPut("{id:int}/paid")]
@@ -187,12 +199,16 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         // Unpaid clears how it was paid, so the two never disagree.
         var paidWith = input.IsPaid ? input.PaidWith : null;
         var comment = input.IsPaid ? Clean(input.PaymentComment) : null;
-        var updated = await db.Orders.Where(o => o.Id == id)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(o => o.IsPaid, input.IsPaid)
-                .SetProperty(o => o.PaidWith, paidWith)
-                .SetProperty(o => o.PaymentComment, comment));
-        return updated == 0 ? NotFound() : NoContent();
+        var order = await db.Orders.FindAsync(id);
+        if (order is null)
+            return NotFound();
+        order.IsPaid = input.IsPaid;
+        order.PaidWith = paidWith;
+        order.PaymentComment = comment;
+        // The admin's record takes over from the driver's.
+        order.PaidByDriver = false;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>
@@ -272,5 +288,12 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal))
             .ToList(),
         o.DeliveryHour,
-        overbooked.Contains(o.Id));
+        overbooked.Contains(o.Id),
+        o.PaidByDriver,
+        DeliveryReport(o));
+
+    private static DeliveryReportDto? DeliveryReport(Order o) =>
+        o.DeliveryOutcome is null && o.DeliveryProofUrl is null
+            ? null
+            : new DeliveryReportDto(o.DeliveryOutcome, o.DeliveryReportedAt, o.DeliveryNote, o.DeliveryProofUrl);
 }

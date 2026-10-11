@@ -15,6 +15,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   serviceCities: 'אשקלון',
   ordersPerHour: null,
   portionsPerSupplyDate: null,
+  style: 'classic',
   ...patch,
 })
 
@@ -34,6 +35,7 @@ export const dish = (id: number, name: string, categoryId: number, patch: Partia
   id,
   name,
   categoryId,
+  displayOrder: id,
   description: null,
   allergenInfo: null,
   sellBy: 'Units',
@@ -70,6 +72,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   whatsAppPhones: [],
   serviceCities: ['אשקלון'],
   features: ['recommendations', 'favorites'],
+  style: 'classic',
   ...patch,
 })
 

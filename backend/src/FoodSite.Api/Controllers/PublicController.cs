@@ -4,12 +4,13 @@ using FoodSite.Api.Orders;
 using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace FoodSite.Api.Controllers;
 
 /// <summary>What the client site shows: site info, contact details, the enabled features, the menu and the open supply dates.</summary>
 [Route("api")]
-public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features) : PublicControllerBase
+public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features, IOptions<SiteOptions> site) : PublicControllerBase
 {
     public record ContactDto(string? Name, string? Phone, string? Address, string? Email, string? OpeningHours);
 
@@ -26,7 +27,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         ContactDto Contact,
         IReadOnlyList<string> WhatsAppPhones,
         IReadOnlyList<string> ServiceCities,
-        IReadOnlyList<string> Features);
+        IReadOnlyList<string> Features,
+        string Style);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -79,7 +81,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
             whatsAppPhones,
             ServiceArea.Parse(s.ServiceCities),
-            await features.EnabledAsync());
+            await features.EnabledAsync(),
+            SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style));
     }
 
     [HttpGet("menu")]
@@ -94,10 +97,14 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             .Include(d => d.Options).Include(d => d.Images).Include(d => d.AddOns)
             .AsSplitQuery()
             .Where(d => !d.IsHidden)
-            .OrderBy(d => d.Id)
+            .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Id)
             .ToListAsync();
-        var shown = dishes.Where(d => visible.Contains(d.CategoryId) || d.IsAddOnOnly).ToList();
+        // Category by category, each in the admin's order; add-on-only dishes of a removed category come last.
+        var categoryPosition = categories.Select((c, i) => (c.Id, i)).ToDictionary(p => p.Id, p => p.i);
+        var shown = dishes.Where(d => visible.Contains(d.CategoryId) || d.IsAddOnOnly)
+            .OrderBy(d => categoryPosition.GetValueOrDefault(d.CategoryId, int.MaxValue)).ToList();
         var shownIds = shown.Select(d => d.Id).ToHashSet();
+        var dishPosition = shown.Select((d, i) => (d.Id, i)).ToDictionary(p => p.Id, p => p.i);
 
         var supplyDates = await OpenDatesAsync();
         var remaining = await RemainingAsync(shown, supplyDates.Select(d => d.Date).ToList());
@@ -107,7 +114,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             d.MinAmount, d.MaxAmount, d.AmountStep, d.UnitPrice, d.IsAddOnOnly, d.IsSoldOut,
             d.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
             d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
-            d.AddOns.Select(a => a.AddOnDishId).Where(shownIds.Contains).Order().ToList(),
+            d.AddOns.Select(a => a.AddOnDishId).Where(shownIds.Contains).OrderBy(id => dishPosition[id]).ToList(),
             remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, d.UnitName))
             .ToList();
 

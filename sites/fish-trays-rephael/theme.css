@@ -1,0 +1,20 @@
+/* The site's colour palette: deep sea blue, a lemon yellow accent and a light sand background. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #f5f3ec;
+  --color-surface: #ffffff;
+  --color-text: #15283a;
+  --color-muted: #566676;
+  --color-accent: #145a7a;
+  --color-accent-hover: #0f4560;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #d9a521;
+  --color-border: #dfe3e2;
+  --color-error: #b42318;
+  --color-success: #1f6b4f;
+  --color-soft: #e8f1f4;
+  --color-shadow: #0f2233;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(217 165 33 / 0.18);
+  --color-badge-text: #7a5a0c;
+  --gradient-hero: linear-gradient(135deg, var(--color-accent-hover) 0%, #1f7ea3 55%, var(--color-gold) 135%);
+}

@@ -74,6 +74,8 @@ jobs:
             hook: RENDER_DEPLOY_HOOK_KUSKUS_LIEL
           - site: home-food-mary
             hook: RENDER_DEPLOY_HOOK_HOME_FOOD_MARY
+          - site: fish-trays-rephael
+            hook: RENDER_DEPLOY_HOOK_FISH_TRAYS_REPHAEL
     steps:
       - name: Trigger the deploy hook
         env:

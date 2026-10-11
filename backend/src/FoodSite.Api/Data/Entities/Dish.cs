@@ -13,6 +13,9 @@ public class Dish
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
 
+    /// <summary>Where the dish sits in its category, set by the admin; new dishes go last.</summary>
+    public int DisplayOrder { get; set; }
+
     public string? Description { get; set; }
     public string? AllergenInfo { get; set; }
 

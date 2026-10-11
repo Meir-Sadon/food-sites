@@ -49,4 +49,7 @@ export function fakeApi(routes: Record<string, Handler>) {
 
 export const invalid = (errors: Record<string, string[]>) => ({ status: 400, body: { errors } })
 
-export const adminSession = { 'GET /api/admin/me': () => ({}) }
+export const adminSession = { 'GET /api/admin/me': () => ({ role: 'admin', actor: 'owner', username: 'admin' }) }
+
+/** The master admin's session, for screens that differ between the two admins. */
+export const masterSession = { 'GET /api/admin/me': () => ({ role: 'admin', actor: 'master', username: 'master' }) }

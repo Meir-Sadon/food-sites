@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { Dish, DishInput } from '../../api/catalog'
@@ -36,6 +36,55 @@ describe('Dishes list', () => {
     expect(rows[0]).toHaveTextContent('₪45 · חצי עוף')
     expect(rows[1]).toHaveTextContent('תוספת בלבד')
     expect(within(screen.getByRole('region', { name: 'סלטים' })).getByText('₪90 לק"ג')).toBeInTheDocument()
+  })
+
+  it('moves a dish down within its category', async () => {
+    const third = dish(5, 'פרגיות', 1)
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/dishes': () => [...all, third],
+      'PUT /api/admin/dishes/order': () => [{ ...leg, displayOrder: 0 }, { ...chicken, displayOrder: 1 }, { ...third, displayOrder: 2 }, eggplant, removed],
+    })
+    renderAt('/admin/dishes')
+    const poultry = await screen.findByRole('region', { name: 'עופות' })
+
+    expect(within(poultry).getByRole('button', { name: 'העברה למעלה: עוף בתנור' })).toBeDisabled()
+    await userEvent.setup().click(within(poultry).getByRole('button', { name: 'העברה למטה: עוף בתנור' }))
+
+    await waitFor(() => expect(within(poultry).getAllByRole('listitem')[1]).toHaveTextContent('עוף בתנור'))
+    expect(api.sent('PUT', '/dishes/order')[0].body).toEqual({ categoryId: 1, dishIds: [3, 1, 5] })
+    // A category with one dish has nothing to reorder.
+    expect(within(screen.getByRole('region', { name: 'סלטים' })).queryByRole('button', { name: /העברה/ })).not.toBeInTheDocument()
+  })
+
+  it('drags a dish to a new place', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/order': () => [{ ...leg, displayOrder: 0 }, { ...chicken, displayOrder: 1 }, eggplant, removed] })
+    renderAt('/admin/dishes')
+    const poultry = await screen.findByRole('region', { name: 'עופות' })
+    // jsdom has no layout: the rows are 40px tall, one under the other.
+    within(poultry).getAllByRole('listitem').forEach((row, i) => {
+      row.getBoundingClientRect = () => ({ top: i * 40, bottom: i * 40 + 40, left: 0, right: 300 }) as DOMRect
+    })
+
+    const grip = within(poultry).getAllByTitle('גררו כדי לשנות את הסדר')[0]
+    fireEvent.pointerDown(grip, { button: 0 })
+    fireEvent(window, Object.assign(new Event('pointermove'), { clientX: 10, clientY: 70 }))
+    await waitFor(() => expect(within(poultry).getAllByRole('listitem')[0]).toHaveTextContent('שוק'))
+    fireEvent(window, new Event('pointerup'))
+
+    await waitFor(() => expect(api.sent('PUT', '/dishes/order')).toHaveLength(1))
+    expect(api.sent('PUT', '/dishes/order')[0].body).toEqual({ categoryId: 1, dishIds: [3, 1] })
+  })
+
+  it('puts the order back when saving it fails', async () => {
+    fakeApi({ ...base, 'PUT /api/admin/dishes/order': () => ({ status: 409, body: { code: 'listChanged' } }) })
+    renderAt('/admin/dishes')
+    const poultry = await screen.findByRole('region', { name: 'עופות' })
+
+    await userEvent.setup().click(within(poultry).getByRole('button', { name: 'העברה למטה: עוף בתנור' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('הרשימה השתנתה')
+    expect(within(poultry).getAllByRole('listitem')[0]).toHaveTextContent('עוף בתנור')
   })
 
   it('marks a dish sold out', async () => {
@@ -298,7 +347,7 @@ describe('Dish form', () => {
       'GET /api/admin/categories': () => categories,
       'GET /api/admin/dishes': () => [current, eggplant],
       'POST /api/admin/dishes/1/images': () => (current = { ...current, images: [image(1, 0), image(2, 1)] }),
-      'POST /api/admin/dishes/1/images/2/move': () => (current = { ...current, images: [image(2, 0), image(1, 1)] }),
+      'PUT /api/admin/dishes/1/images/order': () => (current = { ...current, images: [image(2, 0), image(1, 1)] }),
       'DELETE /api/admin/dishes/1/images/1': () => (current = { ...current, images: [image(2, 0)] }),
     })
     renderAt('/admin/dishes/1')
@@ -308,12 +357,13 @@ describe('Dish form', () => {
     await user.upload(within(pictures).getByLabelText('בחירת תמונה'), new File(['x'], 'a.jpg', { type: 'image/jpeg' }))
     await waitFor(() => expect(within(pictures).getAllByRole('img')).toHaveLength(2))
 
+    expect(within(pictures).getAllByRole('listitem')[0]).toHaveTextContent('תמונה ראשית')
     await user.click(within(pictures).getByRole('button', { name: 'העברה למעלה: תמונה 2' }))
     await waitFor(() => expect(within(pictures).getAllByRole('img')[0]).toHaveAttribute('src', 'https://img.test/2.jpg'))
+    expect(api.sent('PUT', '/images/order')[0].body).toEqual({ imageIds: [2, 1] })
 
     await user.click(within(pictures).getAllByRole('button', { name: 'הסרה' })[1])
     await user.click(within(pictures).getByRole('button', { name: 'כן, להסיר' }))
     await waitFor(() => expect(within(pictures).getAllByRole('img')).toHaveLength(1))
-    expect(api.sent('POST', '/move')[0].body).toEqual({ direction: 'Up' })
   })
 })

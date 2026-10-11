@@ -45,6 +45,13 @@ public enum OrderStatus
     Cancelled,
 }
 
+/// <summary>What the driver reported for a delivery.</summary>
+public enum DeliveryOutcome
+{
+    Delivered,
+    NotDelivered,
+}
+
 /// <summary>Whether a submitted review shows on the home page. New reviews wait for the admin.</summary>
 public enum ReviewStatus
 {

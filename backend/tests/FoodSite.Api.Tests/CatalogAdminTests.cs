@@ -342,14 +342,76 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.All(_factory.Images.Uploads, u => Assert.Equal(ApiFactory.SiteId + "/dishes", u.Folder));
 
         var last = three.Images[2];
-        var moved = await (await _admin.PostAsJsonAsync($"{url}/{last.Id}/move", new { direction = "Up" })).Read<DishDto>();
-        Assert.Equal(last.Id, moved.Images[1].Id);
+        var reordered = new[] { three.Images[0].Id, last.Id, three.Images[1].Id };
+        var moved = await (await _admin.PutAsJsonAsync($"{url}/order", new { imageIds = reordered })).Read<DishDto>();
+        Assert.Equal(reordered, moved.Images.Select(i => i.Id));
+        Assert.Equal([0, 1, 2], moved.Images.Select(i => i.DisplayOrder));
+
+        // A list that misses an image, or names one twice, is refused.
+        var stale = await _admin.PutAsJsonAsync($"{url}/order", new { imageIds = new[] { last.Id, last.Id, three.Images[1].Id } });
+        await AssertListChanged(stale);
 
         var first = moved.Images[0];
         var afterDelete = await (await _admin.DeleteAsync($"{url}/{first.Id}")).Read<DishDto>();
         Assert.Equal([0, 1], afterDelete.Images.Select(i => i.DisplayOrder));
         Assert.Equal(last.Id, afterDelete.Images[0].Id);
         Assert.Single(_factory.Images.Deleted);
+    }
+
+    // ---------- Dish order ----------
+
+    private static async Task AssertListChanged(HttpResponseMessage response)
+    {
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("listChanged", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Dishes_are_ordered_within_their_category_and_the_menu_follows()
+    {
+        var mains = await AddCategory("עיקריות");
+        var sides = await AddCategory("תוספות");
+        var a = await CreateOk(Fixed("א", mains.Id));
+        var b = await CreateOk(Fixed("ב", mains.Id));
+        var c = await CreateOk(Fixed("ג", mains.Id));
+        var side = await CreateOk(Fixed("פיתה", sides.Id));
+        Assert.Equal([0, 1, 2, 0], new[] { a, b, c, side }.Select(d => d.DisplayOrder));
+
+        var all = await (await _admin.PutAsJsonAsync("/api/admin/dishes/order", new { categoryId = mains.Id, dishIds = new[] { c.Id, a.Id, b.Id } }))
+            .Read<List<DishDto>>();
+        Assert.Equal([c.Id, a.Id, b.Id], all.Where(d => d.CategoryId == mains.Id).Select(d => d.Id));
+
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        Assert.Equal([c.Id, a.Id, b.Id, side.Id], menu.Dishes.Select(d => d.Id));
+
+        // A new dish, one moved in from another category and a restored one each go last.
+        var d = await CreateOk(Fixed("ד", mains.Id));
+        Assert.Equal(3, d.DisplayOrder);
+        var moved = await (await Update(side.Id, Fixed("פיתה", mains.Id))).Read<DishDto>();
+        Assert.Equal(4, moved.DisplayOrder);
+        await _admin.DeleteAsync($"/api/admin/dishes/{c.Id}");
+        var restored = await (await _admin.PostAsync($"/api/admin/dishes/{c.Id}/restore", null)).Read<DishDto>();
+        Assert.Equal(5, restored.DisplayOrder);
+    }
+
+    [Fact]
+    public async Task A_dish_order_must_list_the_category_s_current_dishes()
+    {
+        var mains = await AddCategory("עיקריות");
+        var a = await CreateOk(Fixed("א", mains.Id));
+        var b = await CreateOk(Fixed("ב", mains.Id));
+        var removed = await CreateOk(Fixed("ג", mains.Id));
+        await _admin.DeleteAsync($"/api/admin/dishes/{removed.Id}");
+
+        var missing = await _admin.PutAsJsonAsync("/api/admin/dishes/order", new { categoryId = mains.Id, dishIds = new[] { b.Id } });
+        await AssertListChanged(missing);
+        var withRemoved = await _admin.PutAsJsonAsync("/api/admin/dishes/order", new { categoryId = mains.Id, dishIds = new[] { b.Id, a.Id, removed.Id } });
+        await AssertListChanged(withRemoved);
+
+        // Removed dishes stay after the ones on the site.
+        var all = await (await _admin.PutAsJsonAsync("/api/admin/dishes/order", new { categoryId = mains.Id, dishIds = new[] { b.Id, a.Id } }))
+            .Read<List<DishDto>>();
+        Assert.Equal([(b.Id, 0), (a.Id, 1), (removed.Id, 2)], all.Select(d => (d.Id, d.DisplayOrder)));
     }
 
     [Fact]

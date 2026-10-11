@@ -1,0 +1,8 @@
+{
+  "guide": "docs/food-sites-feature-guide.html",
+  "reviewed_commit": "8200f094d9598bcd5ea0f73af502becc88a0eaea",
+  "reviewed_at": "2026-10-08T09:00:00+03:00",
+  "review_interval_days": 3,
+  "screenshots_captured_on": "2026-10-08",
+  "note": "Imported Hebrew-first bilingual guide. Public copy omits captures with contact, order or payment details. Changes after reviewed_commit still need review."
+}

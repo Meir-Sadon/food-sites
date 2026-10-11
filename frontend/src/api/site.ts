@@ -12,6 +12,11 @@ export interface Contact {
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
 export type Feature = 'recommendations' | 'favorites' | 'reviews'
 
+/** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
+export type SiteStyle = 'classic' | 'street'
+
+export const SITE_STYLES: readonly SiteStyle[] = ['classic', 'street']
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -31,6 +36,8 @@ export interface Site {
   serviceCities: string[]
   /** The features that are on for this site. */
   features: Feature[]
+  /** The admin's choice, else the site's default from site.json. */
+  style: SiteStyle
 }
 
 export interface MenuOption {

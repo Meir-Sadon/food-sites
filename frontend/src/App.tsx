@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AdminLayout } from './admin/AdminLayout'
 import { AdminLoginPage } from './admin/AdminLoginPage'
+import { AuditPage } from './admin/audit/AuditPage'
 import { RequireAdmin } from './admin/RequireAdmin'
 import { CategoriesPage } from './admin/categories/CategoriesPage'
 import { ContactsPage } from './admin/contacts/ContactsPage'
@@ -15,6 +16,8 @@ import { SettingsPage } from './admin/settings/SettingsPage'
 import { ClientLayout } from './components/ClientLayout'
 import { RequireFeature } from './components/RequireFeature'
 import { ToastProvider } from './components/ToastProvider'
+import { DriverPage, DriverStops } from './driver/DriverPage'
+import { DriverStopPage } from './driver/DriverStopPage'
 import { AboutPage } from './pages/AboutPage'
 import { LoginPage } from './pages/LoginPage'
 import { OrderPage } from './pages/OrderPage'
@@ -49,6 +52,12 @@ export function App() {
           <Route path="about" element={<AboutPage />} />
         </Route>
 
+        {/* The driver's page behind the link from the driver's report: the link is its only key. */}
+        <Route path="d/:token" element={<DriverPage />}>
+          <Route index element={<DriverStops />} />
+          <Route path=":orderId" element={<DriverStopPage />} />
+        </Route>
+
         {/* Admin area: not linked from the client site. */}
         <Route path="admin/login" element={<AdminLoginPage />} />
         <Route
@@ -70,6 +79,7 @@ export function App() {
           <Route path="orders/route" element={<RoutePage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="messages" element={<MessagesPage />} />
+          <Route path="audit" element={<AuditPage />} />
           <Route
             path="reviews"
             element={

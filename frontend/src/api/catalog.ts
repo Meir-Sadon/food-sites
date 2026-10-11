@@ -1,4 +1,5 @@
 import { apiJson, send } from './client'
+import type { SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -22,8 +23,11 @@ export interface Settings {
   ordersPerHour: number | null
   /** How many portions (dishes sold by units, not sides or add-ons) can be ordered per supply date, across all dishes; null means no limit. */
   portionsPerSupplyDate: number | null
+  /** The look the client site shows. */
+  style: SiteStyle
 }
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl'>
+/** Leaving out the style keeps it. */
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style'> & { style?: SiteStyle }
 
 export interface SupplyDay {
   weekday: Weekday
@@ -71,6 +75,8 @@ export interface Dish {
   id: number
   name: string
   categoryId: number
+  /** Position within its category; the menu shows dishes in this order. */
+  displayOrder: number
   description: string | null
   allergenInfo: string | null
   sellBy: SellBy
@@ -171,6 +177,10 @@ export const dishesApi = {
   restore: (id: number) => apiJson<Dish>(`${admin}/dishes/${id}/restore`, send('POST')),
   addImage: (id: number, file: File) => apiJson<Dish>(`${admin}/dishes/${id}/images`, upload(file)),
   removeImage: (id: number, imageId: number) => apiJson<Dish>(`${admin}/dishes/${id}/images/${imageId}`, send('DELETE')),
-  moveImage: (id: number, imageId: number, direction: Direction) =>
-    apiJson<Dish>(`${admin}/dishes/${id}/images/${imageId}/move`, send('POST', { direction })),
+  /** Sets the order of a category's dishes (all that are not removed); answers every dish. */
+  reorder: (categoryId: number, dishIds: number[]) =>
+    apiJson<Dish[]>(`${admin}/dishes/order`, send('PUT', { categoryId, dishIds })),
+  /** Sets the order of all the dish's images; the first is its main image. */
+  reorderImages: (id: number, imageIds: number[]) =>
+    apiJson<Dish>(`${admin}/dishes/${id}/images/order`, send('PUT', { imageIds })),
 }

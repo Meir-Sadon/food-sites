@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { settings, supplyDays } from '../test/catalogData'
-import { fakeApi } from '../test/fakeApi'
+import { adminSession, fakeApi, masterSession } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 
 const settingsRoutes = {
@@ -11,8 +11,9 @@ const settingsRoutes = {
   'GET /api/admin/closed-dates': () => [],
 }
 
-async function submitPassword(password: string) {
+async function submitPassword(password: string, username = 'admin') {
   const user = userEvent.setup()
+  await user.type(screen.getByLabelText('שם משתמש'), username)
   await user.type(screen.getByLabelText('סיסמה'), password)
   await user.click(screen.getByRole('button', { name: 'כניסה' }))
 }
@@ -31,24 +32,27 @@ describe('admin login', () => {
     expect(screen.getByRole('link', { name: 'לדף הבית' })).toHaveAttribute('href', '/')
   })
 
-  it('disables submit until a password is typed', () => {
+  it('disables submit until a user name and a password are typed', async () => {
     renderAt('/admin/login')
-    expect(screen.getByRole('button', { name: 'כניסה' })).toBeDisabled()
+    const submit = screen.getByRole('button', { name: 'כניסה' })
+    expect(submit).toBeDisabled()
+    await userEvent.setup().type(screen.getByLabelText('סיסמה'), 'secret')
+    expect(submit).toBeDisabled()
   })
 
   it('logs in and opens General settings', async () => {
     const api = fakeApi({
       'POST /api/admin/login': () => undefined,
-      'GET /api/admin/me': () => ({}),
+      ...adminSession,
       ...settingsRoutes,
     })
     renderAt('/admin/login')
 
-    await submitPassword('secret')
+    await submitPassword('secret', ' Admin ')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'הגדרות כלליות' })).toBeInTheDocument()
     const [login] = api.sent('POST', '/api/admin/login')
-    expect(login.body).toEqual({ password: 'secret' })
+    expect(login.body).toEqual({ username: 'Admin', password: 'secret' })
     expect(login.headers['X-Food-Site-Request']).toBe('1')
   })
 
@@ -58,7 +62,7 @@ describe('admin login', () => {
 
     await submitPassword('wrong')
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('הסיסמה שגויה.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('שם המשתמש או הסיסמה שגויים.')
     expect(screen.getByLabelText('סיסמה')).toHaveAttribute('aria-invalid', 'true')
   })
 
@@ -80,8 +84,8 @@ describe('admin login', () => {
 })
 
 describe('admin layout', () => {
-  it('has tabs for orders, messages, reviews, settings, categories, dishes, contacts, reports and a link home', async () => {
-    fakeApi({ 'GET /api/admin/me': () => ({}), ...settingsRoutes })
+  it('has tabs for orders, messages, reviews, settings, categories, dishes, contacts, reports, the audit trail and a link home', async () => {
+    fakeApi({ ...adminSession, ...settingsRoutes })
     renderAt('/admin')
 
     const nav = await screen.findByRole('navigation', { name: 'תפריט ניהול' })
@@ -94,13 +98,23 @@ describe('admin layout', () => {
       'מנות',
       'אנשי קשר',
       'דוחות',
+      'יומן שינויים',
       'לדף הבית',
     ])
     expect(await within(nav).findByRole('link', { current: 'page' })).toHaveTextContent('הגדרות כלליות')
+    expect(within(nav).getByText('בעל העסק')).toBeInTheDocument()
+  })
+
+  it('shows when the master admin is logged in', async () => {
+    fakeApi({ ...masterSession, ...settingsRoutes })
+    renderAt('/admin')
+
+    const nav = await screen.findByRole('navigation', { name: 'תפריט ניהול' })
+    expect(within(nav).getByText('מנהל ראשי')).toBeInTheDocument()
   })
 
   it('logs out back to the login page', async () => {
-    const api = fakeApi({ 'GET /api/admin/me': () => ({}), 'POST /api/admin/logout': () => undefined, ...settingsRoutes })
+    const api = fakeApi({ ...adminSession, 'POST /api/admin/logout': () => undefined, ...settingsRoutes })
     renderAt('/admin/settings')
 
     await userEvent.setup().click(await screen.findByRole('button', { name: 'יציאה' }))

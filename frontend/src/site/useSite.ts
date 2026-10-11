@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { Feature, Site } from '../api/site'
+import { SITE_STYLES, type Feature, type Site, type SiteStyle } from '../api/site'
 import { site as siteConfig } from './config'
 
 export interface SiteState {
@@ -26,3 +26,11 @@ export function useFeatures(): (feature: Feature) => boolean {
 }
 
 export const useFeature = (feature: Feature) => useFeatures()(feature)
+
+/** The site's look: what `/api/site` says, or the site's site.json until (or unless) it answers. */
+export function useSiteStyle(): SiteStyle {
+  const site = useSite()
+  if (site) return site.style
+  const style = siteConfig.settings?.style
+  return SITE_STYLES.find((known) => known === style) ?? 'classic'
+}

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { adminLogout } from '../api/admin'
 import type { Feature } from '../api/site'
 import { useFeatures } from '../site/useSite'
+import { useAdminSession } from './session'
 
 const tabs: { to: string; key: string; feature?: Feature }[] = [
   { to: '/admin/orders', key: 'admin.nav.orders' },
@@ -13,12 +14,14 @@ const tabs: { to: string; key: string; feature?: Feature }[] = [
   { to: '/admin/dishes', key: 'admin.nav.dishes' },
   { to: '/admin/contacts', key: 'admin.nav.contacts' },
   { to: '/admin/reports', key: 'admin.nav.reports' },
+  { to: '/admin/audit', key: 'admin.nav.audit' },
 ]
 
 export function AdminLayout() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const hasFeature = useFeatures()
+  const session = useAdminSession()
 
   async function handleLogout() {
     await adminLogout().catch(() => undefined)
@@ -45,6 +48,7 @@ export function AdminLayout() {
                 {t('admin.home')}
               </NavLink>
             </li>
+            <li className="admin-bar__who">{t(`admin.actors.${session.actor}`)}</li>
             <li>
               <button type="button" className="button-quiet" onClick={handleLogout}>
                 {t('admin.logout')}
