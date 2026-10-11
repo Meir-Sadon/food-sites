@@ -84,7 +84,7 @@ describe('admin login', () => {
 })
 
 describe('admin layout', () => {
-  it('has tabs for orders, messages, reviews, settings, categories, dishes, contacts, reports, the audit trail and a link home', async () => {
+  it('has tabs for orders, messages, reviews, settings, categories, dishes, contacts, reports, site usage, the audit trail and a link home', async () => {
     fakeApi({ ...adminSession, ...settingsRoutes })
     renderAt('/admin')
 
@@ -98,6 +98,7 @@ describe('admin layout', () => {
       'מנות',
       'אנשי קשר',
       'דוחות',
+      'שימוש באתר',
       'יומן שינויים',
       'לדף הבית',
     ])

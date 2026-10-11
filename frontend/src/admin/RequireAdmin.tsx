@@ -3,6 +3,7 @@ import { Navigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { getAdminSession, type AdminSession } from '../api/admin'
 import { AdminSessionContext } from './session'
+import { excludeThisDevice } from '../usage/track'
 
 type State = 'checking' | 'out' | AdminSession
 
@@ -14,7 +15,11 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true
     getAdminSession()
-      .then((session) => active && setState(session ?? 'out'))
+      .then((session) => {
+        // The owner's own visits to the site would swell the usage report.
+        if (session) excludeThisDevice()
+        if (active) setState(session ?? 'out')
+      })
       .catch(() => active && setState('out'))
     return () => {
       active = false

@@ -8,6 +8,7 @@ import { ScrollButtons } from './ScrollButtons'
 import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
 import { useSite, useSiteStyle } from '../site/useSite'
+import { trackUsage } from '../usage/track'
 
 /** Marks the page with the site's style (`<html data-style>`), which `styles/*.css` select on; the admin keeps its own look. */
 function useStyleAttribute() {
@@ -40,6 +41,7 @@ function Shell() {
 }
 
 export function ClientLayout() {
+  useEffect(() => trackUsage('Visit'), [])
   return (
     <SiteProvider>
       <AccountProvider>

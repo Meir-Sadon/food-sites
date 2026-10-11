@@ -31,6 +31,9 @@ public class AppDbContext(
     public DbSet<MessageTemplate> MessageTemplates => Set<MessageTemplate>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<ReviewImage> ReviewImages => Set<ReviewImage>();
+    public DbSet<UsageEvent> UsageEvents => Set<UsageEvent>();
+    public DbSet<UsageDay> UsageDays => Set<UsageDay>();
+    public DbSet<UsageDevice> UsageDevices => Set<UsageDevice>();
     public DbSet<DriverRoute> DriverRoutes => Set<DriverRoute>();
     public DbSet<DriverRouteStop> DriverRouteStops => Set<DriverRouteStop>();
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
@@ -83,6 +86,7 @@ public class AppDbContext(
         builder.Properties<PaidWith>().HaveConversion<string>();
         builder.Properties<OrderStatus>().HaveConversion<string>();
         builder.Properties<ReviewStatus>().HaveConversion<string>();
+        builder.Properties<UsageEventKind>().HaveConversion<string>();
         builder.Properties<DeliveryOutcome>().HaveConversion<string>();
         builder.Properties<AuditAction>().HaveConversion<string>();
 
@@ -271,6 +275,26 @@ public class AppDbContext(
             e.HasOne(i => i.Review).WithMany(r => r.Images)
                 .HasForeignKey(i => i.ReviewId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<UsageEvent>(e =>
+        {
+            // One row per device, kind and day: recording the same thing again changes nothing.
+            e.HasIndex(u => new { u.Day, u.Kind, u.DeviceId }).IsUnique();
+            e.Property(u => u.DeviceId).HasMaxLength(UsageEvent.DeviceIdMaxLength);
+            e.Property(u => u.Kind).HasMaxLength(20);
+        });
+
+        model.Entity<UsageDay>(e =>
+        {
+            e.HasKey(u => new { u.Day, u.Kind });
+            e.Property(u => u.Kind).HasMaxLength(20);
+        });
+
+        model.Entity<UsageDevice>(e =>
+        {
+            e.Property(u => u.Id).HasMaxLength(UsageEvent.DeviceIdMaxLength);
+            e.HasIndex(u => u.FirstSeen);
         });
 
         model.Entity<DriverRoute>(e =>
