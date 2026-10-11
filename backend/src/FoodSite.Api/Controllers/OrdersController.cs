@@ -109,7 +109,9 @@ public class OrdersController(
             .SelectMany(i => (i.AddOns ?? []).Select(a => a.DishId).Append(i.DishId))
             .Distinct().ToList();
         var dishes = await db.Dishes
-            .Include(d => d.Category).Include(d => d.Options).Include(d => d.AddOns)
+            .Include(d => d.Category).Include(d => d.Options).Include(d => d.AddOns).ThenInclude(a => a.Group)
+            .Include(d => d.MainDish).ThenInclude(m => m!.Options)
+            .Include(d => d.MainDish).ThenInclude(m => m!.AddOns).ThenInclude(a => a.Group)
             .AsSplitQuery()
             .Where(d => ids.Contains(d.Id))
             .ToDictionaryAsync(d => d.Id, ct);

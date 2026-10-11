@@ -248,7 +248,7 @@ public class AccountController(
             return NotFound();
 
         var dishIds = order.Items.Select(i => i.DishId).Distinct().ToList();
-        var dishes = await db.Dishes.AsNoTracking().Include(d => d.Options)
+        var dishes = await db.Dishes.AsNoTracking().Include(d => d.Options).Include(d => d.MainDish).ThenInclude(m => m!.Options)
             .Where(d => dishIds.Contains(d.Id) && !d.IsHidden)
             .ToDictionaryAsync(d => d.Id, ct);
 
@@ -378,7 +378,8 @@ public class AccountController(
 
     /// <summary>The current option of a dish with this label, or null (the default is used then).</summary>
     private static int? OptionOf(Dish dish, string? label) =>
-        dish.ChoiceMode == ChoiceMode.Free ? null : dish.Options.FirstOrDefault(o => o.Label == label)?.Id;
+        DishRules.Pricing(dish) is var pricing && pricing.ChoiceMode == ChoiceMode.Free
+            ? null : pricing.Options.FirstOrDefault(o => o.Label == label)?.Id;
 
     private static Errors Validate(ProfileInput input)
     {

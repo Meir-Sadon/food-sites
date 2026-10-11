@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   DESCRIPTION_MAX_LENGTH,
@@ -17,6 +17,9 @@ import { FieldError, Loading, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { DishImagesSection } from './DishImagesSection'
 import { useToast } from '../../components/toast'
+import { useFeature } from '../../site/useSite'
+import { AddOnsSection } from './AddOnsSection'
+import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
 
 interface OptionForm {
   key: number
@@ -46,6 +49,12 @@ interface DishForm {
   maxPerSupplyDate: string
   options: OptionForm[]
   parentDishIds: number[]
+  /** '' for a dish of its own, else the main dish's id. */
+  mainDishId: string
+  useMainDishPrice: boolean
+  isYesNo: boolean
+  groups: GroupForm[]
+  addOns: AddOnForm[]
 }
 
 let nextKey = 1
@@ -54,9 +63,14 @@ const num = (value: string) => (value.trim() === '' ? null : Number(value))
 
 const emptyOption = (isDefault: boolean): OptionForm => ({ key: nextKey++, id: null, label: '', amount: '1', price: '', isDefault })
 
-function toForm(dish: Dish | null, categories: Category[]): DishForm {
+function toForm(dish: Dish | null, categories: Category[], main: Dish | null = null): DishForm {
   if (!dish)
     return {
+      mainDishId: main ? String(main.id) : '',
+      useMainDishPrice: !!main,
+      isYesNo: false,
+      groups: [],
+      addOns: [],
       name: '',
       categoryId: String(categories[0]?.id ?? ''),
       description: '',
@@ -97,12 +111,50 @@ function toForm(dish: Dish | null, categories: Category[]): DishForm {
       ? dish.options.map((o) => ({ key: nextKey++, id: o.id, label: o.label, amount: String(o.amount), price: String(o.price), isDefault: o.isDefault }))
       : [emptyOption(true)],
     parentDishIds: dish.parentDishIds,
+    ...addOnsForm(dish),
   }
 }
 
-function toInput(form: DishForm): DishInput {
-  const fixed = form.choiceMode === 'Fixed'
+function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice' | 'isYesNo' | 'groups' | 'addOns'> {
+  const groups = dish.addOnGroups.map((g) => ({ key: formKey(), id: g.id, name: g.name, maxUnits: str(g.maxUnits) }))
   return {
+    mainDishId: dish.mainDishId === null ? '' : String(dish.mainDishId),
+    useMainDishPrice: dish.useMainDishPrice,
+    isYesNo: dish.isYesNo,
+    groups,
+    addOns: dish.addOns.map((a) => ({
+      key: formKey(),
+      dishId: a.dishId,
+      groupKey: groups[dish.addOnGroups.findIndex((g) => g.id === a.groupId)]?.key ?? null,
+      price: str(a.price),
+      maxQuantity: str(a.maxQuantity),
+      isCheckbox: a.isCheckbox,
+    })),
+  }
+}
+
+/** With advanced dishes on, the dish's own add-ons are sent too; else they stay as they are. */
+function toInput(form: DishForm, advanced: boolean): DishInput {
+  const fixed = form.choiceMode === 'Fixed'
+  const own = advanced
+    ? {
+        addOnGroups: form.groups.map((g) => ({ id: g.id, name: g.name, maxUnits: num(g.maxUnits) })),
+        addOns: form.isAddOnOnly
+          ? []
+          : form.addOns.map((a) => ({
+              dishId: a.dishId,
+              group: a.groupKey === null ? null : form.groups.findIndex((g) => g.key === a.groupKey),
+              price: num(a.price),
+              maxQuantity: a.isCheckbox ? null : num(a.maxQuantity),
+              isCheckbox: a.isCheckbox,
+            })),
+      }
+    : {}
+  return {
+    ...own,
+    mainDishId: form.mainDishId === '' ? null : Number(form.mainDishId),
+    useMainDishPrice: form.mainDishId !== '' && form.useMainDishPrice,
+    isYesNo: form.isYesNo,
     name: form.name,
     categoryId: Number(form.categoryId),
     description: form.description || null,
@@ -133,6 +185,9 @@ export function DishFormPage() {
   const navigate = useNavigate()
   const errorMessage = useFormErrorMessage()
   const toast = useToast()
+  const advanced = useFeature('advancedDishes')
+  const [search] = useSearchParams()
+  const mainParam = search.get('main')
 
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [allDishes, setAllDishes] = useState<Dish[] | null>(null)
@@ -153,10 +208,11 @@ export function DishFormPage() {
         setCategories(c)
         setAllDishes(all)
         setDish(current)
-        setForm(toForm(current, c))
+        const main = current === null && mainParam ? (all.find((d) => d.id === Number(mainParam)) ?? null) : null
+        setForm(toForm(current, c, main))
       })
       .catch(() => setFailed(true))
-  }, [dishId])
+  }, [dishId, mainParam])
 
   if (!categories || !allDishes || !form) return <Loading failed={failed} />
 
@@ -189,7 +245,7 @@ export function DishFormPage() {
     setErrors({})
     setError(null)
     try {
-      const input = toInput(form)
+      const input = toInput(form, advanced)
       if (dishId === null) {
         const created = await dishesApi.create(input)
         toast(t('admin.dishes.createdSaved'))
@@ -213,6 +269,11 @@ export function DishFormPage() {
   const weight = form.sellBy === 'Weight'
   const unitName = form.unitName.trim()
   const parentCandidates = allDishes.filter((d) => !d.isHidden && !d.isAddOnOnly && d.id !== dishId)
+  const variants = dishId === null ? [] : allDishes.filter((d) => d.mainDishId === dishId && !d.isHidden)
+  const mainCandidates = allDishes.filter((d) => !d.isHidden && !d.isAddOnOnly && d.mainDishId === null && d.id !== dishId)
+  const isVariant = form.mainDishId !== ''
+  const ownPrice = !(isVariant && form.useMainDishPrice)
+  const addOnCandidates = allDishes.filter((d) => !d.isHidden && d.id !== dishId)
 
   return (
     <>
@@ -228,17 +289,70 @@ export function DishFormPage() {
           {fieldError('name')}
         </span>
 
-        <span className="field">
-          <label htmlFor="dish-category">{t('admin.dishes.category')}</label>
-          <select id="dish-category" value={form.categoryId} onChange={(e) => set({ categoryId: e.target.value })} {...err('categoryId')}>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          {fieldError('categoryId')}
-        </span>
+        {(advanced || isVariant) && variants.length === 0 && (
+          <span className="field">
+            <label htmlFor="dish-mainDishId">{t('admin.dishes.variantOf')}</label>
+            <select
+              id="dish-mainDishId"
+              value={form.mainDishId}
+              onChange={(e) => set({ mainDishId: e.target.value })}
+              aria-describedby="dish-mainDishId-hint dish-mainDishId-error"
+            >
+              <option value="">{t('admin.dishes.variantOfNone')}</option>
+              {categories.map((category) => {
+                const inCategory = mainCandidates.filter((d) => d.categoryId === category.id)
+                return inCategory.length === 0 ? null : (
+                  <optgroup key={category.id} label={category.name}>
+                    {inCategory.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )
+              })}
+            </select>
+            <span id="dish-mainDishId-hint" className="hint">
+              {t('admin.dishes.variantOfHint')}
+            </span>
+            {fieldError('mainDishId')}
+          </span>
+        )}
+
+        {isVariant ? (
+          <p className="hint">{t('admin.dishes.variantCategory')}</p>
+        ) : (
+          <span className="field">
+            <label htmlFor="dish-category">{t('admin.dishes.category')}</label>
+            <select id="dish-category" value={form.categoryId} onChange={(e) => set({ categoryId: e.target.value })} {...err('categoryId')}>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            {fieldError('categoryId')}
+          </span>
+        )}
+
+        {variants.length > 0 && (
+          <section className="stack" aria-labelledby="dish-variants-title">
+            <h2 id="dish-variants-title">{t('admin.dishes.variants')}</h2>
+            <p className="hint">{t('admin.dishes.variantsHint')}</p>
+            <ul>
+              {variants.map((v) => (
+                <li key={v.id}>
+                  <Link to={`/admin/dishes/${v.id}`}>{v.name}</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {advanced && dishId !== null && !isVariant && !form.isAddOnOnly && (
+          <p>
+            <Link to={`/admin/dishes/new?main=${dishId}`}>{t('admin.dishes.addVariant')}</Link>
+          </p>
+        )}
 
         <span className="field">
           <label htmlFor="dish-description">{t('admin.dishes.description')}</label>
@@ -252,6 +366,7 @@ export function DishFormPage() {
           />
           <span id="dish-description-count" className="hint">
             {t('admin.dishes.charsLeft', { count: DESCRIPTION_MAX_LENGTH - form.description.length })}
+            {isVariant && ` · ${t('admin.dishes.variantDescriptionHint')}`}
           </span>
           {fieldError('description')}
         </span>
@@ -262,6 +377,16 @@ export function DishFormPage() {
           {fieldError('allergenInfo')}
         </span>
 
+        {isVariant && (
+          <label className="checkbox">
+            <input type="checkbox" checked={form.useMainDishPrice} onChange={(e) => set({ useMainDishPrice: e.target.checked })} {...err('useMainDishPrice')} />
+            {t('admin.dishes.useMainDishPrice')}
+          </label>
+        )}
+        {fieldError('useMainDishPrice')}
+
+        {ownPrice && (
+        <>
         <fieldset className="row">
           <legend>{t('admin.dishes.sellBy')}</legend>
           {(['Units', 'Weight'] as const).map((value) => (
@@ -387,12 +512,24 @@ export function DishFormPage() {
             </fieldset>
           </>
         )}
+        </>
+        )}
 
-        <label className="checkbox">
-          <input type="checkbox" checked={form.isAddOnOnly} onChange={(e) => set({ isAddOnOnly: e.target.checked })} {...err('isAddOnOnly')} />
-          {t('admin.dishes.addOnOnlyLabel')}
-        </label>
+        {!isVariant && (
+          <>
+            <label className="checkbox">
+              <input type="checkbox" checked={form.isAddOnOnly} onChange={(e) => set({ isAddOnOnly: e.target.checked })} {...err('isAddOnOnly')} />
+              {t('admin.dishes.addOnOnlyLabel')}
+            </label>
+          </>
+        )}
         {fieldError('isAddOnOnly')}
+        {(advanced || form.isYesNo) && (
+          <label className="checkbox">
+            <input type="checkbox" checked={form.isYesNo} onChange={(e) => set({ isYesNo: e.target.checked })} />
+            {t('admin.dishes.yesNoLabel')}
+          </label>
+        )}
         <label className="checkbox">
           <input type="checkbox" checked={form.isSoldOut} onChange={(e) => set({ isSoldOut: e.target.checked })} />
           {t('admin.dishes.soldOutLabel')}
@@ -460,6 +597,17 @@ export function DishFormPage() {
           {fieldError('parentDishIds')}
         </fieldset>
 
+        {advanced && !form.isAddOnOnly && (
+          <AddOnsSection
+            groups={form.groups}
+            addOns={form.addOns}
+            candidates={addOnCandidates}
+            categories={categories}
+            errors={errors}
+            onChange={(patch) => set(patch)}
+          />
+        )}
+
         <div className="row form-actions">
           <button type="submit" disabled={saving}>
             {saving ? t('admin.saving') : t('admin.save')}
@@ -482,7 +630,13 @@ export function DishFormPage() {
         )}
       </form>
 
-      {dish ? <DishImagesSection dish={dish} onChange={setDish} /> : <p className="hint">{t('admin.dishes.imagesAfterSave')}</p>}
+      {isVariant ? (
+        <p className="hint">{t('admin.dishes.variantImages')}</p>
+      ) : dish ? (
+        <DishImagesSection dish={dish} onChange={setDish} />
+      ) : (
+        <p className="hint">{t('admin.dishes.imagesAfterSave')}</p>
+      )}
     </>
   )
 }

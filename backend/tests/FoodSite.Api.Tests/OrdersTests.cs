@@ -112,6 +112,39 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.DoesNotContain(menu.Dishes, d => d.Id == _meat);
     }
 
+    [Fact]
+    public async Task Variant_with_grouped_add_ons_is_ordered_as_its_own_line_at_the_add_on_prices()
+    {
+        var category = await (await _admin.PostAsJsonAsync("/api/admin/categories", new { name = "סיגרים" })).Read<CategoryDto>();
+        var main = await CreateDish(new DishInput(
+            "סיגרים עבודת יד", category.Id, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
+            [new OptionInput(null, "10 יח׳", 1, 60, true)], []));
+        var liver = await CreateDish(new DishInput(
+            "סיגר כבד", category.Id, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false, null, [],
+            MainDishId: main.Id, UseMainDishPrice: true));
+        var sauce = await CreateDish(new DishInput(
+            "רוטב", category.Id, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, true, false,
+            [new OptionInput(null, "כוס", 1, 6, true)], []));
+        (await _admin.PutAsJsonAsync($"/api/admin/dishes/{main.Id}", new DishInput(
+            "סיגרים עבודת יד", category.Id, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
+            [new OptionInput(main.Options[0].Id, "10 יח׳", 1, 60, true)], [],
+            AddOnGroups: [new AddOnGroupInput(null, "רטבים", 1)],
+            AddOns: [new AddOnLinkInput(sauce.Id, 0, 2, null, true)]), TestFiles.Json)).EnsureSuccessStatusCode();
+
+        var menu = await Menu();
+        Assert.DoesNotContain(menu.Dishes, d => d.Id == main.Id && d.MainDishId is not null);
+        Assert.Equal([sauce.Id], menu.Dishes.Single(d => d.Id == liver.Id).AddOnDishIds);
+
+        var order = await ValidOrder(o => o["items"] = new object[]
+        {
+            new { dishId = liver.Id, optionId = (int?)null, quantity = 2m, addOns = new[] { new { dishId = sauce.Id, optionId = (int?)null, quantity = 1m } } },
+        });
+        var confirmation = await (await Place(order)).Read<ConfirmationDto>();
+
+        Assert.Equal(122m, confirmation.Total);
+        Assert.Equal(["סיגר כבד", "רוטב"], confirmation.Items.Select(i => i.DishName));
+    }
+
     // ---------- Placing orders ----------
 
     [Fact]

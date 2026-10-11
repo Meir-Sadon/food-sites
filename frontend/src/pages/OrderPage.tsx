@@ -13,7 +13,7 @@ import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
 import { useFeature, useSite, useSiteFailed } from '../site/useSite'
 import { DetailsBlock } from '../order/DetailsBlock'
-import { DishCard } from '../order/DishCard'
+import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { formatMoney, formatSlot, formatSupplyDate } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
@@ -30,6 +30,7 @@ import {
   restoreSelections,
   round2,
   standaloneDishes,
+  variantsOf,
   toLines,
   type OrderState,
   type Restored,
@@ -333,16 +334,29 @@ export function OrderPage() {
             <h2>{category.name}</h2>
           </summary>
           <div className="category__dishes">
-            {list.map((dish) => (
-              <DishCard
-                key={dish.id}
-                dish={dish}
-                dishes={dishes}
-                selection={state.selections[dish.id]}
-                date={supplyDate?.date}
-                onChange={(selection) => setSelection(dish.id, selection)}
-              />
-            ))}
+            {list.map((dish) => {
+              const variants = variantsOf(dish, menu)
+              return variants.length > 0 ? (
+                <DishGroupCard
+                  key={dish.id}
+                  dish={dish}
+                  variants={variants}
+                  dishes={dishes}
+                  selections={state.selections}
+                  date={supplyDate?.date}
+                  onChange={setSelection}
+                />
+              ) : (
+                <DishCard
+                  key={dish.id}
+                  dish={dish}
+                  dishes={dishes}
+                  selection={state.selections[dish.id]}
+                  date={supplyDate?.date}
+                  onChange={(selection) => setSelection(dish.id, selection)}
+                />
+              )
+            })}
           </div>
         </details>
       ))}

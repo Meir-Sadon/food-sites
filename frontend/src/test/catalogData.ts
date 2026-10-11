@@ -55,6 +55,11 @@ export const dish = (id: number, name: string, categoryId: number, patch: Partia
   images: [],
   parentDishIds: [],
   addOnDishIds: [],
+  mainDishId: null,
+  useMainDishPrice: false,
+  isYesNo: false,
+  addOnGroups: [],
+  addOns: [],
   ...patch,
 })
 
@@ -132,3 +137,26 @@ export const publicApi = {
   'GET /api/site': () => site(),
   'GET /api/menu': () => menu(),
 }
+
+/** A main dish with two variants priced like it, and a sandwich with a salads group and a cheaper priced add-on. */
+export const groupedMenu = (): Menu => ({
+  categories: [{ id: 1, name: 'סיגרים' }],
+  dishes: [
+    menuDish(1, 'סיגרים עבודת יד', 1, { description: 'תיאור משותף', images: ['https://img/cigar.jpg'] }),
+    menuDish(2, 'סיגר כבד', 1, { mainDishId: 1, options: [{ id: 21, label: 'מארז', amount: 1, price: 60, isDefault: true }] }),
+    menuDish(3, 'סיגר עוף', 1, { mainDishId: 1, options: [{ id: 31, label: 'מארז', amount: 1, price: 70, isDefault: true }] }),
+    menuDish(4, 'כריך', 1, {
+      addOnDishIds: [5, 6, 7],
+      addOnGroups: [{ id: 1, name: 'סלטים', maxUnits: 1 }],
+      addOns: [
+        { dishId: 5, groupId: 1, price: 0, maxQuantity: null, isCheckbox: true },
+        { dishId: 6, groupId: 1, price: null, maxQuantity: null, isCheckbox: true },
+        { dishId: 7, groupId: null, price: 8, maxQuantity: 2, isCheckbox: false },
+      ],
+    }),
+    menuDish(5, 'חומוס', 1, { isAddOnOnly: true }),
+    menuDish(6, 'טחינה', 1, { isAddOnOnly: true, options: [{ id: 60, label: 'כף', amount: 1, price: 3, isDefault: true }] }),
+    menuDish(7, 'עוף', 1, { isAddOnOnly: true, options: [{ id: 70, label: 'יחידה', amount: 1, price: 12, isDefault: true }] }),
+  ],
+  supplyDates: [{ date: '2026-10-16', cutoff: '2026-10-14T20:00:00' }],
+})

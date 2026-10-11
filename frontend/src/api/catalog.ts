@@ -100,6 +100,30 @@ export interface Dish {
   parentDishIds: number[]
   /** Add-ons offered under this dish. */
   addOnDishIds: number[]
+  /** A variant: the main dish whose card it is shown in. */
+  mainDishId: number | null
+  /** A variant priced like its main dish. */
+  useMainDishPrice: boolean
+  /** Ordered or not, never in an amount. */
+  isYesNo: boolean
+  addOnGroups: AddOnGroup[]
+  /** This dish's add-ons in the admin's order, with how each is offered here. */
+  addOns: AddOnLink[]
+}
+
+export interface AddOnGroup {
+  id: number
+  name: string
+  maxUnits: number | null
+}
+
+export interface AddOnLink {
+  dishId: number
+  groupId: number | null
+  /** Price per unit under this dish; null keeps the add-on's own prices. */
+  price: number | null
+  maxQuantity: number | null
+  isCheckbox: boolean
 }
 
 export interface DishInput {
@@ -121,6 +145,13 @@ export interface DishInput {
   maxPerSupplyDate: number | null
   options: { id: number | null; label: string; amount: number; price: number; isDefault: boolean }[]
   parentDishIds: number[]
+  mainDishId?: number | null
+  useMainDishPrice?: boolean
+  isYesNo?: boolean
+  /** Sent together with addOns; `group` in an add-on is an index into this list. */
+  addOnGroups?: { id: number | null; name: string; maxUnits: number | null }[]
+  /** The whole list of this dish's add-ons; left out, they stay as they are. */
+  addOns?: { dishId: number; group: number | null; price: number | null; maxQuantity: number | null; isCheckbox: boolean }[]
 }
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024

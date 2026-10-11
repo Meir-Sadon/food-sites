@@ -10,7 +10,7 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites' | 'reviews'
+export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
 export type SiteStyle = 'classic' | 'street'
@@ -73,6 +73,32 @@ export interface MenuDish {
   addOnDishIds: number[]
   /** For a dish with a per-date limit: how much is left on each open supply date ("yyyy-MM-dd"). */
   remaining?: Record<string, number> | null
+  /** A variant: shown in this main dish's card (with its images and description), ordered as a dish of its own. */
+  mainDishId?: number | null
+  /** Ordered or not, never in an amount. */
+  isYesNo?: boolean
+  /** How each add-on is offered under this dish, in the order of addOnDishIds; absent means its own prices. */
+  addOns?: MenuAddOn[]
+  /** Headings over some of the add-ons, each with a limit on the units picked from it. */
+  addOnGroups?: MenuAddOnGroup[]
+}
+
+export interface MenuAddOn {
+  dishId: number
+  groupId: number | null
+  /** Its price per unit under this dish, in its default option only; null keeps its own prices. */
+  price: number | null
+  /** The most of it under one ordered line; null for its own range. */
+  maxQuantity: number | null
+  /** Added or not, never in an amount. */
+  isCheckbox: boolean
+}
+
+export interface MenuAddOnGroup {
+  id: number
+  name: string
+  /** Units picked from the group together (a check box or a weight counts one); null for no limit. */
+  maxUnits: number | null
 }
 
 export interface MenuCategory {

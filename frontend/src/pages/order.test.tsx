@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Confirmation } from '../api/site'
 import { DRAFT_KEY } from '../order/draft'
-import { menu, menuDish, publicApi, site } from '../test/catalogData'
+import { groupedMenu, menu, menuDish, publicApi, site } from '../test/catalogData'
 import { fakeApi, invalid } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 
@@ -497,5 +497,55 @@ describe('Order page', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('Grouped dishes and add-on settings', () => {
+  const grouped = { ...publicApi, 'GET /api/menu': () => groupedMenu() }
+
+  async function open() {
+    const api = fakeApi(grouped as Parameters<typeof fakeApi>[0])
+    renderAt('/')
+    await screen.findByRole('heading', { level: 2, name: 'סיגרים' })
+    return { api, user: userEvent.setup() }
+  }
+
+  it('shows variants in the main dish card and sends each as a line of its own', async () => {
+    const { api, user } = await open()
+    const card = dishCard('סיגרים עבודת יד')
+    expect(within(card).getByText('תיאור משותף')).toBeInTheDocument()
+    expect(within(card).getByRole('heading', { level: 4, name: 'סיגר כבד' })).toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'סיגר כבד' })).not.toBeInTheDocument()
+
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: סיגר כבד' }))
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: סיגר עוף' }))
+    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
+    await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+
+    await vi.waitFor(() => expect(api.sent('POST', '/api/orders')).toHaveLength(1))
+    const items = (api.sent('POST', '/api/orders')[0].body as { items: { dishId: number }[] }).items
+    expect(items.map((i) => i.dishId)).toEqual([2, 3])
+  })
+
+  it('prices an add-on at its price under the dish, limits its units and its group', async () => {
+    const { user } = await open()
+    const card = dishCard('כריך')
+    await user.click(within(card).getByRole('button', { name: /הוספה להזמנה/ }))
+
+    const salads = within(card).getByRole('group', { name: /סלטים/ })
+    await user.click(within(salads).getByLabelText(/חומוס/))
+    // The group takes one unit, so the second salad cannot be ticked.
+    expect(within(salads).getByLabelText(/טחינה/)).toBeDisabled()
+
+    const chicken = within(card).getByRole('group', { name: 'עוף' })
+    const more = within(chicken).getByRole('button', { name: 'הוספה: עוף' })
+    await user.click(more)
+    await user.click(more)
+    expect(more).toBeDisabled()
+    // 40 for the dish, free hummus, two chicken at 8 instead of 12.
+    expect(total().getByText('סה"כ: ₪56')).toBeInTheDocument()
   })
 })

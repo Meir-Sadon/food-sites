@@ -54,6 +54,24 @@ public class Dish
     /// </summary>
     public bool IsSideDish { get; set; }
 
+    /// <summary>
+    /// A yes or no dish: it is ordered or not, never in an amount (its default option, or its least amount).
+    /// Under a parent it is a check box.
+    /// </summary>
+    public bool IsYesNo { get; set; }
+
+    /// <summary>
+    /// Set on a variant: the main dish whose card it is shown in, with the main dish's images and description
+    /// (e.g. "סיגר כבד" under "סיגרים עבודת יד"). It sits in the main dish's category. Variants are ordered and
+    /// listed in orders as dishes of their own; a main dish with variants is not ordered itself.
+    /// </summary>
+    public int? MainDishId { get; set; }
+    public Dish? MainDish { get; set; }
+    public List<Dish> Variants { get; set; } = [];
+
+    /// <summary>A variant priced like its main dish: the main dish's choice mode, options and amounts apply.</summary>
+    public bool UseMainDishPrice { get; set; }
+
     /// <summary>Removed dishes are hidden, never deleted, so old orders still display.</summary>
     public bool IsHidden { get; set; }
 
@@ -62,6 +80,9 @@ public class Dish
 
     /// <summary>Links where this dish is the parent: the add-ons offered under it.</summary>
     public List<DishAddOn> AddOns { get; set; } = [];
+
+    /// <summary>Named groups of this dish's add-ons, each with a limit on how many units the client picks from it.</summary>
+    public List<AddOnGroup> AddOnGroups { get; set; } = [];
 
     /// <summary>Links where this dish is the add-on: the parents it appears under.</summary>
     public List<DishAddOn> AddOnOf { get; set; } = [];

@@ -993,6 +993,36 @@ label {
   border-radius: var(--radius);
 }
 
+.addons + .addons {
+  margin-block-start: 0.75rem;
+}
+
+.addons > legend {
+  font-weight: 700;
+}
+
+.dish-variants {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dish-variant {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.dish-variant h4,
+.dish-variant p {
+  margin: 0;
+}
+
 .carousel {
   position: relative;
 }
