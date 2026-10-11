@@ -255,6 +255,75 @@ public class OrderBuilderTests
         Assert.True(Has(tooLong, "items[0].note", "tooLong"));
     }
 
+    private static Dish WithQuestions(Dish dish)
+    {
+        dish.Questions =
+        [
+            new() { Id = 1, Text = "חריפות", Kind = QuestionKind.SingleChoice, Choices = ["עדין", "חריף"], IsRequired = true },
+            new() { Id = 2, Text = "תוספות", Kind = QuestionKind.MultiChoice, Choices = ["בצל", "חומוס", "טחינה"] },
+            new() { Id = 3, Text = "ברכה", Kind = QuestionKind.Text },
+            new() { Id = 4, Text = "חתוך?", Kind = QuestionKind.YesNo },
+            new() { Id = 5, Text = "תאריך האירוע", Kind = QuestionKind.Date },
+            new() { Id = 6, Text = "סועדים", Kind = QuestionKind.Number },
+        ];
+        return dish;
+    }
+
+    [Fact]
+    public void Answers_are_checked_and_copied_onto_the_line_as_text_in_the_questions_order()
+    {
+        var menu = Menu(WithQuestions(Fixed(1, "כריך", (10, "כריך", 30, true))));
+        var answers = new List<AnswerInput>
+        {
+            new(6, "12"), new(2, Choices: ["טחינה", "בצל"]), new(1, "חריף"), new(3, " מזל טוב "), new(4, "no"), new(5, "2026-12-25"),
+        };
+
+        var (items, errors) = Build(menu, new OrderLineInput(1, null, 1, [], Answers: answers));
+
+        Assert.False(errors.Any);
+        Assert.Equal(
+            [("חריפות", "חריף"), ("תוספות", "בצל, טחינה"), ("ברכה", "מזל טוב"), ("חתוך?", "לא"), ("תאריך האירוע", "25/12/2026"), ("סועדים", "12")],
+            items.Single().Answers.Select(a => (a.Question, a.Answer)));
+    }
+
+    [Fact]
+    public void A_required_question_must_be_answered_and_answers_must_fit_the_question()
+    {
+        var menu = Menu(WithQuestions(Fixed(1, "כריך", (10, "כריך", 30, true))));
+        OrderLineInput Line(params AnswerInput[] answers) => new(1, null, 1, [], Answers: [.. answers]);
+
+        Assert.True(Has(Build(menu, Line(new AnswerInput(3, "שלום"))).Errors, "items[0].answers", "answerRequired"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "  "))).Errors, "items[0].answers", "answerRequired"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "בינוני"))).Errors, "items[0].answers[0]", "answerInvalid"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "חריף"), new AnswerInput(2, Choices: ["קטשופ"]))).Errors, "items[0].answers[1]", "answerInvalid"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "חריף"), new AnswerInput(4, "maybe"))).Errors, "items[0].answers[1]", "answerInvalid"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "חריף"), new AnswerInput(5, "25/12/2026"))).Errors, "items[0].answers[1]", "answerInvalid"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "חריף"), new AnswerInput(6, "הרבה"))).Errors, "items[0].answers[1]", "answerInvalid"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "חריף"), new AnswerInput(3, new string('א', 201)))).Errors, "items[0].answers[1]", "tooLong"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "חריף"), new AnswerInput(99, "?"))).Errors, "items[0].answers[1]", "answerInvalid"));
+        Assert.True(Has(Build(menu, Line(new AnswerInput(1, "חריף"), new AnswerInput(1, "עדין"))).Errors, "items[0].answers[1]", "answerInvalid"));
+    }
+
+    [Fact]
+    public void Units_with_different_answers_stay_on_lines_of_their_own_and_a_variant_asks_its_main_dish_questions_too()
+    {
+        var main = WithQuestions(Fixed(1, "כריכים", (10, "כריך", 30, true)));
+        var variant = Fixed(2, "כריך טונה", (20, "כריך", 32, true));
+        variant.MainDish = main;
+        variant.MainDishId = 1;
+        variant.Questions = [new() { Id = 7, Text = "לחם", Kind = QuestionKind.SingleChoice, Choices = ["לבן", "מלא"], ShowAsDropdown = true }];
+        UnitAddOnsInput Unit(string spice, string? bread = null) =>
+            new([], Answers: bread is null ? [new(1, spice)] : [new(1, spice), new(7, bread)]);
+
+        var (items, errors) = Build(Menu(main, variant), new OrderLineInput(2, null, 3, null, [Unit("חריף", "מלא"), Unit("עדין"), Unit("חריף", "מלא")]));
+
+        Assert.False(errors.Any);
+        Assert.Equal(
+            [(2m, "חריפות: חריף, לחם: מלא"), (1m, "חריפות: עדין")],
+            items.Select(i => (i.Quantity, string.Join(", ", i.Answers.Select(a => $"{a.Question}: {a.Answer}")))));
+        Assert.True(Has(Build(Menu(main, variant), new OrderLineInput(2, null, 1, [])).Errors, "items[0].answers", "answerRequired"));
+    }
+
     [Fact]
     public void Add_on_price_can_be_zero()
     {

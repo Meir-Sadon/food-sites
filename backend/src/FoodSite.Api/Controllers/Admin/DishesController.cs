@@ -48,7 +48,13 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         bool UseMainDishPrice = false,
         bool IsYesNo = false,
         IReadOnlyList<AddOnGroupDto>? AddOnGroups = null,
-        IReadOnlyList<AddOnLinkDto>? AddOns = null);
+        IReadOnlyList<AddOnLinkDto>? AddOns = null,
+        IReadOnlyList<QuestionDto>? Questions = null);
+
+    public record QuestionDto(int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired);
+
+    /// <summary>A question to keep (with Id) or add (without). Choices are for a single or multiple choice only.</summary>
+    public record QuestionInput(int? Id, string? Text, QuestionKind Kind, List<string>? Choices, bool ShowAsDropdown, bool IsRequired);
 
     public record AddOnGroupDto(int Id, string Name, int? MaxUnits);
 
@@ -71,6 +77,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     /// left out, the add-ons stay as they are.
     /// MainDishId makes the dish a variant shown in that dish's card, in its category; with UseMainDishPrice it is
     /// priced like it and its own choice mode and options are not needed.
+    /// Questions, when sent, is the whole list of the dish's questions; left out, they stay as they are.
+    /// CopyImagesFrom, on a new dish only, gives it the images of that dish (a copy of it); the picture files are shared.
     /// </summary>
     public record DishInput(
         string? Name,
@@ -95,7 +103,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         bool UseMainDishPrice = false,
         bool IsYesNo = false,
         List<AddOnGroupInput>? AddOnGroups = null,
-        List<AddOnLinkInput>? AddOns = null);
+        List<AddOnLinkInput>? AddOns = null,
+        List<QuestionInput>? Questions = null,
+        int? CopyImagesFrom = null);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -125,6 +135,10 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
 
         await ApplyAsync(input, dish);
         dish.DisplayOrder = await NextOrderAsync(dish.CategoryId);
+        if (input.CopyImagesFrom is { } sourceId)
+            dish.Images = await db.DishImages.AsNoTracking().Where(i => i.DishId == sourceId).OrderBy(i => i.DisplayOrder)
+                .Select(i => new DishImage { Url = i.Url, PublicId = i.PublicId, DisplayOrder = i.DisplayOrder })
+                .ToListAsync();
         db.Dishes.Add(dish);
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = dish.Id }, ToDto(await LoadAsync(dish.Id)));
@@ -136,6 +150,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         var dish = await LoadOrNull(id);
         if (dish is null)
             return NotFound();
+        if (input.CopyImagesFrom is not null)
+            return Invalid(nameof(input.CopyImagesFrom), "invalid");
         if (await Validate(input, dish) is { } invalid)
             return invalid;
 
@@ -284,7 +300,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         Renumber(ordered, (i, n) => i.DisplayOrder = n);
         await db.SaveChangesAsync(ct);
 
-        await images.DeleteAsync(image.PublicId, ct);
+        // A copied dish shares its picture files with the dish it was copied from.
+        if (!await db.DishImages.AnyAsync(i => i.PublicId == image.PublicId, ct))
+            await images.DeleteAsync(image.PublicId, ct);
         return ToDto(await LoadAsync(id));
     }
 
@@ -339,6 +357,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
 
         await ValidateAddOnLinks(input, dish, errors);
         await ValidateOwnAddOns(input, dish, errors);
+        ValidateQuestions(input, dish, errors);
+        if (input.CopyImagesFrom is { } sourceId && !await db.Dishes.AnyAsync(d => d.Id == sourceId))
+            errors.Add(nameof(input.CopyImagesFrom), "notFound");
         return errors.Any ? Invalid(errors) : null;
     }
 
@@ -405,6 +426,40 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         }
         if (input.IsAddOnOnly && input.AddOns.Count > 0)
             errors.Add(nameof(input.IsAddOnOnly), "hasAddOns");
+    }
+
+    private static void ValidateQuestions(DishInput input, Dish dish, Errors errors)
+    {
+        if (input.Questions is not { } questions)
+            return;
+        if (questions.Count > DishQuestion.MaxPerDish)
+        {
+            errors.Add(nameof(input.Questions), "tooManyQuestions");
+            return;
+        }
+
+        for (var i = 0; i < questions.Count; i++)
+        {
+            var question = questions[i];
+            var path = $"questions[{i}]";
+            errors.Text($"{path}.text", question.Text, DishQuestion.TextMaxLength, required: true);
+            if (!Enum.IsDefined(question.Kind))
+                errors.Add($"{path}.kind", "invalid");
+            if (question.Id is { } id && dish.Questions.All(q => q.Id != id))
+                errors.Add($"{path}.id", "notFound");
+            if (question.Kind is not (QuestionKind.SingleChoice or QuestionKind.MultiChoice))
+                continue;
+
+            var choices = (question.Choices ?? []).Select(c => c?.Trim() ?? "").ToList();
+            if (choices.Count < (question.Kind == QuestionKind.SingleChoice ? 2 : 1))
+                errors.Add($"{path}.choices", "choicesRequired");
+            else if (choices.Count > DishQuestion.MaxChoices)
+                errors.Add($"{path}.choices", "tooManyChoices");
+            else if (choices.Any(c => c == "" || c.Length > DishQuestion.ChoiceMaxLength))
+                errors.Add($"{path}.choices", "choiceInvalid");
+            else if (choices.Distinct().Count() != choices.Count)
+                errors.Add($"{path}.choices", "duplicateChoice");
+        }
     }
 
     private static void ValidateOptions(DishInput input, Dish dish, Errors errors)
@@ -512,6 +567,29 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
 
         if (input.AddOns is not null)
             ApplyOwnAddOns(input.AddOnGroups ?? [], input.AddOns, dish);
+        if (input.Questions is not null)
+            ApplyQuestions(input.Questions, dish);
+    }
+
+    // Questions keep their ids when edited, so an order page already open still matches them.
+    private void ApplyQuestions(List<QuestionInput> inputs, Dish dish)
+    {
+        var keep = inputs.Where(q => q.Id is not null).Select(q => q.Id!.Value).ToHashSet();
+        db.DishQuestions.RemoveRange(dish.Questions.Where(q => !keep.Contains(q.Id)));
+        for (var i = 0; i < inputs.Count; i++)
+        {
+            var input = inputs[i];
+            var question = input.Id is { } id ? dish.Questions.Single(q => q.Id == id) : null;
+            if (question is null)
+                dish.Questions.Add(question = new DishQuestion { Text = "" });
+            var choices = input.Kind is QuestionKind.SingleChoice or QuestionKind.MultiChoice;
+            question.Text = input.Text!.Trim();
+            question.Kind = input.Kind;
+            question.Choices = choices ? input.Choices!.Select(c => c.Trim()).ToList() : [];
+            question.ShowAsDropdown = input.Kind == QuestionKind.SingleChoice && input.ShowAsDropdown;
+            question.IsRequired = input.IsRequired;
+            question.DisplayOrder = i;
+        }
     }
 
     // Groups keep their ids when edited; links are matched by the add-on dish.
@@ -573,6 +651,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         .Include(d => d.AddOns)
         .Include(d => d.AddOnOf)
         .Include(d => d.AddOnGroups)
+        .Include(d => d.Questions)
         .AsSplitQuery();
 
     private Task<Dish?> LoadOrNull(int id) => WithDetails().SingleOrDefaultAsync(d => d.Id == id);
@@ -599,5 +678,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.IsYesNo,
         d.AddOnGroups.OrderBy(g => g.DisplayOrder).Select(g => new AddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
         d.AddOns.OrderBy(a => a.DisplayOrder).ThenBy(a => a.AddOnDishId)
-            .Select(a => new AddOnLinkDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList());
+            .Select(a => new AddOnLinkDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
+        d.Questions.OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)
+            .Select(q => new QuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired)).ToList());
 }

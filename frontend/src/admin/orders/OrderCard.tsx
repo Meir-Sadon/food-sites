@@ -8,6 +8,7 @@ import { ConfirmRemove, Status } from '../ui'
 import { OrderEditor } from './OrderEditor'
 import { PaidForm } from './PaidForm'
 import { SendMessage } from './SendMessage'
+import { ItemAnswers } from '../../components/ItemAnswers'
 
 export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (order: AdminOrder) => void }) {
   const { t } = useTranslation()
@@ -86,6 +87,7 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
               {formatNumber(item.quantity)} × {item.dishName}
               {item.optionLabel ? ` (${item.optionLabel})` : ''}
               {item.note ? ` · ${item.note}` : ''}
+              <ItemAnswers answers={item.answers} />
             </span>
             <span className="numeric">{formatMoney(item.lineTotal)}</span>
           </li>

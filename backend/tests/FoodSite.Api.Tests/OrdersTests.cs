@@ -242,6 +242,49 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Answers_to_a_dish_s_questions_reach_the_order_the_admin_and_the_whatsapp_message()
+    {
+        var category = (await Menu()).Categories[0].Id;
+        var questions = new List<QuestionInput>
+        {
+            new(null, "חריפות", QuestionKind.SingleChoice, ["עדין", "חריף"], true, true),
+            new(null, "הערה לשף", QuestionKind.Text, null, false, false),
+        };
+        var dish = await CreateDish(new DishInput(
+            "שקשוקה", category, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
+            [new OptionInput(null, "מנה", 1, 50, true)], [], Questions: questions));
+        var menuQuestions = (await Menu()).Dishes.Single(d => d.Id == dish.Id).Questions!;
+        Assert.Equal(["חריפות", "הערה לשף"], menuQuestions.Select(q => q.Text));
+        Assert.Equal((QuestionKind.SingleChoice, true, true), (menuQuestions[0].Kind, menuQuestions[0].ShowAsDropdown, menuQuestions[0].IsRequired));
+
+        object Line(params object[] answers) => new { dishId = dish.Id, optionId = (int?)null, quantity = 1m, addOns = Array.Empty<object>(), answers };
+        var unanswered = await Place(await ValidOrder(o => o["items"] = new[] { Line() }));
+        await unanswered.AssertInvalid("items[0].answers", "answerRequired");
+
+        var confirmation = await (await Place(await ValidOrder(o => o["items"] = new[]
+        {
+            Line(new { questionId = menuQuestions[0].Id, value = "חריף" }, new { questionId = menuQuestions[1].Id, value = "בלי כוסברה" }),
+        }))).Read<ConfirmationDto>();
+
+        var saved = await (await _admin.GetAsync($"/api/admin/orders/{confirmation.Id}")).Read<OrderDto>();
+        Assert.Equal(
+            [new AnswerDto("חריפות", "חריף"), new AnswerDto("הערה לשף", "בלי כוסברה")],
+            saved.Items.Single().Answers!);
+        Assert.Contains(_factory.WhatsApp.Sent, m => m.Message.Contains("  חריפות: חריף\n  הערה לשף: בלי כוסברה"));
+    }
+
+    [Fact]
+    public async Task Order_lines_saved_before_questions_existed_still_show()
+    {
+        var confirmation = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+        await using (var db = _factory.CreateDbContext())
+            await db.Database.ExecuteSqlRawAsync("UPDATE \"OrderItems\" SET \"Answers\" = NULL");
+
+        var saved = await (await _admin.GetAsync($"/api/admin/orders/{confirmation.Id}")).Read<OrderDto>();
+        Assert.All(saved.Items, i => Assert.Empty(i.Answers!));
+    }
+
+    [Fact]
     public async Task Client_and_every_admin_phone_get_a_whatsapp_message()
     {
         (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0521111111" })).EnsureSuccessStatusCode();

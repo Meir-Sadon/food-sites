@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { MenuAddOn, MenuAddOnGroup, MenuDish } from '../api/site'
+import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
 import { formatMoney, priceText, unitLabel } from './format'
 import { ImageCarousel } from './ImageCarousel'
@@ -22,8 +22,13 @@ import {
   remainingOn,
   type AddOnOffer,
   type AddOnSelection,
+  type Answer,
+  type Answers,
   type Selection,
+  unitAnswers,
   unitNote,
+  withAnswer,
+  ANSWER_MAX_LENGTH,
   unitsOf,
   withNote,
   withUnit,
@@ -154,6 +159,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
   const yesNo = !!dish.isYesNo
   const units = selection ? unitsOf(dish, selection) : []
   const options = dish.choiceMode === 'Fixed' && dish.options.length > 1 && !yesNo
+  const questions = dish.questions ?? []
 
   /** Changes one add-on of one ordered unit. */
   function setAddOn(unit: number, addOn: MenuDish, next: AddOnSelection | undefined) {
@@ -246,6 +252,11 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
               <div key={i} className="addon-unit" role="group" aria-label={t('order.unitN', { n: i + 1, name: dish.name })}>
                 <h4 className="addon-unit__title">{t('order.unitN', { n: i + 1, name: dish.name })}</h4>
                 <NoteField label={t('order.unitNote', { n: i + 1 })} value={unitNote(selection, i)} onChange={(note) => onChange(withNote(selection, i, note))} />
+                <QuestionFields
+                  questions={questions}
+                  answers={unitAnswers(selection, i)}
+                  onChange={(questionId, answer) => onChange(withAnswer(selection, i, questionId, answer))}
+                />
                 {addOns.length > 0 && (
                   <>
                     <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={unit} onChange={(a, next) => setAddOn(i, a, next)} />
@@ -275,6 +286,11 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
               {!yesNo && (
                 <NoteField label={t('order.noteFor', { name: dish.name })} value={unitNote(selection, 0)} onChange={(note) => onChange(withNote(selection, 0, note))} />
               )}
+              <QuestionFields
+                questions={questions}
+                answers={unitAnswers(selection, 0)}
+                onChange={(questionId, answer) => onChange(withAnswer(selection, 0, questionId, answer))}
+              />
             </>
           )}
         </div>
@@ -296,6 +312,114 @@ function NoteField({ label, value, onChange }: { label: string; value: string; o
       onChange={(e) => onChange(e.target.value)}
     />
   )
+}
+
+/** The dish's questions for one ordered unit, each answered the way the admin chose. */
+function QuestionFields({
+  questions,
+  answers,
+  onChange,
+}: {
+  questions: MenuQuestion[]
+  answers: Answers
+  onChange: (questionId: number, answer: Answer) => void
+}) {
+  if (questions.length === 0) return null
+  return (
+    <div className="dish-questions">
+      {questions.map((q) => (
+        <QuestionField key={q.id} question={q} answer={answers[q.id]} onChange={(answer) => onChange(q.id, answer)} />
+      ))}
+    </div>
+  )
+}
+
+function QuestionField({ question, answer, onChange }: { question: MenuQuestion; answer: Answer | undefined; onChange: (answer: Answer) => void }) {
+  const { t } = useTranslation()
+  const id = useId()
+  const text = typeof answer === 'string' ? answer : ''
+  const label = (
+    <>
+      {question.text}
+      {question.isRequired && (
+        <>
+          <span aria-hidden="true"> *</span>
+          <span className="visually-hidden"> {t('order.requiredMark')}</span>
+        </>
+      )}
+    </>
+  )
+
+  // Questions answered with a choice of several radio buttons or check boxes are a group under the question.
+  const choices = (kind: 'radio' | 'checkbox', values: { value: string; label: string }[]) => (
+    <fieldset className="dish-question">
+      <legend>{label}</legend>
+      <div className="row">
+        {values.map((c) => {
+          const picked = Array.isArray(answer) ? answer : []
+          const checked = kind === 'radio' ? text === c.value : picked.includes(c.value)
+          return (
+            <label key={c.value} className="checkbox">
+              <input
+                type={kind}
+                name={id}
+                checked={checked}
+                onChange={(e) =>
+                  onChange(
+                    kind === 'radio'
+                      ? c.value
+                      : question.choices.filter((v) => (v === c.value ? e.target.checked : picked.includes(v))),
+                  )
+                }
+              />
+              {c.label}
+            </label>
+          )
+        })}
+      </div>
+    </fieldset>
+  )
+
+  switch (question.kind) {
+    case 'YesNo':
+      return choices('radio', [
+        { value: 'yes', label: t('order.yes') },
+        { value: 'no', label: t('order.no') },
+      ])
+    case 'MultiChoice':
+      return choices('checkbox', question.choices.map((c) => ({ value: c, label: c })))
+    case 'SingleChoice':
+      if (!question.showAsDropdown) return choices('radio', question.choices.map((c) => ({ value: c, label: c })))
+      return (
+        <span className="field dish-question">
+          <label htmlFor={id}>{label}</label>
+          <select id={id} value={text} onChange={(e) => onChange(e.target.value)} aria-required={question.isRequired}>
+            <option value="">{t('order.chooseAnswer')}</option>
+            {question.choices.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </span>
+      )
+    default:
+      return (
+        <span className="field dish-question">
+          <label htmlFor={id}>{label}</label>
+          <input
+            id={id}
+            type={question.kind === 'Number' ? 'number' : question.kind === 'Date' ? 'date' : 'text'}
+            inputMode={question.kind === 'Number' ? 'decimal' : undefined}
+            step={question.kind === 'Number' ? 'any' : undefined}
+            maxLength={question.kind === 'Text' ? ANSWER_MAX_LENGTH : undefined}
+            value={text}
+            aria-required={question.isRequired}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </span>
+      )
+  }
 }
 
 /** The fixed options of a dish as cards; for an open-by-default dish the default one carries a sign. */

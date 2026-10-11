@@ -1,4 +1,4 @@
-import { act, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Confirmation } from '../api/site'
@@ -344,6 +344,72 @@ describe('Order page', () => {
 
     expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({
       items: [{ quantity: 2, addOnUnits: [{ note: 'דנה' }, { note: 'יוסי' }] }],
+    })
+  })
+
+  it('asks the dish questions for each ordered unit and sends the answers', async () => {
+    const cake = menuDish(4, 'עוגה', 1, {
+      questions: [
+        { id: 1, text: 'גודל', kind: 'SingleChoice', choices: ['קטן', 'גדול'], showAsDropdown: false, isRequired: true },
+        { id: 2, text: 'טעם', kind: 'SingleChoice', choices: ['שוקולד', 'וניל'], showAsDropdown: true, isRequired: false },
+        { id: 3, text: 'קישוטים', kind: 'MultiChoice', choices: ['פרחים', 'סוכריות', 'נרות'], showAsDropdown: false, isRequired: false },
+        { id: 4, text: 'ברכה', kind: 'Text', choices: [], showAsDropdown: false, isRequired: false },
+        { id: 5, text: 'חתוכה?', kind: 'YesNo', choices: [], showAsDropdown: false, isRequired: false },
+        { id: 6, text: 'תאריך האירוע', kind: 'Date', choices: [], showAsDropdown: false, isRequired: false },
+        { id: 7, text: 'כמה סועדים', kind: 'Number', choices: [], showAsDropdown: false, isRequired: false },
+      ],
+    })
+    const { api, user } = await openOrderPage({
+      'GET /api/menu': () => menu({ dishes: [...menu().dishes, cake] }),
+      'POST /api/orders': () => confirmation,
+    })
+    const card = dishCard('עוגה')
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: עוגה' }))
+    await user.click(within(card).getByRole('button', { name: 'הוספה: עוגה' }))
+
+    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
+    await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('יש לענות על השאלות המסומנות ב־* במנה עוגה.')
+    expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+
+    const first = within(within(card).getByRole('group', { name: 'מנה 1: עוגה' }))
+    await user.click(within(first.getByRole('group', { name: /גודל/ })).getByLabelText('גדול'))
+    await user.selectOptions(first.getByLabelText('טעם'), 'וניל')
+    await user.click(first.getByLabelText('נרות'))
+    await user.click(first.getByLabelText('פרחים'))
+    await user.type(first.getByLabelText('ברכה'), 'מזל טוב')
+    await user.click(within(first.getByRole('group', { name: 'חתוכה?' })).getByLabelText('כן'))
+    fireEvent.change(first.getByLabelText('תאריך האירוע'), { target: { value: '2026-12-25' } })
+    await user.type(first.getByLabelText('כמה סועדים'), '12')
+    const second = within(within(card).getByRole('group', { name: 'מנה 2: עוגה' }))
+    await user.click(within(second.getByRole('group', { name: /גודל/ })).getByLabelText('קטן'))
+
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({
+      items: [
+        {
+          dishId: 4,
+          quantity: 2,
+          addOnUnits: [
+            {
+              answers: [
+                { questionId: 1, value: 'גדול' },
+                { questionId: 2, value: 'וניל' },
+                { questionId: 3, choices: ['פרחים', 'נרות'] },
+                { questionId: 4, value: 'מזל טוב' },
+                { questionId: 5, value: 'yes' },
+                { questionId: 6, value: '2026-12-25' },
+                { questionId: 7, value: '12' },
+              ],
+            },
+            { answers: [{ questionId: 1, value: 'קטן' }] },
+          ],
+        },
+      ],
     })
   })
 

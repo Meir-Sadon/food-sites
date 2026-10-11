@@ -155,7 +155,7 @@ describe('Dish form', () => {
       ...base,
       'GET /api/admin/dishes': () => (created ? [...all, created] : all),
       'POST /api/admin/dishes': (_, body) => {
-        created = { ...dish(9, 'x', 1), ...(body as DishInput), id: 9, options: [], images: [], addOnDishIds: [], addOnGroups: [], addOns: [] }
+        created = { ...dish(9, 'x', 1), ...(body as DishInput), id: 9, options: [], images: [], addOnDishIds: [], addOnGroups: [], addOns: [], questions: [] }
         return { status: 201, body: created }
       },
     })
@@ -218,6 +218,7 @@ describe('Dish form', () => {
       isYesNo: false,
       addOnGroups: [],
       addOns: [],
+      questions: [],
     })
   })
 
@@ -288,6 +289,65 @@ describe('Dish form', () => {
     fakeApi({ ...base, 'GET /api/admin/dishes': () => [{ ...eggplant, unitName: 'מגש' }] })
     renderAt('/admin/dishes')
     expect(await screen.findByText('₪90 למגש')).toBeInTheDocument()
+  })
+
+  it('adds questions of each kind to a dish', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'הוספת שאלה' }))
+    const first = screen.getByRole('group', { name: 'שאלה 1' })
+    await user.type(within(first).getByLabelText('השאלה'), 'רמת חריפות')
+    await user.selectOptions(within(first).getByLabelText('סוג התשובה'), 'בחירה אחת מרשימה')
+    await user.type(within(first).getByLabelText('אפשרויות (אחת בכל שורה)'), 'עדין{Enter}חריף{Enter}')
+    await user.click(within(first).getByLabelText('רשימה נפתחת'))
+    await user.click(within(first).getByLabelText('חובה לענות'))
+
+    await user.click(screen.getByRole('button', { name: 'הוספת שאלה' }))
+    const second = screen.getByRole('group', { name: 'שאלה 2' })
+    await user.type(within(second).getByLabelText('השאלה'), 'מה לכתוב על העוגה?')
+    await user.click(within(second).getByRole('button', { name: /העברה למעלה/ }))
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).questions).toEqual([
+      { id: null, text: 'מה לכתוב על העוגה?', kind: 'Text', choices: [], showAsDropdown: false, isRequired: false },
+      { id: null, text: 'רמת חריפות', kind: 'SingleChoice', choices: ['עדין', 'חריף'], showAsDropdown: true, isRequired: true },
+    ])
+  })
+
+  it('duplicates a dish into a new one with every detail and its pictures', async () => {
+    const pictured = dish(1, 'עוף בתנור', 1, {
+      ...chicken,
+      images: [{ id: 5, url: 'https://img/1.jpg', displayOrder: 0 }],
+      questions: [{ id: 7, text: 'חריפות', kind: 'YesNo', choices: [], showAsDropdown: false, isRequired: true }],
+    })
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/dishes': () => [pictured, eggplant, leg, removed],
+      'POST /api/admin/dishes': (_, body) => ({ status: 201, body: { ...pictured, ...(body as object), id: 9 } }),
+      'GET /api/admin/dishes/9/affected-orders': () => ({ count: 0 }),
+    })
+    renderAt('/admin/dishes')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('link', { name: 'שכפול המנה: עוף בתנור' }))
+    expect(await screen.findByRole('heading', { name: 'מנה חדשה: עותק של עוף בתנור' })).toBeInTheDocument()
+    expect(screen.getByLabelText('שם המנה')).toHaveValue('עוף בתנור (עותק)')
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    await waitFor(() => expect(api.sent('POST', '/api/admin/dishes')).toHaveLength(1))
+    expect(api.sent('POST', '/api/admin/dishes')[0].body).toMatchObject({
+      name: 'עוף בתנור (עותק)',
+      categoryId: 1,
+      copyImagesFrom: 1,
+      options: [
+        { id: null, label: 'חצי עוף', price: 45 },
+        { id: null, label: 'עוף שלם', price: 80 },
+      ],
+      questions: [{ id: null, text: 'חריפות', kind: 'YesNo', isRequired: true }],
+    })
   })
 
   it('keeps option ids when editing', async () => {

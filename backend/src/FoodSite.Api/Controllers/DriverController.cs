@@ -25,7 +25,9 @@ public class DriverController(
 {
     public const int PaymentCommentMaxLength = OrdersAdminController.PaymentCommentMaxLength;
 
-    public record DriverItemDto(int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, string? Note = null);
+    public record DriverItemDto(
+        int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, string? Note = null,
+        IReadOnlyList<OrdersAdminController.AnswerDto>? Answers = null);
 
     /// <summary>
     /// One stop as the driver sees it: no account, history or admin details. The payment comment shows only when
@@ -215,7 +217,8 @@ public class DriverController(
         var o = stop.Order!;
         return new DriverStopDto(
             o.Id, stop.Position, stop.PlannedArrival, o.Name, o.Phone, o.Address, o.DeliveryHour, o.Notes,
-            o.Items.OrderBy(i => i.Id).Select(i => new DriverItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.Note)).ToList(),
+            o.Items.OrderBy(i => i.Id).Select(i => new DriverItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.Note,
+                (i.Answers ?? []).Select(a => new OrdersAdminController.AnswerDto(a.Question, a.Answer)).ToList())).ToList(),
             o.Total, o.PaymentMethod, o.IsPaid, o.PaidWith, o.PaidByDriver ? o.PaymentComment : null, o.PaidByDriver,
             o.Status == OrderStatus.Cancelled,
             o.DeliveryOutcome, o.DeliveryReportedAt, o.DeliveryNote, o.DeliveryProofUrl);

@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { PaidWith } from './operations'
+import type { ItemAnswer, PaidWith } from './operations'
 import type { Payment } from './site'
 
 export const DELIVERY_NOTE_MAX_LENGTH = 300
@@ -13,6 +13,7 @@ export interface DriverItem {
   dishName: string
   optionLabel: string | null
   note?: string | null
+  answers?: ItemAnswer[] | null
   quantity: number
 }
 

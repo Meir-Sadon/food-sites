@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { SiteStyle } from './site'
+import type { QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -109,6 +109,17 @@ export interface Dish {
   addOnGroups: AddOnGroup[]
   /** This dish's add-ons in the admin's order, with how each is offered here. */
   addOns: AddOnLink[]
+  /** Questions the client answers when ordering the dish, in order. */
+  questions: DishQuestion[]
+}
+
+export interface DishQuestion {
+  id: number
+  text: string
+  kind: QuestionKind
+  choices: string[]
+  showAsDropdown: boolean
+  isRequired: boolean
 }
 
 export interface AddOnGroup {
@@ -152,6 +163,10 @@ export interface DishInput {
   addOnGroups?: { id: number | null; name: string; maxUnits: number | null }[]
   /** The whole list of this dish's add-ons; left out, they stay as they are. */
   addOns?: { dishId: number; group: number | null; price: number | null; maxQuantity: number | null; isCheckbox: boolean }[]
+  /** The whole list of the dish's questions; left out, they stay as they are. */
+  questions?: { id: number | null; text: string; kind: QuestionKind; choices: string[]; showAsDropdown: boolean; isRequired: boolean }[]
+  /** On a new dish: give it the images of this dish (it is a copy of it). */
+  copyImagesFrom?: number
 }
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024

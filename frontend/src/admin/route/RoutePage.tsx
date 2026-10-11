@@ -21,6 +21,7 @@ import {
   type Stop,
   type TravelEstimate,
 } from './plan'
+import { ItemAnswers } from '../../components/ItemAnswers'
 
 const today = () => {
   const now = new Date()
@@ -285,7 +286,8 @@ function StopCard({
             {item.parentItemId !== null && <span aria-hidden="true">+ </span>}
             {formatNumber(item.quantity)} × {item.dishName}
             {item.optionLabel ? ` (${item.optionLabel})` : ''}
-              {item.note ? ` · ${item.note}` : ''}
+            {item.note ? ` · ${item.note}` : ''}
+            <ItemAnswers answers={item.answers} />
           </li>
         ))}
       </ul>

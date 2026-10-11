@@ -114,6 +114,9 @@ export function DishesPage() {
                 <Link className="button-quiet" to={`/admin/dishes/${dish.id}`} aria-label={`${t('admin.edit')}: ${dish.name}`}>
                   {t('admin.edit')}
                 </Link>
+                <Link className="button-quiet" to={`/admin/dishes/new?copy=${dish.id}`} aria-label={`${t('admin.dishes.copy')}: ${dish.name}`}>
+                  {t('admin.dishes.copyShort')}
+                </Link>
                 <ConfirmRemove
                   name={dish.name}
                   warn={async () => {

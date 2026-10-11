@@ -84,6 +84,9 @@ public class Dish
     /// <summary>Named groups of this dish's add-ons, each with a limit on how many units the client picks from it.</summary>
     public List<AddOnGroup> AddOnGroups { get; set; } = [];
 
+    /// <summary>Questions the client answers when ordering this dish, in the admin's order.</summary>
+    public List<DishQuestion> Questions { get; set; } = [];
+
     /// <summary>Links where this dish is the add-on: the parents it appears under.</summary>
     public List<DishAddOn> AddOnOf { get; set; } = [];
 }

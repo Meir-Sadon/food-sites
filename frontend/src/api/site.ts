@@ -81,6 +81,31 @@ export interface MenuDish {
   addOns?: MenuAddOn[]
   /** Headings over some of the add-ons, each with a limit on the units picked from it. */
   addOnGroups?: MenuAddOnGroup[]
+  /** Questions the client answers when ordering the dish (a variant's main dish's first). */
+  questions?: MenuQuestion[]
+}
+
+/** How a dish question is answered (FoodSite.Api `QuestionKind`). */
+export type QuestionKind = 'Text' | 'Number' | 'Date' | 'YesNo' | 'SingleChoice' | 'MultiChoice'
+
+export const QUESTION_KINDS: readonly QuestionKind[] = ['Text', 'Number', 'Date', 'YesNo', 'SingleChoice', 'MultiChoice']
+
+export interface MenuQuestion {
+  id: number
+  text: string
+  kind: QuestionKind
+  /** The choices of a single or multiple choice. */
+  choices: string[]
+  /** A single choice shown as a drop-down list instead of radio buttons. */
+  showAsDropdown: boolean
+  isRequired: boolean
+}
+
+/** Value for text, a number, a date (yyyy-MM-dd), yes/no ('yes' | 'no') and a single choice; choices for a multiple choice. */
+export interface AnswerInput {
+  questionId: number
+  value?: string
+  choices?: string[]
 }
 
 export interface MenuAddOn {
@@ -136,9 +161,11 @@ export interface OrderLineInput {
   quantity: number
   addOns: { dishId: number; optionId: number | null; quantity: number }[]
   /** One entry per ordered unit, each with its own add-ons; sent instead of addOns for a dish ordered in several units. */
-  addOnUnits?: { addOns: { dishId: number; optionId: number | null; quantity: number }[]; note?: string }[]
+  addOnUnits?: { addOns: { dishId: number; optionId: number | null; quantity: number }[]; note?: string; answers?: AnswerInput[] }[]
   /** A name or remark for the line (for a dish not sold by units; units carry their own). */
   note?: string
+  /** Answers to the dish's questions (for a dish not sold by units; units carry their own). */
+  answers?: AnswerInput[]
 }
 
 export interface OrderInput {
