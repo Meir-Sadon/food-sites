@@ -146,6 +146,9 @@ namespace FoodSite.Api.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AdjustmentOptional")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("AllergenInfo")
                         .HasColumnType("text");
 

@@ -61,6 +61,13 @@ public class Dish
     public bool IsYesNo { get; set; }
 
     /// <summary>
+    /// When set, the client may send an order without adjusting each ordered unit of the dish (picking an add-on or
+    /// confirming it as it is); otherwise every unit must be adjusted first. A variant follows its main dish's setting.
+    /// Required questions are asked either way.
+    /// </summary>
+    public bool AdjustmentOptional { get; set; }
+
+    /// <summary>
     /// Set on a variant: the main dish whose card it is shown in, with the main dish's images and description
     /// (e.g. "סיגר כבד" under "סיגרים עבודת יד"). It sits in the main dish's category. Variants are ordered and
     /// listed in orders as dishes of their own; a main dish with variants is not ordered itself.

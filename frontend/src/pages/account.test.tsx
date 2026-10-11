@@ -243,6 +243,8 @@ describe('Order page for a logged-in client', () => {
 
     await waitFor(() => expect(contactBlock).toHaveAttribute('open'))
     expect(paymentBlock).not.toHaveAttribute('open')
+    // The field the server refused is the one the client is brought to.
+    await waitFor(() => expect(screen.getByLabelText('רחוב')).toHaveFocus())
   })
 
   it('keeps the contact block open when the saved city is not served, so the warning shows', async () => {

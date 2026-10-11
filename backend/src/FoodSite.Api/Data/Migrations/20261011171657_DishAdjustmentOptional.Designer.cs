@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodSite.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261011171053_OpsApi")]
-    partial class OpsApi
+    [Migration("20261011171657_DishAdjustmentOptional")]
+    partial class DishAdjustmentOptional
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -148,6 +148,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AdjustmentOptional")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("AllergenInfo")
                         .HasColumnType("text");
@@ -467,46 +470,6 @@ namespace FoodSite.Api.Data.Migrations
                     b.HasKey("Name");
 
                     b.ToTable("FeatureFlags");
-                });
-
-            modelBuilder.Entity("FoodSite.Api.Data.Entities.Feedback", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Actor")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsHandled")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Kind")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("Page")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsHandled");
-
-                    b.ToTable("Feedback", (string)null);
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.LoginCode", b =>
@@ -890,13 +853,6 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<bool>("MinimumOrderAppliesToPickup")
                         .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("OpsTokenCreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("OpsTokenHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
 
                     b.Property<int?>("OrdersPerHour")
                         .HasColumnType("integer");

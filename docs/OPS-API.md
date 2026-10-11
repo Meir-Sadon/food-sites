@@ -36,7 +36,7 @@ The site owner gets `403 { code: "masterOnly" }` on all three.
 {
   "siteId": "kuskus-shel-ima",
   "commit": "c643ef2…",
-  "migration": "20261011171053_OpsApi",
+  "migration": "20261011173500_OpsApi",
   "pendingMigrations": []
 }
 ```

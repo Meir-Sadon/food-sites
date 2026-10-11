@@ -203,11 +203,14 @@ export function applyToUnadjusted(parent: MenuDish, selection: Selection, from: 
   return next
 }
 
-/** The dishes in the order that offer add-ons and have a unit the client has not adjusted or confirmed. */
+/**
+ * The dishes in the order that offer add-ons and have a unit the client has not adjusted or confirmed,
+ * except those whose adjustment the admin made optional.
+ */
 export function unadjustedDishes(selections: Record<number, Selection>, dishes: Map<number, MenuDish>): MenuDish[] {
   return Object.entries(selections).flatMap(([id, selection]) => {
     const dish = dishes.get(Number(id))
-    if (!dish || dish.isYesNo || addOnsOf(dish, dishes).length === 0) return []
+    if (!dish || dish.isYesNo || dish.adjustmentOptional || addOnsOf(dish, dishes).length === 0) return []
     return unitsOf(dish, selection).some((unit, i) => !isAdjusted(selection, i, unit)) ? [dish] : []
   })
 }
@@ -244,6 +247,15 @@ export function unansweredDishes(selections: Record<number, Selection>, dishes: 
     const missing = Array.from({ length: units }, (_, i) => unitAnswers(selection, i)).some((a) => required.some((q) => !answered(a[q.id])))
     return missing ? [dish] : []
   })
+}
+
+/** The first ordered unit of the dish the client still has to fill: not adjusted, or a required question unanswered. */
+export function firstIncompleteUnit(dish: MenuDish, selection: Selection, dishes: Map<number, MenuDish>): number {
+  const adjustable = !dish.isYesNo && addOnsOf(dish, dishes).length > 0
+  const required = dish.questions?.filter((q) => q.isRequired) ?? []
+  return unitsOf(dish, selection).findIndex(
+    (unit, i) => (adjustable && !isAdjusted(selection, i, unit)) || required.some((q) => !answered(unitAnswers(selection, i)[q.id])),
+  )
 }
 
 /** The selection with one ordered unit's add-ons replaced. */

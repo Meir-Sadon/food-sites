@@ -18,6 +18,7 @@ import { SettingsPage } from './admin/settings/SettingsPage'
 import { UsagePage } from './admin/usage/UsagePage'
 import { ClientLayout } from './components/ClientLayout'
 import { RequireFeature } from './components/RequireFeature'
+import { useScrollToInvalid } from './components/scrollToInvalid'
 import { ToastProvider } from './components/ToastProvider'
 import { DriverPage, DriverStops } from './driver/DriverPage'
 import { DriverStopPage } from './driver/DriverStopPage'
@@ -29,6 +30,7 @@ import { RecommendationsPage } from './pages/RecommendationsPage'
 import { ReviewPage } from './pages/ReviewPage'
 
 export function App() {
+  useScrollToInvalid()
   return (
     <ToastProvider>
       <Routes>
