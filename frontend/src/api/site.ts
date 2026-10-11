@@ -135,6 +135,8 @@ export interface OrderLineInput {
   optionId: number | null
   quantity: number
   addOns: { dishId: number; optionId: number | null; quantity: number }[]
+  /** One entry per ordered unit, each with its own add-ons; sent instead of addOns for a dish ordered in several units. */
+  addOnUnits?: { addOns: { dishId: number; optionId: number | null; quantity: number }[] }[]
 }
 
 export interface OrderInput {

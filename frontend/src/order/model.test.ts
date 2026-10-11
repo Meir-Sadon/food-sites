@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { menu } from '../test/catalogData'
-import { addOnsOf, dishMap, lineTotal, newSelection, orderTotal, restoreSelections, standaloneDishes, toLines } from './model'
+import { selectionsFromFavorite, unitsOf, addOnsOf, dishMap, lineTotal, newSelection, orderTotal, restoreSelections, standaloneDishes, toLines } from './model'
 import { normalizePhone } from './phone'
 
 const data = menu()
@@ -22,12 +22,27 @@ describe('order model', () => {
   it('adds add-ons at their own price to the total', () => {
     const selections = { 1: { optionId: 11, quantity: 2, addOns: { 3: { optionId: 30, quantity: 3 } } }, 2: newSelection(meat) }
     expect(orderTotal(selections, dishes)).toBe(2 * 70 + 3 * 12 + 45)
-    expect(toLines(selections)[0]).toEqual({
+    expect(toLines(selections, dishMap(data))[0]).toEqual({
       dishId: 1,
       optionId: 11,
       quantity: 2,
-      addOns: [{ dishId: 3, optionId: 30, quantity: 3 }],
+      addOns: [],
+      addOnUnits: [{ addOns: [{ dishId: 3, optionId: 30, quantity: 3 }] }, { addOns: [] }],
     })
+  })
+
+  it('shares a saved line\'s add-ons between its units and puts lines of one dish side by side', () => {
+    const favorite = {
+      id: 1,
+      name: 'x',
+      items: [
+        { dishId: 1, optionId: 11, quantity: 2, addOns: [{ dishId: 3, optionId: 30, quantity: 2 }] },
+        { dishId: 1, optionId: 11, quantity: 1, addOns: [] },
+      ],
+    }
+    const { selections } = selectionsFromFavorite(favorite as never, data)
+    expect(selections[1].quantity).toBe(3)
+    expect(unitsOf(chicken, selections[1]).map((u) => u[3]?.quantity ?? 0)).toEqual([1, 1, 0])
   })
 
   it('never lists add-on-only dishes as standalone dishes', () => {

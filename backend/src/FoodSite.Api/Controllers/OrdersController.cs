@@ -106,7 +106,7 @@ public class OrdersController(
         }
 
         var ids = (input.Items ?? [])
-            .SelectMany(i => (i.AddOns ?? []).Select(a => a.DishId).Append(i.DishId))
+            .SelectMany(i => (i.AddOns ?? []).Concat((i.AddOnUnits ?? []).SelectMany(u => u.AddOns ?? [])).Select(a => a.DishId).Append(i.DishId))
             .Distinct().ToList();
         var dishes = await db.Dishes
             .Include(d => d.Category).Include(d => d.Options).Include(d => d.AddOns).ThenInclude(a => a.Group)

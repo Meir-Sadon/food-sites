@@ -293,7 +293,7 @@ export function OrderPage() {
         fulfillmentMethod: fulfillment,
         paymentMethod: payment,
         notes: state.notes.trim(),
-        items: toLines(state.selections),
+        items: toLines(state.selections, dishes),
       })
       clearDraft()
       trackUsage('OrderSubmitted')

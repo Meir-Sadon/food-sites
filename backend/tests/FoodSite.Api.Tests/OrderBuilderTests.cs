@@ -206,6 +206,35 @@ public class OrderBuilderTests
     }
 
     [Fact]
+    public void Each_ordered_unit_can_have_its_own_add_ons_and_equal_units_share_a_line()
+    {
+        var sandwich = Fixed(1, "כריך", (10, "כריך", 30, true));
+        var group = new AddOnGroup { Id = 5, DishId = 1, Name = "סלטים", MaxUnits = 1 };
+        var hummus = Fixed(2, "חומוס", (20, "כף", 0, true));
+        var tahini = Fixed(3, "טחינה", (30, "כף", 0, true));
+        Link(sandwich, hummus, checkbox: true, group: group);
+        Link(sandwich, tahini, checkbox: true, group: group);
+        var menu = Menu(sandwich, hummus, tahini);
+        UnitAddOnsInput Unit(params int[] ids) => new([.. ids.Select(id => new AddOnInput(id, null, 1))]);
+
+        var (items, errors) = Build(menu, new OrderLineInput(1, null, 3, null, [Unit(2), Unit(3), Unit(2)]));
+
+        Assert.False(errors.Any);
+        var parents = items.Where(i => i.ParentItem is null).ToList();
+        Assert.Equal([("כריך", 2m), ("כריך", 1m)], parents.Select(p => (p.DishName, p.Quantity)));
+        Assert.Equal(90m, OrderBuilder.Total(items));
+        Assert.Equal([("חומוס", 2m)], parents[0].AddOnItems.Select(a => (a.DishName, a.Quantity)));
+        Assert.Equal([("טחינה", 1m)], parents[1].AddOnItems.Select(a => (a.DishName, a.Quantity)));
+
+        // The group limit is one per unit, not for the whole line.
+        var (_, tooMany) = Build(menu, new OrderLineInput(1, null, 2, null, [Unit(2, 3), Unit(2)]));
+        Assert.True(Has(tooMany, "items[0].addOnUnits[0].addOns", "addOnGroupLimit"));
+        // One entry per unit.
+        var (_, wrongCount) = Build(menu, new OrderLineInput(1, null, 2, null, [Unit(2)]));
+        Assert.True(Has(wrongCount, "items[0].addOnUnits", "addOnUnitsInvalid"));
+    }
+
+    [Fact]
     public void Add_on_price_can_be_zero()
     {
         var sandwich = Fixed(1, "כריך", (10, "כריך", 30, true));

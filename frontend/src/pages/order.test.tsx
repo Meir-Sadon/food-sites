@@ -75,8 +75,19 @@ describe('Order page', () => {
     await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
     expect(total().getByText('סה"כ: ₪80')).toBeInTheDocument()
 
-    await user.click(within(card).getByRole('button', { name: 'הוספה: ירך' }))
-    await user.click(within(card).getByRole('button', { name: 'הוספה: ירך' }))
+    // Two units: each has its add-ons of its own.
+    const first = within(card).getByRole('group', { name: 'מנה 1: עוף בתנור' })
+    const second = within(card).getByRole('group', { name: 'מנה 2: עוף בתנור' })
+    await user.click(within(first).getByRole('button', { name: 'הוספה: ירך' }))
+    await user.click(within(first).getByRole('button', { name: 'הוספה: ירך' }))
+    expect(total().getByText('סה"כ: ₪104')).toBeInTheDocument()
+
+    // The second unit copies the first one's add-ons.
+    await user.selectOptions(within(second).getByRole('combobox', { name: 'העתקת תוספות למנה 2' }), 'מנה 1')
+    expect(total().getByText('סה"כ: ₪128')).toBeInTheDocument()
+    await user.click(within(second).getByRole('button', { name: 'הפחתה: ירך' }))
+    expect(total().getByText('סה"כ: ₪116')).toBeInTheDocument()
+    await user.click(within(second).getByRole('button', { name: 'הפחתה: ירך' }))
     expect(total().getByText('סה"כ: ₪104')).toBeInTheDocument()
 
     const meat = dishCard('בשר טחון')
@@ -107,7 +118,7 @@ describe('Order page', () => {
     const couscous = dishCard('קוסקוס')
     await user.click(within(couscous).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.click(within(couscous).getByRole('button', { name: 'הוספה: קוסקוס' }))
-    await user.click(within(couscous).getByRole('button', { name: 'הוספה: כפיתה' }))
+    await user.click(within(within(couscous).getByRole('group', { name: 'מנה 1: קוסקוס' })).getByRole('button', { name: 'הוספה: כפיתה' }))
     expect(total().getByText('2 מנות')).toBeInTheDocument()
     expect(total().getByText('מנה צדדית אחת')).toBeInTheDocument()
   })
