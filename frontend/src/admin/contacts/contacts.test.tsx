@@ -31,7 +31,7 @@ describe('Admin Contacts', () => {
     fakeApi(base)
     renderAt('/admin/contacts')
     expect(await screen.findByRole('heading', { level: 1, name: 'אנשי קשר' })).toBeInTheDocument()
-    expect(within(screen.getByRole('navigation', { name: 'תפריט ניהול' })).getByRole('link', { name: 'אנשי קשר' })).toHaveAttribute(
+    expect(within(screen.getByRole('navigation', { name: 'תצוגה באתר לקוח' })).getByRole('link', { name: 'אנשי קשר' })).toHaveAttribute(
       'href',
       '/admin/contacts',
     )
