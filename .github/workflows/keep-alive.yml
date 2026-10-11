@@ -1,0 +1,56 @@
+# Keeps the free Render services awake: a free service sleeps after 15 minutes without a
+# request, and the first visitor after that waits about a minute for it to start. This asks
+# each site's /api/health (no database, no auth) every 12 minutes, which counts as a request.
+#
+# Free instance hours: Render gives a workspace 750 free hours a month, shared by all its free
+# services, and only an awake service uses them. A site listed here is awake all month
+# (about 730 hours), so list only the sites the hours (or a paid plan) can carry; when the
+# hours run out, Render suspends every free service until the next month.
+#
+# GitHub runs scheduled workflows late at busy times (often several minutes, so a site can
+# still fall asleep now and then), and turns the schedule off after 60 days without a commit
+# to the repository; it is turned back on under Actions -> Keep sites awake -> Enable workflow.
+name: Keep sites awake
+
+on:
+  schedule:
+    - cron: '*/12 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  ping:
+    name: Ping /api/health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # One address per line: the sites to keep awake (render.yaml lists every site's service).
+      SITES: |
+        https://kuskus-shel-ima.onrender.com
+        https://grape-leaves-eliel.onrender.com
+        https://cigars-shiraz.onrender.com
+        https://kuskus-liel.onrender.com
+        https://fish-trays-rephael.onrender.com
+        https://home-food-mary.onrender.com
+    steps:
+      - name: Ping every site
+        run: |
+          ping() {
+            # A sleeping service takes up to about a minute to answer its first request.
+            if body=$(curl -fsS --max-time 90 --retry 2 --retry-delay 10 --retry-all-errors "$1/api/health" 2>&1); then
+              echo "$1: $body"
+            else
+              echo "::error::$1/api/health did not answer: $body"
+              return 1
+            fi
+          }
+          pids=()
+          for site in $SITES; do ping "$site" & pids+=($!); done
+          failed=0
+          for pid in "${pids[@]}"; do wait "$pid" || failed=1; done
+          exit $failed
