@@ -19,7 +19,14 @@ public static class Features
     /// </summary>
     public const string Reviews = "reviews";
 
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews];
+    /// <summary>
+    /// In the admin's dish form: variants shown in a main dish's card, yes or no dishes, and the add-ons of a dish set
+    /// from the dish itself, with prices and limits of their own, check boxes and named groups with a limit.
+    /// The order page shows whatever the admin set, so it needs no flag.
+    /// </summary>
+    public const string AdvancedDishes = "advancedDishes";
+
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }

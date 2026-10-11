@@ -32,7 +32,7 @@ describe('order model', () => {
 
   it('never lists add-on-only dishes as standalone dishes', () => {
     expect(standaloneDishes(data, 1).map((d) => d.name)).toEqual(['עוף בתנור'])
-    expect(addOnsOf(chicken, dishes).map((d) => d.name)).toEqual(['ירך'])
+    expect(addOnsOf(chicken, dishes).map((o) => o.dish.name)).toEqual(['ירך'])
   })
 
   it('skips dishes and options that no longer exist when restoring a saved order', () => {

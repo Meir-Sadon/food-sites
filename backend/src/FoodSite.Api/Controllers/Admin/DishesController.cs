@@ -43,7 +43,23 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         decimal? MaxPerSupplyDate = null,
         bool OpenByDefault = false,
         bool IsSideDish = false,
-        string? UnitName = null);
+        string? UnitName = null,
+        int? MainDishId = null,
+        bool UseMainDishPrice = false,
+        bool IsYesNo = false,
+        IReadOnlyList<AddOnGroupDto>? AddOnGroups = null,
+        IReadOnlyList<AddOnLinkDto>? AddOns = null);
+
+    public record AddOnGroupDto(int Id, string Name, int? MaxUnits);
+
+    /// <summary>An add-on offered under this dish, in the admin's order, and how it is offered here.</summary>
+    public record AddOnLinkDto(int DishId, int? GroupId, decimal? Price, decimal? MaxQuantity, bool IsCheckbox);
+
+    /// <summary>A group to keep (with Id) or add (without).</summary>
+    public record AddOnGroupInput(int? Id, string? Name, int? MaxUnits);
+
+    /// <summary>An add-on offered under this dish; Group is its group's index in AddOnGroups.</summary>
+    public record AddOnLinkInput(int DishId, int? Group, decimal? Price, decimal? MaxQuantity, bool IsCheckbox);
 
     /// <summary>An option to keep (with Id) or add (without).</summary>
     public record OptionInput(int? Id, string? Label, decimal Amount, decimal Price, bool IsDefault);
@@ -51,6 +67,10 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     /// <summary>
     /// ParentDishIds lists the dishes this dish is offered under as an add-on:
     /// ticking A and B on dish C makes C an add-on of A and B.
+    /// AddOns, when sent, is the whole list of this dish's own add-ons with their settings (and AddOnGroups its groups);
+    /// left out, the add-ons stay as they are.
+    /// MainDishId makes the dish a variant shown in that dish's card, in its category; with UseMainDishPrice it is
+    /// priced like it and its own choice mode and options are not needed.
     /// </summary>
     public record DishInput(
         string? Name,
@@ -70,7 +90,14 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         decimal? MaxPerSupplyDate = null,
         bool OpenByDefault = false,
         bool IsSideDish = false,
-        string? UnitName = null);
+        string? UnitName = null,
+        int? MainDishId = null,
+        bool UseMainDishPrice = false,
+        bool IsYesNo = false,
+        List<AddOnGroupInput>? AddOnGroups = null,
+        List<AddOnLinkInput>? AddOns = null);
+
+    public const decimal MaxAddOnPrice = 100_000;
 
     public record SoldOutInput(bool IsSoldOut);
 
@@ -96,8 +123,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         if (await Validate(input, dish) is { } invalid)
             return invalid;
 
-        Apply(input, dish);
-        dish.DisplayOrder = await NextOrderAsync(input.CategoryId);
+        await ApplyAsync(input, dish);
+        dish.DisplayOrder = await NextOrderAsync(dish.CategoryId);
         db.Dishes.Add(dish);
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = dish.Id }, ToDto(await LoadAsync(dish.Id)));
@@ -113,9 +140,19 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             return invalid;
 
         // A dish moved to another category goes last there.
-        if (dish.CategoryId != input.CategoryId)
-            dish.DisplayOrder = await NextOrderAsync(input.CategoryId);
-        Apply(input, dish);
+        var categoryId = await CategoryOfAsync(input);
+        if (dish.CategoryId != categoryId)
+            dish.DisplayOrder = await NextOrderAsync(categoryId);
+        await ApplyAsync(input, dish);
+
+        // Variants sit in their main dish's category, and the ones priced like it are sold the same way.
+        foreach (var variant in await db.Dishes.Where(v => v.MainDishId == id).ToListAsync())
+        {
+            if (variant.CategoryId != dish.CategoryId)
+                (variant.CategoryId, variant.DisplayOrder) = (dish.CategoryId, await NextOrderAsync(dish.CategoryId));
+            if (variant.UseMainDishPrice)
+                (variant.SellBy, variant.ChoiceMode) = (dish.SellBy, dish.ChoiceMode);
+        }
         await db.SaveChangesAsync();
         return ToDto(await LoadAsync(id));
     }
@@ -266,6 +303,12 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         return ToDto(await LoadAsync(id));
     }
 
+    /// <summary>The category a saved dish goes to: a variant's is its main dish's.</summary>
+    private async Task<int> CategoryOfAsync(DishInput input) =>
+        input.MainDishId is { } mainId
+            ? await db.Dishes.Where(d => d.Id == mainId).Select(d => (int?)d.CategoryId).SingleOrDefaultAsync() ?? input.CategoryId
+            : input.CategoryId;
+
     private async Task<int> NextOrderAsync(int categoryId) =>
         (await db.Dishes.Where(d => d.CategoryId == categoryId).MaxAsync(d => (int?)d.DisplayOrder) ?? -1) + 1;
 
@@ -278,12 +321,15 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         if (!Enum.IsDefined(input.SellBy)) errors.Add(nameof(input.SellBy), "invalid");
         if (!Enum.IsDefined(input.ChoiceMode)) errors.Add(nameof(input.ChoiceMode), "invalid");
 
-        if (!await db.Categories.AnyAsync(c => c.Id == input.CategoryId && !c.IsHidden))
+        var main = await ValidateMainDish(input, dish, errors);
+        if (main is null && !await db.Categories.AnyAsync(c => c.Id == input.CategoryId && !c.IsHidden))
             errors.Add(nameof(input.CategoryId), "notFound");
 
-        if (input.ChoiceMode == ChoiceMode.Fixed)
+        // A variant priced like its main dish has no options or amounts of its own.
+        var ownPrice = !(input.UseMainDishPrice && input.MainDishId is not null);
+        if (ownPrice && input.ChoiceMode == ChoiceMode.Fixed)
             ValidateOptions(input, dish, errors);
-        else if (input.ChoiceMode == ChoiceMode.Free)
+        else if (ownPrice && input.ChoiceMode == ChoiceMode.Free)
             ValidateFreeChoice(input, errors);
 
         if (input.MaxPerSupplyDate is <= 0) errors.Add(nameof(input.MaxPerSupplyDate), "positive");
@@ -292,7 +338,71 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             errors.Add(nameof(input.MaxPerSupplyDate), "wholeNumber");
 
         await ValidateAddOnLinks(input, dish, errors);
+        await ValidateOwnAddOns(input, dish, errors);
         return errors.Any ? Invalid(errors) : null;
+    }
+
+    /// <summary>A variant's main dish: a dish on the site that is not a variant itself, while this dish has no variants.</summary>
+    private async Task<Dish?> ValidateMainDish(DishInput input, Dish dish, Errors errors)
+    {
+        if (input.MainDishId is not { } mainId)
+        {
+            if (input.UseMainDishPrice)
+                errors.Add(nameof(input.UseMainDishPrice), "noMainDish");
+            if (input.IsAddOnOnly && dish.Id != 0 && await db.Dishes.AnyAsync(v => v.MainDishId == dish.Id && !v.IsHidden))
+                errors.Add(nameof(input.IsAddOnOnly), "hasVariants");
+            return null;
+        }
+
+        var main = await db.Dishes.SingleOrDefaultAsync(d => d.Id == mainId);
+        if (main is null || main.IsHidden || main.Id == dish.Id)
+            errors.Add(nameof(input.MainDishId), "notFound");
+        else if (main.MainDishId is not null)
+            errors.Add(nameof(input.MainDishId), "mainIsVariant");
+        else if (main.IsAddOnOnly)
+            errors.Add(nameof(input.MainDishId), "mainIsAddOnOnly");
+        if (dish.Id != 0 && await db.Dishes.AnyAsync(v => v.MainDishId == dish.Id && !v.IsHidden))
+            errors.Add(nameof(input.MainDishId), "hasVariants");
+        if (input.IsAddOnOnly)
+            errors.Add(nameof(input.IsAddOnOnly), "variantAddOnOnly");
+        return main;
+    }
+
+    private async Task ValidateOwnAddOns(DishInput input, Dish dish, Errors errors)
+    {
+        if (input.AddOns is null)
+            return;
+
+        var groups = input.AddOnGroups ?? [];
+        for (var i = 0; i < groups.Count; i++)
+        {
+            errors.Text($"addOnGroups[{i}].name", groups[i].Name, AddOnGroup.NameMaxLength, required: true);
+            if (groups[i].MaxUnits is < 1 or > OrderBuilder.MaxUnits)
+                errors.Add($"addOnGroups[{i}].maxUnits", "invalid");
+            if (groups[i].Id is { } id && dish.AddOnGroups.All(g => g.Id != id))
+                errors.Add($"addOnGroups[{i}].id", "notFound");
+        }
+
+        var ids = input.AddOns.Select(a => a.DishId).ToList();
+        var addOnDishes = await db.Dishes.Where(d => ids.Contains(d.Id)).ToDictionaryAsync(d => d.Id);
+        var seen = new HashSet<int>();
+        for (var i = 0; i < input.AddOns.Count; i++)
+        {
+            var addOn = input.AddOns[i];
+            var path = $"addOns[{i}]";
+            if (!addOnDishes.TryGetValue(addOn.DishId, out var addOnDish) || addOnDish.IsHidden || addOn.DishId == dish.Id)
+                errors.Add($"{path}.dishId", "notFound");
+            else if (!seen.Add(addOn.DishId))
+                errors.Add($"{path}.dishId", "duplicate");
+            if (addOn.Price is < 0 or >= MaxAddOnPrice)
+                errors.Add($"{path}.price", "invalid");
+            if (addOn.MaxQuantity is <= 0) errors.Add($"{path}.maxQuantity", "positive");
+            else if (addOn.MaxQuantity is > OrderBuilder.MaxUnits) errors.Add($"{path}.maxQuantity", "invalid");
+            if (addOn.Group is { } group && (group < 0 || group >= groups.Count))
+                errors.Add($"{path}.group", "notFound");
+        }
+        if (input.IsAddOnOnly && input.AddOns.Count > 0)
+            errors.Add(nameof(input.IsAddOnOnly), "hasAddOns");
     }
 
     private static void ValidateOptions(DishInput input, Dish dish, Errors errors)
@@ -350,14 +460,18 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         // Add-ons sit one level deep: an add-on-only dish cannot have add-ons of its own.
         if (parents.Any(p => p.IsAddOnOnly))
             errors.Add(nameof(input.ParentDishIds), "parentIsAddOnOnly");
-        if (input.IsAddOnOnly && dish.Id != 0 && await db.DishAddOns.AnyAsync(a => a.ParentDishId == dish.Id))
+        if (input.IsAddOnOnly && input.AddOns is null && dish.Id != 0 && await db.DishAddOns.AnyAsync(a => a.ParentDishId == dish.Id))
             errors.Add(nameof(input.IsAddOnOnly), "hasAddOns");
     }
 
-    private void Apply(DishInput input, Dish dish)
+    private async Task ApplyAsync(DishInput input, Dish dish)
     {
+        var main = input.MainDishId is { } mainId ? await db.Dishes.SingleAsync(d => d.Id == mainId) : null;
         dish.Name = input.Name!.Trim();
-        dish.CategoryId = input.CategoryId;
+        dish.CategoryId = main?.CategoryId ?? input.CategoryId;
+        dish.MainDishId = main?.Id;
+        dish.UseMainDishPrice = main is not null && input.UseMainDishPrice;
+        dish.IsYesNo = input.IsYesNo;
         dish.Description = Clean(input.Description);
         dish.AllergenInfo = Clean(input.AllergenInfo);
         dish.SellBy = input.SellBy;
@@ -368,7 +482,14 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         dish.OpenByDefault = input.OpenByDefault;
         dish.IsSideDish = input.IsSideDish;
 
-        if (input.ChoiceMode == ChoiceMode.Fixed)
+        if (dish.UseMainDishPrice)
+        {
+            // Sold the same way as the main dish, so per-date and portion limits count it the same way.
+            (dish.SellBy, dish.ChoiceMode) = (main!.SellBy, main.ChoiceMode);
+            (dish.MinAmount, dish.MaxAmount, dish.AmountStep, dish.UnitPrice, dish.UnitName) = (null, null, null, null, null);
+            db.DishOptions.RemoveRange(dish.Options);
+        }
+        else if (input.ChoiceMode == ChoiceMode.Fixed)
         {
             (dish.MinAmount, dish.MaxAmount, dish.AmountStep, dish.UnitPrice, dish.UnitName) = (null, null, null, null, null);
             ApplyOptions(input.Options!, dish);
@@ -384,6 +505,43 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         db.DishAddOns.RemoveRange(dish.AddOnOf.Where(a => !parentIds.Contains(a.ParentDishId)));
         foreach (var parentId in parentIds.Except(dish.AddOnOf.Select(a => a.ParentDishId)))
             dish.AddOnOf.Add(new DishAddOn { ParentDishId = parentId, AddOnDish = dish });
+
+        if (input.AddOns is not null)
+            ApplyOwnAddOns(input.AddOnGroups ?? [], input.AddOns, dish);
+    }
+
+    // Groups keep their ids when edited; links are matched by the add-on dish.
+    private void ApplyOwnAddOns(List<AddOnGroupInput> groupInputs, List<AddOnLinkInput> addOnInputs, Dish dish)
+    {
+        var keepGroups = groupInputs.Where(g => g.Id is not null).Select(g => g.Id!.Value).ToHashSet();
+        var groups = groupInputs.Select((input, index) =>
+        {
+            var group = input.Id is { } id ? dish.AddOnGroups.Single(g => g.Id == id) : null;
+            if (group is null)
+                dish.AddOnGroups.Add(group = new AddOnGroup { Name = "" });
+            group.Name = input.Name!.Trim();
+            group.MaxUnits = input.MaxUnits;
+            group.DisplayOrder = index;
+            return group;
+        }).ToList();
+
+        var keepAddOns = addOnInputs.Select(a => a.DishId).ToHashSet();
+        db.DishAddOns.RemoveRange(dish.AddOns.Where(a => !keepAddOns.Contains(a.AddOnDishId)));
+        for (var i = 0; i < addOnInputs.Count; i++)
+        {
+            var input = addOnInputs[i];
+            var link = dish.AddOns.SingleOrDefault(a => a.AddOnDishId == input.DishId);
+            if (link is null)
+                dish.AddOns.Add(link = new DishAddOn { ParentDish = dish, AddOnDishId = input.DishId });
+            link.DisplayOrder = i;
+            link.Group = input.Group is { } g ? groups[g] : null;
+            if (link.Group is null)
+                link.GroupId = null;
+            link.Price = input.Price;
+            link.MaxQuantity = input.MaxQuantity;
+            link.IsCheckbox = input.IsCheckbox;
+        }
+        db.AddOnGroups.RemoveRange(dish.AddOnGroups.Where(g => g.Id != 0 && !keepGroups.Contains(g.Id)));
     }
 
     // Options keep their ids when edited, so saved favorites still point at them.
@@ -410,6 +568,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         .Include(d => d.Images)
         .Include(d => d.AddOns)
         .Include(d => d.AddOnOf)
+        .Include(d => d.AddOnGroups)
         .AsSplitQuery();
 
     private Task<Dish?> LoadOrNull(int id) => WithDetails().SingleOrDefaultAsync(d => d.Id == id);
@@ -430,5 +589,11 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.MaxPerSupplyDate,
         d.OpenByDefault,
         d.IsSideDish,
-        d.UnitName);
+        d.UnitName,
+        d.MainDishId,
+        d.UseMainDishPrice,
+        d.IsYesNo,
+        d.AddOnGroups.OrderBy(g => g.DisplayOrder).Select(g => new AddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
+        d.AddOns.OrderBy(a => a.DisplayOrder).ThenBy(a => a.AddOnDishId)
+            .Select(a => new AddOnLinkDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList());
 }

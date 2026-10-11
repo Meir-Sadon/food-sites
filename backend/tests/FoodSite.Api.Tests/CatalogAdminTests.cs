@@ -427,4 +427,82 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
         await (await _admin.PostAsync(url, TestFiles.Upload(TestFiles.Jpeg))).AssertInvalid("file", "tooManyImages");
         Assert.Equal(Dish.MaxImages, _factory.Images.Uploads.Count);
     }
+
+    // ---------- Variants and add-on settings ----------
+
+    [Fact]
+    public async Task Variant_sits_in_its_main_dish_category_and_can_take_its_price()
+    {
+        var cigars = await AddCategory("סיגרים");
+        var other = await AddCategory("אחר");
+        var main = await CreateOk(Fixed("סיגרים עבודת יד", cigars.Id, new OptionInput(null, "10 יח׳", 1, 60, true)));
+        var liver = await CreateOk(new DishInput(
+            "סיגר כבד", other.Id, null, null, SellBy.Weight, ChoiceMode.Free, null, null, null, null, false, false, null, [],
+            MainDishId: main.Id, UseMainDishPrice: true));
+
+        Assert.Equal((cigars.Id, main.Id, true, SellBy.Units, ChoiceMode.Fixed), (liver.CategoryId, liver.MainDishId, liver.UseMainDishPrice, liver.SellBy, liver.ChoiceMode));
+        Assert.Empty(liver.Options);
+
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        var shown = menu.Dishes.Single(d => d.Id == liver.Id);
+        Assert.Equal((main.Id, 60m), (shown.MainDishId, shown.Options.Single().Price));
+
+        // Moving the main dish moves its variants with it.
+        (await Update(main.Id, Fixed("סיגרים עבודת יד", other.Id, new OptionInput(main.Options[0].Id, "10 יח׳", 1, 60, true)))).EnsureSuccessStatusCode();
+        Assert.Equal(other.Id, (await GetDish(liver.Id)).CategoryId);
+
+        // One level only, and a variant is never add-on only.
+        await (await Create(Fixed("תת", cigars.Id) with { MainDishId = liver.Id })).AssertInvalid("MainDishId", "mainIsVariant");
+        await (await Create(Fixed("תוספת", cigars.Id) with { MainDishId = main.Id, IsAddOnOnly = true })).AssertInvalid("IsAddOnOnly", "variantAddOnOnly");
+        await (await Update(main.Id, Fixed("סיגרים", cigars.Id) with { MainDishId = liver.Id })).AssertInvalid("MainDishId", "hasVariants");
+        await (await Create(Fixed("בלי אב", cigars.Id) with { UseMainDishPrice = true })).AssertInvalid("UseMainDishPrice", "noMainDish");
+    }
+
+    [Fact]
+    public async Task Own_add_ons_are_saved_with_their_groups_prices_and_limits()
+    {
+        var category = await AddCategory("כריכים");
+        var sandwich = await CreateOk(Fixed("כריך", category.Id));
+        var hummus = await CreateOk(Fixed("חומוס", category.Id) with { IsAddOnOnly = true });
+        var tahini = await CreateOk(Fixed("טחינה", category.Id) with { IsAddOnOnly = true });
+        var chicken = await CreateOk(Fixed("עוף", category.Id, new OptionInput(null, "יחידה", 1, 12, true)));
+
+        var input = Fixed("כריך", category.Id, new OptionInput(sandwich.Options[0].Id, "מנה", 1, 40, true)) with
+        {
+            AddOnGroups = [new AddOnGroupInput(null, " סלטים ", 2)],
+            AddOns =
+            [
+                new AddOnLinkInput(chicken.Id, null, 8, 2, false),
+                new AddOnLinkInput(hummus.Id, 0, 0, null, true),
+                new AddOnLinkInput(tahini.Id, 0, null, null, true),
+            ],
+        };
+        var saved = await (await Update(sandwich.Id, input)).Read<DishDto>();
+
+        var group = Assert.Single(saved.AddOnGroups!);
+        Assert.Equal(("סלטים", 2), (group.Name, group.MaxUnits));
+        Assert.Equal(
+            [new AddOnLinkDto(chicken.Id, null, 8, 2, false), new AddOnLinkDto(hummus.Id, group.Id, 0, null, true), new AddOnLinkDto(tahini.Id, group.Id, null, null, true)],
+            saved.AddOns!);
+
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        var shown = menu.Dishes.Single(d => d.Id == sandwich.Id);
+        Assert.Equal([hummus.Id, tahini.Id, chicken.Id], shown.AddOnDishIds); // Groups first, in their order.
+        Assert.Equal("סלטים", shown.AddOnGroups!.Single().Name);
+
+        // Saving from the add-on's side keeps the settings; leaving AddOns out keeps the list.
+        (await Update(chicken.Id, Fixed("עוף", category.Id, new OptionInput(chicken.Options[0].Id, "יחידה", 1, 12, true)) with { ParentDishIds = [sandwich.Id] })).EnsureSuccessStatusCode();
+        (await Update(sandwich.Id, input with { AddOns = null, AddOnGroups = null })).EnsureSuccessStatusCode();
+        Assert.Equal(3, (await GetDish(sandwich.Id)).AddOns!.Count);
+        Assert.Equal(8, (await GetDish(sandwich.Id)).AddOns!.Single(a => a.DishId == chicken.Id).Price);
+
+        // Dropping the group keeps the add-ons, ungrouped.
+        (await Update(sandwich.Id, input with { AddOnGroups = [], AddOns = [new AddOnLinkInput(hummus.Id, null, null, null, true)] })).EnsureSuccessStatusCode();
+        var after = await GetDish(sandwich.Id);
+        Assert.Empty(after.AddOnGroups!);
+        Assert.Equal([new AddOnLinkDto(hummus.Id, null, null, null, true)], after.AddOns!);
+
+        await (await Update(sandwich.Id, input with { AddOns = [new AddOnLinkInput(hummus.Id, 3, -1, 0, false)] }))
+            .AssertInvalid("addOns[0].price", "invalid");
+    }
 }

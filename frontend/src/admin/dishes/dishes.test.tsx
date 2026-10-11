@@ -155,7 +155,7 @@ describe('Dish form', () => {
       ...base,
       'GET /api/admin/dishes': () => (created ? [...all, created] : all),
       'POST /api/admin/dishes': (_, body) => {
-        created = { ...dish(9, 'x', 1), ...(body as DishInput), id: 9, options: [], images: [], addOnDishIds: [] }
+        created = { ...dish(9, 'x', 1), ...(body as DishInput), id: 9, options: [], images: [], addOnDishIds: [], addOnGroups: [], addOns: [] }
         return { status: 201, body: created }
       },
     })
@@ -213,6 +213,11 @@ describe('Dish form', () => {
         { id: null, label: 'גדול', amount: 2, price: 9, isDefault: true },
       ],
       parentDishIds: [1],
+      mainDishId: null,
+      useMainDishPrice: false,
+      isYesNo: false,
+      addOnGroups: [],
+      addOns: [],
     })
   })
 

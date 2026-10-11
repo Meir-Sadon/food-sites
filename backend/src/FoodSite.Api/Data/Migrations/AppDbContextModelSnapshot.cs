@@ -22,6 +22,35 @@ namespace FoodSite.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.AddOnGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DishId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("MaxUnits")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DishId");
+
+                    b.ToTable("AddOnGroups");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.AuditEntry", b =>
                 {
                     b.Property<long>("Id")
@@ -149,6 +178,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("IsSoldOut")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsYesNo")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("MainDishId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal?>("MaxAmount")
                         .HasPrecision(10, 3)
                         .HasColumnType("numeric(10,3)");
@@ -181,11 +216,19 @@ namespace FoodSite.Api.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<bool>("UseMainDishPrice")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Dishes");
+                    b.HasIndex("MainDishId");
+
+                    b.ToTable("Dishes", t =>
+                        {
+                            t.HasCheckConstraint("CK_Dishes_NotOwnVariant", "\"MainDishId\" <> \"Id\"");
+                        });
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DishAddOn", b =>
@@ -196,9 +239,28 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int>("AddOnDishId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("GroupId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsCheckbox")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("MaxQuantity")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("numeric(10,3)");
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.HasKey("ParentDishId", "AddOnDishId");
 
                     b.HasIndex("AddOnDishId");
+
+                    b.HasIndex("GroupId");
 
                     b.ToTable("DishAddOns", t =>
                         {
@@ -865,6 +927,17 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.AddOnGroup", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
+                        .WithMany("AddOnGroups")
+                        .HasForeignKey("DishId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dish");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Dish", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.Category", "Category")
@@ -873,7 +946,14 @@ namespace FoodSite.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FoodSite.Api.Data.Entities.Dish", "MainDish")
+                        .WithMany("Variants")
+                        .HasForeignKey("MainDishId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Category");
+
+                    b.Navigation("MainDish");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DishAddOn", b =>
@@ -884,6 +964,11 @@ namespace FoodSite.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("FoodSite.Api.Data.Entities.AddOnGroup", "Group")
+                        .WithMany("AddOns")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("FoodSite.Api.Data.Entities.Dish", "ParentDish")
                         .WithMany("AddOns")
                         .HasForeignKey("ParentDishId")
@@ -891,6 +976,8 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("AddOnDish");
+
+                    b.Navigation("Group");
 
                     b.Navigation("ParentDish");
                 });
@@ -1070,6 +1157,11 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.AddOnGroup", b =>
+                {
+                    b.Navigation("AddOns");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Category", b =>
                 {
                     b.Navigation("Dishes");
@@ -1077,6 +1169,8 @@ namespace FoodSite.Api.Data.Migrations
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Dish", b =>
                 {
+                    b.Navigation("AddOnGroups");
+
                     b.Navigation("AddOnOf");
 
                     b.Navigation("AddOns");
@@ -1084,6 +1178,8 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("Options");
+
+                    b.Navigation("Variants");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DriverRoute", b =>

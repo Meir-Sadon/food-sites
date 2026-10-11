@@ -52,7 +52,20 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyDictionary<string, decimal>? Remaining = null,
         bool OpenByDefault = false,
         bool IsSideDish = false,
-        string? UnitName = null);
+        string? UnitName = null,
+        int? MainDishId = null,
+        bool IsYesNo = false,
+        IReadOnlyList<MenuAddOnDto>? AddOns = null,
+        IReadOnlyList<MenuAddOnGroupDto>? AddOnGroups = null);
+
+    /// <summary>
+    /// How an add-on is offered under this dish (the same order as AddOnDishIds). Price, when set, is its price per unit
+    /// here, in its default option only; MaxQuantity caps it under one ordered line; a check box is added or not.
+    /// </summary>
+    public record MenuAddOnDto(int DishId, int? GroupId, decimal? Price, decimal? MaxQuantity, bool IsCheckbox);
+
+    /// <summary>A heading over some of the dish's add-ons, and the most units the client can pick from them together.</summary>
+    public record MenuAddOnGroupDto(int Id, string Name, int? MaxUnits);
 
     public record MenuCategoryDto(int Id, string Name);
 
@@ -94,14 +107,19 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var visible = categories.Select(c => c.Id).ToHashSet();
 
         var dishes = await db.Dishes.AsNoTracking()
-            .Include(d => d.Options).Include(d => d.Images).Include(d => d.AddOns)
+            .Include(d => d.Options).Include(d => d.Images).Include(d => d.AddOns).ThenInclude(a => a.Group)
             .AsSplitQuery()
             .Where(d => !d.IsHidden)
             .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Id)
             .ToListAsync();
+        // A variant is shown with its main dish (priced like it when set), and not at all when the main dish is removed.
+        var byId = dishes.ToDictionary(d => d.Id);
+        foreach (var variant in dishes.Where(d => d.MainDishId is not null))
+            variant.MainDish = byId.GetValueOrDefault(variant.MainDishId!.Value);
         // Category by category, each in the admin's order; add-on-only dishes of a removed category come last.
         var categoryPosition = categories.Select((c, i) => (c.Id, i)).ToDictionary(p => p.Id, p => p.i);
-        var shown = dishes.Where(d => visible.Contains(d.CategoryId) || d.IsAddOnOnly)
+        var shown = dishes.Where(d => d.MainDishId is null || d.MainDish is not null)
+            .Where(d => visible.Contains(d.CategoryId) || d.IsAddOnOnly)
             .OrderBy(d => categoryPosition.GetValueOrDefault(d.CategoryId, int.MaxValue)).ToList();
         var shownIds = shown.Select(d => d.Id).ToHashSet();
         var dishPosition = shown.Select((d, i) => (d.Id, i)).ToDictionary(p => p.Id, p => p.i);
@@ -109,14 +127,24 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var supplyDates = await OpenDatesAsync();
         var remaining = await RemainingAsync(shown, supplyDates.Select(d => d.Date).ToList());
 
-        var menuDishes = shown.Select(d => new MenuDishDto(
-            d.Id, d.Name, d.CategoryId, d.Description, d.AllergenInfo, d.SellBy, d.ChoiceMode,
-            d.MinAmount, d.MaxAmount, d.AmountStep, d.UnitPrice, d.IsAddOnOnly, d.IsSoldOut,
-            d.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
-            d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
-            d.AddOns.Select(a => a.AddOnDishId).Where(shownIds.Contains).OrderBy(id => dishPosition[id]).ToList(),
-            remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, d.UnitName))
-            .ToList();
+        var menuDishes = shown.Select(d =>
+        {
+            var p = DishRules.Pricing(d);
+            var links = DishRules.AddOnLinks(d).Where(a => shownIds.Contains(a.AddOnDishId))
+                .OrderBy(a => a.Group?.DisplayOrder ?? int.MaxValue).ThenBy(a => a.DisplayOrder).ThenBy(a => dishPosition[a.AddOnDishId])
+                .ToList();
+            return new MenuDishDto(
+                d.Id, d.Name, d.CategoryId, d.Description, d.AllergenInfo, p.SellBy, p.ChoiceMode,
+                p.MinAmount, p.MaxAmount, p.AmountStep, p.UnitPrice, d.IsAddOnOnly, d.IsSoldOut || d.MainDish is { IsSoldOut: true },
+                p.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
+                d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
+                links.Select(a => a.AddOnDishId).ToList(),
+                remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, p.UnitName,
+                d.MainDishId, d.IsYesNo,
+                links.Select(a => new MenuAddOnDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
+                links.Where(a => a.Group is not null).Select(a => a.Group!).DistinctBy(g => g.Id)
+                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList());
+        }).ToList();
 
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList());
     }

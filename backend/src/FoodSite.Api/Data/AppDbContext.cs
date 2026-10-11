@@ -19,6 +19,7 @@ public class AppDbContext(
     public DbSet<DishImage> DishImages => Set<DishImage>();
     public DbSet<DishOption> DishOptions => Set<DishOption>();
     public DbSet<DishAddOn> DishAddOns => Set<DishAddOn>();
+    public DbSet<AddOnGroup> AddOnGroups => Set<AddOnGroup>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -126,6 +127,19 @@ public class AppDbContext(
             e.HasOne(d => d.Category).WithMany(c => c.Dishes)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(d => d.MainDish).WithMany(d => d.Variants)
+                .HasForeignKey(d => d.MainDishId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.ToTable(t => t.HasCheckConstraint(
+                "CK_Dishes_NotOwnVariant", "\"MainDishId\" <> \"Id\""));
+        });
+
+        model.Entity<AddOnGroup>(e =>
+        {
+            e.Property(g => g.Name).HasMaxLength(AddOnGroup.NameMaxLength);
+            e.HasOne(g => g.Dish).WithMany(d => d.AddOnGroups)
+                .HasForeignKey(g => g.DishId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<DishImage>(e =>
@@ -152,6 +166,10 @@ public class AppDbContext(
             e.HasOne(a => a.AddOnDish).WithMany(d => d.AddOnOf)
                 .HasForeignKey(a => a.AddOnDishId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Group).WithMany(g => g.AddOns)
+                .HasForeignKey(a => a.GroupId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.Property(a => a.MaxQuantity).HasPrecision(10, 3);
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_DishAddOns_NotSelf", "\"ParentDishId\" <> \"AddOnDishId\""));
         });

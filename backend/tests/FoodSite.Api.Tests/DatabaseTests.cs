@@ -32,7 +32,7 @@ public sealed class DatabaseTests : IDisposable
         string[] expected =
         [
             "Settings", "SupplyDays", "ClosedDates", "Categories", "Dishes", "DishImages",
-            "DishOptions", "DishAddOns", "Users", "Orders", "OrderItems", "FavoriteOrders",
+            "DishOptions", "DishAddOns", "AddOnGroups", "Users", "Orders", "OrderItems", "FavoriteOrders",
             "Recommendations", "NotifyPhones", "LoginCodes", "FeatureFlags", "MessageTemplates", "Reviews", "ReviewImages",
             "DriverRoutes", "DriverRouteStops",
             "AuditEntries",
