@@ -13,7 +13,7 @@ import {
   type SellBy,
 } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
-import { FieldError, Loading, Status } from '../ui'
+import { FieldError, FormBlock, Loading, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { DishImagesSection } from './DishImagesSection'
 import { useToast } from '../../components/toast'
@@ -316,6 +316,9 @@ export function DishFormPage() {
     .filter((name): name is string => !!name)
   const addOnCandidates = allDishes.filter((d) => !d.isHidden && d.id !== dishId)
   const inheritedQuestions = (mainDish?.questions ?? []).map((q) => q.text)
+  /** Whether a field under one of these names (or lists, like `options[0].price`) failed validation. */
+  const invalid = (...names: string[]) =>
+    Object.keys(errors).some((key) => names.some((name) => key === name.toLowerCase() || key.startsWith(`${name.toLowerCase()}[`)))
 
   return (
     <>
@@ -339,6 +342,12 @@ export function DishFormPage() {
       )}
 
       <form onSubmit={handleSubmit} className="stack dish-form" noValidate>
+        <FormBlock
+          title={t('admin.dishes.blocks.basics')}
+          about={t('admin.dishes.blocks.basicsAbout')}
+          defaultOpen
+          invalid={invalid('name', 'mainDishId', 'categoryId', 'description', 'allergenInfo')}
+        >
         <span className="field">
           <label htmlFor="dish-name">{t('admin.dishes.name')}</label>
           <input id="dish-name" required maxLength={100} value={form.name} onChange={(e) => set({ name: e.target.value })} {...err('name')} />
@@ -432,7 +441,13 @@ export function DishFormPage() {
           <textarea id="dish-allergens" rows={2} maxLength={500} value={form.allergenInfo} onChange={(e) => set({ allergenInfo: e.target.value })} {...err('allergenInfo')} />
           {fieldError('allergenInfo')}
         </span>
+        </FormBlock>
 
+        <FormBlock
+          title={t('admin.dishes.blocks.price')}
+          about={t('admin.dishes.blocks.priceAbout')}
+          invalid={invalid('useMainDishPrice', 'sellBy', 'choiceMode', 'options', 'unitName', 'minAmount', 'maxAmount', 'amountStep', 'unitPrice')}
+        >
         {isVariant && (
           <label className="checkbox">
             <input type="checkbox" checked={form.useMainDishPrice} onChange={(e) => set({ useMainDishPrice: e.target.checked })} {...err('useMainDishPrice')} />
@@ -570,7 +585,13 @@ export function DishFormPage() {
         )}
         </>
         )}
+        </FormBlock>
 
+        <FormBlock
+          title={t('admin.dishes.blocks.availability')}
+          about={t('admin.dishes.blocks.availabilityAbout')}
+          invalid={invalid('isAddOnOnly', 'isYesNo', 'isSoldOut', 'isSideDish', 'openByDefault', 'maxPerSupplyDate')}
+        >
         {!isVariant && (
           <>
             <label className="checkbox">
@@ -632,7 +653,9 @@ export function DishFormPage() {
           </span>
           {fieldError('maxPerSupplyDate')}
         </span>
+        </FormBlock>
 
+        <FormBlock title={t('admin.dishes.blocks.parents')} about={t('admin.dishes.blocks.parentsAbout')} invalid={invalid('parentDishIds')}>
         <fieldset className="stack" aria-describedby="dish-parents-hint dish-parentDishIds-error">
           <legend>{t('admin.dishes.parents')}</legend>
           <p id="dish-parents-hint" className="hint">
@@ -669,7 +692,10 @@ export function DishFormPage() {
           })}
           {fieldError('parentDishIds')}
         </fieldset>
+        </FormBlock>
 
+        {(inheritedAddOns.length > 0 || (advanced && !form.isAddOnOnly)) && (
+        <FormBlock title={t('admin.dishes.blocks.addOns')} about={t('admin.dishes.blocks.addOnsAbout')} invalid={invalid('addOns', 'addOnGroups')}>
         {inheritedAddOns.length > 0 && (
           <p className="hint">{t('admin.dishes.inheritedAddOns', { names: inheritedAddOns.join(', ') })}</p>
         )}
@@ -684,7 +710,12 @@ export function DishFormPage() {
             onChange={(patch) => set(patch)}
           />
         )}
+        </FormBlock>
+        )}
+
+        <FormBlock title={t('admin.dishes.blocks.questions')} about={t('admin.dishes.blocks.questionsAbout')} invalid={invalid('questions')}>
         <QuestionsSection questions={form.questions} inherited={inheritedQuestions} errors={errors} onChange={(questions) => set({ questions })} />
+        </FormBlock>
 
         <div className="row form-actions">
           <button type="submit" disabled={saving}>

@@ -393,6 +393,28 @@ describe('Dish form', () => {
     expect(screen.getByText('למנה הזו יש תוספות, ולכן היא לא יכולה להיות תוספת בלבד.')).toBeInTheDocument()
     // The summary points to the fields instead of repeating their messages.
     expect(screen.getByRole('alert')).toHaveTextContent('יש שדות לתיקון')
+    // Blocks holding a field to fix open by themselves and say so; the others stay folded.
+    const price = screen.getByRole('region', { name: 'מחיר וכמויות' })
+    expect(price.querySelector('details')).toHaveAttribute('open')
+    expect(price).toHaveTextContent('יש כאן שדות לתיקון')
+    expect(screen.getByRole('region', { name: 'זמינות ואופן הצגה' }).querySelector('details')).toHaveAttribute('open')
+    expect(screen.getByRole('region', { name: 'שאלות ללקוח' }).querySelector('details')).not.toHaveAttribute('open')
+  })
+
+  it('folds each topic of the form under a block with a line about it', async () => {
+    fakeApi(base)
+    renderAt('/admin/dishes/1')
+    const basics = await screen.findByRole('region', { name: 'פרטים בסיסיים' })
+    const price = screen.getByRole('region', { name: 'מחיר וכמויות' })
+
+    expect(basics.querySelector('details')).toHaveAttribute('open')
+    for (const name of ['מחיר וכמויות', 'זמינות ואופן הצגה', 'תוספת למנות אחרות', 'שאלות ללקוח', 'תמונות'])
+      expect(screen.getByRole('region', { name }).querySelector('details')).not.toHaveAttribute('open')
+    const toggle = within(price).getByText('מחיר וכמויות').closest('summary')!
+    expect(toggle).toHaveAccessibleDescription(/איך המנה נמכרת/)
+
+    await userEvent.setup().click(toggle)
+    expect(price.querySelector('details')).toHaveAttribute('open')
   })
 
   it('asks before saving a dish that is in unsupplied orders', async () => {
