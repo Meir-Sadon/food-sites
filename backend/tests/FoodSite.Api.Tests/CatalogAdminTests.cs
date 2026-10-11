@@ -358,6 +358,76 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Single(_factory.Images.Deleted);
     }
 
+    [Fact]
+    public async Task Questions_are_saved_in_order_keep_their_ids_and_stay_when_left_out()
+    {
+        var category = await AddCategory("עיקריות");
+        var dish = await CreateOk(Fixed("כריך", category.Id) with
+        {
+            Questions =
+            [
+                new(null, " חריפות ", QuestionKind.SingleChoice, [" עדין", "חריף "], true, true),
+                new(null, "ברכה", QuestionKind.Text, ["נשמט"], true, false),
+            ],
+        });
+        Assert.Equal(
+            [("חריפות", QuestionKind.SingleChoice, "עדין|חריף", true, true), ("ברכה", QuestionKind.Text, "", false, false)],
+            dish.Questions!.Select(q => (q.Text, q.Kind, string.Join("|", q.Choices), q.ShowAsDropdown, q.IsRequired)));
+
+        var spice = dish.Questions![0];
+        var updated = await (await Update(dish.Id, Fixed("כריך", category.Id) with
+        {
+            Questions =
+            [
+                new(null, "תוספות", QuestionKind.MultiChoice, ["בצל"], false, false),
+                new(spice.Id, "רמת חריפות", QuestionKind.SingleChoice, ["עדין", "חריף"], false, true),
+            ],
+        })).Read<DishDto>();
+        Assert.Equal(["תוספות", "רמת חריפות"], updated.Questions!.Select(q => q.Text));
+        Assert.Equal(spice.Id, updated.Questions![1].Id);
+
+        var kept = await (await Update(dish.Id, Fixed("כריך", category.Id))).Read<DishDto>();
+        Assert.Equal(2, kept.Questions!.Count);
+    }
+
+    [Fact]
+    public async Task Questions_are_checked()
+    {
+        var category = await AddCategory("עיקריות");
+        Task<HttpResponseMessage> With(params QuestionInput[] questions) => Create(Fixed("כריך", category.Id) with { Questions = [.. questions] });
+
+        await (await With(new QuestionInput(null, " ", QuestionKind.Text, null, false, false))).AssertInvalid("questions[0].text", "required");
+        await (await With(new QuestionInput(null, "חריפות", QuestionKind.SingleChoice, ["רק אחת"], false, false)))
+            .AssertInvalid("questions[0].choices", "choicesRequired");
+        await (await With(new QuestionInput(null, "תוספות", QuestionKind.MultiChoice, ["בצל", "בצל"], false, false)))
+            .AssertInvalid("questions[0].choices", "duplicateChoice");
+        await (await With(new QuestionInput(null, "תוספות", QuestionKind.MultiChoice, ["בצל", " "], false, false)))
+            .AssertInvalid("questions[0].choices", "choiceInvalid");
+        await (await With(new QuestionInput(12345, "ברכה", QuestionKind.Text, null, false, false))).AssertInvalid("questions[0].id", "notFound");
+        await (await With([.. Enumerable.Range(0, 21).Select(i => new QuestionInput(null, $"שאלה {i}", QuestionKind.Text, null, false, false))]))
+            .AssertInvalid("questions", "tooManyQuestions");
+    }
+
+    [Fact]
+    public async Task A_copy_can_take_the_dish_s_pictures_which_stay_until_neither_dish_uses_them()
+    {
+        var category = await AddCategory("עיקריות");
+        var dish = await CreateOk(Fixed("קוסקוס", category.Id));
+        var withImage = await (await _admin.PostAsync($"/api/admin/dishes/{dish.Id}/images", TestFiles.Upload(TestFiles.Jpeg))).Read<DishDto>();
+
+        var copy = await CreateOk(Fixed("קוסקוס גדול", category.Id) with { CopyImagesFrom = dish.Id });
+        Assert.Equal(withImage.Images.Select(i => i.Url), copy.Images.Select(i => i.Url));
+        Assert.NotEqual(withImage.Images[0].Id, copy.Images[0].Id);
+
+        await (await _admin.DeleteAsync($"/api/admin/dishes/{copy.Id}/images/{copy.Images[0].Id}")).Read<DishDto>();
+        Assert.Empty(_factory.Images.Deleted);
+        await (await _admin.DeleteAsync($"/api/admin/dishes/{dish.Id}/images/{withImage.Images[0].Id}")).Read<DishDto>();
+        Assert.Single(_factory.Images.Deleted);
+
+        await (await Create(Fixed("עוד", category.Id) with { CopyImagesFrom = 999999 })).AssertInvalid("copyImagesFrom", "notFound");
+        await (await Update(copy.Id, Fixed("קוסקוס גדול", category.Id) with { CopyImagesFrom = dish.Id })).AssertInvalid("copyImagesFrom", "invalid");
+    }
+
     // ---------- Dish order ----------
 
     private static async Task AssertListChanged(HttpResponseMessage response)

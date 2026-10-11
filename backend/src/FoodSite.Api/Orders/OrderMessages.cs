@@ -48,6 +48,7 @@ public static class OrderMessages
         foreach (var item in order.Items.Where(i => i.ParentItemId is null && i.ParentItem is null))
         {
             lines.Add(Line(item, ""));
+            lines.AddRange((item.Answers ?? []).Select(a => $"  {a.Question}: {a.Answer}"));
             foreach (var addOn in item.AddOnItems)
                 lines.Add(Line(addOn, "  + "));
         }

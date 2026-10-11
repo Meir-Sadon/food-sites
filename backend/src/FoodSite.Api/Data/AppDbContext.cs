@@ -20,6 +20,7 @@ public class AppDbContext(
     public DbSet<DishOption> DishOptions => Set<DishOption>();
     public DbSet<DishAddOn> DishAddOns => Set<DishAddOn>();
     public DbSet<AddOnGroup> AddOnGroups => Set<AddOnGroup>();
+    public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -89,6 +90,7 @@ public class AppDbContext(
         builder.Properties<UsageEventKind>().HaveConversion<string>();
         builder.Properties<DeliveryOutcome>().HaveConversion<string>();
         builder.Properties<AuditAction>().HaveConversion<string>();
+        builder.Properties<QuestionKind>().HaveConversion<string>();
 
         // Money in shekels and agorot; amounts that can be weights get grams precision.
         builder.Properties<decimal>().HavePrecision(10, 2);
@@ -143,6 +145,15 @@ public class AppDbContext(
             e.Property(g => g.Name).HasMaxLength(AddOnGroup.NameMaxLength);
             e.HasOne(g => g.Dish).WithMany(d => d.AddOnGroups)
                 .HasForeignKey(g => g.DishId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<DishQuestion>(e =>
+        {
+            e.Property(q => q.Text).HasMaxLength(DishQuestion.TextMaxLength);
+            e.Property(q => q.Kind).HasMaxLength(20);
+            e.HasOne(q => q.Dish).WithMany(d => d.Questions)
+                .HasForeignKey(q => q.DishId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -204,6 +215,7 @@ public class AppDbContext(
             e.HasOne(i => i.ParentItem).WithMany(i => i.AddOnItems)
                 .HasForeignKey(i => i.ParentItemId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.OwnsMany(i => i.Answers, answers => answers.ToJson());
         });
 
         model.Entity<FavoriteOrder>(e =>

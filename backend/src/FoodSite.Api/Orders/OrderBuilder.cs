@@ -1,3 +1,4 @@
+using System.Globalization;
 using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data.Entities;
 
@@ -5,15 +6,22 @@ namespace FoodSite.Api.Orders;
 
 public record AddOnInput(int DishId, int? OptionId, decimal Quantity);
 
-/// <summary>The add-ons of one ordered unit of a dish.</summary>
-public record UnitAddOnsInput(List<AddOnInput>? AddOns, string? Note = null);
+/// <summary>
+/// An answer to one of the dish's questions: Value for text, a number, a date (yyyy-MM-dd), yes or no ("yes"/"no")
+/// and a single choice; Choices for a multiple choice.
+/// </summary>
+public record AnswerInput(int QuestionId, string? Value = null, List<string>? Choices = null);
+
+/// <summary>The add-ons, name or remark and answers of one ordered unit of a dish.</summary>
+public record UnitAddOnsInput(List<AddOnInput>? AddOns, string? Note = null, List<AnswerInput>? Answers = null);
 
 /// <summary>
 /// AddOns are shared by the whole line (their limits grow with the quantity). AddOnUnits, when sent, has one entry
 /// per ordered unit instead, each with add-ons of its own and the limits of one unit; AddOns is then ignored.
 /// </summary>
 public record OrderLineInput(
-    int DishId, int? OptionId, decimal Quantity, List<AddOnInput>? AddOns, List<UnitAddOnsInput>? AddOnUnits = null, string? Note = null);
+    int DishId, int? OptionId, decimal Quantity, List<AddOnInput>? AddOns, List<UnitAddOnsInput>? AddOnUnits = null, string? Note = null,
+    List<AnswerInput>? Answers = null);
 
 /// <summary>
 /// Turns what the client chose into order lines, taking every name and price from the
@@ -25,7 +33,7 @@ public static class OrderBuilder
     public const int MaxUnits = 99;
 
     /// <param name="dishes">
-    /// Dishes with Options, AddOns (with their Group) and MainDish (with its Options and AddOns) loaded, by id.
+    /// Dishes with Options, Questions, AddOns (with their Group) and MainDish (with its Options, Questions and AddOns) loaded, by id.
     /// </param>
     public static List<OrderItem> Build(
         IReadOnlyList<OrderLineInput>? lines, IReadOnlyDictionary<int, Dish> dishes, Errors errors)
@@ -59,9 +67,11 @@ public static class OrderBuilder
                 continue;
 
             var links = DishRules.AddOnLinks(dish);
+            var questions = DishRules.Questions(dish);
             if (line.AddOnUnits is not { } unitInputs)
             {
                 item.Note = NoteOf(line.Note, $"{path}.note", errors);
+                item.Answers = AnswersOf(questions, line.Answers, path, errors);
                 items.Add(item);
                 foreach (var child in AddOnsOf(links, line.AddOns ?? [], path, DishRules.LimitFactor(dish, item.Quantity), dishes, errors))
                     Attach(item, child, items);
@@ -78,13 +88,15 @@ public static class OrderBuilder
             var perUnit = unitInputs
                 .Select((unit, u) => (
                     children: AddOnsOf(links, unit.AddOns ?? [], $"{path}.addOnUnits[{u}]", 1, dishes, errors),
-                    note: NoteOf(unit.Note, $"{path}.addOnUnits[{u}].note", errors)))
+                    note: NoteOf(unit.Note, $"{path}.addOnUnits[{u}].note", errors),
+                    answers: AnswersOf(questions, unit.Answers, $"{path}.addOnUnits[{u}]", errors)))
                 .ToList();
-            foreach (var group in perUnit.GroupBy(x => $"{x.note}#{Signature(x.children)}"))
+            foreach (var group in perUnit.GroupBy(x => $"{x.note}#{Signature(x.children)}#{AnswersSignature(x.answers)}"))
             {
                 var count = group.Count();
                 var parent = Scaled(item, count);
                 parent.Note = group.First().note;
+                parent.Answers = group.First().answers;
                 items.Add(parent);
                 foreach (var child in group.First().children)
                     Attach(parent, Scaled(child, child.Quantity * count), items);
@@ -101,6 +113,74 @@ public static class OrderBuilder
         errors.Text(path, note, NoteMaxLength);
         return string.IsNullOrWhiteSpace(note) ? null : note.Trim();
     }
+
+    /// <summary>The longest free-text answer to a dish question.</summary>
+    public const int AnswerMaxLength = 200;
+
+    /// <summary>
+    /// Checks the answers to a dish's questions and turns them into text, in the questions' order. An answer to an
+    /// unknown question, or one that is not one of its choices, is answerInvalid; a required question left empty is answerRequired.
+    /// </summary>
+    private static List<OrderItemAnswer> AnswersOf(
+        IReadOnlyList<DishQuestion> questions, IReadOnlyList<AnswerInput>? inputs, string path, Errors errors)
+    {
+        var answers = new List<OrderItemAnswer>();
+        inputs ??= [];
+        for (var k = 0; k < inputs.Count; k++)
+            if (questions.All(q => q.Id != inputs[k].QuestionId) || inputs.Take(k).Any(a => a.QuestionId == inputs[k].QuestionId))
+                errors.Add($"{path}.answers[{k}]", "answerInvalid");
+
+        foreach (var question in questions)
+        {
+            var index = inputs.ToList().FindIndex(a => a.QuestionId == question.Id);
+            var input = index < 0 ? null : inputs[index];
+            var answerPath = $"{path}.answers[{(index < 0 ? inputs.Count : index)}]";
+            var text = AnswerText(question, input, answerPath, errors);
+            if (text is not null)
+                answers.Add(new OrderItemAnswer { Question = question.Text, Answer = text });
+            else if (question.IsRequired)
+                errors.Add($"{path}.answers", "answerRequired");
+        }
+        return answers;
+    }
+
+    /// <summary>The answer as shown, null when there is none.</summary>
+    private static string? AnswerText(DishQuestion question, AnswerInput? input, string path, Errors errors)
+    {
+        var value = input?.Value?.Trim();
+        if (question.Kind == QuestionKind.MultiChoice)
+        {
+            var picked = (input?.Choices ?? []).Select(c => c.Trim()).Where(c => c != "").ToList();
+            if (picked.Any(c => !question.Choices.Contains(c)) || picked.Distinct().Count() != picked.Count)
+            {
+                errors.Add(path, "answerInvalid");
+                return null;
+            }
+            // In the admin's order, whatever order they were ticked in.
+            return picked.Count == 0 ? null : string.Join(", ", question.Choices.Where(picked.Contains));
+        }
+        if (string.IsNullOrEmpty(value))
+            return null;
+
+        string? text = question.Kind switch
+        {
+            QuestionKind.Text => value.Length <= AnswerMaxLength ? value : null,
+            QuestionKind.Number => decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var number)
+                && Math.Abs(number) < 1_000_000_000
+                ? number.ToString("0.###", CultureInfo.InvariantCulture) : null,
+            QuestionKind.Date => DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
+                ? date.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) : null,
+            QuestionKind.YesNo => value switch { "yes" => "כן", "no" => "לא", _ => null },
+            QuestionKind.SingleChoice => question.Choices.Contains(value) ? value : null,
+            _ => null,
+        };
+        if (text is null)
+            errors.Add(path, question.Kind == QuestionKind.Text ? "tooLong" : "answerInvalid");
+        return text;
+    }
+
+    private static string AnswersSignature(IEnumerable<OrderItemAnswer> answers) =>
+        string.Join("|", answers.Select(a => $"{a.Question}={a.Answer}"));
 
     private static void Attach(OrderItem parent, OrderItem child, List<OrderItem> items)
     {
@@ -120,6 +200,8 @@ public static class OrderBuilder
         DishName = source.DishName,
         OptionLabel = source.OptionLabel,
         Note = source.Note,
+        // Each line needs answers of its own: they are stored with it.
+        Answers = source.Answers.Select(a => new OrderItemAnswer { Question = a.Question, Answer = a.Answer }).ToList(),
         Quantity = quantity,
         UnitPrice = source.UnitPrice,
         LineTotal = decimal.Round(source.UnitPrice * quantity, 2),

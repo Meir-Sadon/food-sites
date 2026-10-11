@@ -26,6 +26,14 @@ public static class DishRules
             .Concat(own).ToList();
     }
 
+    /// <summary>
+    /// The questions asked when ordering a dish: a variant's main dish's questions, then its own. Questions (and
+    /// MainDish.Questions) must be loaded.
+    /// </summary>
+    public static IReadOnlyList<DishQuestion> Questions(Dish dish) =>
+        (dish.MainDish?.Questions ?? []).OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)
+            .Concat(dish.Questions.OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)).ToList();
+
     /// <summary>The add-on is added or not, never in an amount: a check box under this parent, or a yes or no dish.</summary>
     public static bool IsCheckbox(DishAddOn link, Dish addOn) => link.IsCheckbox || addOn.IsYesNo;
 

@@ -19,7 +19,11 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     public const decimal MaxQuantity = 999;
 
     public record ItemDto(
-        int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, string? Note = null);
+        int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, string? Note = null,
+        IReadOnlyList<AnswerDto>? Answers = null);
+
+    /// <summary>A dish question and the client's answer, as shown.</summary>
+    public record AnswerDto(string Question, string Answer);
 
     public record OrderDto(
         int Id,
@@ -285,7 +289,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.Id, o.Phone, o.Name, o.Address, o.SupplyDate, o.FulfillmentMethod, o.Notes, o.PaymentMethod, o.IsPaid,
         o.PaidWith, o.PaymentComment, o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
         o.Items.OrderBy(i => i.Id)
-            .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.Note))
+            .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.Note,
+                (i.Answers ?? []).Select(a => new AnswerDto(a.Question, a.Answer)).ToList()))
             .ToList(),
         o.DeliveryHour,
         overbooked.Contains(o.Id),

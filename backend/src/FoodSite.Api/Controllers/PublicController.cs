@@ -56,7 +56,11 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         int? MainDishId = null,
         bool IsYesNo = false,
         IReadOnlyList<MenuAddOnDto>? AddOns = null,
-        IReadOnlyList<MenuAddOnGroupDto>? AddOnGroups = null);
+        IReadOnlyList<MenuAddOnGroupDto>? AddOnGroups = null,
+        IReadOnlyList<MenuQuestionDto>? Questions = null);
+
+    /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
+    public record MenuQuestionDto(int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired);
 
     /// <summary>
     /// How an add-on is offered under this dish (the same order as AddOnDishIds). Price, when set, is its price per unit
@@ -107,7 +111,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var visible = categories.Select(c => c.Id).ToHashSet();
 
         var dishes = await db.Dishes.AsNoTracking()
-            .Include(d => d.Options).Include(d => d.Images).Include(d => d.AddOns).ThenInclude(a => a.Group)
+            .Include(d => d.Options).Include(d => d.Images).Include(d => d.Questions).Include(d => d.AddOns).ThenInclude(a => a.Group)
             .AsSplitQuery()
             .Where(d => !d.IsHidden)
             .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Id)
@@ -143,7 +147,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 d.MainDishId, d.IsYesNo,
                 links.Select(a => new MenuAddOnDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
                 links.Where(a => a.Group is not null).Select(a => a.Group!).DistinctBy(g => g.Id)
-                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList());
+                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
+                DishRules.Questions(d)
+                    .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired)).ToList());
         }).ToList();
 
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList());
