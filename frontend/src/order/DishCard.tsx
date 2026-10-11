@@ -83,6 +83,9 @@ export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
   )
 }
 
+/** A variant with no pictures, description or allergens of its own has nothing to fill a row with. */
+const isCompact = (variant: MenuDish) => variant.images.length === 0 && !variant.description && !variant.allergenInfo
+
 /**
  * A main dish with variants: one card with the main dish's images and description, and each variant under it with its
  * own price and choices. Each variant is ordered (and listed in the order) as a dish of its own.
@@ -118,7 +121,10 @@ export function DishGroupCard({
         )}
         <ul className="dish-variants" aria-label={t('order.variantsOf', { name: dish.name })}>
           {variants.map((variant) => (
-            <li key={variant.id} className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}`}>
+            <li
+              key={variant.id}
+              className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}${isCompact(variant) && !selections[variant.id] ? ' dish-variant--compact' : ''}`}
+            >
               {/* A variant with pictures of its own shows them; without, the card's pictures (the main dish's) stay. */}
               <ImageCarousel images={variant.images} name={variant.name} />
               <DishDetails dish={variant} nameId={`${id}-${variant.id}`} variant />
