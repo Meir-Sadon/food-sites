@@ -1,6 +1,6 @@
 # The frontend behind nginx, for docker-compose.yml. Built from the repo root with --build-arg SITE=<folder under sites/>.
 
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 ARG SITE
 WORKDIR /repo/frontend
 COPY sites/ /repo/sites/
@@ -11,7 +11,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN SITE="$SITE" npm run build
 
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /repo/frontend/dist /usr/share/nginx/html
 EXPOSE 80
