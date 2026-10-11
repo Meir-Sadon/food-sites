@@ -273,6 +273,11 @@ export function DishFormPage() {
   const mainCandidates = allDishes.filter((d) => !d.isHidden && !d.isAddOnOnly && d.mainDishId === null && d.id !== dishId)
   const isVariant = form.mainDishId !== ''
   const ownPrice = !(isVariant && form.useMainDishPrice)
+  const mainDish = isVariant ? allDishes.find((d) => d.id === Number(form.mainDishId)) : undefined
+  const inheritedAddOns = (mainDish?.addOns ?? [])
+    .filter((a) => !form.addOns.some((own) => own.dishId === a.dishId))
+    .map((a) => allDishes.find((d) => d.id === a.dishId)?.name)
+    .filter((name): name is string => !!name)
   const addOnCandidates = allDishes.filter((d) => !d.isHidden && d.id !== dishId)
 
   return (
@@ -597,6 +602,9 @@ export function DishFormPage() {
           {fieldError('parentDishIds')}
         </fieldset>
 
+        {inheritedAddOns.length > 0 && (
+          <p className="hint">{t('admin.dishes.inheritedAddOns', { names: inheritedAddOns.join(', ') })}</p>
+        )}
         {advanced && !form.isAddOnOnly && (
           <AddOnsSection
             groups={form.groups}

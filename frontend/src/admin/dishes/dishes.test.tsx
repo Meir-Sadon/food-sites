@@ -372,3 +372,14 @@ describe('Dish form', () => {
     await waitFor(() => expect(within(pictures).getAllByRole('img')).toHaveLength(1))
   })
 })
+
+describe('Variant form', () => {
+  it('lists the add-ons it gets from its main dish', async () => {
+    const main = dish(1, 'כריך', 1, { addOns: [{ dishId: 3, groupId: null, price: null, maxQuantity: null, isCheckbox: true }], addOnDishIds: [3] })
+    const side = dish(3, 'סלט', 1, { isAddOnOnly: true })
+    const variant = dish(2, 'כריך שניצל', 1, { mainDishId: 1, useMainDishPrice: true, options: [] })
+    fakeApi({ ...base, 'GET /api/admin/dishes': () => [main, variant, side] })
+    renderAt('/admin/dishes/2')
+    expect(await screen.findByText(/מתקבלות ממנת האב.*סלט/)).toBeInTheDocument()
+  })
+})

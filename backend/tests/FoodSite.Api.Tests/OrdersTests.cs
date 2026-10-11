@@ -145,6 +145,42 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal(["סיגר כבד", "רוטב"], confirmation.Items.Select(i => i.DishName));
     }
 
+    [Fact]
+    public async Task Add_ons_set_on_a_main_dish_reach_every_variant_in_the_menu_and_orders()
+    {
+        var category = await (await _admin.PostAsJsonAsync("/api/admin/categories", new { name = "כריכים" })).Read<CategoryDto>();
+        DishInput Plain(string name, bool addOnOnly, int? main = null, List<int>? parents = null) => new(
+            name, category.Id, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, addOnOnly, false,
+            main is null ? [new OptionInput(null, "מנה", 1, 30, true)] : null, parents ?? [], MainDishId: main, UseMainDishPrice: main is not null);
+        var sandwich = await CreateDish(Plain("כריך", false));
+        var pickle = await CreateDish(Plain("חמוצים", true));
+        var salad = await CreateDish(Plain("סלט", true, parents: [sandwich.Id]));
+        var a = await CreateDish(Plain("כריך שניצל", false, main: sandwich.Id));
+        var b = await CreateDish(Plain("כריך סביח", false, main: sandwich.Id));
+        (await _admin.PutAsJsonAsync($"/api/admin/dishes/{sandwich.Id}", Plain("כריך", false) with
+        {
+            Options = [new OptionInput(sandwich.Options[0].Id, "מנה", 1, 30, true)],
+            AddOnGroups = [new AddOnGroupInput(null, "תוספות", 1)],
+            AddOns = [new AddOnLinkInput(pickle.Id, 0, 0, null, true), new AddOnLinkInput(salad.Id, null, null, null, false)],
+        }, TestFiles.Json)).EnsureSuccessStatusCode();
+
+        var menu = await Menu();
+        foreach (var variant in new[] { a.Id, b.Id })
+        {
+            var shown = menu.Dishes.Single(d => d.Id == variant);
+            Assert.Contains(pickle.Id, shown.AddOnDishIds);
+            Assert.Contains(salad.Id, shown.AddOnDishIds);
+            Assert.Equal("תוספות", shown.AddOnGroups!.Single().Name);
+        }
+
+        var order = await ValidOrder(o => o["items"] = new object[]
+        {
+            new { dishId = a.Id, optionId = (int?)null, quantity = 1m, addOns = new[] { new { dishId = pickle.Id, optionId = (int?)null, quantity = 1m } } },
+            new { dishId = b.Id, optionId = (int?)null, quantity = 1m, addOns = new[] { new { dishId = salad.Id, optionId = (int?)null, quantity = 1m } } },
+        });
+        Assert.Equal(HttpStatusCode.OK, (await Place(order)).StatusCode);
+    }
+
     // ---------- Placing orders ----------
 
     [Fact]
