@@ -382,4 +382,12 @@ describe('Variant form', () => {
     renderAt('/admin/dishes/2')
     expect(await screen.findByText(/מתקבלות ממנת האב.*סלט/)).toBeInTheDocument()
   })
+
+  it('lets a variant have pictures of its own', async () => {
+    const main = dish(1, 'כריך', 1)
+    const variant = dish(2, 'כריך שניצל', 1, { mainDishId: 1, useMainDishPrice: true, options: [] })
+    fakeApi({ ...base, 'GET /api/admin/dishes': () => [main, variant] })
+    renderAt('/admin/dishes/2')
+    expect(await screen.findByRole('region', { name: 'תמונות' })).toBeInTheDocument()
+  })
 })

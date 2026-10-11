@@ -638,13 +638,8 @@ export function DishFormPage() {
         )}
       </form>
 
-      {isVariant ? (
-        <p className="hint">{t('admin.dishes.variantImages')}</p>
-      ) : dish ? (
-        <DishImagesSection dish={dish} onChange={setDish} />
-      ) : (
-        <p className="hint">{t('admin.dishes.imagesAfterSave')}</p>
-      )}
+      {isVariant && <p className="hint">{t('admin.dishes.variantImages')}</p>}
+      {dish ? <DishImagesSection dish={dish} onChange={setDish} /> : <p className="hint">{t('admin.dishes.imagesAfterSave')}</p>}
     </>
   )
 }

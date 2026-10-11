@@ -516,6 +516,8 @@ describe('Grouped dishes and add-on settings', () => {
     expect(within(card).getByText('תיאור משותף')).toBeInTheDocument()
     expect(within(card).getByRole('heading', { level: 4, name: 'סיגר כבד' })).toBeInTheDocument()
     expect(screen.queryByRole('article', { name: 'סיגר כבד' })).not.toBeInTheDocument()
+    // The main dish's picture stays in the card; only the variant with pictures of its own adds one.
+    expect(within(card).getAllByRole('img').map((i) => i.getAttribute('src'))).toEqual(['https://img/cigar.jpg', 'https://img/chicken.jpg'])
 
     await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: סיגר כבד' }))
     await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: סיגר עוף' }))

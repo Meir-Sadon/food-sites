@@ -115,6 +115,8 @@ export function DishGroupCard({
         <ul className="dish-variants" aria-label={t('order.variantsOf', { name: dish.name })}>
           {variants.map((variant) => (
             <li key={variant.id} className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}`}>
+              {/* A variant with pictures of its own shows them; without, the card's pictures (the main dish's) stay. */}
+              <ImageCarousel images={variant.images} name={variant.name} />
               <DishDetails dish={variant} nameId={`${id}-${variant.id}`} variant />
               <DishChoice
                 dish={variant}
