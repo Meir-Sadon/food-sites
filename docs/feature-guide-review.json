@@ -1,8 +1,8 @@
 {
   "guide": "docs/food-sites-feature-guide.html",
-  "reviewed_commit": "8200f094d9598bcd5ea0f73af502becc88a0eaea",
-  "reviewed_at": "2026-10-08T09:00:00+03:00",
+  "reviewed_commit": "ed62b98843fedb0e78cafaacb6cadd26ccfc57ba",
+  "reviewed_at": "2026-10-11T11:25:00+03:00",
   "review_interval_days": 3,
   "screenshots_captured_on": "2026-10-08",
-  "note": "Imported Hebrew-first bilingual guide. Public copy omits captures with contact, order or payment details. Changes after reviewed_commit still need review."
+  "note": "Reviewed #40-#53 against the guide on 11 Oct 2026: added dish order and image dragging (#47), the daily portions limit (#41), two admins (#48), the usage report (#50) and the change log (#48); #49, #51 and #53 were already covered. Most screenshots date from 8 Oct 2026; the admin captures in sections 05, 07, 41 and 42 were taken on 11 Oct 2026 from a local run with synthetic demo data. Public copy omits captures with contact, order or payment details."
 }
