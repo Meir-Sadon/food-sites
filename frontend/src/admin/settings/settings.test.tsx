@@ -28,7 +28,7 @@ describe('Site style', () => {
       'GET /api/admin/settings': () => saved,
       'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
     })
-    renderAt('/admin/settings')
+    renderAt('/admin/appearance')
     const user = userEvent.setup()
     const form = await section('סגנון האתר')
 
@@ -226,7 +226,7 @@ describe('General settings', () => {
       ...base,
       'PUT /api/admin/settings/background': () => settings({ backgroundImageUrl: 'https://img.test/bg.jpg' }),
     })
-    renderAt('/admin/settings')
+    renderAt('/admin/appearance')
     const background = await section('תמונת רקע ראשית')
 
     const file = new File(['x'], 'bg.jpg', { type: 'image/jpeg' })
@@ -240,7 +240,7 @@ describe('General settings', () => {
 
   it('refuses pictures over 5 MB before uploading', async () => {
     const api = fakeApi(base)
-    renderAt('/admin/settings')
+    renderAt('/admin/appearance')
     const background = await section('תמונת רקע ראשית')
 
     const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'big.jpg', { type: 'image/jpeg' })
@@ -252,7 +252,7 @@ describe('General settings', () => {
 
   it('explains when picture uploads are not configured', async () => {
     fakeApi({ ...base, 'PUT /api/admin/settings/background': () => ({ status: 503, body: { code: 'imageStoreUnavailable' } }) })
-    renderAt('/admin/settings')
+    renderAt('/admin/appearance')
     const background = await section('תמונת רקע ראשית')
 
     await userEvent.setup().upload(within(background).getByLabelText('בחירת תמונה'), new File(['x'], 'a.png', { type: 'image/png' }))

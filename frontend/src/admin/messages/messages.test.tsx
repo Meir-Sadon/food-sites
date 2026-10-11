@@ -172,11 +172,12 @@ describe('Admin reviews', () => {
     expect(await screen.findByText('אין חוות דעת להצגה.')).toBeInTheDocument()
   })
 
-  it('links the new tabs from the admin bar', async () => {
+  it('lists reviews with the client site display and messages with the site settings', async () => {
     fakeApi({ ...adminSession, 'GET /api/admin/reviews.*': () => [] })
     renderAt('/admin/reviews')
-    const nav = await screen.findByRole('navigation', { name: 'תפריט ניהול' })
-    expect(within(nav).getByRole('link', { name: 'הודעות וואטסאפ' })).toHaveAttribute('href', '/admin/messages')
-    expect(within(nav).getByRole('link', { name: 'חוות דעת' })).toHaveAttribute('href', '/admin/reviews')
+    const display = await screen.findByRole('navigation', { name: 'תצוגה באתר לקוח' })
+    expect(within(display).getByRole('link', { name: 'חוות דעת' })).toHaveAttribute('href', '/admin/reviews')
+    const nav = screen.getByRole('navigation', { name: 'תפריט ניהול' })
+    expect(within(nav).getByRole('link', { name: 'הגדרות אתר' })).toHaveAttribute('href', '/admin/settings')
   })
 })
