@@ -144,7 +144,7 @@ export const groupedMenu = (): Menu => ({
   dishes: [
     menuDish(1, 'סיגרים עבודת יד', 1, { description: 'תיאור משותף', images: ['https://img/cigar.jpg'] }),
     menuDish(2, 'סיגר כבד', 1, { mainDishId: 1, options: [{ id: 21, label: 'מארז', amount: 1, price: 60, isDefault: true }] }),
-    menuDish(3, 'סיגר עוף', 1, { mainDishId: 1, options: [{ id: 31, label: 'מארז', amount: 1, price: 70, isDefault: true }] }),
+    menuDish(3, 'סיגר עוף', 1, { mainDishId: 1, images: ['https://img/chicken.jpg'], options: [{ id: 31, label: 'מארז', amount: 1, price: 70, isDefault: true }] }),
     menuDish(4, 'כריך', 1, {
       addOnDishIds: [5, 6, 7],
       addOnGroups: [{ id: 1, name: 'סלטים', maxUnits: 1 }],
