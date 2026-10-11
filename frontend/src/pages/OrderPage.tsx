@@ -32,6 +32,7 @@ import {
   standaloneDishes,
   variantsOf,
   toLines,
+  unansweredDishes,
   type OrderState,
   type Restored,
   type Selection,
@@ -279,6 +280,11 @@ export function OrderPage() {
     if (hours.length > 0 && !deliveryHour) {
       setErrors({ deliveryhour: ['required'] })
       setSubmitError(t('errors.checkFields'))
+      return
+    }
+    const unanswered = unansweredDishes(state.selections, dishes)
+    if (unanswered.length > 0) {
+      setSubmitError(t('order.answerRequiredFor', { name: unanswered.map((d) => d.name).join(', ') }))
       return
     }
 

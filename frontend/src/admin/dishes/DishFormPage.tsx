@@ -20,6 +20,8 @@ import { useToast } from '../../components/toast'
 import { useFeature } from '../../site/useSite'
 import { AddOnsSection } from './AddOnsSection'
 import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
+import { QuestionsSection } from './QuestionsSection'
+import { questionsForm, questionsInput, type QuestionForm } from './questionForm'
 
 interface OptionForm {
   key: number
@@ -55,6 +57,7 @@ interface DishForm {
   isYesNo: boolean
   groups: GroupForm[]
   addOns: AddOnForm[]
+  questions: QuestionForm[]
 }
 
 let nextKey = 1
@@ -71,6 +74,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       isYesNo: false,
       groups: [],
       addOns: [],
+      questions: [],
       name: '',
       categoryId: String(categories[0]?.id ?? ''),
       description: '',
@@ -112,6 +116,23 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       : [emptyOption(true)],
     parentDishIds: dish.parentDishIds,
     ...addOnsForm(dish),
+    questions: questionsForm(dish.questions),
+  }
+}
+
+/**
+ * A new dish with every detail of another, ready to change and save. Nothing keeps an id, so saving creates its own
+ * options, add-on groups and questions; its name says it is a copy.
+ */
+function copyForm(source: Dish, categories: Category[], name: string): DishForm {
+  const form = toForm(source, categories)
+  const groups = form.groups.map((g) => ({ ...g, id: null }))
+  return {
+    ...form,
+    name,
+    options: form.options.map((o) => ({ ...o, id: null })),
+    groups,
+    questions: questionsForm(source.questions, true),
   }
 }
 
@@ -175,6 +196,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
       ? form.options.map((o) => ({ id: o.id, label: o.label, amount: num(o.amount) ?? 0, price: num(o.price) ?? 0, isDefault: o.isDefault }))
       : [],
     parentDishIds: form.parentDishIds,
+    questions: questionsInput(form.questions),
   }
 }
 
@@ -188,12 +210,15 @@ export function DishFormPage() {
   const advanced = useFeature('advancedDishes')
   const [search] = useSearchParams()
   const mainParam = search.get('main')
+  const copyParam = dishId === null ? search.get('copy') : null
 
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [allDishes, setAllDishes] = useState<Dish[] | null>(null)
   const [dish, setDish] = useState<Dish | null>(null)
   const [form, setForm] = useState<DishForm | null>(null)
   const [failed, setFailed] = useState(false)
+  /** The dish this new one copies, when it is a copy. */
+  const [source, setSource] = useState<Dish | null>(null)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -209,10 +234,13 @@ export function DishFormPage() {
         setAllDishes(all)
         setDish(current)
         const main = current === null && mainParam ? (all.find((d) => d.id === Number(mainParam)) ?? null) : null
-        setForm(toForm(current, c, main))
+        const copied = copyParam ? (all.find((d) => d.id === Number(copyParam) && !d.isHidden) ?? null) : null
+        if (copyParam && !copied) throw new Error('not found')
+        setSource(copied)
+        setForm(copied ? copyForm(copied, c, t('admin.dishes.copyName', { name: copied.name })) : toForm(current, c, main))
       })
       .catch(() => setFailed(true))
-  }, [dishId, mainParam])
+  }, [dishId, mainParam, copyParam, t])
 
   if (!categories || !allDishes || !form) return <Loading failed={failed} />
 
@@ -245,9 +273,10 @@ export function DishFormPage() {
     setErrors({})
     setError(null)
     try {
-      const input = toInput(form, advanced)
+      // A copy takes every detail of its dish, even ones the form shows only with advanced dishes on.
+      const input = toInput(form, advanced || source !== null)
       if (dishId === null) {
-        const created = await dishesApi.create(input)
+        const created = await dishesApi.create(source ? { ...input, copyImagesFrom: source.id } : input)
         toast(t('admin.dishes.createdSaved'))
         navigate(`/admin/dishes/${created.id}`, { replace: true })
         return
@@ -282,13 +311,28 @@ export function DishFormPage() {
     .map((a) => allDishes.find((d) => d.id === a.dishId)?.name)
     .filter((name): name is string => !!name)
   const addOnCandidates = allDishes.filter((d) => !d.isHidden && d.id !== dishId)
+  const inheritedQuestions = (mainDish?.questions ?? []).map((q) => q.text)
 
   return (
     <>
       <p>
         <Link to="/admin/dishes">{t('admin.dishes.back')}</Link>
       </p>
-      <h1>{dishId === null ? t('admin.dishes.new') : `${t('admin.dishes.editTitle')}: ${dish?.name}`}</h1>
+      <h1>
+        {source
+          ? t('admin.dishes.copyTitle', { name: source.name })
+          : dishId === null
+            ? t('admin.dishes.new')
+            : `${t('admin.dishes.editTitle')}: ${dish?.name}`}
+      </h1>
+      {source && <p className="hint">{t('admin.dishes.copyHint', { name: source.name })}</p>}
+      {dish && !dish.isHidden && (
+        <p>
+          <Link className="button-quiet" to={`/admin/dishes/new?copy=${dish.id}`}>
+            {t('admin.dishes.copy')}
+          </Link>
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="stack dish-form" noValidate>
         <span className="field">
@@ -620,6 +664,7 @@ export function DishFormPage() {
             onChange={(patch) => set(patch)}
           />
         )}
+        <QuestionsSection questions={form.questions} inherited={inheritedQuestions} errors={errors} onChange={(questions) => set({ questions })} />
 
         <div className="row form-actions">
           <button type="submit" disabled={saving}>
@@ -644,7 +689,11 @@ export function DishFormPage() {
       </form>
 
       {isVariant && <p className="hint">{t('admin.dishes.variantImages')}</p>}
-      {dish ? <DishImagesSection dish={dish} onChange={setDish} /> : <p className="hint">{t('admin.dishes.imagesAfterSave')}</p>}
+      {dish ? (
+        <DishImagesSection dish={dish} onChange={setDish} />
+      ) : source && source.images.length > 0 ? null : (
+        <p className="hint">{t('admin.dishes.imagesAfterSave')}</p>
+      )}
     </>
   )
 }

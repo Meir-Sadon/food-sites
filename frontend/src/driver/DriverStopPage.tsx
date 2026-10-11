@@ -21,6 +21,7 @@ import { useToast } from '../components/toast'
 import { formatMoney } from '../order/format'
 import { StopState, StopTimes } from './DriverPage'
 import { toCollect, useDriver } from './stops'
+import { ItemAnswers } from '../components/ItemAnswers'
 
 /** "Not collected" in the payment choice. */
 const NONE = 'None'
@@ -110,6 +111,7 @@ export function DriverStopPage() {
               {formatNumber(item.quantity)} × {item.dishName}
               {item.optionLabel ? ` (${item.optionLabel})` : ''}
               {item.note ? ` · ${item.note}` : ''}
+              <ItemAnswers answers={item.answers} />
             </li>
           ))}
         </ul>

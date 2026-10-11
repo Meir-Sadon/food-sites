@@ -16,6 +16,12 @@ export interface PaidInput {
   paymentComment?: string
 }
 
+/** A dish question and the client's answer, as shown. */
+export interface ItemAnswer {
+  question: string
+  answer: string
+}
+
 export interface AdminOrderItem {
   id: number
   parentItemId: number | null
@@ -23,6 +29,8 @@ export interface AdminOrderItem {
   optionLabel: string | null
   /** The client's name or remark for this dish. */
   note?: string | null
+  /** The client's answers to the dish's questions, as shown. */
+  answers?: ItemAnswer[] | null
   quantity: number
   unitPrice: number
   lineTotal: number
