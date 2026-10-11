@@ -11,11 +11,13 @@ import {
   addOnUnitPrice,
   checkedAddOn,
   defaultOption,
+  fitAddOns,
   fixedOption,
   groupUnits,
   groupUsed,
   isCheckbox,
   limitedRange,
+  limitFactor,
   lineTotal,
   newSelection,
   remainingOn,
@@ -211,7 +213,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                 {...range}
                 max={Math.max(range.max, range.min)}
                 unit={unitLabel(dish, t)}
-                onChange={(quantity) => onChange({ ...selection, quantity })}
+                onChange={(quantity) => onChange(fitAddOns(dish, { ...selection, quantity }, dishes))}
               />
             )}
             <strong className="numeric">{formatMoney(lineTotal(dish, selection.optionId, selection.quantity))}</strong>
@@ -226,7 +228,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
           </div>
 
           {addOns.length > 0 && (
-            <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={selection.addOns} onChange={setAddOn} />
+            <AddOnGroups parent={dish} factor={limitFactor(dish, selection.quantity)} offers={addOns} dishes={dishes} date={date} selections={selection.addOns} onChange={setAddOn} />
           )}
         </div>
       )}
@@ -274,6 +276,7 @@ function OptionCards({
 /** The add-ons under a dish: each named group under its own heading with its limit, then the ones in no group. */
 function AddOnGroups({
   parent,
+  factor,
   offers,
   dishes,
   date,
@@ -281,6 +284,8 @@ function AddOnGroups({
   onChange,
 }: {
   parent: MenuDish
+  /** Ordered units of the parent: the add-on limits are per unit. */
+  factor: number
   offers: AddOnOffer[]
   dishes: Map<number, MenuDish>
   date: string | undefined
@@ -298,12 +303,12 @@ function AddOnGroups({
       {groups.map(({ group, offers: inGroup }) => {
         // Room left in the group for an add-on: its limit less what the other add-ons in it already take.
         const room = (addOnId: number) =>
-          group?.maxUnits == null ? Infinity : group.maxUnits - groupUsed(parent, selections, group.id, dishes, addOnId)
+          group?.maxUnits == null ? Infinity : group.maxUnits * factor - groupUsed(parent, selections, group.id, dishes, addOnId)
         return (
           <fieldset key={group?.id ?? 'other'} className="addons">
             <legend>
               {group ? group.name : t('order.addOns')}
-              {group?.maxUnits != null && <span className="muted"> · {t('order.groupLimit', { max: group.maxUnits })}</span>}
+              {group?.maxUnits != null && <span className="muted"> · {t('order.groupLimit', { max: group.maxUnits * factor })}</span>}
             </legend>
             {inGroup.map(({ dish: addOn, link }) => (
               <AddOnRow
@@ -313,6 +318,7 @@ function AddOnGroups({
                 parent={parent}
                 date={date}
                 room={room(addOn.id)}
+                factor={factor}
                 selection={selections[addOn.id]}
                 onChange={(next) => onChange(addOn, next)}
               />
@@ -330,11 +336,13 @@ function AddOnRow({
   parent,
   date,
   room,
+  factor,
   selection,
   onChange,
 }: {
   addOn: MenuDish
   link: MenuAddOn
+  factor: number
   parent: MenuDish
   date: string | undefined
   /** How many group units this add-on can still take. */
@@ -344,7 +352,7 @@ function AddOnRow({
 }) {
   const { t } = useTranslation()
   const remaining = remainingOn(addOn, date)
-  const range = addOnRange(link, addOn, remaining)
+  const range = addOnRange(link, addOn, remaining, factor)
   const none = range.max < range.min
   const fixed = fixedOption(link, addOn)
   const optionId = (!fixed && selection?.optionId) || (addOn.choiceMode === 'Fixed' ? (defaultOption(addOn)?.id ?? null) : null)

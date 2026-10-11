@@ -23,7 +23,7 @@ public class DishAddOn
     /// </summary>
     public decimal? Price { get; set; }
 
-    /// <summary>The most of the add-on the client can add under one ordered parent line; null for the add-on's own range.</summary>
+    /// <summary>The most of the add-on the client can add per ordered unit of the parent (2 parents with 2 allow 4); null for the add-on's own range.</summary>
     public decimal? MaxQuantity { get; set; }
 
     /// <summary>Under this parent the add-on is a check box: added or not, never in an amount.</summary>

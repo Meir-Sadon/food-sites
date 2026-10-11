@@ -35,4 +35,10 @@ public static class DishRules
     /// </summary>
     public static decimal GroupUnits(DishAddOn link, Dish addOn, decimal quantity) =>
         IsCheckbox(link, addOn) || Pricing(addOn).SellBy == SellBy.Weight ? 1 : quantity;
+
+    /// <summary>
+    /// Add-on limits (per add-on and per group) are per unit of the ordered dish: 2 couscous with a limit of 2 allow 4.
+    /// A dish sold by weight counts once.
+    /// </summary>
+    public static decimal LimitFactor(Dish dish, decimal quantity) => Pricing(dish).SellBy == SellBy.Units ? quantity : 1;
 }

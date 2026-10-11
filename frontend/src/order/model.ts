@@ -130,10 +130,13 @@ export const addOnLineTotal = (parent: MenuDish, addOn: MenuDish, selection: Add
   round2(addOnUnitPrice(addOnLink(parent, addOn.id), addOn, selection.optionId) * selection.quantity)
 
 /** The add-on's amount range under the dish: what is left on the date, and the dish's own cap on it. */
-export function addOnRange(link: MenuAddOn, addOn: MenuDish, remaining: number | null) {
+export function addOnRange(link: MenuAddOn, addOn: MenuDish, remaining: number | null, factor = 1) {
   const range = limitedRange(addOn, remaining)
-  return link.maxQuantity === null ? range : { ...range, max: Math.min(range.max, link.maxQuantity) }
+  return link.maxQuantity === null ? range : { ...range, max: Math.min(range.max, link.maxQuantity * factor) }
 }
+
+/** Add-on limits are per ordered unit of the dish (2 couscous with a limit of 2 allow 4); a weight counts once. */
+export const limitFactor = (parent: MenuDish, quantity: number) => (parent.sellBy === 'Units' ? quantity : 1)
 
 /** What an add-on line takes from its group's limit: an amount of units counts as many, a check box or a weight one. */
 export const groupUnits = (link: MenuAddOn, addOn: MenuDish, quantity: number) =>
@@ -150,6 +153,22 @@ export function groupUsed(
     if (addOn && link.groupId === groupId && Number(id) !== except) used += groupUnits(link, addOn, selection.quantity)
   }
   return used
+}
+
+/** After the parent's amount drops, brings its add-ons down to the per-unit limits: over-limit amounts are cut, then later add-ons of a full group dropped. */
+export function fitAddOns(parent: MenuDish, selection: Selection, dishes: Map<number, MenuDish>): Selection {
+  const factor = limitFactor(parent, selection.quantity)
+  const addOns: Record<number, AddOnSelection> = {}
+  for (const [id, addOn] of Object.entries(selection.addOns)) {
+    const dish = dishes.get(Number(id))
+    const link = addOnLink(parent, Number(id))
+    if (!dish) continue
+    const quantity = link.maxQuantity === null ? addOn.quantity : Math.min(addOn.quantity, link.maxQuantity * factor)
+    const group = link.groupId === null ? undefined : parent.addOnGroups?.find((g) => g.id === link.groupId)
+    if (group?.maxUnits != null && groupUsed(parent, addOns, group.id, dishes) + groupUnits(link, dish, quantity) > group.maxUnits * factor) continue
+    addOns[Number(id)] = { ...addOn, quantity }
+  }
+  return { ...selection, addOns }
 }
 
 export function orderTotal(selections: Record<number, Selection>, dishes: Map<number, MenuDish>): number {
@@ -248,10 +267,10 @@ export function restoreSelections(saved: Record<number, Selection>, menu: Menu):
   const dishes = dishMap(menu)
   const orderable = (dish?: MenuDish) => !!dish && !dish.isSoldOut
 
-  function fit(dish: MenuDish, optionId: number | null, quantity: number, link?: MenuAddOn) {
+  function fit(dish: MenuDish, optionId: number | null, quantity: number, link?: MenuAddOn, factor = 1) {
     if (dish.isYesNo || (link && isCheckbox(link, dish))) return checkedAddOn(dish)
     const { min, max: ownMax, step } = amountRange(dish)
-    const max = link?.maxQuantity != null ? Math.max(min, Math.min(ownMax, link.maxQuantity)) : ownMax
+    const max = link?.maxQuantity != null ? Math.max(min, Math.min(ownMax, link.maxQuantity * factor)) : ownMax
     let q = Math.min(Math.max(quantity, min), max)
     q = round2(min + Math.round((q - min) / step) * step)
     const keep = !link || link.price === null
@@ -276,10 +295,11 @@ export function restoreSelections(saved: Record<number, Selection>, menu: Menu):
         continue
       }
       const link = addOnLink(dish, addOnDish.id)
-      const fitted = fit(addOnDish, addOn.optionId, addOn.quantity, link)
+      const factor = limitFactor(dish, selection.quantity)
+      const fitted = fit(addOnDish, addOn.optionId, addOn.quantity, link, factor)
       // An add-on that no longer fits in its group's limit is left out.
       const group = link.groupId === null ? undefined : dish.addOnGroups?.find((g) => g.id === link.groupId)
-      if (group?.maxUnits != null && groupUsed(dish, addOns, group.id, dishes) + groupUnits(link, addOnDish, fitted.quantity) > group.maxUnits) {
+      if (group?.maxUnits != null && groupUsed(dish, addOns, group.id, dishes) + groupUnits(link, addOnDish, fitted.quantity) > group.maxUnits * factor) {
         skipped++
         continue
       }

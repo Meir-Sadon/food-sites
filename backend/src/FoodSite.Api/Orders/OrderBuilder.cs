@@ -52,6 +52,7 @@ public static class OrderBuilder
             items.Add(item);
 
             var links = DishRules.AddOnLinks(dish);
+            var factor = DishRules.LimitFactor(dish, item.Quantity);
             var seen = new HashSet<int>();
             var groupUnits = new Dictionary<int, decimal>();
             var addOns = line.AddOns ?? [];
@@ -71,7 +72,7 @@ public static class OrderBuilder
                     DishRules.IsCheckbox(link, addOnDish), link.Price);
                 if (child is null)
                     continue;
-                if (link.MaxQuantity is { } max && child.Quantity > max)
+                if (link.MaxQuantity is { } max && child.Quantity > max * factor)
                 {
                     errors.Add($"{addOnPath}.quantity", "addOnLimit");
                     continue;
@@ -86,7 +87,7 @@ public static class OrderBuilder
             foreach (var (groupId, units) in groupUnits)
             {
                 var group = links.First(a => a.GroupId == groupId).Group;
-                if (group?.MaxUnits is { } limit && units > limit)
+                if (group?.MaxUnits is { } limit && units > limit * factor)
                     errors.Add($"{path}.addOns", "addOnGroupLimit");
             }
         }

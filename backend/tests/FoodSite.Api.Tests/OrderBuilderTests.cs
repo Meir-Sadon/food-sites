@@ -188,6 +188,24 @@ public class OrderBuilderTests
     }
 
     [Fact]
+    public void Add_on_and_group_limits_grow_with_the_ordered_quantity()
+    {
+        var couscous = Fixed(1, "קוסקוס", (10, "מנה", 50, true));
+        var chicken = Fixed(2, "עוף", (20, "יחידה", 12, true));
+        var group = new AddOnGroup { Id = 5, DishId = 1, Name = "תוספות", MaxUnits = 2 };
+        Link(couscous, chicken, price: 8, max: 2, group: group);
+        var menu = Menu(couscous, chicken);
+
+        var (_, four) = Build(menu, new OrderLineInput(1, null, 2, [new AddOnInput(2, null, 4)]));
+        var (_, five) = Build(menu, new OrderLineInput(1, null, 2, [new AddOnInput(2, null, 5)]));
+        var (_, perPortion) = Build(menu, new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 3)]));
+
+        Assert.False(four.Any);
+        Assert.True(Has(five, "items[0].addOns[0].quantity", "addOnLimit"));
+        Assert.True(Has(perPortion, "items[0].addOns[0].quantity", "addOnLimit"));
+    }
+
+    [Fact]
     public void Add_on_price_can_be_zero()
     {
         var sandwich = Fixed(1, "כריך", (10, "כריך", 30, true));
@@ -205,7 +223,7 @@ public class OrderBuilderTests
         var couscous = Fixed(1, "קוסקוס", (10, "מנה", 50, true));
         var chicken = Fixed(2, "עוף", (20, "יחידה", 12, true));
         Link(couscous, chicken, price: 8, max: 2);
-        var (_, errors) = Build(Menu(couscous, chicken), new OrderLineInput(1, null, 3, [new AddOnInput(2, null, 3)]));
+        var (_, errors) = Build(Menu(couscous, chicken), new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 3)]));
 
         Assert.True(Has(errors, "items[0].addOns[0].quantity", "addOnLimit"));
     }
