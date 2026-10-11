@@ -113,6 +113,32 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Each_unit_of_a_dish_can_be_ordered_with_its_own_add_ons()
+    {
+        var order = await ValidOrder(o => o["items"] = new object[]
+        {
+            new
+            {
+                dishId = _chicken, optionId = (int?)null, quantity = 2m, addOns = Array.Empty<object>(),
+                addOnUnits = new object[]
+                {
+                    new { addOns = new[] { new { dishId = _thigh, optionId = (int?)null, quantity = 1m } } },
+                    new { addOns = Array.Empty<object>() },
+                },
+            },
+        });
+
+        var response = await Place(order);
+
+        Assert.True(response.StatusCode == HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var wrong = await ValidOrder(o => o["items"] = new object[]
+        {
+            new { dishId = _chicken, optionId = (int?)null, quantity = 2m, addOns = Array.Empty<object>(), addOnUnits = new object[] { new { addOns = Array.Empty<object>() } } },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, (await Place(wrong)).StatusCode);
+    }
+
+    [Fact]
     public async Task Variant_with_grouped_add_ons_is_ordered_as_its_own_line_at_the_add_on_prices()
     {
         var category = await (await _admin.PostAsJsonAsync("/api/admin/categories", new { name = "סיגרים" })).Read<CategoryDto>();

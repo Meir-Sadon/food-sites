@@ -85,6 +85,7 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
               {item.parentItemId !== null && <span aria-hidden="true">+ </span>}
               {formatNumber(item.quantity)} × {item.dishName}
               {item.optionLabel ? ` (${item.optionLabel})` : ''}
+              {item.note ? ` · ${item.note}` : ''}
             </span>
             <span className="numeric">{formatMoney(item.lineTotal)}</span>
           </li>

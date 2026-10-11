@@ -22,6 +22,9 @@ public class OrderItem
     public required string DishName { get; set; }
     public string? OptionLabel { get; set; }
 
+    /// <summary>The client's name or remark for this line (e.g. who the dish is for); set on dish lines, not add-ons.</summary>
+    public string? Note { get; set; }
+
     /// <summary>Unit count, or weight in kilos for free-choice weight dishes.</summary>
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }

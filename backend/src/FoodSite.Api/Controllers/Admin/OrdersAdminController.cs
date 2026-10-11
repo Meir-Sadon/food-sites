@@ -19,7 +19,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     public const decimal MaxQuantity = 999;
 
     public record ItemDto(
-        int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal);
+        int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, string? Note = null);
 
     public record OrderDto(
         int Id,
@@ -285,7 +285,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.Id, o.Phone, o.Name, o.Address, o.SupplyDate, o.FulfillmentMethod, o.Notes, o.PaymentMethod, o.IsPaid,
         o.PaidWith, o.PaymentComment, o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
         o.Items.OrderBy(i => i.Id)
-            .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal))
+            .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.Note))
             .ToList(),
         o.DeliveryHour,
         overbooked.Contains(o.Id),

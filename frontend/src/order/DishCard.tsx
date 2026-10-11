@@ -17,13 +17,17 @@ import {
   groupUsed,
   isCheckbox,
   limitedRange,
-  limitFactor,
   lineTotal,
   newSelection,
   remainingOn,
   type AddOnOffer,
   type AddOnSelection,
   type Selection,
+  unitNote,
+  unitsOf,
+  withNote,
+  withUnit,
+  NOTE_MAX_LENGTH,
 } from './model'
 
 interface Props {
@@ -79,6 +83,9 @@ export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
   )
 }
 
+/** A variant with no pictures, description or allergens of its own has nothing to fill a row with. */
+const isCompact = (variant: MenuDish) => variant.images.length === 0 && !variant.description && !variant.allergenInfo
+
 /**
  * A main dish with variants: one card with the main dish's images and description, and each variant under it with its
  * own price and choices. Each variant is ordered (and listed in the order) as a dish of its own.
@@ -114,7 +121,10 @@ export function DishGroupCard({
         )}
         <ul className="dish-variants" aria-label={t('order.variantsOf', { name: dish.name })}>
           {variants.map((variant) => (
-            <li key={variant.id} className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}`}>
+            <li
+              key={variant.id}
+              className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}${isCompact(variant) && !selections[variant.id] ? ' dish-variant--compact' : ''}`}
+            >
               {/* A variant with pictures of its own shows them; without, the card's pictures (the main dish's) stay. */}
               <ImageCarousel images={variant.images} name={variant.name} />
               <DishDetails dish={variant} nameId={`${id}-${variant.id}`} variant />
@@ -142,14 +152,16 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
   const none = range.max < range.min
   const addOns = addOnsOf(dish, dishes)
   const yesNo = !!dish.isYesNo
+  const units = selection ? unitsOf(dish, selection) : []
   const options = dish.choiceMode === 'Fixed' && dish.options.length > 1 && !yesNo
 
-  function setAddOn(addOn: MenuDish, next: AddOnSelection | undefined) {
+  /** Changes one add-on of one ordered unit. */
+  function setAddOn(unit: number, addOn: MenuDish, next: AddOnSelection | undefined) {
     if (!selection) return
-    const addOnSelections = { ...selection.addOns }
+    const addOnSelections = { ...unitsOf(dish, selection)[unit] }
     if (next && next.quantity > 0) addOnSelections[addOn.id] = next
     else delete addOnSelections[addOn.id]
-    onChange({ ...selection, addOns: addOnSelections })
+    onChange(withUnit(selection, unit, addOnSelections))
   }
 
   return (
@@ -229,12 +241,60 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
             </button>
           </div>
 
-          {addOns.length > 0 && (
-            <AddOnGroups parent={dish} factor={limitFactor(dish, selection.quantity)} offers={addOns} dishes={dishes} date={date} selections={selection.addOns} onChange={setAddOn} />
+          {units.length > 1 ? (
+            units.map((unit, i) => (
+              <div key={i} className="addon-unit" role="group" aria-label={t('order.unitN', { n: i + 1, name: dish.name })}>
+                <h4 className="addon-unit__title">{t('order.unitN', { n: i + 1, name: dish.name })}</h4>
+                <NoteField label={t('order.unitNote', { n: i + 1 })} value={unitNote(selection, i)} onChange={(note) => onChange(withNote(selection, i, note))} />
+                {addOns.length > 0 && (
+                  <>
+                    <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={unit} onChange={(a, next) => setAddOn(i, a, next)} />
+                    <select
+                      aria-label={t('order.copyAddOnsTo', { n: i + 1 })}
+                      value=""
+                      onChange={(e) => e.target.value !== '' && onChange(withUnit(selection, i, { ...units[Number(e.target.value)] }))}
+                    >
+                      <option value="">{t('order.copyAddOnsFrom')}</option>
+                      {units.map((_, k) =>
+                        k === i ? null : (
+                          <option key={k} value={k}>
+                            {t('order.unitOption', { n: k + 1 })}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </>
+                )}
+              </div>
+            ))
+          ) : (
+            <>
+              {addOns.length > 0 && (
+                <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={units[0]} onChange={(a, next) => setAddOn(0, a, next)} />
+              )}
+              {!yesNo && (
+                <NoteField label={t('order.noteFor', { name: dish.name })} value={unitNote(selection, 0)} onChange={(note) => onChange(withNote(selection, 0, note))} />
+              )}
+            </>
           )}
         </div>
       )}
     </>
+  )
+}
+
+/** A name or remark the client writes on one ordered dish (who it is for, how they want it). */
+function NoteField({ label, value, onChange }: { label: string; value: string; onChange: (note: string) => void }) {
+  return (
+    <input
+      type="text"
+      className="dish-note"
+      aria-label={label}
+      placeholder={label}
+      maxLength={NOTE_MAX_LENGTH}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   )
 }
 
@@ -278,7 +338,6 @@ function OptionCards({
 /** The add-ons under a dish: each named group under its own heading with its limit, then the ones in no group. */
 function AddOnGroups({
   parent,
-  factor,
   offers,
   dishes,
   date,
@@ -286,8 +345,6 @@ function AddOnGroups({
   onChange,
 }: {
   parent: MenuDish
-  /** Ordered units of the parent: the add-on limits are per unit. */
-  factor: number
   offers: AddOnOffer[]
   dishes: Map<number, MenuDish>
   date: string | undefined
@@ -305,12 +362,12 @@ function AddOnGroups({
       {groups.map(({ group, offers: inGroup }) => {
         // Room left in the group for an add-on: its limit less what the other add-ons in it already take.
         const room = (addOnId: number) =>
-          group?.maxUnits == null ? Infinity : group.maxUnits * factor - groupUsed(parent, selections, group.id, dishes, addOnId)
+          group?.maxUnits == null ? Infinity : group.maxUnits - groupUsed(parent, selections, group.id, dishes, addOnId)
         return (
           <fieldset key={group?.id ?? 'other'} className="addons">
             <legend>
               {group ? group.name : t('order.addOns')}
-              {group?.maxUnits != null && <span className="muted"> · {t('order.groupLimit', { max: group.maxUnits * factor })}</span>}
+              {group?.maxUnits != null && <span className="muted"> · {t('order.groupLimit', { max: group.maxUnits })}</span>}
             </legend>
             {inGroup.map(({ dish: addOn, link }) => (
               <AddOnRow
@@ -320,7 +377,6 @@ function AddOnGroups({
                 parent={parent}
                 date={date}
                 room={room(addOn.id)}
-                factor={factor}
                 selection={selections[addOn.id]}
                 onChange={(next) => onChange(addOn, next)}
               />
@@ -338,13 +394,11 @@ function AddOnRow({
   parent,
   date,
   room,
-  factor,
   selection,
   onChange,
 }: {
   addOn: MenuDish
   link: MenuAddOn
-  factor: number
   parent: MenuDish
   date: string | undefined
   /** How many group units this add-on can still take. */
@@ -354,7 +408,7 @@ function AddOnRow({
 }) {
   const { t } = useTranslation()
   const remaining = remainingOn(addOn, date)
-  const range = addOnRange(link, addOn, remaining, factor)
+  const range = addOnRange(link, addOn, remaining)
   const none = range.max < range.min
   const fixed = fixedOption(link, addOn)
   const optionId = (!fixed && selection?.optionId) || (addOn.choiceMode === 'Fixed' ? (defaultOption(addOn)?.id ?? null) : null)

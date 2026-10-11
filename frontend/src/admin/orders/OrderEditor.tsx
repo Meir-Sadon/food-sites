@@ -127,6 +127,7 @@ export function OrderEditor({
                 {item.parentItemId !== null && <span aria-hidden="true">+</span>}
                 {item.dishName}
                 {item.optionLabel && <span className="muted">({item.optionLabel})</span>}
+                {item.note && <span className="muted">· {item.note}</span>}
               </span>
               <input
                 aria-label={t('admin.orders.quantityOf', { name: item.dishName })}

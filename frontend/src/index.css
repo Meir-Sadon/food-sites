@@ -1002,7 +1002,8 @@ label {
 }
 
 .dish-variants {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin: 0;
   padding: 0;
@@ -1010,12 +1011,19 @@ label {
 }
 
 .dish-variant {
+  flex: 1 1 100%;
   display: grid;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+}
+
+/* A variant with nothing but its name, price and an add button sits beside the others to save room; picking it opens it to a full row. */
+.dish-variant--compact {
+  flex: 1 1 12rem;
+  align-content: start;
 }
 
 /* A variant's own pictures are a small thumbnail beside its details, much smaller than the card's. */
