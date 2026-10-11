@@ -1018,6 +1018,15 @@ label {
   border-radius: var(--radius);
 }
 
+/* A variant's own pictures are a small thumbnail beside its details, much smaller than the card's. */
+.dish-variant .carousel {
+  max-inline-size: 7rem;
+}
+
+.dish-variant .carousel img {
+  aspect-ratio: 1;
+}
+
 .dish-variant h4,
 .dish-variant p {
   margin: 0;

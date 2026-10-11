@@ -390,7 +390,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         {
             var addOn = input.AddOns[i];
             var path = $"addOns[{i}]";
-            if (!addOnDishes.TryGetValue(addOn.DishId, out var addOnDish) || addOnDish.IsHidden || addOn.DishId == dish.Id)
+            // A removed add-on that is already offered here can be kept or taken off, but not newly added.
+            if (!addOnDishes.TryGetValue(addOn.DishId, out var addOnDish)
+                || (addOnDish.IsHidden && dish.AddOns.All(a => a.AddOnDishId != addOn.DishId)) || addOn.DishId == dish.Id)
                 errors.Add($"{path}.dishId", "notFound");
             else if (!seen.Add(addOn.DishId))
                 errors.Add($"{path}.dishId", "duplicate");
@@ -455,10 +457,12 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             errors.Add(nameof(input.ParentDishIds), "self");
 
         var parents = await db.Dishes.Where(d => parentIds.Contains(d.Id) && d.Id != dish.Id).ToListAsync();
-        if (parents.Count != parentIds.Count(id => id != dish.Id) || parents.Any(p => p.IsHidden))
+        // A removed dish the link already exists to can stay linked (it is not shown to the admin, so it can't be dealt with first).
+        var linked = dish.AddOnOf.Select(a => a.ParentDishId).ToHashSet();
+        if (parents.Count != parentIds.Count(id => id != dish.Id) || parents.Any(p => p.IsHidden && !linked.Contains(p.Id)))
             errors.Add(nameof(input.ParentDishIds), "notFound");
         // Add-ons sit one level deep: an add-on-only dish cannot have add-ons of its own.
-        if (parents.Any(p => p.IsAddOnOnly))
+        if (parents.Any(p => p.IsAddOnOnly && !linked.Contains(p.Id)))
             errors.Add(nameof(input.ParentDishIds), "parentIsAddOnOnly");
         if (input.IsAddOnOnly && input.AddOns is null && dish.Id != 0 && await db.DishAddOns.AnyAsync(a => a.ParentDishId == dish.Id))
             errors.Add(nameof(input.IsAddOnOnly), "hasAddOns");

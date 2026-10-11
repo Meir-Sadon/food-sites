@@ -505,4 +505,34 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
         await (await Update(sandwich.Id, input with { AddOns = [new AddOnLinkInput(hummus.Id, 3, -1, 0, false)] }))
             .AssertInvalid("addOns[0].price", "invalid");
     }
+
+    [Fact]
+    public async Task A_dish_can_be_saved_while_linked_to_removed_dishes_and_the_link_taken_off()
+    {
+        var category = await AddCategory("כריכים");
+        var sandwich = await CreateOk(Fixed("כריך", category.Id));
+        var salad = await CreateOk(Fixed("סלט", category.Id, new OptionInput(null, "כף", 1, 5, true)) with { IsAddOnOnly = true, ParentDishIds = [sandwich.Id] });
+        var pickle = await CreateOk(Fixed("חמוצים", category.Id) with { IsAddOnOnly = true });
+        (await Update(sandwich.Id, Fixed("כריך", category.Id, new OptionInput(sandwich.Options[0].Id, "מנה", 1, 40, true)) with
+        {
+            AddOnGroups = [], AddOns = [new AddOnLinkInput(pickle.Id, null, null, null, false), new AddOnLinkInput(salad.Id, null, null, null, false)],
+        })).EnsureSuccessStatusCode();
+        (await _admin.DeleteAsync($"/api/admin/dishes/{sandwich.Id}")).EnsureSuccessStatusCode();
+        (await _admin.DeleteAsync($"/api/admin/dishes/{pickle.Id}")).EnsureSuccessStatusCode();
+
+        // The salad is still linked under the removed sandwich: saving it keeps working, and the link can be dropped.
+        (await Update(salad.Id, Fixed("סלט", category.Id, new OptionInput(salad.Options[0].Id, "כף", 1, 5, true)) with { IsAddOnOnly = true, ParentDishIds = [sandwich.Id] })).EnsureSuccessStatusCode();
+        Assert.Equal([sandwich.Id], (await GetDish(salad.Id)).ParentDishIds);
+        (await Update(salad.Id, Fixed("סלט", category.Id, new OptionInput(salad.Options[0].Id, "כף", 1, 5, true)) with { IsAddOnOnly = true, ParentDishIds = [] })).EnsureSuccessStatusCode();
+        Assert.Empty((await GetDish(salad.Id)).ParentDishIds);
+
+        // Same for an add-on of the dish that was removed.
+        (await Update(sandwich.Id, Fixed("כריך", category.Id, new OptionInput(sandwich.Options[0].Id, "מנה", 1, 40, true)) with
+        {
+            AddOnGroups = [], AddOns = [new AddOnLinkInput(pickle.Id, null, null, null, false)],
+        })).EnsureSuccessStatusCode();
+
+        // A removed dish can't be newly linked.
+        await (await Update(salad.Id, Fixed("סלט", category.Id) with { IsAddOnOnly = true, ParentDishIds = [sandwich.Id] })).AssertInvalid("ParentDishIds", "notFound");
+    }
 }
