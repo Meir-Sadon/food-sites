@@ -268,7 +268,10 @@ export function DishFormPage() {
   const fieldError = (field: string) => <FieldError errors={errors} field={field} id={`dish-${field}-error`} />
   const weight = form.sellBy === 'Weight'
   const unitName = form.unitName.trim()
-  const parentCandidates = allDishes.filter((d) => !d.isHidden && !d.isAddOnOnly && d.id !== dishId)
+  // Removed dishes this one is still linked under stay listed (marked), so the link can be taken off.
+  const parentCandidates = allDishes.filter(
+    (d) => d.id !== dishId && (d.isHidden ? form.parentDishIds.includes(d.id) : !d.isAddOnOnly),
+  )
   const variants = dishId === null ? [] : allDishes.filter((d) => d.mainDishId === dishId && !d.isHidden)
   const mainCandidates = allDishes.filter((d) => !d.isHidden && !d.isAddOnOnly && d.mainDishId === null && d.id !== dishId)
   const isVariant = form.mainDishId !== ''
@@ -593,6 +596,7 @@ export function DishFormPage() {
                         }
                       />
                       {d.name}
+                      {d.isHidden && ` (${t('admin.dishes.removedTag')})`}
                     </label>
                   ))}
                 </div>
@@ -610,6 +614,7 @@ export function DishFormPage() {
             groups={form.groups}
             addOns={form.addOns}
             candidates={addOnCandidates}
+            allDishes={allDishes}
             categories={categories}
             errors={errors}
             onChange={(patch) => set(patch)}

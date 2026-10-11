@@ -9,15 +9,17 @@ interface Props {
   addOns: AddOnForm[]
   /** Dishes that can be offered under this one. */
   candidates: Dish[]
+  /** Every dish, removed ones included, to name the add-ons already linked. */
+  allDishes: Dish[]
   categories: Category[]
   errors: FieldErrors
   onChange: (patch: { groups?: GroupForm[]; addOns?: AddOnForm[] }) => void
 }
 
 /** The dish's own add-ons, set from the dish: their price and limit under it, check boxes and named groups with a limit. */
-export function AddOnsSection({ groups, addOns, candidates, categories, errors, onChange }: Props) {
+export function AddOnsSection({ groups, addOns, candidates, allDishes, categories, errors, onChange }: Props) {
   const { t } = useTranslation()
-  const byId = new Map(candidates.map((d) => [d.id, d]))
+  const byId = new Map(allDishes.map((d) => [d.id, d]))
   const available = candidates.filter((d) => !addOns.some((a) => a.dishId === d.id))
   const fieldError = (field: string) => <FieldError errors={errors} field={field} id={`dish-${field}-error`} />
   const described = (field: string) => ({ 'aria-describedby': `dish-${field}-error` })
@@ -97,7 +99,7 @@ export function AddOnsSection({ groups, addOns, candidates, categories, errors, 
       {addOns.length === 0 && <p>{t('admin.dishes.noOwnAddOns')}</p>}
       {addOns.map((addOn, index) => {
         const dish = byId.get(addOn.dishId)
-        const name = dish?.name ?? `#${addOn.dishId}`
+        const name = dish ? `${dish.name}${dish.isHidden ? ` (${t('admin.dishes.removedTag')})` : ''}` : `#${addOn.dishId}`
         const field = (part: string) => `addOns[${index}].${part}`
         return (
           <div key={addOn.key} className="option-row" role="group" aria-label={name}>
