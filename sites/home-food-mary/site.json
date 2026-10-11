@@ -11,7 +11,8 @@
   "features": {
     "recommendations": true,
     "favorites": true,
-    "reviews": true
+    "reviews": true,
+    "advancedDishes": true
   },
   "settings": {
     "contactName": "מרי פדידה",
