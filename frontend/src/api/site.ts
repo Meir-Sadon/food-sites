@@ -83,6 +83,8 @@ export interface MenuDish {
   addOnGroups?: MenuAddOnGroup[]
   /** Questions the client answers when ordering the dish (a variant's main dish's first). */
   questions?: MenuQuestion[]
+  /** The client may order without adjusting each unit (picking an add-on or confirming it as it is). */
+  adjustmentOptional?: boolean
 }
 
 /** How a dish question is answered (FoodSite.Api `QuestionKind`). */

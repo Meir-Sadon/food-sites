@@ -375,6 +375,29 @@ describe('Order page', () => {
     expect(total().getByText('סה"כ: ₪' + String(3 * 70 + 3 * 12))).toBeInTheDocument()
   })
 
+  it('lets the client send units left unadjusted when the dish makes adjusting optional', async () => {
+    const optional = menu()
+    optional.dishes[0] = { ...optional.dishes[0], adjustmentOptional: true }
+    const { api, user } = await openOrderPage({ 'GET /api/menu': () => optional, 'POST /api/orders': () => confirmation })
+    const card = dishCard('עוף בתנור')
+    await user.click(within(card).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
+    const first = within(card).getByRole('group', { name: 'מנה 1: עוף בתנור' })
+    await user.click(within(first).getByRole('button', { name: 'הוספה: ירך' }))
+
+    expect(screen.queryByText(/יש להתאים כל מנה/)).not.toBeInTheDocument()
+    expect(within(card).queryAllByText(/נדרשת התאמה/)).toHaveLength(0)
+    expect(within(card).getByText(/התאמה לא חובה/)).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
+    await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+    expect(api.sent('POST', '/api/orders')).toHaveLength(1)
+  })
+
   it('has one remark for a dish without add-ons, whatever the amount', async () => {
     const plain = [menuDish(1, 'קוסקוס', 1)]
     const { user } = await openOrderPage({ 'GET /api/menu': () => menu({ dishes: plain }) })

@@ -260,7 +260,11 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                   .map((addOnId) => dishes.get(Number(addOnId))?.name)
                   .filter(Boolean)
                   .join(', ')
-                const status = addOns.length === 0 ? '' : names || (adjusted ? t('order.noAdjustments') : t('order.needsAdjustment'))
+                const optional = !!dish.adjustmentOptional
+                const status =
+                  addOns.length === 0
+                    ? ''
+                    : names || (adjusted ? t('order.noAdjustments') : optional ? t('order.adjustmentOptional') : t('order.needsAdjustment'))
                 const title = units.length > 1 ? t('order.unitN', { n: i + 1, name: dish.name }) : t('order.customize', { name: dish.name })
                 const others = units.map((_, k) => k).filter((k) => k !== i)
                 const waiting = others.some((k) => !isAdjusted(selection, k, units[k]))
@@ -268,7 +272,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                   <details key={i} className="addon-unit">
                     <summary className="addon-unit__title">
                       {title}
-                      {status && <span className={adjusted ? 'muted' : 'addon-unit__missing'}> · {status}</span>}
+                      {status && <span className={adjusted || optional ? 'muted' : 'addon-unit__missing'}> · {status}</span>}
                     </summary>
                     <div role="group" aria-label={title} className="stack">
                       <NoteField

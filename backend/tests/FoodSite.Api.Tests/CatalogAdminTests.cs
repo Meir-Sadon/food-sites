@@ -529,6 +529,25 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Optional_adjustment_is_saved_on_a_main_dish_and_followed_by_its_variants()
+    {
+        var category = await AddCategory("סיגרים");
+        var main = await CreateOk(Fixed("סיגרים", category.Id) with { AdjustmentOptional = true });
+        // A variant follows its main dish, whatever it sends.
+        var variant = await CreateOk(Fixed("סיגר כבד", category.Id) with { MainDishId = main.Id, AdjustmentOptional = true });
+        var plain = await CreateOk(Fixed("כריך", category.Id));
+
+        Assert.Equal((true, false, false), (main.AdjustmentOptional, variant.AdjustmentOptional, plain.AdjustmentOptional));
+
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        Assert.True(menu.Dishes.Single(d => d.Id == variant.Id).AdjustmentOptional);
+        Assert.False(menu.Dishes.Single(d => d.Id == plain.Id).AdjustmentOptional);
+
+        (await Update(main.Id, Fixed("סיגרים", category.Id, new OptionInput(main.Options[0].Id, main.Options[0].Label, 1, main.Options[0].Price, true)))).EnsureSuccessStatusCode();
+        Assert.False((await GetDish(main.Id)).AdjustmentOptional);
+    }
+
+    [Fact]
     public async Task Own_add_ons_are_saved_with_their_groups_prices_and_limits()
     {
         var category = await AddCategory("כריכים");
