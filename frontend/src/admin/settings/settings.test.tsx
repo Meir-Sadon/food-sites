@@ -134,6 +134,26 @@ describe('General settings', () => {
     await waitFor(() => expect(phone).toHaveAccessibleDescription('מספר הטלפון לא תקין.'))
   })
 
+  it('brings the admin to the first field the server refused', async () => {
+    // jsdom has no scrollIntoView.
+    const scrolled = vi.fn()
+    Element.prototype.scrollIntoView = scrolled
+    try {
+      fakeApi({ ...base, 'PUT /api/admin/settings': () => invalid({ PaymentPhone: ['phone'] }) })
+      renderAt('/admin/settings')
+      const user = userEvent.setup()
+      const form = await section('משלוח, כשרות ותשלום')
+
+      await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+      const phone = within(form).getByLabelText('מספר טלפון ל־Bit / PayBox')
+      await waitFor(() => expect(phone).toHaveFocus())
+      expect(scrolled.mock.contexts).toEqual([phone])
+    } finally {
+      delete (Element.prototype as Partial<Element>).scrollIntoView
+    }
+  })
+
   it('saves supply days with their cutoff, starting the week on Sunday', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/supply-days': (_, body) => body })
     renderAt('/admin/settings')

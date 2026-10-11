@@ -11,6 +11,7 @@ import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
+import { bringIntoView } from '../components/scrollToInvalid'
 import { useFeature, useSite, useSiteFailed } from '../site/useSite'
 import { DetailsBlock } from '../order/DetailsBlock'
 import { DishCard, DishGroupCard } from '../order/DishCard'
@@ -33,6 +34,7 @@ import {
   variantsOf,
   toLines,
   unadjustedDishes,
+  firstIncompleteUnit,
   unansweredDishes,
   type OrderState,
   type Restored,
@@ -268,10 +270,29 @@ export function OrderPage() {
     else navigate(to.to)
   }
 
+  /** Opens the first unit, in page order, of the dishes the client has not finished, and brings the client to it. */
+  function showUnfinished(unfinished: MenuDish[]) {
+    const ids = new Set(unfinished.map((d) => String(d.id)))
+    const choice = [...document.querySelectorAll<HTMLElement>('[data-dish-id]')].find((e) => ids.has(e.dataset.dishId ?? ''))
+    const dish = choice && dishes.get(Number(choice.dataset.dishId))
+    if (!choice || !dish) return
+    const unit = choice.querySelectorAll<HTMLDetailsElement>('details.addon-unit')[firstIncompleteUnit(dish, state.selections[dish.id], dishes)]
+    if (unit) unit.open = true
+    bringIntoView(unit?.querySelector('summary') ?? choice)
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setErrors({})
     setSubmitError(null)
+    // The dishes come before the form, so a dish still waiting for the client is the first thing to fix.
+    const unanswered = unansweredDishes(state.selections, dishes)
+    if (unadjusted.length > 0 || unanswered.length > 0) {
+      // Dishes not adjusted are already named under the submit button.
+      if (unanswered.length > 0) setSubmitError(t('order.answerRequiredFor', { name: unanswered.map((d) => d.name).join(', ') }))
+      showUnfinished([...unadjusted, ...unanswered])
+      return
+    }
     if (!normalizedPhone) {
       setErrors({ phone: ['phone'] })
       openBlocksWith({ phone: ['phone'] })
@@ -282,11 +303,6 @@ export function OrderPage() {
     if (hours.length > 0 && !deliveryHour) {
       setErrors({ deliveryhour: ['required'] })
       setSubmitError(t('errors.checkFields'))
-      return
-    }
-    const unanswered = unansweredDishes(state.selections, dishes)
-    if (unanswered.length > 0) {
-      setSubmitError(t('order.answerRequiredFor', { name: unanswered.map((d) => d.name).join(', ') }))
       return
     }
 
@@ -528,7 +544,7 @@ export function OrderPage() {
           </p>
         )}
         <div className="row">
-          <button ref={submitRef} type="submit" disabled={submitting || count === 0 || !supplyDate || belowMinimum || unadjusted.length > 0}>
+          <button ref={submitRef} type="submit" disabled={submitting || count === 0 || !supplyDate || belowMinimum}>
             {submitting ? t('order.submitting') : t('order.submit')}
           </button>
           <button type="button" className="button-quiet" onClick={reset}>

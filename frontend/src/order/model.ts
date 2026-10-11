@@ -246,6 +246,15 @@ export function unansweredDishes(selections: Record<number, Selection>, dishes: 
   })
 }
 
+/** The first ordered unit of the dish the client still has to fill: not adjusted, or a required question unanswered. */
+export function firstIncompleteUnit(dish: MenuDish, selection: Selection, dishes: Map<number, MenuDish>): number {
+  const adjustable = !dish.isYesNo && addOnsOf(dish, dishes).length > 0
+  const required = dish.questions?.filter((q) => q.isRequired) ?? []
+  return unitsOf(dish, selection).findIndex(
+    (unit, i) => (adjustable && !isAdjusted(selection, i, unit)) || required.some((q) => !answered(unitAnswers(selection, i)[q.id])),
+  )
+}
+
 /** The selection with one ordered unit's add-ons replaced. */
 export function withUnit(selection: Selection, unit: number, addOns: Record<number, AddOnSelection>): Selection {
   if (unit === 0) return { ...selection, addOns }
