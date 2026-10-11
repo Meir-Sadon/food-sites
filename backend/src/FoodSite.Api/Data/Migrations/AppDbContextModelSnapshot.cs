@@ -812,6 +812,71 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("SupplyDays");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.UsageDay", b =>
+                {
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("Devices")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Day", "Kind");
+
+                    b.ToTable("UsageDays");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.UsageDevice", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateOnly>("FirstSeen")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("LastSeen")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FirstSeen");
+
+                    b.ToTable("UsageDevices");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.UsageEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DeviceId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Day", "Kind", "DeviceId")
+                        .IsUnique();
+
+                    b.ToTable("UsageEvents");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -834,6 +899,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .HasColumnType("text");

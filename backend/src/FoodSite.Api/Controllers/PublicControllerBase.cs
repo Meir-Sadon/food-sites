@@ -10,6 +10,7 @@ namespace FoodSite.Api.Controllers;
 public abstract class PublicControllerBase : ControllerBase
 {
     public const string WriteRateLimitPolicy = "public-write";
+    public const string UsageRateLimitPolicy = "public-usage";
 
     protected ActionResult Invalid(Errors errors) =>
         ValidationProblem(new ValidationProblemDetails(errors.ToDictionary()));

@@ -74,6 +74,18 @@ public class SiteClock(TimeProvider time, IConfiguration config)
 
     public DateTime NowLocal() => TimeZoneInfo.ConvertTime(time.GetUtcNow(), _zone).DateTime;
 
+    public DateOnly Today() => DateOnly.FromDateTime(NowLocal());
+
+    /// <summary>A moment as the business's wall-clock time.</summary>
+    public DateTime ToLocal(DateTimeOffset moment) => TimeZoneInfo.ConvertTime(moment, _zone).DateTime;
+
+    /// <summary>The moment the business's day <paramref name="date"/> starts.</summary>
+    public DateTimeOffset StartOf(DateOnly date)
+    {
+        var local = date.ToDateTime(TimeOnly.MinValue);
+        return new DateTimeOffset(local, _zone.GetUtcOffset(local)).ToUniversalTime();
+    }
+
     private static TimeZoneInfo Find(string id)
     {
         try { return TimeZoneInfo.FindSystemTimeZoneById(id); }

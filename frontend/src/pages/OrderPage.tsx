@@ -39,6 +39,7 @@ import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
 import { siteLogo } from '../site/config'
+import { trackUsage } from '../usage/track'
 
 function formatCutoff(iso: string) {
   const [date, time] = iso.split('T')
@@ -210,13 +211,15 @@ export function OrderPage() {
     if (supplyDate) checkHour(supplyDate.date, hour)
   }
 
-  const setSelection = (dishId: number, selection: Selection | undefined) =>
+  const setSelection = (dishId: number, selection: Selection | undefined) => {
+    if (selection) trackUsage('OrderStarted')
     setState((current) => {
       const selections = { ...current.selections }
       if (selection) selections[dishId] = selection
       else delete selections[dishId]
       return { ...current, selections }
     })
+  }
 
   function reset() {
     setState((current) => ({
@@ -243,6 +246,7 @@ export function OrderPage() {
   }
 
   function applyQuickFill({ selections, skipped }: Restored) {
+    trackUsage('OrderStarted')
     setState((current) => ({ ...current, selections }))
     toast(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
     setErrors({})
@@ -291,6 +295,7 @@ export function OrderPage() {
         items: toLines(state.selections),
       })
       clearDraft()
+      trackUsage('OrderSubmitted')
       setConfirmation(result)
     } catch (err) {
       const fieldErrors = fieldErrorsOf(err)
