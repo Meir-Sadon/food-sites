@@ -52,9 +52,13 @@ public class ReviewsAdminController(AppDbContext db, TimeProvider time) : AdminC
     {
         if (!Enum.IsDefined(input.Status))
             return Invalid(nameof(input.Status), "invalid");
-        var updated = await db.Reviews.Where(r => r.Id == id && r.SubmittedAt != null)
-            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, input.Status));
-        return updated == 0 ? NotFound() : NoContent();
+        // Loaded rather than updated in place, so the change reaches the audit trail.
+        var review = await db.Reviews.SingleOrDefaultAsync(r => r.Id == id && r.SubmittedAt != null);
+        if (review is null)
+            return NotFound();
+        review.Status = input.Status;
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>The order's review link token, made the first time it is asked for. Sending it again gives the same link.</summary>

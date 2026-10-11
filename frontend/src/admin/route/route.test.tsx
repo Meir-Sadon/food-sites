@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import type { DriverLink, DriverLinkInput } from '../../api/driver'
 import type { AdminOrder } from '../../api/operations'
 import { adminSession, fakeApi } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
@@ -36,10 +37,21 @@ const orders = [
   order(5, { address: 'הרצל 9, אשקלון', deliveryHour: '09:00:00', total: 80 }),
 ]
 
-function openReport() {
+function openReport(links: DriverLink[] = []) {
   const api = fakeApi({
     ...adminSession,
     'GET /api/admin/orders\\?from=2030-01-06&to=2030-01-06': () => orders,
+    'GET /api/admin/driver-routes\\?date=2030-01-06': () => links,
+    'POST /api/admin/driver-routes': (_, body) => ({
+      id: 7,
+      token: 'T'.repeat(32),
+      date: '2030-01-06',
+      validThrough: '2030-01-07',
+      createdAt: '2030-01-06T07:00:00Z',
+      orderIds: (body as DriverLinkInput).stops.map((s) => s.orderId),
+      reported: 0,
+    }),
+    'DELETE /api/admin/driver-routes/7': () => undefined,
     'GET /api/admin/contact': () => ({ name: null, phone: null, address: 'הנשיא 3, אשקלון', email: null, openingHours: null }),
   })
   renderAt('/admin/orders/route?date=2030-01-06')
@@ -106,5 +118,49 @@ describe('Driver report', () => {
     fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [order(2, { supplyDate: '2030-01-06' })] })
     renderAt('/admin/orders')
     expect(await screen.findByRole('link', { name: /דוח שליח/ })).toHaveAttribute('href', '/admin/orders/route?date=2030-01-06')
+  })
+
+  it('makes a driver link with the route in its order, and sends it in the WhatsApp message', async () => {
+    const { api, user } = openReport()
+    await screen.findByRole('listitem', { name: 'עצירה 1: הזמנה #2' })
+
+    await user.click(screen.getByRole('button', { name: 'יצירת קישור לשליח' }))
+    expect(api.sent('POST', '/api/admin/driver-routes')[0].body).toEqual({
+      date: '2030-01-06',
+      stops: [
+        { orderId: 2, plannedArrival: '09:00:00' },
+        { orderId: 5, plannedArrival: '09:08:00' },
+        { orderId: 1, plannedArrival: '10:00:00' },
+      ],
+    })
+    expect(await screen.findByText(/קישור עם 3 עצירות/)).toHaveTextContent('דווחו 0 מתוך 3')
+    expect(screen.getByRole('link', { name: 'פתיחה' })).toHaveAttribute('href', `${window.location.origin}/d/${'T'.repeat(32)}`)
+
+    const href = screen.getByRole('link', { name: 'שליחה לשליח ב־WhatsApp' }).getAttribute('href')!
+    const text = decodeURIComponent(href.replace('https://wa.me/?text=', ''))
+    expect(text).toContain(`כל העצירות ודיווח על כל משלוח: ${window.location.origin}/d/${'T'.repeat(32)}`)
+    expect(text).toContain(`${window.location.origin}/d/${'T'.repeat(32)}/2`)
+
+    // Moving a stop leaves the link with the old order: the admin is told, and the message drops the link.
+    await user.click(screen.getByRole('button', { name: 'העברה למטה: הזמנה #2' }))
+    expect(screen.getByText(/סדר העצירות או הבחירה השתנו/)).toBeInTheDocument()
+    const changed = screen.getByRole('link', { name: 'שליחה לשליח ב־WhatsApp' }).getAttribute('href')!
+    expect(decodeURIComponent(changed)).not.toContain('/d/')
+
+    await user.click(screen.getByRole('button', { name: 'ביטול הקישור' }))
+    await user.click(screen.getByRole('button', { name: 'כן, לבטל' }))
+    expect(api.sent('DELETE', '/api/admin/driver-routes/7')).toHaveLength(1)
+    expect(screen.queryByText(/קישור עם 3 עצירות/)).not.toBeInTheDocument()
+  })
+
+  it('shows what the driver reported on each stop', async () => {
+    orders[0].delivery = { outcome: 'Delivered', reportedAt: '2030-01-06T08:15:00Z', note: null, proofUrl: null }
+    try {
+      openReport()
+      const stop = await screen.findByRole('listitem', { name: 'עצירה 3: הזמנה #1' })
+      expect(within(stop).getByText(/^נמסר ב־/)).toBeInTheDocument()
+    } finally {
+      delete orders[0].delivery
+    }
   })
 })

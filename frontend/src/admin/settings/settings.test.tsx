@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { SupplyDay } from '../../api/catalog'
 import { settings, supplyDays } from '../../test/catalogData'
-import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
+import { adminSession, fakeApi, invalid, masterSession } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
 
 const base = {
@@ -241,7 +241,7 @@ describe('Admin password', () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/password': () => undefined })
     renderAt('/admin/settings')
     const user = userEvent.setup()
-    const form = await section('סיסמת מנהל')
+    const form = await section('סיסמת בעל העסק')
 
     await user.type(within(form).getByLabelText('הסיסמה הנוכחית'), 'old-secret')
     await user.type(within(form).getByLabelText('סיסמה חדשה'), 'new-secret-1')
@@ -260,7 +260,7 @@ describe('Admin password', () => {
     fakeApi({ ...base, 'PUT /api/admin/password': () => invalid({ currentPassword: ['wrongPassword'] }) })
     renderAt('/admin/settings')
     const user = userEvent.setup()
-    const form = await section('סיסמת מנהל')
+    const form = await section('סיסמת בעל העסק')
 
     await user.type(within(form).getByLabelText('הסיסמה הנוכחית'), 'guess')
     await user.type(within(form).getByLabelText('סיסמה חדשה'), 'new-secret-1')
@@ -268,5 +268,20 @@ describe('Admin password', () => {
 
     expect(await within(form).findByText('הסיסמה שגויה.')).toBeInTheDocument()
     expect(within(form).getByLabelText('סיסמה חדשה')).toHaveValue('new-secret-1')
+  })
+
+  it('lets the master set a new owner password without the current one', async () => {
+    const api = fakeApi({ ...base, ...masterSession, 'PUT /api/admin/owner-password': () => undefined })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('סיסמת בעל העסק')
+
+    expect(within(form).queryByLabelText('הסיסמה הנוכחית')).not.toBeInTheDocument()
+    await user.type(within(form).getByLabelText('סיסמה חדשה'), 'owner-forgot-it')
+    await user.click(within(form).getByRole('button', { name: 'הגדרת סיסמה חדשה' }))
+
+    expect(await within(form).findByRole('status')).toHaveTextContent('לבעל העסק הוגדרה סיסמה חדשה.')
+    expect(api.sent('PUT', '/api/admin/owner-password')[0].body).toEqual({ newPassword: 'owner-forgot-it' })
+    expect(api.sent('PUT', '/api/admin/password')).toHaveLength(0)
   })
 })

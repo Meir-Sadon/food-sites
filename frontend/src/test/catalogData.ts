@@ -34,6 +34,7 @@ export const dish = (id: number, name: string, categoryId: number, patch: Partia
   id,
   name,
   categoryId,
+  displayOrder: id,
   description: null,
   allergenInfo: null,
   sellBy: 'Units',

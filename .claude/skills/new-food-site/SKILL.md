@@ -93,13 +93,13 @@ One PR with the site folder and the deploy files, on a readable branch. Run `/ch
   ```
   If the business limits its portions per day across all dishes, also `UPDATE "Settings" SET "PortionsPerSupplyDate" = <n>;`. Use the business's real supply days and cutoff instead of the defaults when it gave them.
   Read the rows back to check them.
-- **Admin password**: set it to the default `admin`: run `dotnet run --project backend/src/FoodSite.Api -- hash-password 'admin'` and add the output as the service's `Admin__PasswordHash` with `update_environment_variables`. The owner changes it after signing in, under **הגדרות כלליות** (the password section).
+- **Admin password**: set the owner's to the default `admin` (user name `admin`): run `dotnet run --project backend/src/FoodSite.Api -- hash-password 'admin'` and add the output as the service's `Admin__PasswordHash` with `update_environment_variables`. The owner changes it after signing in, under **הגדרות כלליות** (the password section). The master admin's `Admin__MasterUsername` and `Admin__MasterPasswordHash` are the same on every site and are not in the repo: ask the user for them, or list adding them (copied from another service's **Environment**) in the checklist below.
 
 ## 8. Tell the owner how to activate the site
 
 End with one reply that gives the site's address and a numbered checklist of exactly what the owner has to do, with where to click. Mark what's required and what's optional, and say which steps Claude does once they answer. Fill in the real names (site id, secret name, address):
 
-1. **Change the admin password** (required): the site is public and the password is `admin`, so anyone who guesses it can see the orders and the clients' phone numbers. Sign in to the admin and change it under **הגדרות כלליות**.
+1. **Change the admin password** (required): the site is public and the password is `admin`, so anyone who guesses it can see the orders and the clients' phone numbers. Sign in to the admin with user name `admin` and password `admin`, and change it under **הגדרות כלליות**.
 2. **Cloudinary key** (required for pictures): Cloudinary → **Settings → API Keys → Generate New API Key**, named `<site-id>`. Then Render → the `<site-id>` service → **Environment** → add `Cloudinary__Url` = `cloudinary://<key>:<secret>@<cloud_name>` → **Save**.
 3. **Health check** (required): Render → the service → **Settings → Health Check Path** → `/api/health`.
 4. **Deploy hook** (required for later updates): Render → the service → **Settings → Deploy Hook** → copy. GitHub → the repo → **Settings → Secrets and variables → Actions → New repository secret**, named `RENDER_DEPLOY_HOOK_<ID_UPPER>`, with the hook as the value.

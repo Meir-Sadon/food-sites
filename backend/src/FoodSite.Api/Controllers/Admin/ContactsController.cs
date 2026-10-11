@@ -81,8 +81,13 @@ public class ContactsController(AppDbContext db) : AdminControllerBase
     [HttpDelete("notify-phones/{id:int}")]
     public async Task<IActionResult> RemoveNotifyPhone(int id)
     {
-        var deleted = await db.NotifyPhones.Where(p => p.Id == id).ExecuteDeleteAsync();
-        return deleted == 0 ? NotFound() : NoContent();
+        // Loaded rather than deleted in place, so the removal reaches the audit trail.
+        var phone = await db.NotifyPhones.FindAsync(id);
+        if (phone is null)
+            return NotFound();
+        db.NotifyPhones.Remove(phone);
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     internal static bool LooksLikeEmail(string value)

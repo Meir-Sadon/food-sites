@@ -39,7 +39,12 @@ public class ClosedDatesController(AppDbContext db) : AdminControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Remove(int id)
     {
-        var deleted = await db.ClosedDates.Where(c => c.Id == id).ExecuteDeleteAsync();
-        return deleted == 0 ? NotFound() : NoContent();
+        // Loaded rather than deleted in place, so the removal reaches the audit trail.
+        var closed = await db.ClosedDates.FindAsync(id);
+        if (closed is null)
+            return NotFound();
+        db.ClosedDates.Remove(closed);
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 }

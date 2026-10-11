@@ -94,8 +94,10 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
         <p className="muted">
           {t('admin.orders.paidVia', { method: t(`admin.orders.paidMethods.${order.paidWith}`) })}
           {order.paymentComment ? ` · ${order.paymentComment}` : ''}
+          {order.paidByDriver ? ` · ${t('admin.orders.paidByDriver')}` : ''}
         </p>
       )}
+      {order.delivery && <DeliveryReport order={order} />}
       {order.notes && (
         <p>
           {t('admin.orders.notes')}: {order.notes}
@@ -166,5 +168,27 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
         />
       )}
     </article>
+  )
+}
+
+/** What the driver reported through the driver's link: when, the note, and the photo from the door. */
+function DeliveryReport({ order }: { order: AdminOrder }) {
+  const { t } = useTranslation()
+  const report = order.delivery!
+  const time = report.reportedAt ? new Date(report.reportedAt).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : ''
+  return (
+    <div className="order-delivery stack" role="group" aria-label={t('admin.orders.deliveryReport')}>
+      {report.outcome && (
+        <p className={report.outcome === 'Delivered' ? 'driver-badge--ok' : 'notice notice--warning'}>
+          {t(report.outcome === 'Delivered' ? 'admin.orders.deliveredAt' : 'admin.orders.notDeliveredAt', { time })}
+          {report.note ? ` · ${t('admin.orders.driverNote')}: ${report.note}` : ''}
+        </p>
+      )}
+      {report.proofUrl && (
+        <a href={report.proofUrl} target="_blank" rel="noreferrer">
+          <img className="order-delivery__proof" src={report.proofUrl} alt={t('admin.orders.proofAlt', { id: order.id })} />
+        </a>
+      )}
+    </div>
   )
 }
