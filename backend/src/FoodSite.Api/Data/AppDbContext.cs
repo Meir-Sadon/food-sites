@@ -26,6 +26,7 @@ public class AppDbContext(
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<FavoriteOrder> FavoriteOrders => Set<FavoriteOrder>();
     public DbSet<Recommendation> Recommendations => Set<Recommendation>();
+    public DbSet<Feedback> Feedback => Set<Feedback>();
     public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
     public DbSet<NotifyPhone> NotifyPhones => Set<NotifyPhone>();
     public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
@@ -91,6 +92,7 @@ public class AppDbContext(
         builder.Properties<DeliveryOutcome>().HaveConversion<string>();
         builder.Properties<AuditAction>().HaveConversion<string>();
         builder.Properties<QuestionKind>().HaveConversion<string>();
+        builder.Properties<FeedbackKind>().HaveConversion<string>();
 
         // Money in shekels and agorot; amounts that can be weights get grams precision.
         builder.Properties<decimal>().HavePrecision(10, 2);
@@ -103,6 +105,7 @@ public class AppDbContext(
             e.Property(s => s.Id).ValueGeneratedNever();
             e.Property(s => s.MinimumOrderAmount).HasPrecision(10, 2);
             e.Property(s => s.SiteStyle).HasMaxLength(Sites.SiteStyles.MaxLength);
+            e.Property(s => s.OpsTokenHash).HasMaxLength(64);
             e.Property(s => s.OrderTotalPosition).HasMaxLength(Sites.OrderLayout.MaxLength);
             e.Property(s => s.OrderFlow).HasMaxLength(Sites.OrderLayout.MaxLength);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
@@ -237,6 +240,16 @@ public class AppDbContext(
             e.HasOne(r => r.User).WithMany(u => u.Recommendations)
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<Feedback>(e =>
+        {
+            e.ToTable("Feedback");
+            e.Property(f => f.Kind).HasMaxLength(20);
+            e.Property(f => f.Text).HasMaxLength(Entities.Feedback.TextMaxLength);
+            e.Property(f => f.Page).HasMaxLength(Entities.Feedback.PageMaxLength);
+            e.Property(f => f.Actor).HasMaxLength(20);
+            e.HasIndex(f => f.IsHandled);
         });
 
         model.Entity<FeatureFlag>(e =>

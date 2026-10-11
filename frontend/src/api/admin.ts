@@ -1,4 +1,4 @@
-import { ApiError, apiFetch, apiJson } from './client'
+import { ApiError, apiFetch, apiJson, send } from './client'
 
 /** The two admins of a site: the platform's master (same on every site) and the business owner. */
 export type AdminActor = 'master' | 'owner'
@@ -47,10 +47,13 @@ export interface AuditChange {
   secret: boolean
 }
 
+/** Who made a change: one of the admins, or the platform's console (through the ops API). */
+export type AuditActor = AdminActor | 'console'
+
 export interface AuditEntry {
   id: number
   at: string
-  actor: AdminActor
+  actor: AuditActor
   action: AuditAction
   entityType: string | null
   entityId: string | null
@@ -65,4 +68,40 @@ export function listAudit(before?: number): Promise<AuditEntry[]> {
   const query = new URLSearchParams({ limit: String(auditPageSize) })
   if (before !== undefined) query.set('before', String(before))
   return apiJson<AuditEntry[]>(`/api/admin/audit?${query}`)
+}
+
+export type FeedbackKind = 'Problem' | 'Comment'
+
+export const FEEDBACK_TEXT_MAX_LENGTH = 2000
+
+export interface FeedbackInput {
+  kind: FeedbackKind
+  text: string
+  /** The admin page (or `/` for the client site) the report is about. */
+  page: string | null
+}
+
+/** A problem or comment the admin sent to the platform; the console marks it handled. */
+export interface Feedback extends FeedbackInput {
+  id: number
+  actor: AdminActor
+  createdAt: string
+  isHandled: boolean
+}
+
+export const feedbackApi = {
+  list: () => apiJson<Feedback[]>('/api/admin/feedback'),
+  send: (input: FeedbackInput) => apiJson<Feedback>('/api/admin/feedback', send('POST', input)),
+}
+
+/** The console's token for this site (master only). `createdAt` is null while there is none. */
+export interface OpsTokenState {
+  createdAt: string | null
+}
+
+export const opsTokenApi = {
+  get: () => apiJson<OpsTokenState>('/api/admin/ops-token'),
+  /** The token itself is in this answer only. */
+  create: () => apiJson<{ token: string; createdAt: string }>('/api/admin/ops-token', send('POST')),
+  revoke: () => apiJson<void>('/api/admin/ops-token', send('DELETE')),
 }

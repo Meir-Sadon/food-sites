@@ -145,7 +145,11 @@ builder.Services
                 return Task.CompletedTask;
             },
         };
-    });
+    })
+    // The console (ops API): the site's console token in an Authorization header, checked against its hash in
+    // Settings. Only /api/ops asks for this scheme, and /api/ops asks for nothing else.
+    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, FoodSite.Api.Ops.OpsAuthenticationHandler>(
+        FoodSite.Api.Ops.OpsToken.Scheme, null);
 builder.Services.AddAuthorization();
 
 var loginLimit = adminOptions.LoginAttemptsPerMinute;
