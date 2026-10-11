@@ -59,7 +59,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         bool IsYesNo = false,
         IReadOnlyList<MenuAddOnDto>? AddOns = null,
         IReadOnlyList<MenuAddOnGroupDto>? AddOnGroups = null,
-        IReadOnlyList<MenuQuestionDto>? Questions = null);
+        IReadOnlyList<MenuQuestionDto>? Questions = null,
+        bool AdjustmentOptional = false);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
     public record MenuQuestionDto(int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired);
@@ -153,7 +154,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 links.Where(a => a.Group is not null).Select(a => a.Group!).DistinctBy(g => g.Id)
                     .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
                 DishRules.Questions(d)
-                    .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired)).ToList());
+                    .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired)).ToList(),
+                (d.MainDish ?? d).AdjustmentOptional);
         }).ToList();
 
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList());

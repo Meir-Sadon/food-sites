@@ -1158,6 +1158,70 @@ label {
   font-size: 1.25rem;
 }
 
+/* The dish form's topics: what a block is for on a line above it, the block folded under its title. */
+.form-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-block__about {
+  margin: 0;
+}
+
+.form-block > details {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.form-block--invalid > details {
+  border-color: var(--color-error);
+}
+
+.form-block > details > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.form-block > details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.form-block > details > summary::after {
+  content: '▾';
+  margin-inline-start: auto;
+  color: var(--color-muted);
+  transition: transform 0.15s;
+}
+
+.form-block > details:not([open]) > summary::after {
+  transform: rotate(90deg);
+}
+
+.form-block > details[open] > summary {
+  border-block-end: 1px solid var(--color-border);
+}
+
+.form-block__title {
+  font-weight: 600;
+  font-size: 1.0625rem;
+}
+
+.form-block__error {
+  color: var(--color-error);
+  font-size: 0.9375rem;
+}
+
+.form-block__body {
+  padding: 0.75rem 1rem 1rem;
+}
+
 /* The contact/address and payment blocks: each folds to a one-line summary. */
 .details-block {
   border: 1px solid var(--color-border);

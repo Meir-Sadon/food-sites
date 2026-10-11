@@ -116,6 +116,8 @@ export interface Dish {
   addOns: AddOnLink[]
   /** Questions the client answers when ordering the dish, in order. */
   questions: DishQuestion[]
+  /** The client may order without adjusting each unit (a variant follows its main dish). */
+  adjustmentOptional: boolean
 }
 
 export interface DishQuestion {
@@ -172,6 +174,7 @@ export interface DishInput {
   questions?: { id: number | null; text: string; kind: QuestionKind; choices: string[]; showAsDropdown: boolean; isRequired: boolean }[]
   /** On a new dish: give it the images of this dish (it is a copy of it). */
   copyImagesFrom?: number
+  adjustmentOptional?: boolean
 }
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024

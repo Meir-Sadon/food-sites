@@ -125,6 +125,49 @@ export function DragHandle(props: HTMLAttributes<HTMLSpanElement>) {
   )
 }
 
+/**
+ * One topic of a long form, folded under its title. The line about it stays visible above the fold, so the admin can
+ * tell what each block is for without opening it. A block opens by itself when a field in it fails validation.
+ */
+export function FormBlock({
+  title,
+  about,
+  defaultOpen = false,
+  invalid = false,
+  children,
+}: {
+  title: string
+  about: string
+  defaultOpen?: boolean
+  invalid?: boolean
+  children: ReactNode
+}) {
+  const { t } = useTranslation()
+  const id = useId()
+  const [open, setOpen] = useState(defaultOpen || invalid)
+  const [wasInvalid, setWasInvalid] = useState(invalid)
+  if (invalid !== wasInvalid) {
+    setWasInvalid(invalid)
+    if (invalid) setOpen(true)
+  }
+  return (
+    <section className={invalid ? 'form-block form-block--invalid' : 'form-block'} aria-labelledby={`${id}-title`}>
+      <p id={`${id}-about`} className="hint form-block__about">
+        {about}
+      </p>
+      <details open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+        <summary aria-describedby={`${id}-about`}>
+          <span id={`${id}-title`} className="form-block__title">
+            {title}
+          </span>
+          {invalid && <span className="form-block__error">{t('admin.blockHasErrors')}</span>}
+        </summary>
+        <div className="stack form-block__body">{children}</div>
+      </details>
+    </section>
+  )
+}
+
 export function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   const id = useId()
   return (

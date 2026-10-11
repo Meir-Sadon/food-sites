@@ -216,6 +216,7 @@ describe('Dish form', () => {
       mainDishId: null,
       useMainDishPrice: false,
       isYesNo: false,
+      adjustmentOptional: false,
       addOnGroups: [],
       addOns: [],
       questions: [],
@@ -233,6 +234,19 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).openByDefault).toBe(true)
+  })
+
+  it('saves a dish whose adjustment is optional', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    await user.click(screen.getByLabelText('התאמת המנות אינה חובה'))
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).adjustmentOptional).toBe(true)
   })
 
   it('saves a per-supply-date limit on a dish', async () => {
@@ -379,6 +393,28 @@ describe('Dish form', () => {
     expect(screen.getByText('למנה הזו יש תוספות, ולכן היא לא יכולה להיות תוספת בלבד.')).toBeInTheDocument()
     // The summary points to the fields instead of repeating their messages.
     expect(screen.getByRole('alert')).toHaveTextContent('יש שדות לתיקון')
+    // Blocks holding a field to fix open by themselves and say so; the others stay folded.
+    const price = screen.getByRole('region', { name: 'מחיר וכמויות' })
+    expect(price.querySelector('details')).toHaveAttribute('open')
+    expect(price).toHaveTextContent('יש כאן שדות לתיקון')
+    expect(screen.getByRole('region', { name: 'זמינות ואופן הצגה' }).querySelector('details')).toHaveAttribute('open')
+    expect(screen.getByRole('region', { name: 'שאלות ללקוח' }).querySelector('details')).not.toHaveAttribute('open')
+  })
+
+  it('folds each topic of the form under a block with a line about it', async () => {
+    fakeApi(base)
+    renderAt('/admin/dishes/1')
+    const basics = await screen.findByRole('region', { name: 'פרטים בסיסיים' })
+    const price = screen.getByRole('region', { name: 'מחיר וכמויות' })
+
+    expect(basics.querySelector('details')).toHaveAttribute('open')
+    for (const name of ['מחיר וכמויות', 'זמינות ואופן הצגה', 'תוספת למנות אחרות', 'שאלות ללקוח', 'תמונות'])
+      expect(screen.getByRole('region', { name }).querySelector('details')).not.toHaveAttribute('open')
+    const toggle = within(price).getByText('מחיר וכמויות').closest('summary')!
+    expect(toggle).toHaveAccessibleDescription(/איך המנה נמכרת/)
+
+    await userEvent.setup().click(toggle)
+    expect(price.querySelector('details')).toHaveAttribute('open')
   })
 
   it('asks before saving a dish that is in unsupplied orders', async () => {
