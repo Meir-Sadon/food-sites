@@ -1,8 +1,8 @@
 {
   "guide": "docs/food-sites-feature-guide.html",
-  "reviewed_commit": "e81f3a63c4c546d7271575eed762442b12b79fad",
-  "reviewed_at": "2026-10-11T17:20:00+03:00",
+  "reviewed_commit": "c643ef205d7dac31bfc3bd84e305cbd147c72d67",
+  "reviewed_at": "2026-10-11T17:23:03+00:00",
   "review_interval_days": 3,
   "screenshots_captured_on": "2026-10-08",
-  "note": "Reviewed #54-#59 against the guide on 11 Oct 2026: per-unit add-ons, the per-dish name or remark, variant pictures and saving dishes linked to removed dishes are in section 04; #54 (a site flag) has no guide impact. The dish questions PR adds section 43 and duplicating a dish in section 07, with captures taken on 11 Oct 2026 from a local run with synthetic demo data. Most other screenshots date from 8 Oct 2026; the admin captures in sections 05, 07, 41 and 42 were taken on 11 Oct 2026. Public copy omits captures with contact, order or payment details."
+  "note": "Reviewed #60-#63 against the guide on 11 Oct 2026: each updated the guide in its own PR (admin sections in section 43, dish questions in section 44, collapsed per-unit choices with apply-to-rest and pinned variant pictures in section 04), and the texts match the source. The Phase 6 ops API PR adds section 45 (report a problem) and section 46 (admin console connection, master only), and mentions the console in sections 42 and 43, with captures taken on 11 Oct 2026 from a local run with synthetic demo data. Most other screenshots date from 8 Oct 2026; the admin captures in sections 05, 07, 41-46 were taken on 11 Oct 2026. Public copy omits captures with contact, order or payment details."
 }

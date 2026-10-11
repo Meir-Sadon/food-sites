@@ -46,6 +46,12 @@ public class Settings
 
     public string? AdminPasswordHash { get; set; }
 
+    /// <summary>SHA-256 (hex) of the console's token (see <c>OpsToken</c>); null while the site has none.</summary>
+    public string? OpsTokenHash { get; set; }
+
+    /// <summary>When the master created the current console token.</summary>
+    public DateTimeOffset? OpsTokenCreatedAt { get; set; }
+
     /// <summary>
     /// Set once the site's <c>site.json</c> → <c>settings</c> defaults were copied in on startup, so a value the
     /// admin clears later is not filled in again.

@@ -310,3 +310,58 @@ describe('Admin password', () => {
     expect(api.sent('PUT', '/api/admin/password')).toHaveLength(0)
   })
 })
+
+describe('Console token', () => {
+  it('is not shown to the owner', async () => {
+    fakeApi(base)
+    renderAt('/admin/settings')
+    await section('סיסמת בעל העסק')
+    expect(screen.queryByRole('region', { name: 'חיבור למסוף הניהול' })).not.toBeInTheDocument()
+  })
+
+  it('lets the master make a token, shown once, and revoke it', async () => {
+    const api = fakeApi({
+      ...base,
+      ...masterSession,
+      'GET /api/admin/ops-token': () => ({ createdAt: null }),
+      'POST /api/admin/ops-token': () => ({ token: 'fso_secret-token', createdAt: '2026-10-11T09:00:00Z' }),
+      'DELETE /api/admin/ops-token': () => undefined,
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const region = await section('חיבור למסוף הניהול')
+
+    expect(within(region).getByText('אין מפתח. מסוף הניהול לא יכול להתחבר לאתר.')).toBeInTheDocument()
+    await user.click(within(region).getByRole('button', { name: 'יצירת מפתח' }))
+
+    expect(await within(region).findByLabelText('המפתח')).toHaveValue('fso_secret-token')
+    expect(within(region).getByText(/יש מפתח פעיל מ-/)).toBeInTheDocument()
+    expect(api.sent('POST', '/api/admin/ops-token')).toHaveLength(1)
+
+    await user.click(within(region).getByRole('button', { name: 'ביטול המפתח' }))
+    await user.click(await within(region).findByRole('button', { name: 'כן, לבטל' }))
+
+    expect(await within(region).findByText('אין מפתח. מסוף הניהול לא יכול להתחבר לאתר.')).toBeInTheDocument()
+    expect(within(region).queryByLabelText('המפתח')).not.toBeInTheDocument()
+    expect(api.sent('DELETE', '/api/admin/ops-token')).toHaveLength(1)
+  })
+
+  it('asks before replacing a token the console uses', async () => {
+    const api = fakeApi({
+      ...base,
+      ...masterSession,
+      'GET /api/admin/ops-token': () => ({ createdAt: '2026-10-01T09:00:00Z' }),
+      'POST /api/admin/ops-token': () => ({ token: 'fso_new', createdAt: '2026-10-11T09:00:00Z' }),
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const region = await section('חיבור למסוף הניהול')
+
+    await user.click(within(region).getByRole('button', { name: 'יצירת מפתח חדש' }))
+    expect(within(region).getByText(/מפתח חדש מבטל את הקודם/)).toBeInTheDocument()
+    expect(api.sent('POST', '/api/admin/ops-token')).toHaveLength(0)
+    await user.click(within(region).getByRole('button', { name: 'כן, ליצור מפתח חדש' }))
+
+    expect(await within(region).findByLabelText('המפתח')).toHaveValue('fso_new')
+  })
+})
