@@ -17,6 +17,16 @@ export type SiteStyle = 'classic' | 'street'
 
 export const SITE_STYLES: readonly SiteStyle[] = ['classic', 'street']
 
+/** Where the order total sits (FoodSite.Api `OrderLayout`): a bar at the bottom, or on a wide screen a panel at the side. */
+export type OrderTotalPosition = 'bottom' | 'side'
+
+export const ORDER_TOTAL_POSITIONS: readonly OrderTotalPosition[] = ['bottom', 'side']
+
+/** The whole menu on one page, or one category at a time. */
+export type OrderFlow = 'page' | 'steps'
+
+export const ORDER_FLOWS: readonly OrderFlow[] = ['page', 'steps']
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -38,6 +48,10 @@ export interface Site {
   features: Feature[]
   /** The admin's choice, else the site's default from site.json. */
   style: SiteStyle
+  /** The admin's choice, else the site's default from site.json. */
+  orderTotalPosition: OrderTotalPosition
+  /** The admin's choice, else the site's default from site.json. */
+  orderFlow: OrderFlow
 }
 
 export interface MenuOption {

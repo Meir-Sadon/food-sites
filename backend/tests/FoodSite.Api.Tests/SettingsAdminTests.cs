@@ -107,6 +107,46 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task The_admin_picks_where_the_order_total_sits_and_how_the_menu_is_paged()
+    {
+        var client = _factory.CreateApiClient();
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Equal(("bottom", "page"), (settings.OrderTotalPosition, settings.OrderFlow));
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, orderTotalPosition = "side", orderFlow = "steps" })).Read<SettingsDto>();
+        Assert.Equal(("side", "steps"), (saved.OrderTotalPosition, saved.OrderFlow));
+        var site = await client.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal(("side", "steps"), (site.OrderTotalPosition, site.OrderFlow));
+
+        // Left out by an older client, or by another section's save: unchanged. One at a time is fine too.
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.Equal(("side", "steps"), (saved.OrderTotalPosition, saved.OrderFlow));
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, orderFlow = "page" })).Read<SettingsDto>();
+        Assert.Equal(("side", "page"), (saved.OrderTotalPosition, saved.OrderFlow));
+
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, orderTotalPosition = "top" })).AssertInvalid("OrderTotalPosition", "invalid");
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, orderFlow = "wizard" })).AssertInvalid("OrderFlow", "invalid");
+    }
+
+    [Fact]
+    public async Task The_site_default_order_layout_applies_until_the_admin_picks_one()
+    {
+        using var factory = new ApiFactory(postgres, new() { ["Site:Settings:OrderTotalPosition"] = "side", ["Site:Settings:OrderFlow"] = "steps" });
+        var admin = await factory.CreateAdminClientAsync();
+        var site = await factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal(("side", "steps"), (site.OrderTotalPosition, site.OrderFlow));
+
+        (await admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, orderTotalPosition = "bottom" })).EnsureSuccessStatusCode();
+        site = await factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal(("bottom", "steps"), (site.OrderTotalPosition, site.OrderFlow));
+    }
+
+    [Fact]
     public async Task A_service_city_longer_than_an_address_part_is_rejected()
     {
         var response = await _admin.PutAsJsonAsync("/api/admin/settings", Input(cities: "אשקלון, " + new string('א', 101)));

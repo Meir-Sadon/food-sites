@@ -415,6 +415,46 @@
   }
 }
 
+/* Side total: a sticker panel instead of the floating pill. */
+@media (min-width: 64rem) {
+  [data-style='street'] .order-page[data-total='side'] .total-bar {
+    inset-inline: auto;
+    min-inline-size: 0;
+    padding: 1rem;
+    border-radius: 1.5rem;
+  }
+
+  [data-style='street'] .client-shell:has(.order-page[data-total='side']) .fabs {
+    inset-block-end: 1rem;
+  }
+
+  [data-style='street'] .total-bar__details {
+    background: var(--color-surface);
+    color: var(--ink);
+  }
+}
+
+/* Category steps: a chunky strip of sticker chips. */
+[data-style='street'] .order-steps {
+  border: var(--line);
+  border-radius: 1.25rem;
+  box-shadow: var(--hard);
+}
+
+[data-style='street'] .order-steps__step,
+[data-style='street'] .order-steps__arrow {
+  color: var(--ink);
+}
+
+[data-style='street'] .order-steps__step[aria-current='step'] {
+  background: var(--ink);
+  color: var(--color-surface);
+}
+
+[data-style='street'] .order-steps__arrow {
+  background: var(--color-gold);
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-style='street'] button {
     transition: none;

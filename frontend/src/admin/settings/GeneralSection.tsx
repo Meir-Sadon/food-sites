@@ -28,8 +28,8 @@ export function GeneralSection() {
     setSaving(true)
     setErrors({})
     try {
-      // The style is saved by its own section; leaving it out keeps it.
-      const { backgroundImageUrl: _, style: __, ...input } = settings
+      // The style and the order layout are saved by their own sections; leaving them out keeps them.
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, ...input } = settings
       setData(await settingsApi.save(input))
       setError(null)
       toast(t('admin.saved'))

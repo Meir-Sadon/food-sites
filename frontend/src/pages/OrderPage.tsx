@@ -11,7 +11,8 @@ import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
-import { useFeature, useSite, useSiteFailed } from '../site/useSite'
+import { useFeature, useOrderLayout, useSite, useSiteFailed } from '../site/useSite'
+import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DetailsBlock } from '../order/DetailsBlock'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
@@ -27,6 +28,7 @@ import {
   itemCount,
   clampToDate,
   orderTotal,
+  pickedInCategory,
   restoreSelections,
   round2,
   standaloneDishes,
@@ -77,11 +79,26 @@ export function OrderPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
-  const [leaveTo, setLeaveTo] = useState<{ to: string; proceed?: () => void | Promise<void> } | null>(null)
+  const [leaveTo, setLeaveTo] = useState<{
+    to: string
+    proceed?: () => void | Promise<void>
+  } | null>(null)
   const [prefilledFor, setPrefilledFor] = useState<number | null>(null)
-  const [blocksOpen, setBlocksOpen] = useState({ contact: true, payment: true })
+  const [blocksOpen, setBlocksOpen] = useState({
+    contact: true,
+    payment: true,
+  })
   // The picked hours the server said are already full ("date hour").
   const [fullSlots, setFullSlots] = useState<string[]>([])
+  // The admin's order layout: where the total sits, and whether the menu is paged one category at a time.
+  const { totalPosition, flow } = useOrderLayout()
+  const steps = flow === 'steps'
+  // The shown step: a category's position, or the number of categories for the contact and payment details.
+  const [step, setStep] = useState(0)
+  // Bumped on every move to another step: the page then scrolls to the steps header.
+  const [stepMoves, setStepMoves] = useState(0)
+  const stepsRef = useRef<HTMLElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const total = orderTotal(state.selections, dishes)
@@ -116,8 +133,20 @@ export function OrderPage() {
 
   // After a quick fill the order is ready to send: bring the client to the submit button.
   useEffect(() => {
-    if (quickFills > 0) submitRef.current?.scrollIntoView?.({ behavior: scrollBehavior(), block: 'center' })
+    if (quickFills > 0)
+      submitRef.current?.scrollIntoView?.({
+        behavior: scrollBehavior(),
+        block: 'center',
+      })
   }, [quickFills])
+
+  useEffect(() => {
+    if (stepMoves > 0)
+      stepsRef.current?.scrollIntoView?.({
+        behavior: scrollBehavior(),
+        block: 'start',
+      })
+  }, [stepMoves])
 
   // Load the menu, then bring back a draft saved in this browser: the menu is needed first so
   // dishes that have vanished since can be skipped.
@@ -182,10 +211,41 @@ export function OrderPage() {
   const hourIsFull = !!supplyDate && !!deliveryHour && fullSlots.includes(slotKey(supplyDate.date, deliveryHour))
   const normalizedPhone = normalizePhone(state.phone)
 
+  const categories = menu.categories
+    .map((category) => ({
+      category,
+      dishes: standaloneDishes(menu, category.id),
+    }))
+    .filter((group) => group.dishes.length > 0)
+  const detailsStep = categories.length
+  const currentStep = steps ? Math.min(step, detailsStep) : 0
+  const showDetails = !steps || currentStep === detailsStep
+  const shownCategories = steps ? categories.slice(currentStep, currentStep + 1) : categories
+
+  function goToStep(next: number) {
+    setStep(Math.max(0, Math.min(next, detailsStep)))
+    setStepMoves((n) => n + 1)
+  }
+
+  /** The side total's button: the details step when paged, else down to the form. */
+  function goToDetails() {
+    if (steps) goToStep(detailsStep)
+    else
+      formRef.current?.scrollIntoView?.({
+        behavior: scrollBehavior(),
+        block: 'start',
+      })
+  }
+
   const change = (patch: Partial<OrderState>) => {
     setState((current) => {
       const next = { ...current, ...patch }
-      return patch.supplyDate ? { ...next, selections: clampToDate(next.selections, dishes, patch.supplyDate) } : next
+      return patch.supplyDate
+        ? {
+            ...next,
+            selections: clampToDate(next.selections, dishes, patch.supplyDate),
+          }
+        : next
     })
     setSubmitError(null)
   }
@@ -238,6 +298,7 @@ export function OrderPage() {
     setErrors({})
     setSubmitError(null)
     clearDraft()
+    setStep(0)
   }
 
   // A block with a field the server (or the phone check) refused opens, so the message is seen.
@@ -256,6 +317,8 @@ export function OrderPage() {
     setErrors({})
     setSubmitError(null)
     setQuickFills((n) => n + 1)
+    // Paged: the filled order is ready to send, so go to its details.
+    if (steps) setStep(detailsStep)
   }
 
   function leave(save: boolean) {
@@ -286,7 +349,11 @@ export function OrderPage() {
     }
     const unanswered = unansweredDishes(state.selections, dishes)
     if (unanswered.length > 0) {
-      setSubmitError(t('order.answerRequiredFor', { name: unanswered.map((d) => d.name).join(', ') }))
+      setSubmitError(
+        t('order.answerRequiredFor', {
+          name: unanswered.map((d) => d.name).join(', '),
+        }),
+      )
       return
     }
 
@@ -316,239 +383,291 @@ export function OrderPage() {
     }
   }
 
-  const categories = menu.categories
-    .map((category) => ({ category, dishes: standaloneDishes(menu, category.id) }))
-    .filter((group) => group.dishes.length > 0)
-
   return (
-    <div className="order-page">
-      <header className="order-hero">
-        {siteLogo && <img className="order-hero__logo" src={siteLogo} alt="" />}
-        <h1>{t('pages.order.title')}</h1>
-        <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
-        <ul className="order-hero__chips">
-          <li>{t('order.hero.fresh')}</li>
-          <li>{t('order.hero.homemade')}</li>
-          <li>{t('order.hero.kosher')}</li>
-        </ul>
-      </header>
+    <div className="order-page" data-total={totalPosition}>
+      <div className="order-main">
+        {(!steps || currentStep === 0) && (
+          <header className="order-hero">
+            {siteLogo && <img className="order-hero__logo" src={siteLogo} alt="" />}
+            <h1>{t('pages.order.title')}</h1>
+            <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
+            <ul className="order-hero__chips">
+              <li>{t('order.hero.fresh')}</li>
+              <li>{t('order.hero.homemade')}</li>
+              <li>{t('order.hero.kosher')}</li>
+            </ul>
+          </header>
+        )}
 
-      {user && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
+        {user && (!steps || currentStep === 0) && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 
-      {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
-      {categories.map(({ category, dishes: list }) => (
-        <details key={category.id} open className="category">
-          <summary>
-            <h2>{category.name}</h2>
-          </summary>
-          <div className="category__dishes">
-            {list.map((dish) => {
-              const variants = variantsOf(dish, menu)
-              return variants.length > 0 ? (
-                <DishGroupCard
-                  key={dish.id}
-                  dish={dish}
-                  variants={variants}
-                  dishes={dishes}
-                  selections={state.selections}
-                  date={supplyDate?.date}
-                  onChange={setSelection}
-                />
+        {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
+        {steps && categories.length > 0 && (
+          <CategorySteps
+            ref={stepsRef}
+            categories={categories.map(({ category }) => ({
+              id: category.id,
+              name: category.name,
+              picked: pickedInCategory(state.selections, dishes, category.id),
+            }))}
+            current={currentStep}
+            onChange={goToStep}
+          />
+        )}
+        {shownCategories.map(({ category, dishes: list }) => (
+          <details key={category.id} open className="category">
+            <summary>
+              <h2>{category.name}</h2>
+            </summary>
+            <div className="category__dishes">
+              {list.map((dish) => {
+                const variants = variantsOf(dish, menu)
+                return variants.length > 0 ? (
+                  <DishGroupCard
+                    key={dish.id}
+                    dish={dish}
+                    variants={variants}
+                    dishes={dishes}
+                    selections={state.selections}
+                    date={supplyDate?.date}
+                    onChange={setSelection}
+                  />
+                ) : (
+                  <DishCard
+                    key={dish.id}
+                    dish={dish}
+                    dishes={dishes}
+                    selection={state.selections[dish.id]}
+                    date={supplyDate?.date}
+                    onChange={(selection) => setSelection(dish.id, selection)}
+                  />
+                )
+              })}
+            </div>
+          </details>
+        ))}
+        {steps && currentStep < detailsStep && <CategoryStepsFooter current={currentStep} last={detailsStep - 1} onChange={goToStep} />}
+
+        {showDetails && (
+          <form ref={formRef} className="order-form stack" onSubmit={handleSubmit} aria-labelledby="order-details-title" noValidate>
+            <h2 id="order-details-title">{t('order.details')}</h2>
+
+            <span className="field">
+              <label htmlFor="order-date">{t('order.supplyDate')}</label>
+              {supplyDate ? (
+                <select
+                  id="order-date"
+                  value={supplyDate.date}
+                  aria-describedby="order-date-hint order-date-error"
+                  onChange={(e) => changeDate(e.target.value)}
+                >
+                  {menu.supplyDates.map((d) => (
+                    <option key={d.date} value={d.date}>
+                      {formatSupplyDate(d.date, t)}
+                    </option>
+                  ))}
+                </select>
               ) : (
-                <DishCard
-                  key={dish.id}
-                  dish={dish}
-                  dishes={dishes}
-                  selection={state.selections[dish.id]}
-                  date={supplyDate?.date}
-                  onChange={(selection) => setSelection(dish.id, selection)}
-                />
-              )
-            })}
-          </div>
-        </details>
-      ))}
-
-      <form className="order-form stack" onSubmit={handleSubmit} aria-labelledby="order-details-title" noValidate>
-        <h2 id="order-details-title">{t('order.details')}</h2>
-
-        <span className="field">
-          <label htmlFor="order-date">{t('order.supplyDate')}</label>
-          {supplyDate ? (
-            <select
-              id="order-date"
-              value={supplyDate.date}
-              aria-describedby="order-date-hint order-date-error"
-              onChange={(e) => changeDate(e.target.value)}
-            >
-              {menu.supplyDates.map((d) => (
-                <option key={d.date} value={d.date}>
-                  {formatSupplyDate(d.date, t)}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <p role="alert" className="form-error">
-              {t('order.noSupplyDates')}
-            </p>
-          )}
-          {supplyDate && (
-            <span id="order-date-hint" className="hint">
-              {t('order.cutoff', { when: formatCutoff(supplyDate.cutoff) })}
+                <p role="alert" className="form-error">
+                  {t('order.noSupplyDates')}
+                </p>
+              )}
+              {supplyDate && (
+                <span id="order-date-hint" className="hint">
+                  {t('order.cutoff', { when: formatCutoff(supplyDate.cutoff) })}
+                </span>
+              )}
+              <FieldError errors={errors} field="supplyDate" id="order-date-error" />
             </span>
-          )}
-          <FieldError errors={errors} field="supplyDate" id="order-date-error" />
-        </span>
 
-        {supplyDate && hours.length > 0 && (
-          <span className="field">
-            <label htmlFor="order-hour">{t('order.deliveryHour')}</label>
-            <select
-              id="order-hour"
-              value={deliveryHour ?? ''}
-              required
-              aria-describedby="order-hour-note order-hour-error"
-              onChange={(e) => changeHour(e.target.value || null)}
-            >
-              <option value="">{t('order.chooseHour')}</option>
-              {hours.map((slot) => (
-                <option key={slot.from} value={slot.from}>
-                  {formatSlot(slot, t)}
-                </option>
-              ))}
-            </select>
-            {hourIsFull && (
-              <span id="order-hour-note" role="status" className="notice notice--warning hour-tooltip">
-                {t('order.hourFull')}
+            {supplyDate && hours.length > 0 && (
+              <span className="field">
+                <label htmlFor="order-hour">{t('order.deliveryHour')}</label>
+                <select
+                  id="order-hour"
+                  value={deliveryHour ?? ''}
+                  required
+                  aria-describedby="order-hour-note order-hour-error"
+                  onChange={(e) => changeHour(e.target.value || null)}
+                >
+                  <option value="">{t('order.chooseHour')}</option>
+                  {hours.map((slot) => (
+                    <option key={slot.from} value={slot.from}>
+                      {formatSlot(slot, t)}
+                    </option>
+                  ))}
+                </select>
+                {hourIsFull && (
+                  <span id="order-hour-note" role="status" className="notice notice--warning hour-tooltip">
+                    {t('order.hourFull')}
+                  </span>
+                )}
+                <FieldError errors={errors} field="deliveryHour" id="order-hour-error" />
               </span>
             )}
-            <FieldError errors={errors} field="deliveryHour" id="order-hour-error" />
-          </span>
-        )}
 
-        <fieldset>
-          <legend>{t('order.fulfillment')}</legend>
-          <div className="row">
-            {site.deliveryEnabled && (
-              <label className="checkbox">
-                <input type="radio" name="fulfillment" checked={fulfillment === 'Delivery'} onChange={() => change({ fulfillment: 'Delivery' })} />
-                {t('order.delivery')}
-              </label>
-            )}
-            {site.pickupEnabled && (
-              <label className="checkbox">
-                <input type="radio" name="fulfillment" checked={fulfillment === 'Pickup'} onChange={() => change({ fulfillment: 'Pickup' })} />
-                {t('order.pickup')}
-              </label>
-            )}
-          </div>
-          {fulfillment === 'Delivery' && (site.deliveryAreaText || site.deliveryFeeText) && (
-            <p className="hint">
-              {site.deliveryAreaText && <span>{t('order.deliveryArea')}: {site.deliveryAreaText}. </span>}
-              {site.deliveryFeeText && <span>{t('order.deliveryFee')}: {site.deliveryFeeText}. </span>}
-              {t('order.deliveryCall')}
-            </p>
-          )}
-          <FieldError errors={errors} field="fulfillmentMethod" id="order-fulfillment-error" />
-        </fieldset>
-
-        <DetailsBlock
-          title={t(fulfillment === 'Delivery' ? 'order.blocks.contactAndAddress' : 'order.blocks.contact')}
-          summary={[
-            state.name.trim(),
-            state.phone.trim(),
-            fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment })),
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-          open={blocksOpen.contact}
-          onToggle={(open) => setBlocksOpen((current) => ({ ...current, contact: open }))}
-        >
-          <span className="field">
-            <label htmlFor="order-name">{t('order.name')}</label>
-            <input
-              id="order-name"
-              autoComplete="name"
-              value={state.name}
-              maxLength={100}
-              required
-              aria-describedby="order-name-error"
-              onChange={(e) => change({ name: e.target.value })}
-            />
-            <FieldError errors={errors} field="name" id="order-name-error" />
-          </span>
-
-          <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
-
-          {fulfillment === 'Delivery' && (
-            <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" context="order" />
-          )}
-        </DetailsBlock>
-
-        <DetailsBlock
-          title={t('order.payment')}
-          summary={t(payment === 'Transfer' ? 'order.payTransfer' : 'order.payOnDelivery')}
-          open={blocksOpen.payment}
-          onToggle={(open) => setBlocksOpen((current) => ({ ...current, payment: open }))}
-        >
-          <fieldset>
-            <legend className="visually-hidden">{t('order.payment')}</legend>
-            <div className="row">
-              <label className="checkbox">
-                <input type="radio" name="payment" checked={payment === 'OnDelivery'} onChange={() => change({ payment: 'OnDelivery' })} />
-                {t('order.payOnDelivery')}
-              </label>
-              {site.paymentPhone && (
-                <label className="checkbox">
-                  <input type="radio" name="payment" checked={payment === 'Transfer'} onChange={() => change({ payment: 'Transfer' })} />
-                  {t('order.payTransfer')}
-                </label>
+            <fieldset>
+              <legend>{t('order.fulfillment')}</legend>
+              <div className="row">
+                {site.deliveryEnabled && (
+                  <label className="checkbox">
+                    <input
+                      type="radio"
+                      name="fulfillment"
+                      checked={fulfillment === 'Delivery'}
+                      onChange={() => change({ fulfillment: 'Delivery' })}
+                    />
+                    {t('order.delivery')}
+                  </label>
+                )}
+                {site.pickupEnabled && (
+                  <label className="checkbox">
+                    <input
+                      type="radio"
+                      name="fulfillment"
+                      checked={fulfillment === 'Pickup'}
+                      onChange={() => change({ fulfillment: 'Pickup' })}
+                    />
+                    {t('order.pickup')}
+                  </label>
+                )}
+              </div>
+              {fulfillment === 'Delivery' && (site.deliveryAreaText || site.deliveryFeeText) && (
+                <p className="hint">
+                  {site.deliveryAreaText && (
+                    <span>
+                      {t('order.deliveryArea')}: {site.deliveryAreaText}.{' '}
+                    </span>
+                  )}
+                  {site.deliveryFeeText && (
+                    <span>
+                      {t('order.deliveryFee')}: {site.deliveryFeeText}.{' '}
+                    </span>
+                  )}
+                  {t('order.deliveryCall')}
+                </p>
               )}
+              <FieldError errors={errors} field="fulfillmentMethod" id="order-fulfillment-error" />
+            </fieldset>
+
+            <DetailsBlock
+              title={t(fulfillment === 'Delivery' ? 'order.blocks.contactAndAddress' : 'order.blocks.contact')}
+              summary={[
+                state.name.trim(),
+                state.phone.trim(),
+                fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment })),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              open={blocksOpen.contact}
+              onToggle={(open) => setBlocksOpen((current) => ({ ...current, contact: open }))}
+            >
+              <span className="field">
+                <label htmlFor="order-name">{t('order.name')}</label>
+                <input
+                  id="order-name"
+                  autoComplete="name"
+                  value={state.name}
+                  maxLength={100}
+                  required
+                  aria-describedby="order-name-error"
+                  onChange={(e) => change({ name: e.target.value })}
+                />
+                <FieldError errors={errors} field="name" id="order-name-error" />
+              </span>
+
+              <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
+
+              {fulfillment === 'Delivery' && (
+                <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" context="order" />
+              )}
+            </DetailsBlock>
+
+            <DetailsBlock
+              title={t('order.payment')}
+              summary={t(payment === 'Transfer' ? 'order.payTransfer' : 'order.payOnDelivery')}
+              open={blocksOpen.payment}
+              onToggle={(open) => setBlocksOpen((current) => ({ ...current, payment: open }))}
+            >
+              <fieldset>
+                <legend className="visually-hidden">{t('order.payment')}</legend>
+                <div className="row">
+                  <label className="checkbox">
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={payment === 'OnDelivery'}
+                      onChange={() => change({ payment: 'OnDelivery' })}
+                    />
+                    {t('order.payOnDelivery')}
+                  </label>
+                  {site.paymentPhone && (
+                    <label className="checkbox">
+                      <input
+                        type="radio"
+                        name="payment"
+                        checked={payment === 'Transfer'}
+                        onChange={() => change({ payment: 'Transfer' })}
+                      />
+                      {t('order.payTransfer')}
+                    </label>
+                  )}
+                </div>
+                {payment === 'Transfer' && <p className="hint">{t('order.transferHint')}</p>}
+                <FieldError errors={errors} field="paymentMethod" id="order-payment-error" />
+              </fieldset>
+              {payment === 'OnDelivery' && <p className="pay-note">{t('order.payOnDeliveryNote')}</p>}
+            </DetailsBlock>
+
+            <span className="field">
+              <label htmlFor="order-notes">{t('order.notes')}</label>
+              <textarea id="order-notes" rows={2} maxLength={500} value={state.notes} onChange={(e) => change({ notes: e.target.value })} />
+            </span>
+
+            {site.contact.phone && (
+              <p className="muted">
+                {t('order.callToChange')} <span dir="ltr">{site.contact.phone}</span>
+              </p>
+            )}
+
+            {submitError && (
+              <p role="alert" className="form-error">
+                {submitError}
+              </p>
+            )}
+            <div className="row">
+              <button
+                ref={submitRef}
+                type="submit"
+                disabled={submitting || count === 0 || !supplyDate || belowMinimum || unadjusted.length > 0}
+              >
+                {submitting ? t('order.submitting') : t('order.submit')}
+              </button>
+              <button type="button" className="button-quiet" onClick={reset}>
+                {t('order.reset')}
+              </button>
             </div>
-            {payment === 'Transfer' && <p className="hint">{t('order.transferHint')}</p>}
-            <FieldError errors={errors} field="paymentMethod" id="order-payment-error" />
-          </fieldset>
-          {payment === 'OnDelivery' && <p className="pay-note">{t('order.payOnDeliveryNote')}</p>}
-        </DetailsBlock>
-
-        <span className="field">
-          <label htmlFor="order-notes">{t('order.notes')}</label>
-          <textarea id="order-notes" rows={2} maxLength={500} value={state.notes} onChange={(e) => change({ notes: e.target.value })} />
-        </span>
-
-        {site.contact.phone && (
-          <p className="muted">
-            {t('order.callToChange')} <span dir="ltr">{site.contact.phone}</span>
-          </p>
+            {count === 0 && <p className="hint">{t('order.chooseDishes')}</p>}
+            {unadjusted.length > 0 && (
+              <p role="status" className="hint">
+                {t('order.adjustRequired', {
+                  names: unadjusted.map((d) => d.name).join(', '),
+                })}
+              </p>
+            )}
+            {belowMinimum && (
+              <p role="status" className="hint">
+                {t('order.belowMinimum', {
+                  minimum: formatMoney(minimum),
+                  missing: formatMoney(round2(minimum - total)),
+                })}
+              </p>
+            )}
+          </form>
         )}
 
-        {submitError && (
-          <p role="alert" className="form-error">
-            {submitError}
-          </p>
-        )}
-        <div className="row">
-          <button ref={submitRef} type="submit" disabled={submitting || count === 0 || !supplyDate || belowMinimum || unadjusted.length > 0}>
-            {submitting ? t('order.submitting') : t('order.submit')}
-          </button>
-          <button type="button" className="button-quiet" onClick={reset}>
-            {t('order.reset')}
-          </button>
-        </div>
-        {count === 0 && <p className="hint">{t('order.chooseDishes')}</p>}
-        {unadjusted.length > 0 && (
-          <p role="status" className="hint">
-            {t('order.adjustRequired', { names: unadjusted.map((d) => d.name).join(', ') })}
-          </p>
-        )}
-        {belowMinimum && (
-          <p role="status" className="hint">
-            {t('order.belowMinimum', { minimum: formatMoney(minimum), missing: formatMoney(round2(minimum - total)) })}
-          </p>
-        )}
-      </form>
-
-      {reviewsOn && <ReviewsCarousel />}
+        {reviewsOn && showDetails && <ReviewsCarousel />}
+      </div>
 
       <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
         <span className="total-bar__counts">
@@ -559,6 +678,11 @@ export function OrderPage() {
         <strong className="numeric" aria-live="polite">
           {t('order.total')}: {formatMoney(total)}
         </strong>
+        {totalPosition === 'side' && (
+          <button type="button" className="total-bar__details" onClick={goToDetails}>
+            {t('order.toDetails')}
+          </button>
+        )}
       </div>
 
       {leaveTo && <LeaveDialog onSave={() => leave(true)} onDiscard={() => leave(false)} onStay={() => setLeaveTo(null)} />}

@@ -16,6 +16,8 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   ordersPerHour: null,
   portionsPerSupplyDate: null,
   style: 'classic',
+  orderTotalPosition: 'bottom',
+  orderFlow: 'page',
   ...patch,
 })
 
@@ -79,6 +81,8 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   serviceCities: ['אשקלון'],
   features: ['recommendations', 'favorites'],
   style: 'classic',
+  orderTotalPosition: 'bottom',
+  orderFlow: 'page',
   ...patch,
 })
 

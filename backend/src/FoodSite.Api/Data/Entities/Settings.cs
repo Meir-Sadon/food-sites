@@ -55,6 +55,12 @@ public class Settings
     /// <summary>The look the admin picked (see <c>SiteStyles</c>); null means the site's default.</summary>
     public string? SiteStyle { get; set; }
 
+    /// <summary>Where the order total sits (see <c>OrderLayout</c>); null means the site's default.</summary>
+    public string? OrderTotalPosition { get; set; }
+
+    /// <summary>One long page or one category at a time (see <c>OrderLayout</c>); null means the site's default.</summary>
+    public string? OrderFlow { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }

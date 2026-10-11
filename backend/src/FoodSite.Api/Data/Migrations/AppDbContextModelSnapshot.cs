@@ -848,6 +848,14 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("MinimumOrderAppliesToPickup")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("OrderFlow")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("OrderTotalPosition")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<int?>("OrdersPerHour")
                         .HasColumnType("integer");
 

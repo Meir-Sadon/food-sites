@@ -42,6 +42,12 @@ if (site.Features.Keys.FirstOrDefault(name => !Features.IsKnown(name)) is { } un
 if (site.Settings.Style is { } style && !SiteStyles.IsKnown(style))
     throw new InvalidOperationException(
         $"Site:Settings:Style {style} is not a style. Known styles: {string.Join(", ", SiteStyles.All)}.");
+if (site.Settings.OrderTotalPosition is { } totalPosition && !OrderLayout.IsKnownTotalPosition(totalPosition))
+    throw new InvalidOperationException(
+        $"Site:Settings:OrderTotalPosition {totalPosition} is not a position. Known positions: {string.Join(", ", OrderLayout.TotalPositions)}.");
+if (site.Settings.OrderFlow is { } orderFlow && !OrderLayout.IsKnownFlow(orderFlow))
+    throw new InvalidOperationException(
+        $"Site:Settings:OrderFlow {orderFlow} is not a flow. Known flows: {string.Join(", ", OrderLayout.Flows)}.");
 builder.Services.Configure<SiteOptions>(config.GetSection(SiteOptions.Section));
 builder.Services.AddScoped<FeatureFlags>();
 // Cookie names, the JWT issuer and the WhatsApp template names are built from the site id unless configured.

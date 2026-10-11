@@ -31,7 +31,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string ServiceCities,
         int? OrdersPerHour,
         int? PortionsPerSupplyDate,
-        string Style);
+        string Style,
+        string OrderTotalPosition,
+        string OrderFlow);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -45,7 +47,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool? MinimumOrderAppliesToPickup = null,
         int? OrdersPerHour = null,
         int? PortionsPerSupplyDate = null,
-        string? Style = null);
+        string? Style = null,
+        string? OrderTotalPosition = null,
+        string? OrderFlow = null);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -73,6 +77,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.ServiceCities), "tooLong");
         if (input.Style is not null && !SiteStyles.IsKnown(input.Style))
             errors.Add(nameof(input.Style), "invalid");
+        if (input.OrderTotalPosition is not null && !OrderLayout.IsKnownTotalPosition(input.OrderTotalPosition))
+            errors.Add(nameof(input.OrderTotalPosition), "invalid");
+        if (input.OrderFlow is not null && !OrderLayout.IsKnownFlow(input.OrderFlow))
+            errors.Add(nameof(input.OrderFlow), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -97,6 +105,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Missing (an older client) keeps the style.
         if (input.Style is not null)
             settings.SiteStyle = input.Style;
+        // Likewise the order layout.
+        if (input.OrderTotalPosition is not null)
+            settings.OrderTotalPosition = input.OrderTotalPosition;
+        if (input.OrderFlow is not null)
+            settings.OrderFlow = input.OrderFlow;
         await db.SaveChangesAsync();
         return ToDto(settings);
     }
@@ -149,7 +162,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
         s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate,
-        SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style));
+        SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
+        OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
+        OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow));
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]
