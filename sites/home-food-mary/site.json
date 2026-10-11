@@ -17,8 +17,8 @@
     "contactName": "מרי פדידה",
     "contactPhone": "053-5280884",
     "contactAddress": "איסוף משכונת אגמים, אשקלון",
-    "deliveryAreaText": "משלוחים באשקלון והסביבה",
-    "deliveryFeeText": "משלוח באשקלון והסביבה, או איסוף עצמי משכונת אגמים",
+    "deliveryAreaText": "משלוחים באשקלון והסביבה, בין השעות 11:00 ל-21:00",
+    "deliveryFeeText": "משלוח 20 ₪, או איסוף עצמי משכונת אגמים",
     "backgroundImageUrl": "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791462755/home-food-mary/background/background-1.jpg"
   },
   "seed": [
