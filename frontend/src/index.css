@@ -883,7 +883,8 @@ label {
 }
 
 .category {
-  overflow: hidden;
+  /* clip, not hidden: hidden would make the category the scroll container and stop the pictures of a dish group from sticking. */
+  overflow: clip;
   border-inline-start: 5px solid var(--color-highlight);
   box-shadow: var(--shadow-sm);
   background: var(--color-surface);
@@ -1077,6 +1078,27 @@ label {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+}
+
+/* A dish group's pictures stay in view while the client scrolls through its variants, until the block ends. */
+.dish--group > .carousel {
+  position: sticky;
+  inset-block-start: 5rem;
+  z-index: 1;
+  align-self: flex-start;
+}
+
+@media (max-width: 39.99rem) {
+  /* Stacked above the variants on a phone: keep the pinned picture short so the choices stay visible. */
+  .dish--group > .carousel {
+    inline-size: 100%;
+    max-block-size: 9rem;
+    overflow: hidden;
+  }
+
+  .dish--group > .carousel img {
+    aspect-ratio: 16 / 9;
+  }
 }
 
 /* A variant with nothing but its name, price and an add button sits beside the others to save room; picking it opens it to a full row. */
