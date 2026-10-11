@@ -12,6 +12,7 @@ import { MessagesPage } from './admin/messages/MessagesPage'
 import { ReportsPage } from './admin/reports/ReportsPage'
 import { ReviewsPage } from './admin/reviews/ReviewsPage'
 import { RoutePage } from './admin/route/RoutePage'
+import { AppearancePage } from './admin/settings/AppearancePage'
 import { SettingsPage } from './admin/settings/SettingsPage'
 import { UsagePage } from './admin/usage/UsagePage'
 import { ClientLayout } from './components/ClientLayout'
@@ -71,6 +72,7 @@ export function App() {
         >
           <Route index element={<Navigate to="settings" replace />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="appearance" element={<AppearancePage />} />
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="dishes" element={<DishesPage />} />
           <Route path="dishes/new" element={<DishFormPage key="new" />} />

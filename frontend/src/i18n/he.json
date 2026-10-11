@@ -201,14 +201,20 @@
     },
     "nav": {
       "label": "תפריט ניהול",
+      "sections": {
+        "reports": "דוחות",
+        "display": "תצוגה באתר לקוח",
+        "site": "הגדרות אתר"
+      },
       "orders": "הזמנות",
       "messages": "הודעות וואטסאפ",
       "reviews": "חוות דעת",
       "settings": "הגדרות כלליות",
       "categories": "קטגוריות",
       "dishes": "מנות",
+      "appearance": "עיצוב האתר",
       "contacts": "אנשי קשר",
-      "reports": "דוחות",
+      "reports": "סטטיסטיקה",
       "usage": "שימוש באתר",
       "audit": "יומן שינויים"
     },
@@ -224,6 +230,9 @@
     "moveUp": "העברה למעלה: {{name}}",
     "moveDown": "העברה למטה: {{name}}",
     "dragToMove": "גררו כדי לשנות את הסדר",
+    "appearance": {
+      "title": "עיצוב האתר"
+    },
     "settings": {
       "title": "הגדרות כלליות",
       "style": "סגנון האתר",

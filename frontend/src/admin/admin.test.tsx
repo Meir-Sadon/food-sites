@@ -84,26 +84,49 @@ describe('admin login', () => {
 })
 
 describe('admin layout', () => {
-  it('has tabs for orders, messages, reviews, settings, categories, dishes, contacts, reports, site usage, the audit trail and a link home', async () => {
+  it('groups the pages into reports, client site display and site settings, with a link home', async () => {
     fakeApi({ ...adminSession, ...settingsRoutes })
     renderAt('/admin')
 
     const nav = await screen.findByRole('navigation', { name: 'תפריט ניהול' })
     expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual([
-      'הזמנות',
-      'הודעות וואטסאפ',
-      'חוות דעת',
-      'הגדרות כלליות',
-      'קטגוריות',
-      'מנות',
-      'אנשי קשר',
       'דוחות',
-      'שימוש באתר',
-      'יומן שינויים',
+      'תצוגה באתר לקוח',
+      'הגדרות אתר',
       'לדף הבית',
     ])
-    expect(await within(nav).findByRole('link', { current: 'page' })).toHaveTextContent('הגדרות כלליות')
+    expect(await within(nav).findByRole('link', { current: 'page' })).toHaveTextContent('הגדרות אתר')
     expect(within(nav).getByText('בעל העסק')).toBeInTheDocument()
+    const pages = screen.getByRole('navigation', { name: 'הגדרות אתר' })
+    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual(['הגדרות כלליות', 'הודעות וואטסאפ'])
+    expect(within(pages).getByRole('link', { current: 'page' })).toHaveTextContent('הגדרות כלליות')
+  })
+
+  it('opens a section at its first page and lists that section\'s pages', async () => {
+    fakeApi({ ...adminSession, ...settingsRoutes, 'GET /api/admin/categories': () => [], 'GET /api/admin/dishes': () => [] })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+
+    await user.click(within(await screen.findByRole('navigation', { name: 'תפריט ניהול' })).getByRole('link', { name: 'תצוגה באתר לקוח' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'מנות' })).toBeInTheDocument()
+    const pages = screen.getByRole('navigation', { name: 'תצוגה באתר לקוח' })
+    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual([
+      'מנות',
+      'קטגוריות',
+      'עיצוב האתר',
+      'אנשי קשר',
+      'חוות דעת',
+    ])
+    expect(screen.queryByRole('navigation', { name: 'דוחות' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the reports section on a page opened from one of its pages', async () => {
+    fakeApi({ ...adminSession, 'GET /api/admin/orders': () => [] })
+    renderAt('/admin/orders/route?date=2026-10-14')
+
+    const pages = await screen.findByRole('navigation', { name: 'דוחות' })
+    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual(['הזמנות', 'סטטיסטיקה', 'שימוש באתר', 'יומן שינויים'])
   })
 
   it('shows when the master admin is logged in', async () => {

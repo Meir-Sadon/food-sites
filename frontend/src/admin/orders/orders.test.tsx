@@ -95,7 +95,7 @@ describe('Admin Orders', () => {
     const card = screen.getByRole('article', { name: 'הזמנה #7' })
     expect(within(card).getByText(/דנה/)).toBeInTheDocument()
     expect(within(card).getByText('₪176')).toBeInTheDocument()
-    expect(within(screen.getByRole('navigation', { name: 'תפריט ניהול' })).getByRole('link', { name: 'הזמנות' })).toHaveAttribute('href', '/admin/orders')
+    expect(within(screen.getByRole('navigation', { name: 'דוחות' })).getByRole('link', { name: 'הזמנות' })).toHaveAttribute('href', '/admin/orders')
   })
 
   it('changes the status', async () => {
