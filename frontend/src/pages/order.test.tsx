@@ -361,14 +361,21 @@ describe('Order page', () => {
     await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
     await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
     const submit = screen.getByRole('button', { name: 'שליחת ההזמנה' })
-    expect(submit).toBeDisabled()
     expect(screen.getByText(/יש להתאים כל מנה/)).toBeInTheDocument()
     expect(within(card).getAllByText(/נדרשת התאמה/)).toHaveLength(3)
+
+    // Sending opens the first unit waiting for the client and brings them to it; nothing is sent.
+    await user.click(submit)
+    const panels = card.querySelectorAll('details.addon-unit')
+    expect(panels[0]).toHaveAttribute('open')
+    expect(panels[0].querySelector('summary')).toHaveFocus()
 
     // One add-on on the first unit, then the same for every unit not set yet.
     const first = within(card).getByRole('group', { name: 'מנה 1: עוף בתנור' })
     await user.click(within(first).getByRole('button', { name: 'הוספה: ירך' }))
-    expect(submit).toBeDisabled()
+    await user.click(submit)
+    expect(panels[1]).toHaveAttribute('open')
+    expect(panels[1].querySelector('summary')).toHaveFocus()
     await user.click(within(first).getByRole('button', { name: /החלה על כל המנות שלא הותאמו/ }))
     expect(screen.queryByText(/יש להתאים כל מנה/)).not.toBeInTheDocument()
     expect(within(card).queryAllByText(/נדרשת התאמה/)).toHaveLength(0)

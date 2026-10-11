@@ -218,7 +218,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
           {t('order.add')}
         </button>
       ) : (
-        <div className="dish__choice">
+        <div className="dish__choice" data-dish-id={dish.id}>
           {options && (
             <OptionCards dish={dish} name={`${id}-option`} checkedId={selection.optionId} onPick={(optionId) => onChange({ ...selection, optionId })} />
           )}
