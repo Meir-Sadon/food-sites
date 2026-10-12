@@ -2815,6 +2815,208 @@ label {
   box-shadow: -2px 2px 0 var(--color-text);
 }
 
+/* ---------- Order layout: side total, category steps ---------- */
+
+.order-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-inline-size: 0;
+}
+
+.total-bar__details {
+  display: none;
+}
+
+/* The total as a panel at the end of the line (left in Hebrew) instead of a bar across the bottom; only where
+   there is room. Narrow screens keep the bottom bar. */
+@media (min-width: 64rem) {
+  .order-page[data-total='side'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    align-items: start;
+    gap: 1.5rem;
+    padding-block-end: 1.5rem;
+  }
+
+  .order-page[data-total='side'] .total-bar {
+    position: sticky;
+    inset-inline: auto;
+    inset-block: 5rem auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+  }
+
+  .order-page[data-total='side'] .total-bar__counts {
+    gap: 0.125rem;
+  }
+
+  .order-page[data-total='side'] .total-bar__details {
+    display: block;
+    margin: 0;
+    background: var(--color-surface);
+    color: var(--color-accent);
+  }
+
+  .client-shell:has(.order-page[data-total='side']) .fabs {
+    inset-block-end: 1rem;
+  }
+}
+
+.order-steps {
+  position: sticky;
+  inset-block-start: 3.5rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  scroll-margin-block-start: 4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.order-steps__list {
+  display: flex;
+  flex: 1;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.order-steps__list > li {
+  flex: none;
+}
+
+.order-steps__arrow {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.order-steps__arrow svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+/* The chevron is drawn pointing right: "next" points to the end of the line, "previous" to its start. */
+:root[dir='rtl'] .order-steps__arrow--next svg,
+:root:not([dir='rtl']) .order-steps__arrow--previous svg {
+  transform: scaleX(-1);
+}
+
+.order-steps__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.order-steps__step[aria-current='step'] {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.order-steps__step--details:not([aria-current='step']) {
+  border-style: dashed;
+}
+
+.order-steps__count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
+  padding-inline: 0.25rem;
+  border-radius: 999px;
+  background: var(--color-gold);
+  color: var(--color-text);
+  font-size: 0.75rem;
+}
+
+.order-steps__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.order-steps__footer > :only-child {
+  margin-inline-start: auto;
+}
+
+/* Admin: little drawings for the order layout choices. */
+.layout-preview {
+  grid-column: 1 / -1;
+  position: relative;
+  block-size: 3.5rem;
+  margin-block-end: 0.25rem;
+  border-radius: 0.5rem;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.layout-preview::before,
+.layout-preview::after {
+  content: '';
+  position: absolute;
+  border-radius: 0.25rem;
+}
+
+.layout-preview::before {
+  inset: 0.5rem;
+  background: repeating-linear-gradient(
+    var(--color-border) 0 0.5rem,
+    transparent 0.5rem 0.75rem
+  );
+}
+
+.layout-preview--total-bottom::after {
+  inset: auto 0 0;
+  block-size: 0.75rem;
+  border-radius: 0;
+  background: var(--color-accent);
+}
+
+.layout-preview--total-side::after {
+  inset: 0 auto 0 0;
+  inline-size: 1.75rem;
+  border-radius: 0;
+  background: var(--color-accent);
+}
+
+.layout-preview--flow-steps::before {
+  background: linear-gradient(var(--color-border) 0 0.75rem, transparent 0.75rem) top / 100% 100% no-repeat,
+    repeating-linear-gradient(var(--color-border) 0 0.5rem, transparent 0.5rem 0.75rem) 0 1.25rem / 100% 100% no-repeat;
+}
+
+.layout-preview--flow-steps::after {
+  inset: auto 0.5rem 0.25rem;
+  block-size: 0.625rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--color-accent) 0.2rem, transparent 0.21rem) 0 0 / 1.25rem 100%;
+}
+
 /* One ordered unit's choices (add-ons, name, questions): closed until opened, with its state in the heading. */
 .addon-units {
   display: grid;

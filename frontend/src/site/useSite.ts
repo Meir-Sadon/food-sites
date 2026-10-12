@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import { SITE_STYLES, type Feature, type Site, type SiteStyle } from '../api/site'
+import { ORDER_FLOWS, ORDER_TOTAL_POSITIONS, SITE_STYLES, type Feature, type OrderFlow, type OrderTotalPosition, type Site, type SiteStyle } from '../api/site'
 import { site as siteConfig } from './config'
 
 export interface SiteState {
@@ -33,4 +33,15 @@ export function useSiteStyle(): SiteStyle {
   if (site) return site.style
   const style = siteConfig.settings?.style
   return SITE_STYLES.find((known) => known === style) ?? 'classic'
+}
+
+/** How the order page is laid out: what `/api/site` says, or the site's site.json until (or unless) it answers. */
+export function useOrderLayout(): { totalPosition: OrderTotalPosition; flow: OrderFlow } {
+  const site = useSite()
+  if (site) return { totalPosition: site.orderTotalPosition, flow: site.orderFlow }
+  const { orderTotalPosition, orderFlow } = siteConfig.settings ?? {}
+  return {
+    totalPosition: ORDER_TOTAL_POSITIONS.find((known) => known === orderTotalPosition) ?? 'bottom',
+    flow: ORDER_FLOWS.find((known) => known === orderFlow) ?? 'page',
+  }
 }

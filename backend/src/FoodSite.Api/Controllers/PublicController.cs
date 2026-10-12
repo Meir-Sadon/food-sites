@@ -28,7 +28,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<string> WhatsAppPhones,
         IReadOnlyList<string> ServiceCities,
         IReadOnlyList<string> Features,
-        string Style);
+        string Style,
+        string OrderTotalPosition,
+        string OrderFlow);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -100,7 +102,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             whatsAppPhones,
             ServiceArea.Parse(s.ServiceCities),
             await features.EnabledAsync(),
-            SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style));
+            SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
+            OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
+            OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow));
     }
 
     [HttpGet("menu")]

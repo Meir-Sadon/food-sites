@@ -45,6 +45,34 @@ describe('Site style', () => {
   })
 })
 
+describe('Order layout', () => {
+  it('saves where the total sits and how the menu is paged, as settings stand now', async () => {
+    let saved = settings({ kashrutText: 'נשמר בינתיים' })
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('פריסת עמוד ההזמנה')
+
+    expect(within(form).getByRole('radio', { name: /בתחתית המסך/ })).toBeChecked()
+    expect(within(form).getByRole('radio', { name: /עמוד אחד/ })).toBeChecked()
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    expect(save).toBeDisabled()
+    await user.click(within(form).getByRole('radio', { name: /בצד, במסך רחב/ }))
+    await user.click(within(form).getByRole('radio', { name: /קטגוריה אחר קטגוריה/ }))
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    const body = api.sent('PUT', '/api/admin/settings')[0].body
+    expect(body).toMatchObject({ orderTotalPosition: 'side', orderFlow: 'steps', kashrutText: 'נשמר בינתיים' })
+    expect(body).not.toHaveProperty('style')
+    expect(save).toBeDisabled()
+  })
+})
+
 describe('General settings', () => {
   it('saves delivery, kashrut and payment details', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })

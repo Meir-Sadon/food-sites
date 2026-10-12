@@ -106,6 +106,8 @@ public class AppDbContext(
             e.Property(s => s.MinimumOrderAmount).HasPrecision(10, 2);
             e.Property(s => s.SiteStyle).HasMaxLength(Sites.SiteStyles.MaxLength);
             e.Property(s => s.OpsTokenHash).HasMaxLength(64);
+            e.Property(s => s.OrderTotalPosition).HasMaxLength(Sites.OrderLayout.MaxLength);
+            e.Property(s => s.OrderFlow).HasMaxLength(Sites.OrderLayout.MaxLength);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
         });
 

@@ -82,6 +82,12 @@ public class SiteSettingsDefaults
     /// into Settings: it applies until the admin picks a style.
     /// </summary>
     public string? Style { get; set; }
+
+    /// <summary>The site's default place for the order total, one of <see cref="OrderLayout.TotalPositions"/>. Applies until the admin picks one.</summary>
+    public string? OrderTotalPosition { get; set; }
+
+    /// <summary>The site's default order flow, one of <see cref="OrderLayout.Flows"/>. Applies until the admin picks one.</summary>
+    public string? OrderFlow { get; set; }
 }
 
 public class SiteWhatsAppTemplates
