@@ -1,0 +1,20 @@
+/* The site's colour palette: Yemeni terracotta, saffron gold and warm cream, with dark brown text. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #fbf3e6;
+  --color-surface: #fffdf9;
+  --color-text: #3a2418;
+  --color-muted: #75594a;
+  --color-accent: #9c3d22;
+  --color-accent-hover: #7f2f19;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #d99a2b;
+  --color-border: #ecdcc4;
+  --color-error: #b42318;
+  --color-success: #4d6b2f;
+  --color-soft: #f6e8d2;
+  --color-shadow: #3a2418;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(217 154 43 / 0.18);
+  --color-badge-text: #7a5212;
+  --gradient-hero: linear-gradient(135deg, var(--color-accent-hover) 0%, #b5562c 55%, var(--color-gold) 135%);
+}

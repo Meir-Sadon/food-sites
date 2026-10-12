@@ -1,0 +1,124 @@
+{
+  "categories": [
+    {
+      "name": "מאפים תימניים",
+      "dishes": [
+        {
+          "name": "ג'חנון (5 יחידות)",
+          "description": "ג'חנון תימני ביתי באפייה ארוכה, מארז של 5 יחידות.",
+          "sellBy": "Units",
+          "unitName": "מארז",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791817068/yemeni-dishes-sapir/dishes/01-jachnun.jpg"]
+        },
+        {
+          "name": "קובנה קטנה",
+          "description": "קובנה תימנית ביתית, רכה ואוורירית, בגודל קטן.",
+          "sellBy": "Units",
+          "unitPrice": 35,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791817084/yemeni-dishes-sapir/dishes/02-kubaneh-small.jpg"]
+        },
+        {
+          "name": "קובנה גדולה",
+          "description": "קובנה תימנית ביתית, רכה ואוורירית, בגודל משפחתי.",
+          "sellBy": "Units",
+          "unitPrice": 55,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791817101/yemeni-dishes-sapir/dishes/03-kubaneh-large.jpg"]
+        },
+        {
+          "name": "מלאווח חלבי",
+          "description": "מלאווח ביתי עם חמאה, פריך ושכבתי.",
+          "sellBy": "Units",
+          "unitPrice": 35,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791817118/yemeni-dishes-sapir/dishes/04-malawach-dairy.jpg"]
+        },
+        {
+          "name": "מלאווח פרווה",
+          "description": "מלאווח ביתי פרווה, פריך ושכבתי.",
+          "sellBy": "Units",
+          "unitPrice": 30,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["/dishes/05-malawach-parve.svg"]
+        },
+        {
+          "name": "סביאה קטנה",
+          "description": "סביאה תימנית ביתית, שכבות דקות של בצק, בגודל קטן.",
+          "sellBy": "Units",
+          "unitPrice": 60,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["/dishes/06-sabaya-small.svg"]
+        },
+        {
+          "name": "סביאה גדולה",
+          "description": "סביאה תימנית ביתית, שכבות דקות של בצק, בגודל גדול.",
+          "sellBy": "Units",
+          "unitPrice": 130,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["/dishes/07-sabaya-large.svg"]
+        },
+        {
+          "name": "דמולה עם סמנה חלבית (5 יחידות)",
+          "description": "דמולה תימנית ביתית עם סמנה חלבית, מארז של 5 יחידות. אפשר לבחור סמנה פרווה במקום חלבית.",
+          "sellBy": "Units",
+          "unitName": "מארז",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["/dishes/08-damoula.svg"],
+          "questions": [
+            {
+              "text": "סוג הסמנה",
+              "kind": "SingleChoice",
+              "choices": ["סמנה חלבית", "סמנה פרווה במקום חלבית"],
+              "isRequired": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "רטבים",
+      "dishes": [
+        {
+          "name": "חילבה",
+          "description": "חילבה ביתית, מוקצפת וטרייה.",
+          "sellBy": "Units",
+          "unitPrice": 20,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["/dishes/09-hilbe.svg"]
+        },
+        {
+          "name": "חריף אדום-ירוק",
+          "description": "סחוג ביתי אדום וירוק.",
+          "sellBy": "Units",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": ["/dishes/10-schug.svg"]
+        }
+      ]
+    }
+  ]
+}
