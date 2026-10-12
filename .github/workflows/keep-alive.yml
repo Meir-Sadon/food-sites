@@ -1,0 +1,73 @@
+# Keeps chosen free Render services awake during opening hours: a free service sleeps after 15
+# minutes without a request, and the first visitor after that waits about a minute for it to
+# start. Every 25 minutes between 09:00 and 21:00 Israel time this asks /api/health (no database,
+# no auth) of each site listed in .github/keep-alive-sites.txt, which counts as a request. Sites
+# not in that file are never pinged.
+#
+# Free instance hours: Render gives a workspace 750 free hours a month, shared by all its free
+# services, and only an awake service uses them. With a ping every 25 minutes, a listed site is
+# awake about 15 minutes after each ping, roughly 7 to 8 hours a day (about 230 hours a month), so
+# three sites at most fit in the monthly hours, and list only what they can carry; when they run out,
+# Render suspends every free service until the next month.
+#
+# GitHub runs scheduled workflows late at busy times (often several minutes, so a site can
+# still fall asleep between pings, since a 25-minute gap is longer than the 15-minute idle limit), and turns the schedule off after 60 days without a commit
+# to the repository; it is turned back on under Actions -> Keep sites awake -> Enable workflow.
+name: Keep sites awake
+
+on:
+  schedule:
+    # UTC hours that cover 09:00-21:00 in Israel in both summer (UTC+3) and winter (UTC+2) time;
+    # the first step checks the exact Israel time.
+    - cron: '*/25 5-19 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping /api/health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: Asia/Jerusalem
+      # Opening hours: pings start at START_HOUR:00 and stop before END_HOUR:00 (Israel time).
+      START_HOUR: '9'
+      END_HOUR: '21'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/keep-alive-sites.txt
+          sparse-checkout-cone-mode: false
+      - name: Ping the listed sites
+        run: |
+          hour=$((10#$(date +%H)))
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && { [ "$hour" -lt "$START_HOUR" ] || [ "$hour" -ge "$END_HOUR" ]; }; then
+            echo "It is $(date +%H:%M) in Israel, outside $START_HOUR:00-$END_HOUR:00; nothing to do."
+            exit 0
+          fi
+          sites=$(sed 's/#.*//' .github/keep-alive-sites.txt | tr -s '[:space:]' ' ')
+          if [ -z "${sites// /}" ]; then
+            echo "No site is listed in .github/keep-alive-sites.txt; nothing to do."
+            exit 0
+          fi
+          ping() {
+            url="https://$1.onrender.com"
+            # A sleeping service takes up to about a minute to answer its first request.
+            if body=$(curl -fsS --max-time 90 --retry 2 --retry-delay 10 --retry-all-errors "$url/api/health" 2>&1); then
+              echo "$url: $body"
+            else
+              echo "::error::$url/api/health did not answer: $body"
+              return 1
+            fi
+          }
+          pids=()
+          for site in $sites; do ping "$site" & pids+=($!); done
+          failed=0
+          for pid in "${pids[@]}"; do wait "$pid" || failed=1; done
+          exit $failed

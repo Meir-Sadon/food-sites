@@ -24,10 +24,18 @@ Migrations run on each site's start, so a migration must work with the code befo
 The `new-food-site` skill (`.claude/skills/new-food-site/SKILL.md`) walks through all of it, from the business's ad and photos.
 
 1. Its folder under `sites/` (copy `sites/_template/`), with the main contact and other starting settings in `site.json` → `settings`.
-2. A service entry in `render.yaml` with `SITE` set to the folder, `autoDeployTrigger: "off"` and no `Database__ApplySeeds` (a new site wants its seed menu), and a line in the matrix of `.github/workflows/deploy.yml`.
+2. A service entry in `render.yaml` with `SITE` set to the folder, `autoDeployTrigger: "off"` and no `Database__ApplySeeds` (a new site wants its seed menu), a line in the matrix of `.github/workflows/deploy.yml`, and its id in `.github/keep-alive-sites.txt` if it should be kept awake (see below).
 3. A Neon project and the service's secrets (steps 1 to 4 below), and the deploy hook secret.
 
 Before adding a third site, check the free tiers: free Render services share a monthly allowance of instance hours, and Neon limits the number of free projects.
+
+## Keeping sites awake
+
+A free Render service sleeps after 15 minutes without a request, and the next visitor waits about a minute for it to start. `.github/workflows/keep-alive.yml` asks `/api/health` (no database) every 25 minutes, **between 09:00 and 21:00 Israel time**, of the sites listed in `.github/keep-alive-sites.txt` (one site id per line; a site not listed there is never pinged). A ping every 25 minutes is longer than Render's 15-minute idle limit, so a listed site still sleeps between pings and a visitor who arrives in that gap waits about a minute. The job cuts the hours a listed site uses; it does not keep the site always awake. A site that doesn't answer fails the run, which GitHub emails about. The hours are `START_HOUR` and `END_HOUR` in the workflow; **Actions → Keep sites awake → Run workflow** pings the listed sites at any hour.
+
+- A listed site is awake about 15 minutes after each ping, roughly 7 to 8 hours a day, so about 230 of the workspace's **750 free instance hours a month**, shared by all free services. When they run out, Render suspends every free service until the next month. So list only what the hours cover (about three sites, less the hours the other sites use when visitors wake them), or move the sites that must answer at once to a paid plan (which never sleeps and needs no keep-alive).
+- GitHub runs scheduled workflows late at busy times, sometimes by more than 15 minutes, so a site can still fall asleep now and then.
+- GitHub turns a schedule off after 60 days without a commit to the repository. Turn it back on under **Actions → Keep sites awake → Enable workflow**.
 
 ## Before you start
 
