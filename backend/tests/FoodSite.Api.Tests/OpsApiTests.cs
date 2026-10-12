@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Ops;
 using FoodSite.Api.Sites;
@@ -105,7 +106,7 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task The_summary_counts_orders_and_totals_per_period_like_the_reports()
+    public async Task The_summary_counts_every_order_but_cancelled_per_period_and_each_status_on_its_own()
     {
         await using (var db = _factory.CreateDbContext())
         {
@@ -127,11 +128,29 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
         var console = await ConsoleAsync();
 
         var months = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-03-31").Read<SummaryDto>();
-        Assert.Equal(4, months.Orders);
-        Assert.Equal(250, months.Sales);
+        // A delivery waiting for the admin's approval counts; a cancelled order does not.
+        Assert.Equal(5, months.Orders);
+        Assert.Equal(1249, months.Sales);
         Assert.Equal(
-            [new PeriodDto(new(2030, 1, 1), 3, 180), new PeriodDto(new(2030, 2, 1), 1, 70)],
+            [new PeriodDto(new(2030, 1, 1), 3, 180), new PeriodDto(new(2030, 2, 1), 2, 1069)],
             months.Periods);
+        Assert.Equal(["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"], months.Statuses);
+        Assert.Equal(
+            [
+                new StatusDto("New", 4, 250), new StatusDto("Confirmed", 0, 0), new StatusDto("Ready", 0, 0),
+                new StatusDto("Delivered", 0, 0), new StatusDto("WaitingApproval", 1, 999), new StatusDto("Cancelled", 1, 999),
+            ],
+            months.ByStatus);
+
+        // Asking for states picks what the totals count; byStatus still shows them all.
+        var cancelled = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-03-31&statuses=cancelled").Read<SummaryDto>();
+        Assert.Equal((1, 999m), (cancelled.Orders, cancelled.Sales));
+        Assert.Equal([new PeriodDto(new(2030, 2, 1), 1, 999)], cancelled.Periods);
+        Assert.Equal(["Cancelled"], cancelled.Statuses);
+        Assert.Equal(months.ByStatus, cancelled.ByStatus);
+        var two = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-03-31&statuses=WaitingApproval,New").Read<SummaryDto>();
+        Assert.Equal((5, 1249m), (two.Orders, two.Sales));
+        await (await console.GetAsync("/api/ops/summary?statuses=Shipped")).AssertInvalid("statuses", "invalid");
 
         // Weeks start on Sunday: 2030-01-06 is one.
         var weeks = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-01-31&period=week").Read<SummaryDto>();
@@ -140,6 +159,31 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
             weeks.Periods);
 
         await (await console.GetAsync("/api/ops/summary?from=2030-02-01&to=2030-01-01")).AssertInvalid("from", "invalidRange");
+    }
+
+    [Fact]
+    public async Task The_usage_report_is_the_admins_numbers_for_the_console()
+    {
+        await using (var db = _factory.CreateDbContext())
+        {
+            db.Users.Add(new User { Phone = "0501234567", FullName = "דנה", Address = "אשקלון", CreatedAt = DateTimeOffset.UtcNow });
+            db.Orders.Add(new Order
+            {
+                Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = new(2030, 1, 6), Total = 80,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        }
+        var console = await ConsoleAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var report = await console.GetAsync($"/api/ops/usage?from={today.AddDays(-1):yyyy-MM-dd}&to={today.AddDays(1):yyyy-MM-dd}")
+            .Read<UsageReportController.UsageReportDto>();
+
+        Assert.Equal(1, report.Registered.Total);
+        Assert.Equal((1, 80m), (report.Orders.Orders, report.Orders.Sales));
+        await (await console.GetAsync("/api/ops/usage?from=2030-02-01&to=2030-01-01")).AssertInvalid("from", "invalidRange");
+        await (await console.GetAsync("/api/ops/usage?from=2020-01-01&to=2030-01-01")).AssertInvalid("from", "invalidRange");
     }
 
     [Fact]

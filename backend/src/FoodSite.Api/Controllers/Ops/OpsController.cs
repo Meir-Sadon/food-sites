@@ -1,8 +1,10 @@
 using FoodSite.Api.Data;
+using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Ops;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Sites;
+using FoodSite.Api.Usage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +20,7 @@ namespace FoodSite.Api.Controllers.Ops;
 [ApiController]
 [Route("api/ops")]
 [Authorize(AuthenticationSchemes = OpsToken.Scheme, Roles = OpsToken.Role)]
-public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureFlags flags, SiteClock clock) : ControllerBase
+public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureFlags flags, SiteClock clock, UsageReportBuilder usage) : ControllerBase
 {
     /// <summary>The most items a list returns, newest first.</summary>
     public const int ListLimit = 500;
@@ -41,7 +43,30 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
 
     public record PeriodDto(DateOnly Start, int Orders, decimal Sales);
 
-    public record SummaryDto(DateOnly From, DateOnly To, SummaryPeriod Period, int Orders, decimal Sales, IReadOnlyList<PeriodDto> Periods);
+    /// <summary>Where an order stands, as the summary tells it apart: its status, or <see cref="WaitingApproval"/> while the admin has not approved it.</summary>
+    public static class OrderState
+    {
+        /// <summary>A delivery outside the service area that the admin has not approved yet (not cancelled).</summary>
+        public const string WaitingApproval = nameof(WaitingApproval);
+
+        /// <summary>Every state, in the order <see cref="SummaryDto.ByStatus"/> lists them.</summary>
+        public static readonly IReadOnlyList<string> All =
+            [nameof(OrderStatus.New), nameof(OrderStatus.Confirmed), nameof(OrderStatus.Ready), nameof(OrderStatus.Delivered), WaitingApproval, nameof(OrderStatus.Cancelled)];
+
+        /// <summary>What a summary counts when no <c>statuses</c> are asked for: everything but cancelled.</summary>
+        public static readonly IReadOnlyList<string> Default = All.Where(s => s != nameof(OrderStatus.Cancelled)).ToList();
+
+        public static string Of(OrderStatus status, bool needsReview) =>
+            status == OrderStatus.Cancelled ? nameof(OrderStatus.Cancelled) : needsReview ? WaitingApproval : status.ToString();
+    }
+
+    public record StatusDto(string Status, int Orders, decimal Sales);
+
+    /// <param name="Statuses">The states the totals and periods count.</param>
+    /// <param name="ByStatus">Every state's orders and sales in the range, whatever <paramref name="Statuses"/> asks for.</param>
+    public record SummaryDto(
+        DateOnly From, DateOnly To, SummaryPeriod Period, int Orders, decimal Sales, IReadOnlyList<PeriodDto> Periods,
+        IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus);
 
     public record RecommendationDto(int Id, string Text, string? ClientName, DateTimeOffset CreatedAt, bool IsHandled);
 
@@ -63,12 +88,14 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     }
 
     /// <summary>
-    /// Orders and their totals per period, by supply date, counted like the admin's reports: cancelled orders and
-    /// orders waiting for approval are left out. Without dates: the last 12 months up to today.
+    /// Orders and their totals per period, by supply date. <paramref name="statuses"/> (comma-separated
+    /// <see cref="OrderState.All"/>) picks what counts; without it everything but cancelled does, orders waiting for the
+    /// admin's approval included. Every state's own count is returned in <c>byStatus</c> either way.
+    /// Without dates: the last 12 months up to today.
     /// </summary>
     [HttpGet("summary")]
     public async Task<ActionResult<SummaryDto>> Summary(
-        DateOnly? from, DateOnly? to, SummaryPeriod period = SummaryPeriod.Month, CancellationToken ct = default)
+        DateOnly? from, DateOnly? to, SummaryPeriod period = SummaryPeriod.Month, string? statuses = null, CancellationToken ct = default)
     {
         var end = to ?? clock.Today();
         var start = from ?? new DateOnly(end.Year, end.Month, 1).AddMonths(-11);
@@ -76,16 +103,50 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
             return ValidationProblem(new ValidationProblemDetails(
                 new Admin.Errors().Add(nameof(from), "invalidRange").ToDictionary()));
 
-        var orders = await db.Orders.AsNoTracking()
-            .Where(o => o.Status != OrderStatus.Cancelled && !o.NeedsReview && o.SupplyDate >= start && o.SupplyDate <= end)
-            .Select(o => new { o.SupplyDate, o.Total })
-            .ToListAsync(ct);
+        var counted = OrderState.Default;
+        if (!string.IsNullOrWhiteSpace(statuses))
+        {
+            var asked = statuses.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => OrderState.All.FirstOrDefault(known => string.Equals(known, s, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+            if (asked.Count == 0 || asked.Any(s => s is null))
+                return ValidationProblem(new ValidationProblemDetails(
+                    new Admin.Errors().Add(nameof(statuses), "invalid").ToDictionary()));
+            counted = OrderState.All.Where(asked.Contains).ToList();
+        }
+
+        var all = (await db.Orders.AsNoTracking()
+                .Where(o => o.SupplyDate >= start && o.SupplyDate <= end)
+                .Select(o => new { o.SupplyDate, o.Total, o.Status, o.NeedsReview })
+                .ToListAsync(ct))
+            .Select(o => new { o.SupplyDate, o.Total, State = OrderState.Of(o.Status, o.NeedsReview) })
+            .ToList();
+        var orders = all.Where(o => counted.Contains(o.State)).ToList();
         var periods = orders
             .GroupBy(o => PeriodStart(o.SupplyDate, period))
             .OrderBy(g => g.Key)
             .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Total)))
             .ToList();
-        return new SummaryDto(start, end, period, orders.Count, orders.Sum(o => o.Total), periods);
+        var byStatus = OrderState.All
+            .Select(state => new StatusDto(state, all.Count(o => o.State == state), all.Where(o => o.State == state).Sum(o => o.Total)))
+            .ToList();
+        return new SummaryDto(start, end, period, orders.Count, orders.Sum(o => o.Total), periods, counted, byStatus);
+    }
+
+    /// <summary>
+    /// How the client site is used between two dates (the admin's usage report): devices that visited, started and
+    /// sent an order, registered clients, orders and customers. Without dates: the last 30 days up to today.
+    /// </summary>
+    [HttpGet("usage")]
+    public async Task<ActionResult<UsageReportController.UsageReportDto>> Usage(DateOnly? from, DateOnly? to, CancellationToken ct)
+    {
+        var end = to ?? clock.Today();
+        var start = from ?? end.AddDays(-29);
+        if (start > end || end.DayNumber - start.DayNumber + 1 > UsageReportController.MaxDays)
+            return ValidationProblem(new ValidationProblemDetails(
+                new Admin.Errors().Add(nameof(from), "invalidRange").ToDictionary()));
+
+        return await usage.BuildAsync(start, end, ct);
     }
 
     internal static DateOnly PeriodStart(DateOnly date, SummaryPeriod period) => period switch
