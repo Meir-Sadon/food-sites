@@ -73,6 +73,33 @@ describe('Order layout', () => {
   })
 })
 
+describe('Corners', () => {
+  it('saves the picked corners and nothing the other sections own', async () => {
+    let saved = settings({ kashrutText: 'נשמר בינתיים' })
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('עיגול פינות')
+
+    expect(within(form).getByRole('radio', { name: /המראה הרגיל של האתר/ })).toBeChecked()
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    expect(save).toBeDisabled()
+    await user.click(within(form).getByRole('radio', { name: /^מרובע/ }))
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    const body = api.sent('PUT', '/api/admin/settings')[0].body
+    expect(body).toMatchObject({ corners: 'square', kashrutText: 'נשמר בינתיים' })
+    expect(body).not.toHaveProperty('style')
+    expect(body).not.toHaveProperty('orderFlow')
+    expect(within(form).getByRole('radio', { name: /^מרובע/ })).toBeChecked()
+  })
+})
+
 describe('General settings', () => {
   it('saves delivery, kashrut and payment details', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })

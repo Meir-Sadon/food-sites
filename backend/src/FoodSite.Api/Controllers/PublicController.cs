@@ -30,7 +30,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<string> Features,
         string Style,
         string OrderTotalPosition,
-        string OrderFlow);
+        string OrderFlow,
+        string Corners);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -104,7 +105,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             await features.EnabledAsync(),
             SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
             OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
-            OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow));
+            OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
+            Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners));
     }
 
     [HttpGet("menu")]

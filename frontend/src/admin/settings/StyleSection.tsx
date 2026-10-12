@@ -24,7 +24,7 @@ export function StyleSection() {
     setError(null)
     try {
       // The other settings as saved now, so this never sends stale values back.
-      const { backgroundImageUrl: _, orderTotalPosition: __, orderFlow: ___, ...current } = await settingsApi.get()
+      const { backgroundImageUrl: _, orderTotalPosition: __, orderFlow: ___, corners: ____, ...current } = await settingsApi.get()
       setData(await settingsApi.save({ ...current, style }))
       setPicked(null)
       toast(t('admin.saved'))

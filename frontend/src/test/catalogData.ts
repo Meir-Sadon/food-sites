@@ -18,6 +18,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   style: 'classic',
   orderTotalPosition: 'bottom',
   orderFlow: 'page',
+  corners: 'rounded',
   ...patch,
 })
 
@@ -84,6 +85,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   style: 'classic',
   orderTotalPosition: 'bottom',
   orderFlow: 'page',
+  corners: 'rounded',
   ...patch,
 })
 

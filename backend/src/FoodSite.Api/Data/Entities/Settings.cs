@@ -67,6 +67,9 @@ public class Settings
     /// <summary>One long page or one category at a time (see <c>OrderLayout</c>); null means the site's default.</summary>
     public string? OrderFlow { get; set; }
 
+    /// <summary>How round the client site's corners are (see <c>Corners</c>); null means the site's default.</summary>
+    public string? Corners { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }

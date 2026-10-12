@@ -6,12 +6,34 @@
     0 1px 3px color-mix(in srgb, var(--color-shadow) 8%, transparent);
   --shadow-md: 0 4px 12px color-mix(in srgb, var(--color-shadow) 8%, transparent),
     0 2px 4px color-mix(in srgb, var(--color-shadow) 5%, transparent);
-  --radius: 0.75rem;
+  /* Corners: Settings → corners sets <html data-corners> on client pages, which scales every rounded corner
+     (circles stay circles). The admin has no data-corners and keeps the original look. */
+  --corner-scale: 1;
+  --radius-pill: 999px;
+  --radius: calc(0.75rem * var(--corner-scale));
 
   font-family: 'Assistant', 'Rubik', 'Segoe UI', Arial, sans-serif;
   line-height: 1.6;
   color: var(--color-text);
   background: var(--color-bg);
+}
+
+/* The admin's corner choice (Corners in FoodSite.Api); the picker's previews use the same classes. */
+:root[data-corners='square'],
+.corners-preview--square {
+  --corner-scale: 0;
+  --radius-pill: 0;
+}
+
+:root[data-corners='slight'],
+.corners-preview--slight {
+  --corner-scale: 0.5;
+  --radius-pill: 0.5rem;
+}
+
+:root[data-corners='round'],
+.corners-preview--round {
+  --corner-scale: 2;
 }
 
 *,
@@ -88,7 +110,7 @@ a {
   inline-size: 2.75rem;
   block-size: 2.75rem;
   padding: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-text);
   font-weight: 600;
@@ -304,7 +326,7 @@ button:disabled {
 .admin-subnav__link {
   display: block;
   padding: 0.375rem 0.75rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--color-muted);
   font-weight: 600;
   text-decoration: none;
@@ -489,7 +511,7 @@ label {
   align-self: center;
   inline-size: 2.5rem;
   block-size: 2.5rem;
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
   object-fit: cover;
 }
 
@@ -499,7 +521,7 @@ label {
 
 .badge {
   padding: 0.125rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-soft);
   font-size: 0.8125rem;
 }
@@ -518,7 +540,7 @@ label {
   min-block-size: 2.75rem;
   padding: 0.375rem 0.75rem;
   border: 1px solid var(--color-border);
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
   background: var(--color-surface);
   color: var(--color-text);
   text-decoration: none;
@@ -565,7 +587,7 @@ label {
   justify-content: center;
   min-inline-size: 2.75rem;
   min-block-size: 2.75rem;
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
   color: var(--color-muted);
   font-size: 1.25rem;
   cursor: grab;
@@ -581,7 +603,7 @@ label {
 .is-dragging {
   position: relative;
   z-index: 1;
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
   background: var(--color-surface);
   box-shadow: 0 0.25rem 1rem color-mix(in srgb, var(--color-shadow) 20%, transparent);
   opacity: 0.9;
@@ -623,7 +645,7 @@ label {
   align-items: center;
   gap: 0.25rem 1rem;
   padding-inline: 0.5rem;
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
 }
 
 .supply-day--on {
@@ -638,7 +660,7 @@ label {
   max-inline-size: 100%;
   max-block-size: 12rem;
   object-fit: cover;
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
 }
 
 .option-row {
@@ -690,7 +712,7 @@ label {
   inline-size: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
 }
 
 .visually-hidden {
@@ -828,7 +850,7 @@ label {
 .order-hero__chips li {
   white-space: nowrap;
   padding: 0.35rem 0.85rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgb(255 255 255 / 0.18);
   border: 1px solid rgb(255 255 255 / 0.3);
   backdrop-filter: blur(4px);
@@ -841,7 +863,7 @@ label {
   margin: 0;
   padding: 0.5rem 0.75rem;
   background: var(--color-soft);
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
 }
 
 .about-page {
@@ -1000,7 +1022,7 @@ label {
 
 .option-card__default {
   padding: 0.05rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-badge);
   color: var(--color-badge-text);
   font-size: 0.75rem;
@@ -1142,7 +1164,7 @@ label {
   inline-size: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
 }
 
 .amount {
@@ -1619,7 +1641,7 @@ label {
   padding: 0.75rem 1rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: calc(0.5rem * var(--corner-scale));
 }
 
 .order-card--cancelled {
@@ -1639,7 +1661,7 @@ label {
 .cooking-summary {
   padding: 0.75rem 1rem;
   background: var(--color-soft);
-  border-radius: 0.5rem;
+  border-radius: calc(0.5rem * var(--corner-scale));
 }
 
 .table {
@@ -1657,7 +1679,7 @@ label {
 .warning {
   padding: 0.75rem 1rem;
   border: 2px solid var(--color-error);
-  border-radius: 0.5rem;
+  border-radius: calc(0.5rem * var(--corner-scale));
   background: var(--color-surface);
 }
 
@@ -1793,7 +1815,7 @@ label {
   padding-inline: 1rem 0.75rem;
   background: var(--color-text);
   color: var(--color-surface);
-  border-radius: 0.5rem;
+  border-radius: calc(0.5rem * var(--corner-scale));
   box-shadow: 0 6px 18px color-mix(in srgb, var(--color-shadow) 25%, transparent);
   pointer-events: auto;
   animation: toast-in 0.2s ease-out;
@@ -1983,7 +2005,7 @@ label {
 .reviews__dot {
   inline-size: 0.5rem;
   block-size: 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-border);
   transition: inline-size 0.2s, background-color 0.2s;
 }
@@ -2628,7 +2650,7 @@ label {
 .bar-chart__bar {
   inline-size: 100%;
   min-block-size: 2px;
-  border-radius: 4px 4px 0 0;
+  border-radius: calc(4px * var(--corner-scale)) calc(4px * var(--corner-scale)) 0 0;
   background: var(--color-accent);
 }
 
@@ -2671,7 +2693,7 @@ label {
 .step-bars__track {
   display: block;
   block-size: 0.75rem;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--corner-scale));
   background: var(--color-soft);
 }
 
@@ -2679,7 +2701,7 @@ label {
   display: block;
   block-size: 100%;
   min-inline-size: 2px;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--corner-scale));
   background: var(--color-accent);
 }
 
@@ -2784,7 +2806,7 @@ label {
   gap: 0.375rem;
   padding: 0.5rem;
   margin-block-end: 0.25rem;
-  border-radius: 0.5rem;
+  border-radius: calc(0.5rem * var(--corner-scale));
   background: var(--color-bg);
 }
 
@@ -2801,7 +2823,7 @@ label {
 
 .style-option__preview--classic > span {
   border: 1px solid var(--color-border);
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
   box-shadow: var(--shadow-sm);
 }
 
@@ -2811,8 +2833,42 @@ label {
 
 .style-option__preview--street > span {
   border: 2px solid var(--color-text);
-  border-radius: 0.625rem;
+  border-radius: calc(0.625rem * var(--corner-scale));
   box-shadow: -2px 2px 0 var(--color-text);
+}
+
+/* A tiny drawing of each corner choice: a picture, a line of text and a button. */
+.corners-preview {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  margin-block-end: 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: calc(0.75rem * var(--corner-scale));
+  background: var(--color-bg);
+}
+
+.corners-preview > span:first-child {
+  grid-column: 1 / -1;
+  block-size: 2.25rem;
+  border-radius: calc(0.5rem * var(--corner-scale));
+  background: var(--gradient-hero);
+}
+
+.corners-preview > span:nth-child(2) {
+  align-self: center;
+  block-size: 0.5rem;
+  border-radius: calc(0.25rem * var(--corner-scale));
+  background: var(--color-border);
+}
+
+.corners-preview > span:last-child {
+  inline-size: 2.5rem;
+  block-size: 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
 }
 
 /* ---------- Order layout: side total, category steps ---------- */
@@ -2926,7 +2982,7 @@ label {
   margin: 0;
   padding: 0.375rem 0.875rem;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text);
   font-weight: 600;
@@ -2949,7 +3005,7 @@ label {
   min-inline-size: 1.25rem;
   block-size: 1.25rem;
   padding-inline: 0.25rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-gold);
   color: var(--color-text);
   font-size: 0.75rem;
@@ -2971,7 +3027,7 @@ label {
   position: relative;
   block-size: 3.5rem;
   margin-block-end: 0.25rem;
-  border-radius: 0.5rem;
+  border-radius: calc(0.5rem * var(--corner-scale));
   background: var(--color-bg);
   overflow: hidden;
 }
@@ -2980,7 +3036,7 @@ label {
 .layout-preview::after {
   content: '';
   position: absolute;
-  border-radius: 0.25rem;
+  border-radius: calc(0.25rem * var(--corner-scale));
 }
 
 .layout-preview::before {
@@ -3013,7 +3069,7 @@ label {
 .layout-preview--flow-steps::after {
   inset: auto 0.5rem 0.25rem;
   block-size: 0.625rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: radial-gradient(circle, var(--color-accent) 0.2rem, transparent 0.21rem) 0 0 / 1.25rem 100%;
 }
 

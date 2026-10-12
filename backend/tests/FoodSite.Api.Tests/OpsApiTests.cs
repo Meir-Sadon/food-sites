@@ -50,7 +50,8 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
 
         var version = await Console(token).GetAsync("/api/ops/version").Read<VersionDto>();
         Assert.Equal(ApiFactory.SiteId, version.SiteId);
-        Assert.EndsWith("_OpsApi", version.Migration);
+        await using (var db = _factory.CreateDbContext())
+            Assert.Equal(db.Database.GetMigrations().Last(), version.Migration);
         Assert.Empty(version.PendingMigrations);
     }
 

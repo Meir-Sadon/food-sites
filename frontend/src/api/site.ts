@@ -27,6 +27,11 @@ export type OrderFlow = 'page' | 'steps'
 
 export const ORDER_FLOWS: readonly OrderFlow[] = ['page', 'steps']
 
+/** How round the client site's corners are (FoodSite.Api `Corners`); `rounded` is the original look. */
+export type Corners = 'square' | 'slight' | 'rounded' | 'round'
+
+export const CORNERS: readonly Corners[] = ['square', 'slight', 'rounded', 'round']
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -52,6 +57,8 @@ export interface Site {
   orderTotalPosition: OrderTotalPosition
   /** The admin's choice, else the site's default from site.json. */
   orderFlow: OrderFlow
+  /** The admin's choice, else the site's default from site.json. */
+  corners: Corners
 }
 
 export interface MenuOption {

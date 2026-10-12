@@ -48,6 +48,9 @@ if (site.Settings.OrderTotalPosition is { } totalPosition && !OrderLayout.IsKnow
 if (site.Settings.OrderFlow is { } orderFlow && !OrderLayout.IsKnownFlow(orderFlow))
     throw new InvalidOperationException(
         $"Site:Settings:OrderFlow {orderFlow} is not a flow. Known flows: {string.Join(", ", OrderLayout.Flows)}.");
+if (site.Settings.Corners is { } corners && !Corners.IsKnown(corners))
+    throw new InvalidOperationException(
+        $"Site:Settings:Corners {corners} is not a corner shape. Known shapes: {string.Join(", ", Corners.All)}.");
 builder.Services.Configure<SiteOptions>(config.GetSection(SiteOptions.Section));
 builder.Services.AddScoped<FeatureFlags>();
 // Cookie names, the JWT issuer and the WhatsApp template names are built from the site id unless configured.

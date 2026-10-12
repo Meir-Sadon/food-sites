@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import { ORDER_FLOWS, ORDER_TOTAL_POSITIONS, SITE_STYLES, type Feature, type OrderFlow, type OrderTotalPosition, type Site, type SiteStyle } from '../api/site'
+import { CORNERS, ORDER_FLOWS, ORDER_TOTAL_POSITIONS, SITE_STYLES, type Corners, type Feature, type OrderFlow, type OrderTotalPosition, type Site, type SiteStyle } from '../api/site'
 import { site as siteConfig } from './config'
 
 export interface SiteState {
@@ -44,4 +44,12 @@ export function useOrderLayout(): { totalPosition: OrderTotalPosition; flow: Ord
     totalPosition: ORDER_TOTAL_POSITIONS.find((known) => known === orderTotalPosition) ?? 'bottom',
     flow: ORDER_FLOWS.find((known) => known === orderFlow) ?? 'page',
   }
+}
+
+/** How round the client site's corners are: what `/api/site` says, or the site's site.json until (or unless) it answers. */
+export function useCorners(): Corners {
+  const site = useSite()
+  if (site) return site.corners
+  const corners = siteConfig.settings?.corners
+  return CORNERS.find((known) => known === corners) ?? 'rounded'
 }

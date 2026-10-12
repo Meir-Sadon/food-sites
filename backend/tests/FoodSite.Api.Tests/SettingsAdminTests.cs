@@ -147,6 +147,40 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task The_admin_picks_the_corners_and_leaving_them_out_keeps_them()
+    {
+        var client = _factory.CreateApiClient();
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Equal("rounded", settings.Corners);
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, corners = "square" })).Read<SettingsDto>();
+        Assert.Equal("square", saved.Corners);
+        var site = await client.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal("square", site.Corners);
+
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.Equal("square", saved.Corners);
+
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, corners = "oval" })).AssertInvalid("Corners", "invalid");
+    }
+
+    [Fact]
+    public async Task The_site_default_corners_apply_until_the_admin_picks_them()
+    {
+        using var factory = new ApiFactory(postgres, new() { ["Site:Settings:Corners"] = "round" });
+        var admin = await factory.CreateAdminClientAsync();
+        var site = await factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal("round", site.Corners);
+
+        (await admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, corners = "slight" })).EnsureSuccessStatusCode();
+        site = await factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal("slight", site.Corners);
+    }
+
+    [Fact]
     public async Task A_service_city_longer_than_an_address_part_is_rejected()
     {
         var response = await _admin.PutAsJsonAsync("/api/admin/settings", Input(cities: "אשקלון, " + new string('א', 101)));

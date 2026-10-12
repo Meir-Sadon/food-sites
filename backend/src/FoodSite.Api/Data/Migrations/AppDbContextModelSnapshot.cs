@@ -872,6 +872,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("ContactPhone")
                         .HasColumnType("text");
 
+                    b.Property<string>("Corners")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("DeliveryAreaText")
                         .HasColumnType("text");
 

@@ -7,19 +7,25 @@ import { LeaveGuardProvider } from './LeaveGuardProvider'
 import { ScrollButtons } from './ScrollButtons'
 import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
-import { useSite, useSiteStyle } from '../site/useSite'
+import { useCorners, useSite, useSiteStyle } from '../site/useSite'
 import { trackUsage } from '../usage/track'
 
-/** Marks the page with the site's style (`<html data-style>`), which `styles/*.css` select on; the admin keeps its own look. */
+/**
+ * Marks the page with the site's style and corners (`<html data-style data-corners>`), which `styles/*.css` and
+ * `--corner-scale` in index.css select on; the admin keeps its own look.
+ */
 function useStyleAttribute() {
   const style = useSiteStyle()
+  const corners = useCorners()
   useEffect(() => {
     const root = document.documentElement
     root.dataset.style = style
+    root.dataset.corners = corners
     return () => {
       delete root.dataset.style
+      delete root.dataset.corners
     }
-  }, [style])
+  }, [style, corners])
 }
 
 function Shell() {

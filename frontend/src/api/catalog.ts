@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { OrderFlow, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { Corners, OrderFlow, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -29,10 +29,12 @@ export interface Settings {
   orderTotalPosition: OrderTotalPosition
   /** One long page, or one category at a time. */
   orderFlow: OrderFlow
+  /** How round the client site's corners are. */
+  corners: Corners
 }
-/** Leaving out the style or the order layout keeps it: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow'> &
-  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow'>>
+/** Leaving out the style, the order layout or the corners keeps it: each has its own section, and saving one never pins the others' defaults. */
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'> &
+  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'>>
 
 export interface SupplyDay {
   weekday: Weekday
