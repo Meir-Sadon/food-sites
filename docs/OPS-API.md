@@ -45,12 +45,13 @@ The site owner gets `403 { code: "masterOnly" }` on all three.
 - `migration`: the last migration applied to the site's database.
 - `pendingMigrations`: migrations this build has and the database lacks (empty once the site migrated on startup).
 
-### `GET /api/ops/summary?from=&to=&period=`
+### `GET /api/ops/summary?from=&to=&period=&statuses=`
 
-Orders and their totals per period, by **supply date**, counted like the admin's statistics: cancelled orders and orders waiting for approval are left out.
+Orders and their totals per period, by **supply date**.
 
-- `from`, `to`: dates, both included. Without them: the first of the month 11 months ago up to today. At most 731 days; `from` after `to` or a longer range is `400` with `from: ["invalidRange"]`.
+- `from`, `to`: dates, both included. Without them: the first of the month 11 months ago up to today. At most 731 days; `from` after `to` or a longer range is `400` with `from: ["invalidRange"]`. An order for a supply date after `to` is not in the answer, so a console that wants upcoming orders sends a `to` in the future.
 - `period`: `Day`, `Week` (Sunday to Saturday) or `Month` (default).
+- `statuses`: comma-separated states to count (case-insensitive): `New`, `Confirmed`, `Ready`, `Delivered`, `WaitingApproval` (a delivery outside the service area that the admin has not approved yet) and `Cancelled`. Without it everything but `Cancelled` counts. An unknown name is `400` with `statuses: ["invalid"]`.
 
 ```json
 {
@@ -62,11 +63,49 @@ Orders and their totals per period, by **supply date**, counted like the admin's
   "periods": [
     { "start": "2030-01-01", "orders": 3, "sales": 180.00 },
     { "start": "2030-02-01", "orders": 1, "sales": 70.00 }
+  ],
+  "statuses": ["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"],
+  "byStatus": [
+    { "status": "New", "orders": 4, "sales": 250.00 },
+    { "status": "Confirmed", "orders": 0, "sales": 0 },
+    { "status": "Ready", "orders": 0, "sales": 0 },
+    { "status": "Delivered", "orders": 0, "sales": 0 },
+    { "status": "WaitingApproval", "orders": 0, "sales": 0 },
+    { "status": "Cancelled", "orders": 0, "sales": 0 }
   ]
 }
 ```
 
-`sales` is the sum of the orders' totals in shekels. Periods with no orders are left out.
+`sales` is the sum of the orders' totals in shekels. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
+
+### `GET /api/ops/usage?from=&to=`
+
+How the client site is used: the numbers on the admin's **שימוש באתר** page, as `UsageReportDto` (`Controllers/Admin/UsageReportController`).
+
+- `from`, `to`: dates in the site's time zone, both included. Without them: the last 30 days up to today. `from` after `to` or more than 366 days is `400` with `from: ["invalidRange"]`.
+
+```json
+{
+  "from": "2030-01-01",
+  "to": "2030-01-30",
+  "approximate": false,
+  "keptSince": "2029-10-03",
+  "totalDevices": 120,
+  "funnel": { "visitors": 90, "newVisitors": 40, "started": 25, "submitted": 12 },
+  "registered": { "total": 55, "new": 6 },
+  "orders": {
+    "orders": 12, "sales": 960.00, "averageOrder": 80.00,
+    "customers": 10, "returningCustomers": 3, "newCustomerOrders": 7, "returningCustomerOrders": 5
+  },
+  "days": [{ "day": "2030-01-01", "visitors": 3, "started": 1, "submitted": 1, "orders": 1 }],
+  "ordersByWeekday": [0, 2, 1, 3, 2, 4, 0],
+  "ordersByHour": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 2, 1, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0],
+  "topDishes": [{ "dishName": "קוסקוס", "quantity": 20, "sales": 800.00 }]
+}
+```
+
+- Visitors, started and submitted count devices (a random id the browser keeps), not people. `approximate` is `true` when the range starts before `keptSince`: older days only keep daily counts, so a device seen on several of them counts more than once.
+- `orders` counts non-cancelled orders by the day they were **sent** (not their supply date); `registered.total` is every client account, `new` those made in the range.
 
 ### `GET /api/ops/recommendations?handled=`
 

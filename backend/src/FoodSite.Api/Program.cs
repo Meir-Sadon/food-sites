@@ -75,6 +75,7 @@ builder.Services.AddSingleton<SiteClock>();
 builder.Services.Configure<UsageOptions>(config.GetSection(UsageOptions.Section));
 builder.Services.AddScoped<UsageRecorder>();
 builder.Services.AddScoped<UsageRetention>();
+builder.Services.AddScoped<UsageReportBuilder>();
 builder.Services.AddHostedService<UsageRetentionService>();
 // Messages go out through the WhatsApp Cloud API once WhatsApp__PhoneNumberId and WhatsApp__Token are
 // set (after Meta approves the templates); until then they are only written to the log.
