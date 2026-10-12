@@ -85,6 +85,15 @@ public static class DatabaseInitializer
                         PublicId = "static" + Path.ChangeExtension(url, null),
                         DisplayOrder = i,
                     }).ToList(),
+                    Questions = (dish.Questions ?? []).Select((q, i) => new Entities.DishQuestion
+                    {
+                        Text = q.Text,
+                        Kind = q.Kind,
+                        Choices = [.. q.Choices ?? []],
+                        IsRequired = q.IsRequired,
+                        ShowAsDropdown = q.ShowAsDropdown,
+                        DisplayOrder = i,
+                    }).ToList(),
                 };
                 category.Dishes.Add(entity);
                 if (dish.AddOnOf is { Count: > 0 } parents)

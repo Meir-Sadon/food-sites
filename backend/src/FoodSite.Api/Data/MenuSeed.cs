@@ -9,6 +9,7 @@ namespace FoodSite.Api.Data;
 /// <c>sites/_shared/seed/</c>): categories with their dishes.
 /// Pictures are URLs, either absolute or served from the site root (the site's <c>public/</c> folder).
 /// <c>AddOnOf</c> names the dishes (from any category, this seed or the database) a dish is offered under as an add-on.
+/// <c>Questions</c> are asked of the client for each ordered unit, like the ones the admin adds in the dish form.
 /// </summary>
 public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
 {
@@ -26,7 +27,15 @@ public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
         string? UnitName = null,
         decimal? MaxPerSupplyDate = null,
         bool IsSideDish = false,
-        IReadOnlyList<string>? AddOnOf = null);
+        IReadOnlyList<string>? AddOnOf = null,
+        IReadOnlyList<SeedQuestion>? Questions = null);
+
+    public record SeedQuestion(
+        string Text,
+        QuestionKind Kind = QuestionKind.SingleChoice,
+        IReadOnlyList<string>? Choices = null,
+        bool IsRequired = false,
+        bool ShowAsDropdown = false);
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {

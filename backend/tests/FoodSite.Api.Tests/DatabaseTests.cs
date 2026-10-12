@@ -101,6 +101,34 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
+    public async Task A_menu_seed_adds_dish_questions()
+    {
+        var seed = new MenuSeed([
+            new("מאפים", [
+                new("דמולה", UnitPrice: 40m, Questions: [
+                    new("סוג סמנה", Choices: ["חלבית", "פרווה"], IsRequired: true),
+                    new("הערה לאפייה", QuestionKind.Text),
+                ]),
+            ]),
+        ]);
+        await using var db = _factory.CreateDbContext();
+
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+
+        db.ChangeTracker.Clear();
+        var dish = await db.Dishes.Include(d => d.Questions).SingleAsync();
+        var questions = dish.Questions.OrderBy(q => q.DisplayOrder).ToList();
+        Assert.Equal(2, questions.Count);
+        Assert.Equal("סוג סמנה", questions[0].Text);
+        Assert.Equal(QuestionKind.SingleChoice, questions[0].Kind);
+        Assert.Equal(["חלבית", "פרווה"], questions[0].Choices);
+        Assert.True(questions[0].IsRequired);
+        Assert.Equal(QuestionKind.Text, questions[1].Kind);
+        Assert.Empty(questions[1].Choices);
+    }
+
+    [Fact]
     public async Task A_menu_seed_sets_limits_side_dishes_and_add_ons()
     {
         var seed = new MenuSeed([

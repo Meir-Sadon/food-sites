@@ -76,6 +76,8 @@ jobs:
             hook: RENDER_DEPLOY_HOOK_HOME_FOOD_MARY
           - site: fish-trays-rephael
             hook: RENDER_DEPLOY_HOOK_FISH_TRAYS_REPHAEL
+          - site: yemeni-dishes-sapir
+            hook: RENDER_DEPLOY_HOOK_YEMENI_DISHES_SAPIR
     steps:
       - name: Trigger the deploy hook
         env:

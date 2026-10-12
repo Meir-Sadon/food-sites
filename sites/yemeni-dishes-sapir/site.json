@@ -1,0 +1,25 @@
+{
+  "id": "yemeni-dishes-sapir",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אשקלון",
+  "emoji": "🫓",
+  "whatsApp": {
+    "orderConfirmationTemplate": "yemeni_dishes_sapir_order_confirmation",
+    "newOrderTemplate": "yemeni_dishes_sapir_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true
+  },
+  "settings": {
+    "contactName": "ספיר",
+    "contactPhone": "053-7320587",
+    "contactAddress": "איסוף משכונת אפרידר, אשקלון",
+    "deliveryFeeText": "איסוף עצמי בלבד, משכונת אפרידר באשקלון",
+    "backgroundImageUrl": "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791817051/yemeni-dishes-sapir/background/background-1.jpg"
+  },
+  "seed": ["seed/menu.json"]
+}
