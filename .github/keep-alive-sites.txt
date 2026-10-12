@@ -1,0 +1,15 @@
+# Sites the "Keep sites awake" workflow (.github/workflows/keep-alive.yml) pings, one site id per
+# line (the folder name under sites/, which is also the Render service name). A site that is not
+# listed here is never pinged and sleeps when idle. Lines starting with # and blank lines are ignored.
+#
+# The workflow pings only between 09:00 and 21:00 Israel time, so a listed site is awake about
+# 12 hours a day (about 370 free instance hours a month); Render gives the whole workspace 750,
+# shared by all its free services (docs/DEPLOY.md, "Keeping sites awake"). To keep a site awake,
+# remove the # in front of its id:
+#
+# kuskus-shel-ima
+# grape-leaves-eliel
+# cigars-shiraz
+# kuskus-liel
+# fish-trays-rephael
+# home-food-mary
