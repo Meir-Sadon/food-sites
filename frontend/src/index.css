@@ -1080,10 +1080,21 @@ label {
   border-radius: var(--radius);
 }
 
-/* A dish group's pictures stay in view while the client scrolls through its variants, until the block ends. */
+/* A dish group's pictures stay in view while the client scrolls through its variants, until the block ends,
+   pinned a little below the top bar so the whole picture shows. TopBar sets the bar's real height; these are guesses until it does. */
+:root {
+  --top-bar-height: 7rem;
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --top-bar-height: 4.5rem;
+  }
+}
+
 .dish--group > .carousel {
   position: sticky;
-  inset-block-start: 5rem;
+  inset-block-start: calc(var(--top-bar-height) + 1.25rem);
   z-index: 1;
   align-self: flex-start;
 }
@@ -1091,6 +1102,7 @@ label {
 @media (max-width: 39.99rem) {
   /* Stacked above the variants on a phone: keep the pinned picture short so the choices stay visible. */
   .dish--group > .carousel {
+    inset-block-start: calc(var(--top-bar-height) + 0.75rem);
     inline-size: 100%;
     max-block-size: 9rem;
     overflow: hidden;
