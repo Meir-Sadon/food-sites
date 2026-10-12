@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../account/useAccount'
@@ -21,12 +22,27 @@ export function TopBar() {
   const checkLeave = useLeaveCheck()
   const { user, logout } = useAccount()
   const isOn = useFeatures()
+  const header = useRef<HTMLElement>(null)
+  // Publishes the bar's height so things pinned below it (a dish group's pictures) start under it, not behind it.
+  useLayoutEffect(() => {
+    const element = header.current
+    if (!element || typeof ResizeObserver === 'undefined') return
+    const root = document.documentElement
+    const update = () => root.style.setProperty('--top-bar-height', `${element.offsetHeight}px`)
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(element)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--top-bar-height')
+    }
+  }, [])
   async function signOut() {
     await logout()
     navigate('/')
   }
   return (
-    <header className="top-bar">
+    <header className="top-bar" ref={header}>
       <NavLink to="/" className="top-bar__brand" onClick={(event) => { if (checkLeave('/')) event.preventDefault() }}>
         <span className="top-bar__logo" aria-hidden="true">{site.emoji}</span>
         {t('app.name')}
