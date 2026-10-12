@@ -1,8 +1,8 @@
 {
   "guide": "docs/food-sites-feature-guide.html",
-  "reviewed_commit": "c643ef205d7dac31bfc3bd84e305cbd147c72d67",
-  "reviewed_at": "2026-10-11T17:23:03+00:00",
+  "reviewed_commit": "5e21cebae8c122ab7a04dcbbf6432efba6375d1a",
+  "reviewed_at": "2026-10-12T05:26:42+00:00",
   "review_interval_days": 3,
   "screenshots_captured_on": "2026-10-08",
-  "note": "Reviewed #60-#63 against the guide on 11 Oct 2026: each updated the guide in its own PR (admin sections in section 43, dish questions in section 44, collapsed per-unit choices with apply-to-rest and pinned variant pictures in section 04), and the texts match the source. The Phase 6 ops API PR adds section 46 (report a problem) and section 47 (admin console connection, master only), and mentions the console in sections 42 and 43, with captures taken on 11 Oct 2026 from a local run with synthetic demo data. Most other screenshots date from 8 Oct 2026; the admin captures in sections 05, 07, 41-47 were taken on 11 Oct 2026. Public copy omits captures with contact, order or payment details."
+  "note": "Checked #64, #65, #66, #67, #68 and #70 (merged after the previous marker) on 12 Oct 2026: each updated the guide in its own PR (jump to the invalid field in section 45, optional adjustment, order page layout in section 48, the ops API in sections 46-47, dish form blocks, the pinned dish group picture). The corner roundness PR adds section 49 with captures taken on 12 Oct 2026 from a local run (placeholder dish pictures). Most other screenshots date from 8 Oct 2026; the admin captures in sections 05, 07, 41-47 were taken on 11 Oct 2026. Public copy omits captures with contact, order or payment details."
 }

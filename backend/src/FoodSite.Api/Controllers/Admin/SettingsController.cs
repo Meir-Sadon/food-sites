@@ -33,7 +33,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         int? PortionsPerSupplyDate,
         string Style,
         string OrderTotalPosition,
-        string OrderFlow);
+        string OrderFlow,
+        string Corners);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -49,7 +50,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         int? PortionsPerSupplyDate = null,
         string? Style = null,
         string? OrderTotalPosition = null,
-        string? OrderFlow = null);
+        string? OrderFlow = null,
+        string? Corners = null);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -81,6 +83,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.OrderTotalPosition), "invalid");
         if (input.OrderFlow is not null && !OrderLayout.IsKnownFlow(input.OrderFlow))
             errors.Add(nameof(input.OrderFlow), "invalid");
+        if (input.Corners is not null && !Sites.Corners.IsKnown(input.Corners))
+            errors.Add(nameof(input.Corners), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -110,6 +114,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.OrderTotalPosition = input.OrderTotalPosition;
         if (input.OrderFlow is not null)
             settings.OrderFlow = input.OrderFlow;
+        if (input.Corners is not null)
+            settings.Corners = input.Corners;
         await db.SaveChangesAsync();
         return ToDto(settings);
     }
@@ -164,7 +170,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate,
         SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
-        OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow));
+        OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
+        Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners));
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]

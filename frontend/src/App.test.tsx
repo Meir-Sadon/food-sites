@@ -82,4 +82,13 @@ describe('site style', () => {
     unmount()
     expect(document.documentElement.dataset.style).toBeUndefined()
   })
+
+  it('marks client pages with the corners /api/site names', async () => {
+    fakeApi({ ...publicApi, 'GET /api/site': () => site({ corners: 'square' }) })
+    const { unmount } = renderAt('/about')
+    expect(document.documentElement.dataset.corners).toBe('rounded')
+    await waitFor(() => expect(document.documentElement.dataset.corners).toBe('square'))
+    unmount()
+    expect(document.documentElement.dataset.corners).toBeUndefined()
+  })
 })

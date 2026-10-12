@@ -88,6 +88,9 @@ public class SiteSettingsDefaults
 
     /// <summary>The site's default order flow, one of <see cref="OrderLayout.Flows"/>. Applies until the admin picks one.</summary>
     public string? OrderFlow { get; set; }
+
+    /// <summary>The site's default corners, one of <see cref="Sites.Corners.All"/>. Applies until the admin picks one.</summary>
+    public string? Corners { get; set; }
 }
 
 public class SiteWhatsAppTemplates
