@@ -1507,6 +1507,65 @@ label {
 
 /* ---------- Accounts ---------- */
 
+.dish-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-block-end: 1.25rem;
+  color: var(--color-muted);
+}
+
+.dish-search > svg {
+  position: absolute;
+  inset-inline-start: 0.9rem;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  pointer-events: none;
+}
+
+.dish-search input {
+  inline-size: 100%;
+  min-block-size: 3rem;
+  padding-inline: 2.75rem;
+  font-size: 1rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+}
+
+.dish-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.dish-search__clear {
+  position: absolute;
+  inset-inline-end: 0.35rem;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.dish-results__title {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  font-size: 1.25rem;
+  background: linear-gradient(90deg, var(--color-soft), transparent);
+}
+
+.dish-results__empty {
+  margin: 0;
+  padding: 0 1.25rem 1.25rem;
+}
+
 .quick-fill {
   display: flex;
   flex-direction: column;
