@@ -2,7 +2,8 @@ import { useEffect, useId, useRef, type ReactNode } from 'react'
 
 /**
  * A dialog over the page. Focus moves into it, Escape closes it and focus returns to where it was.
- * Tab stays inside it.
+ * Tab stays inside it. Tapping the dimmed area behind it closes it like Escape and the dialog's own buttons do
+ * (a press that starts inside the dialog and ends outside, such as selecting text, does not).
  */
 export function Modal({
   title,
@@ -18,6 +19,7 @@ export function Modal({
 }) {
   const titleId = useId()
   const ref = useRef<HTMLDivElement>(null)
+  const pressedBackdrop = useRef(false)
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
@@ -46,7 +48,16 @@ export function Modal({
   }
 
   return (
-    <div className="modal-backdrop">
+    <div
+      className="modal-backdrop"
+      onMouseDown={(event) => {
+        pressedBackdrop.current = event.target === event.currentTarget
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget && pressedBackdrop.current) onClose()
+        pressedBackdrop.current = false
+      }}
+    >
       <div
         ref={ref}
         role="dialog"

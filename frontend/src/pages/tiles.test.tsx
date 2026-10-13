@@ -70,4 +70,31 @@ describe('The tiles style', () => {
     await user.click(within(dialog).getByRole('button', { name: 'סיום' }))
     expect(within(tile).getByText('1 נבחרו')).toBeInTheDocument()
   })
+
+  it('adds a dish with no picture when its tile is tapped, not only the round button', async () => {
+    const user = open()
+    const tile = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('article')!
+    await user.click(screen.getByRole('heading', { level: 3, name: 'חומוס פשוט' }))
+    expect(within(tile).getByRole('group', { name: 'חומוס פשוט' })).toBeInTheDocument()
+  })
+
+  it('opens the dialog when a dish that needs choices is tapped', async () => {
+    const user = open()
+    await user.click(await screen.findByRole('heading', { level: 3, name: 'עוף בתנור' }))
+    expect(screen.getByRole('dialog', { name: 'עוף בתנור' })).toBeInTheDocument()
+  })
+
+  it('closes a dialog on a tap behind it, like the done button, and keeps the choice', async () => {
+    const user = open()
+    const tile = (await screen.findByRole('heading', { level: 3, name: 'עוף בתנור' })).closest('article')!
+    await user.click(within(tile).getByRole('button', { name: 'הוספה להזמנה: עוף בתנור' }))
+    const dialog = screen.getByRole('dialog', { name: 'עוף בתנור' })
+
+    await user.click(dialog) // inside the dialog: stays open
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    await user.click(dialog.parentElement!) // the dimmed area
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(within(tile).getByRole('button', { name: 'התאמת המנה: עוף בתנור' })).toBeInTheDocument()
+  })
 })
