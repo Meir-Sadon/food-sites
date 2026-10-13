@@ -1,0 +1,20 @@
+/* The site's colour palette: the menu's pale sky blue, deep teal and hummus olive-oil gold. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #f1f6f9;
+  --color-surface: #ffffff;
+  --color-text: #172a3a;
+  --color-muted: #55687a;
+  --color-accent: #0e5a78;
+  --color-accent-hover: #0a465d;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #d79a2b;
+  --color-border: #d9e4ec;
+  --color-error: #b42318;
+  --color-success: #2f6b3a;
+  --color-soft: #e3eef4;
+  --color-shadow: #172a3a;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(215 154 43 / 0.18);
+  --color-badge-text: #7a5410;
+  --gradient-hero: linear-gradient(135deg, var(--color-accent-hover) 0%, #1b7a9c 60%, var(--color-gold) 150%);
+}

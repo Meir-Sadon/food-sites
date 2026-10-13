@@ -9,6 +9,7 @@ namespace FoodSite.Api.Data;
 /// <c>sites/_shared/seed/</c>): categories with their dishes.
 /// Pictures are URLs, either absolute or served from the site root (the site's <c>public/</c> folder).
 /// <c>AddOnOf</c> names the dishes (from any category, this seed or the database) a dish is offered under as an add-on.
+/// <c>Options</c> make a fixed-choice dish; <c>AddOns</c> (with <c>AddOnGroups</c>) are the dish's own add-ons, linked once it is added.
 /// <c>Questions</c> are asked of the client for each ordered unit, like the ones the admin adds in the dish form.
 /// </summary>
 public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
@@ -28,7 +29,23 @@ public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
         decimal? MaxPerSupplyDate = null,
         bool IsSideDish = false,
         IReadOnlyList<string>? AddOnOf = null,
-        IReadOnlyList<SeedQuestion>? Questions = null);
+        IReadOnlyList<SeedQuestion>? Questions = null,
+        IReadOnlyList<SeedOption>? Options = null,
+        bool IsAddOnOnly = false,
+        IReadOnlyList<SeedAddOnGroup>? AddOnGroups = null,
+        IReadOnlyList<SeedAddOn>? AddOns = null);
+
+    /// <summary>A fixed choice of the dish (a size or a weight); with any, the dish is a fixed-choice dish and its amount settings are unused.</summary>
+    public record SeedOption(string Label, decimal Price, bool IsDefault = false, decimal Amount = 1);
+
+    /// <summary>A named group of the dish's own add-ons with a limit on the units picked from it (null: no limit).</summary>
+    public record SeedAddOnGroup(string Name, int? MaxUnits = null);
+
+    /// <summary>
+    /// An add-on this dish offers: the name of another dish (this seed's or the database's), at <c>Price</c> under this dish
+    /// (null keeps its own), in the named group, as a check box or up to <c>MaxQuantity</c> per ordered unit.
+    /// </summary>
+    public record SeedAddOn(string Dish, decimal? Price = null, string? Group = null, bool IsCheckbox = false, decimal? MaxQuantity = null);
 
     public record SeedQuestion(
         string Text,

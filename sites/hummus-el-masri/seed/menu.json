@@ -1,0 +1,1310 @@
+{
+  "categories": [
+    {
+      "name": "חומוס אל מסרי",
+      "dishes": [
+        {
+          "name": "חומוס נטו",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חומוס טחינה",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חומוס גרגירים",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חומוס מסבחה",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חומוס פול",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "חומוס אל מסרי ספיישל",
+      "dishes": [
+        {
+          "name": "נטו שקשוקה",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג, רוטב לימוני ו-3 כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 45,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חומוס סלט",
+          "description": "ירקות קצוצים וטחינה גרגירים. מוגש עם 2 פיתות ענן, חמוצים, סחוג, רוטב לימוני ו-3 כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 45,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חומוס פטריות ובצל מטוגן",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 46,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חומוס סביח",
+          "description": "חציל מטוגן, ביצה קשה, חומוס וטחינעמבה. מוגש עם 2 פיתות ענן, חמוצים, סחוג, רוטב לימוני ו-3 כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 46,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "questions": [
+            {
+              "text": "ללא ביצה קשה",
+              "kind": "YesNo"
+            },
+            {
+              "text": "ללא עמבה",
+              "kind": "YesNo"
+            }
+          ],
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חמשוקה",
+          "description": "חומוס עם רוטב שקשוקה ו-2 ביצים וטחינה. מוגש עם 2 פיתות ענן, חמוצים, סחוג, רוטב לימוני ו-3 כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 46,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        },
+        {
+          "name": "חומוס פלאפל",
+          "description": "5 כדורי פלאפל וטחינה. מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 46,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "עסקיות אל מסרי",
+      "dishes": [
+        {
+          "name": "עסקית חומוס",
+          "description": "חומוס לבחירה, ביצה, דואט פלאפל וצ'יפס אישי, חמוצים, 2 פיתות ושתייה לבחירה",
+          "sellBy": "Units",
+          "unitPrice": 55,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו חומוס",
+              "maxUnits": 1
+            },
+            {
+              "name": "תוספות לחומוס",
+              "maxUnits": 5
+            },
+            {
+              "name": "בחרו שתיה",
+              "maxUnits": 1
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס נטו",
+              "price": 0,
+              "group": "בחרו חומוס",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חומוס גרגירים",
+              "price": 0,
+              "group": "בחרו חומוס",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חומוס טחינה",
+              "price": 0,
+              "group": "בחרו חומוס",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חומוס מסבחה",
+              "price": 0,
+              "group": "בחרו חומוס",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חומוס פטריות ובצל מטוגן",
+              "price": 5,
+              "group": "בחרו חומוס",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חומוס סביח",
+              "price": 5,
+              "group": "בחרו חומוס",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חמשוקה",
+              "price": 5,
+              "group": "בחרו חומוס",
+              "isCheckbox": true
+            },
+            {
+              "dish": "תוספת פיתה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "תוספת ביצה",
+              "price": 3,
+              "group": "תוספות לחומוס",
+              "maxQuantity": 5
+            },
+            {
+              "dish": "מים מינרליים נביעות",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "שוופס סודה",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פחית קוקה קולה",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פחית קולה זירו",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פחית ספרייט",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פחית ספרייט זירו",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "מים בטעם אפרסק",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "מים בטעם תפוח",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "לצד החומוס",
+      "dishes": [
+        {
+          "name": "כדורי פלאפל - 5 יח'",
+          "description": "מוגש עם טחינה",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "צ'יפס",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "קטן",
+              "price": 18,
+              "isDefault": true
+            },
+            {
+              "label": "גדול",
+              "price": 25
+            }
+          ]
+        },
+        {
+          "name": "דואט של צ'יפס ופלאפל",
+          "sellBy": "Units",
+          "unitPrice": 25,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סלט ירקות קצוץ",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "קטן",
+              "price": 18,
+              "isDefault": true
+            },
+            {
+              "label": "גדול",
+              "price": 30
+            }
+          ]
+        },
+        {
+          "name": "סלט גרגירים",
+          "description": "גרגירי חומוס נימוחים + סלט ירקות, טחינה וביצה קשה",
+          "sellBy": "Units",
+          "unitPrice": 36,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קובה בשר",
+          "sellBy": "Units",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חציל בטחינה",
+          "sellBy": "Units",
+          "unitPrice": 39,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "3 קציצות פרסה",
+          "sellBy": "Units",
+          "unitPrice": 20,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "אל מסרי בפיתה",
+      "dishes": [
+        {
+          "name": "פלאפל בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 25,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו סלטים וממרחים",
+              "maxUnits": 4
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ירקות",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ערבי חריף",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל מטוגן",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            }
+          ]
+        },
+        {
+          "name": "חביתת ירק בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 25,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו סלטים וממרחים",
+              "maxUnits": 4
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ירקות",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ערבי חריף",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל מטוגן",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            }
+          ]
+        },
+        {
+          "name": "סביח בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 30,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "questions": [
+            {
+              "text": "ללא ביצה קשה",
+              "kind": "YesNo"
+            },
+            {
+              "text": "ללא עמבה",
+              "kind": "YesNo"
+            }
+          ],
+          "addOnGroups": [
+            {
+              "name": "בחרו סלטים וממרחים",
+              "maxUnits": 4
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ירקות",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ערבי חריף",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל מטוגן",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            }
+          ]
+        },
+        {
+          "name": "שקשוקה בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 35,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו סלטים וממרחים",
+              "maxUnits": 4
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ירקות",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ערבי חריף",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל מטוגן",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            }
+          ]
+        },
+        {
+          "name": "חומוס פול וביצה בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 22,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו סלטים וממרחים",
+              "maxUnits": 4
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ירקות",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ערבי חריף",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל מטוגן",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            }
+          ]
+        },
+        {
+          "name": "סביח מחוזק בפיתה",
+          "description": "עם כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 30,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "questions": [
+            {
+              "text": "ללא ביצה קשה",
+              "kind": "YesNo"
+            },
+            {
+              "text": "ללא עמבה",
+              "kind": "YesNo"
+            }
+          ],
+          "addOnGroups": [
+            {
+              "name": "בחרו סלטים וממרחים",
+              "maxUnits": 4
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ירקות",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ערבי חריף",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל מטוגן",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            }
+          ]
+        },
+        {
+          "name": "פיתה שניצל",
+          "sellBy": "Units",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו סלטים וממרחים",
+              "maxUnits": 4
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ירקות",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ערבי חריף",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל מטוגן",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            }
+          ]
+        },
+        {
+          "name": "ארוחת פיתה שניצל",
+          "description": "פיתה שניצל, צ'יפס ושתיה לבחירה",
+          "sellBy": "Units",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו סלטים וממרחים",
+              "maxUnits": 4
+            },
+            {
+              "name": "בחרו שתיה",
+              "maxUnits": 1
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חומוס",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ירקות",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ערבי חריף",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל מטוגן",
+              "price": 0,
+              "group": "בחרו סלטים וממרחים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "מים מינרליים נביעות",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "שוופס סודה",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פחית קוקה קולה",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פחית קולה זירו",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פחית ספרייט",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פחית ספרייט זירו",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "מים בטעם אפרסק",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            },
+            {
+              "dish": "מים בטעם תפוח",
+              "price": 0,
+              "group": "בחרו שתיה",
+              "isCheckbox": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "אל מסרי במשקל",
+      "dishes": [
+        {
+          "name": "חומוס במשקל",
+          "sellBy": "Weight",
+          "options": [
+            {
+              "label": "270 גרם",
+              "price": 18,
+              "isDefault": true,
+              "amount": 0.27
+            },
+            {
+              "label": "500 גרם",
+              "price": 30,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "חומוס מסבחה במשקל",
+          "sellBy": "Weight",
+          "options": [
+            {
+              "label": "270 גרם",
+              "price": 18,
+              "isDefault": true,
+              "amount": 0.27
+            },
+            {
+              "label": "500 גרם",
+              "price": 30,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "פול במשקל",
+          "sellBy": "Weight",
+          "options": [
+            {
+              "label": "270 גרם",
+              "price": 18,
+              "isDefault": true,
+              "amount": 0.27
+            },
+            {
+              "label": "500 גרם",
+              "price": 30,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "טחינה במשקל",
+          "sellBy": "Weight",
+          "options": [
+            {
+              "label": "270 גרם",
+              "price": 18,
+              "isDefault": true,
+              "amount": 0.27
+            },
+            {
+              "label": "500 גרם",
+              "price": 30,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "תערובת לפלאפל",
+          "description": "תערובת להכנת פלאפל ביתי. המחיר לקילו.",
+          "sellBy": "Weight",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "קינוחים",
+      "dishes": [
+        {
+          "name": "מלבי",
+          "sellBy": "Units",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "שתיה קלה",
+      "dishes": [
+        {
+          "name": "מים מינרליים נביעות",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מים בטעם אפרסק",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מים בטעם תפוח",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מים בטעם ענבים",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פיוז טי אפרסק",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "תפוזינה תפוזים - בקבוק זכוכית",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "תפוזינה ענבים - בקבוק זכוכית",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "שוופס סודה",
+          "description": "0.25 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קינלי סודה",
+          "description": "0.25 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "בירה שחורה נשר מאלט - בקבוק",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 14,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית קוקה קולה",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית קולה זירו",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית פאנטה",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית ספרייט",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית ספרייט זירו",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "תוספות",
+      "dishes": [
+        {
+          "name": "תוספת פיתה",
+          "sellBy": "Units",
+          "unitPrice": 3,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isAddOnOnly": true
+        },
+        {
+          "name": "תוספת ביצה",
+          "sellBy": "Units",
+          "unitPrice": 3,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isAddOnOnly": true
+        },
+        {
+          "name": "חומוס",
+          "sellBy": "Units",
+          "unitPrice": 0,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isAddOnOnly": true
+        },
+        {
+          "name": "טחינה",
+          "sellBy": "Units",
+          "unitPrice": 0,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isAddOnOnly": true
+        },
+        {
+          "name": "סלט ירקות",
+          "sellBy": "Units",
+          "unitPrice": 0,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isAddOnOnly": true
+        },
+        {
+          "name": "סלט ערבי חריף",
+          "sellBy": "Units",
+          "unitPrice": 0,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isAddOnOnly": true
+        },
+        {
+          "name": "חציל מטוגן",
+          "sellBy": "Units",
+          "unitPrice": 0,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "isAddOnOnly": true
+        }
+      ]
+    }
+  ]
+}
