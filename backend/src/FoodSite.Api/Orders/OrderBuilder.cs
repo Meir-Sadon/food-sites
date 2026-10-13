@@ -68,10 +68,12 @@ public static class OrderBuilder
 
             var links = DishRules.AddOnLinks(dish);
             var questions = DishRules.Questions(dish);
+            // With adjustment optional (a variant follows its main dish), even required questions may be left empty.
+            var answersRequired = !(dish.MainDish ?? dish).AdjustmentOptional;
             if (line.AddOnUnits is not { } unitInputs)
             {
                 item.Note = NoteOf(line.Note, $"{path}.note", errors);
-                item.Answers = AnswersOf(questions, line.Answers, path, errors);
+                item.Answers = AnswersOf(questions, line.Answers, answersRequired, path, errors);
                 items.Add(item);
                 foreach (var child in AddOnsOf(links, line.AddOns ?? [], path, DishRules.LimitFactor(dish, item.Quantity), dishes, errors))
                     Attach(item, child, items);
@@ -89,7 +91,7 @@ public static class OrderBuilder
                 .Select((unit, u) => (
                     children: AddOnsOf(links, unit.AddOns ?? [], $"{path}.addOnUnits[{u}]", 1, dishes, errors),
                     note: NoteOf(unit.Note, $"{path}.addOnUnits[{u}].note", errors),
-                    answers: AnswersOf(questions, unit.Answers, $"{path}.addOnUnits[{u}]", errors)))
+                    answers: AnswersOf(questions, unit.Answers, answersRequired, $"{path}.addOnUnits[{u}]", errors)))
                 .ToList();
             foreach (var group in perUnit.GroupBy(x => $"{x.note}#{Signature(x.children)}#{AnswersSignature(x.answers)}"))
             {
@@ -119,10 +121,11 @@ public static class OrderBuilder
 
     /// <summary>
     /// Checks the answers to a dish's questions and turns them into text, in the questions' order. An answer to an
-    /// unknown question, or one that is not one of its choices, is answerInvalid; a required question left empty is answerRequired.
+    /// unknown question, or one that is not one of its choices, is answerInvalid; a required question left empty is
+    /// answerRequired, unless <paramref name="required"/> is off (the dish's adjustment is optional).
     /// </summary>
     private static List<OrderItemAnswer> AnswersOf(
-        IReadOnlyList<DishQuestion> questions, IReadOnlyList<AnswerInput>? inputs, string path, Errors errors)
+        IReadOnlyList<DishQuestion> questions, IReadOnlyList<AnswerInput>? inputs, bool required, string path, Errors errors)
     {
         var answers = new List<OrderItemAnswer>();
         inputs ??= [];
@@ -138,7 +141,7 @@ public static class OrderBuilder
             var text = AnswerText(question, input, answerPath, errors);
             if (text is not null)
                 answers.Add(new OrderItemAnswer { Question = question.Text, Answer = text });
-            else if (question.IsRequired)
+            else if (question.IsRequired && required)
                 errors.Add($"{path}.answers", "answerRequired");
         }
         return answers;

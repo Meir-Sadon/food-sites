@@ -1,4 +1,4 @@
-import { useId, useState, type HTMLAttributes, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type HTMLAttributes, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../api/client'
 
@@ -11,6 +11,54 @@ export function FieldError({ errors, field, id }: { errors: FieldErrors; field: 
     <p id={id} className="field-error">
       {codes.map((code) => t(`errors.${code}`, { defaultValue: t('errors.generic') })).join(' ')}
     </p>
+  )
+}
+
+/**
+ * A small "i" button that shows what a field (or a block, or a page) is for, so the explanations don't crowd the
+ * screen. Its text opens under the line it sits on; another click, Escape or a click elsewhere closes it. Put it next
+ * to the label (in a `.with-info` line), never inside one.
+ */
+export function Info({ text, about }: { text: ReactNode; about?: string }) {
+  const { t } = useTranslation()
+  const id = useId()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const close = (e: Event) => {
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !ref.current?.parentElement?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [open])
+  return (
+    <>
+      <button
+        ref={ref}
+        type="button"
+        className="info-button"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label={about ? t('admin.infoAbout', { name: about }) : t('admin.info')}
+        onClick={(e) => {
+          // Inside a summary, a click would also fold the block.
+          e.preventDefault()
+          setOpen(!open)
+        }}
+      >
+        i
+      </button>
+      {open && (
+        <span id={id} role="note" className="info-text">
+          {text}
+        </span>
+      )}
+    </>
   )
 }
 
@@ -137,7 +185,7 @@ export function FormBlock({
   children,
 }: {
   title: string
-  about: string
+  about: ReactNode
   defaultOpen?: boolean
   invalid?: boolean
   children: ReactNode
@@ -152,14 +200,12 @@ export function FormBlock({
   }
   return (
     <section className={invalid ? 'form-block form-block--invalid' : 'form-block'} aria-labelledby={`${id}-title`}>
-      <p id={`${id}-about`} className="hint form-block__about">
-        {about}
-      </p>
       <details open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
-        <summary aria-describedby={`${id}-about`}>
+        <summary>
           <span id={`${id}-title`} className="form-block__title">
             {title}
           </span>
+          <Info text={about} about={title} />
           {invalid && <span className="form-block__error">{t('admin.blockHasErrors')}</span>}
         </summary>
         <div className="stack form-block__body">{children}</div>
@@ -172,8 +218,10 @@ export function Section({ title, hint, children }: { title: string; hint?: strin
   const id = useId()
   return (
     <section className="admin-section" aria-labelledby={id}>
-      <h2 id={id}>{title}</h2>
-      {hint && <p className="hint">{hint}</p>}
+      <div className="with-info">
+        <h2 id={id}>{title}</h2>
+        {hint && <Info text={hint} about={title} />}
+      </div>
       {children}
     </section>
   )

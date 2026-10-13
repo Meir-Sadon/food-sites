@@ -28,4 +28,10 @@ public class DishAddOn
 
     /// <summary>Under this parent the add-on is a check box: added or not, never in an amount.</summary>
     public bool IsCheckbox { get; set; }
+
+    /// <summary>
+    /// The link was made on the add-on's own form ("add-on to other dishes", or a seed's AddOnOf). Only these links
+    /// show (and change) there; the ones the parent set up among its own add-ons are the parent's alone.
+    /// </summary>
+    public bool LinkedFromAddOn { get; set; }
 }

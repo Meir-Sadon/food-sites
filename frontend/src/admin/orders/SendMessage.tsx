@@ -5,7 +5,7 @@ import type { AdminOrder } from '../../api/operations'
 import { reviewsAdminApi, templatesApi, type MessageTemplate, type ReviewLink } from '../../api/reviews'
 import { useFeature } from '../../site/useSite'
 import { useErrorMessage } from '../hooks'
-import { Loading, Status } from '../ui'
+import { Info, Loading, Status } from '../ui'
 import { composeMessage, reviewUrl, whatsAppUrl } from '../messages/compose'
 
 /** The message for the order's status (e.g. the review request once delivered), else a general one. */
@@ -104,17 +104,16 @@ export function SendMessage({ order, onClose }: { order: AdminOrder; onClose: ()
             <p role="status">{t('admin.messages.preparingLink')}</p>
           ) : (
             <span className="field">
-              <label htmlFor={`${id}-text`}>{t('admin.messages.preview')}</label>
+              <span className="with-info">
+                <label htmlFor={`${id}-text`}>{t('admin.messages.preview')}</label>
+                <Info text={t('admin.messages.previewHint')} about={t('admin.messages.preview')} />
+              </span>
               <textarea
                 id={`${id}-text`}
                 rows={6}
                 value={text}
-                aria-describedby={`${id}-text-hint`}
                 onChange={(e) => template && setEdits({ ...edits, [template.id]: e.target.value })}
               />
-              <span id={`${id}-text-hint`} className="hint">
-                {t('admin.messages.previewHint')}
-              </span>
               {template && edits[template.id] !== undefined && (
                 <span>
                   <button

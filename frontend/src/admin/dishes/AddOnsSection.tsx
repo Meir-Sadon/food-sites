@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { Category, Dish } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
-import { FieldError } from '../ui'
+import { FieldError, Info } from '../ui'
 import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
 
 interface Props {
@@ -30,17 +30,17 @@ export function AddOnsSection({ groups, addOns, candidates, allDishes, categorie
     onChange({ addOns: addOns.map((a) => (a.key === key ? { ...a, ...patch } : a)) })
 
   return (
-    <fieldset className="stack" aria-describedby="dish-addons-hint">
-      <legend>{t('admin.dishes.ownAddOns')}</legend>
-      <p id="dish-addons-hint" className="hint">
-        {t('admin.dishes.ownAddOnsHint')}
-      </p>
+    <fieldset className="stack" aria-labelledby="dish-addons-title">
+      <legend className="with-info">
+        <span id="dish-addons-title">{t('admin.dishes.ownAddOns')}</span>
+        <Info text={t('admin.dishes.ownAddOnsHint')} about={t('admin.dishes.ownAddOns')} />
+      </legend>
 
-      <fieldset className="stack" aria-describedby="dish-groups-hint">
-        <legend>{t('admin.dishes.groups')}</legend>
-        <p id="dish-groups-hint" className="hint">
-          {t('admin.dishes.groupsHint')}
-        </p>
+      <fieldset className="stack" aria-labelledby="dish-groups-title">
+        <legend className="with-info">
+          <span id="dish-groups-title">{t('admin.dishes.groups')}</span>
+          <Info text={t('admin.dishes.groupsHint')} about={t('admin.dishes.groups')} />
+        </legend>
         {groups.map((group, index) => {
           const n = index + 1
           const field = (name: string) => `addOnGroups[${index}].${name}`

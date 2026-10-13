@@ -4,7 +4,7 @@ import type { FieldErrors } from '../../api/client'
 import { ordersAdminApi, type AdminOrder } from '../../api/operations'
 import type { Fulfillment, Payment } from '../../api/site'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
-import { FieldError, Status } from '../ui'
+import { FieldError, Info, Status } from '../ui'
 
 /** Edits an order after the client called: contact details, date, payment and quantities. */
 export function OrderEditor({
@@ -117,8 +117,11 @@ export function OrderEditor({
         <textarea id={id('notes')} rows={2} maxLength={500} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </span>
 
-      <fieldset className="stack" aria-describedby={`${id('items')}-error`}>
-        <legend>{t('admin.orders.items')}</legend>
+      <fieldset className="stack" aria-labelledby={`${id('items')}-title`} aria-describedby={`${id('items')}-error`}>
+        <legend className="with-info">
+          <span id={`${id('items')}-title`}>{t('admin.orders.items')}</span>
+          <Info text={t('admin.orders.editHint')} about={t('admin.orders.items')} />
+        </legend>
         {order.items
           .filter((i) => i.id in quantities)
           .map((item) => (
@@ -145,7 +148,6 @@ export function OrderEditor({
             </div>
           ))}
         {fieldError('items')}
-        <p className="hint">{t('admin.orders.editHint')}</p>
       </fieldset>
 
       <div className="row form-actions">

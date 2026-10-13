@@ -158,6 +158,7 @@ public class AppDbContext(
         {
             e.Property(q => q.Text).HasMaxLength(DishQuestion.TextMaxLength);
             e.Property(q => q.Kind).HasMaxLength(20);
+            e.Property(q => q.DefaultAnswer).HasMaxLength(DishQuestion.ChoiceMaxLength);
             e.HasOne(q => q.Dish).WithMany(d => d.Questions)
                 .HasForeignKey(q => q.DishId)
                 .OnDelete(DeleteBehavior.Cascade);

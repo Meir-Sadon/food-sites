@@ -51,9 +51,10 @@ export function DishImagesSection({ dish, onChange }: { dish: Dish; onChange: (d
   }
 
   return (
-    <FormBlock title={t('admin.dishes.images')} about={t('admin.dishes.blocks.imagesAbout')}>
-      <p className="hint">{t('admin.settings.imageHint')}</p>
-      {dish.images.length > 1 && <p className="hint">{t('admin.dishes.imagesOrderHint')}</p>}
+    <FormBlock
+      title={t('admin.dishes.images')}
+      about={`${t('admin.dishes.blocks.imagesAbout')} ${t('admin.settings.imageHint')} ${t('admin.dishes.imagesOrderHint')}`}
+    >
       <ol className="image-list">
         {sort.items.map((image, index) => {
           const name = t('admin.dishes.imageN', { n: index + 1 })

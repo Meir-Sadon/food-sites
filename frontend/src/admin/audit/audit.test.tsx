@@ -52,7 +52,7 @@ describe('audit trail', () => {
     expect(rows[1]).toHaveTextContent('סיסמת בעל העסק שונתה')
     expect(rows[2]).toHaveTextContent('בעל העסק נכנס/ה לאזור הניהול')
     // Read-only: nothing on the page edits or removes an entry.
-    expect(within(screen.getByRole('main')).queryByRole('button')).toBeNull()
+    expect(within(screen.getByRole('main')).queryAllByRole('button').filter((b) => !b.classList.contains('info-button'))).toEqual([])
   })
 
   it('loads earlier entries page by page', async () => {

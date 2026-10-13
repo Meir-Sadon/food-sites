@@ -266,7 +266,35 @@ public class OrderBuilderTests
             new() { Id = 5, Text = "תאריך האירוע", Kind = QuestionKind.Date },
             new() { Id = 6, Text = "סועדים", Kind = QuestionKind.Number },
         ];
+        // Required questions are enforced only when adjusting the dish is required.
+        dish.AdjustmentOptional = false;
         return dish;
+    }
+
+    [Fact]
+    public void With_adjustment_optional_a_required_question_may_be_left_empty()
+    {
+        var dish = WithQuestions(Fixed(1, "כריך", (10, "כריך", 30, true)));
+        dish.AdjustmentOptional = true;
+
+        var (items, errors) = Build(Menu(dish), new OrderLineInput(1, null, 1, []));
+
+        Assert.False(errors.Any);
+        Assert.Empty(items.Single().Answers);
+    }
+
+    [Fact]
+    public void A_variant_is_not_offered_under_itself_through_its_main_dish()
+    {
+        var main = Fixed(1, "סביאה", (10, "סביאה", 30, true));
+        var small = Fixed(2, "סביאה קטנה", (20, "קטנה", 20, true));
+        var large = Fixed(3, "סביאה גדולה", (30, "גדולה", 40, true));
+        small.MainDish = large.MainDish = main;
+        small.MainDishId = large.MainDishId = 1;
+        main.AddOns = [new DishAddOn { ParentDishId = 1, AddOnDishId = 2, ParentDish = main, AddOnDish = small }];
+
+        Assert.Empty(DishRules.AddOnLinks(small));
+        Assert.Equal([2], DishRules.AddOnLinks(large).Select(a => a.AddOnDishId));
     }
 
     [Fact]

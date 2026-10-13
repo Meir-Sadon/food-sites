@@ -61,11 +61,11 @@ public class Dish
     public bool IsYesNo { get; set; }
 
     /// <summary>
-    /// When set, the client may send an order without adjusting each ordered unit of the dish (picking an add-on or
-    /// confirming it as it is); otherwise every unit must be adjusted first. A variant follows its main dish's setting.
-    /// Required questions are asked either way.
+    /// When set (the default), the client may send an order without adjusting each ordered unit of the dish (picking an
+    /// add-on or confirming it as it is) and without answering its questions, required ones included; otherwise every
+    /// unit must be adjusted and its required questions answered first. A variant follows its main dish's setting.
     /// </summary>
-    public bool AdjustmentOptional { get; set; }
+    public bool AdjustmentOptional { get; set; } = true;
 
     /// <summary>
     /// Set on a variant: the main dish whose card it is shown in, with the main dish's images and description

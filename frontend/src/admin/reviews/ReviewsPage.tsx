@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { reviewStatuses, reviewsAdminApi, type AdminReview, type ReviewStatus } from '../../api/reviews'
 import { Stars } from '../../components/Stars'
 import { useErrorMessage } from '../hooks'
-import { Loading, Status } from '../ui'
+import { Info, Loading, Status } from '../ui'
 
 /** The reviews clients sent: new ones wait here until the admin approves them for the home page or blocks them. */
 export function ReviewsPage() {
@@ -34,8 +34,10 @@ export function ReviewsPage() {
 
   return (
     <>
-      <h1>{t('admin.reviews.title')}</h1>
-      <p className="hint">{t('admin.reviews.intro')}</p>
+      <div className="with-info">
+        <h1>{t('admin.reviews.title')}</h1>
+        <Info text={t('admin.reviews.intro')} about={t('admin.reviews.title')} />
+      </div>
       <div className="row row--end">
         <span className="field field--narrow">
           <label htmlFor="reviews-status">{t('admin.reviews.show')}</label>

@@ -5,7 +5,7 @@ import { usageApi, type UsageReport } from '../../api/operations'
 import { formatMoney } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { useErrorMessage } from '../hooks'
-import { Loading, Section, Status } from '../ui'
+import { Info, Loading, Section, Status } from '../ui'
 import { BarChart, StepBars } from './BarChart'
 
 type Period = '7' | '30' | '90' | 'custom'
@@ -63,8 +63,10 @@ export function UsagePage() {
 
   return (
     <>
-      <h1>{t('admin.usage.title')}</h1>
-      <p className="hint">{t('admin.usage.intro')}</p>
+      <div className="with-info">
+        <h1>{t('admin.usage.title')}</h1>
+        <Info text={t('admin.usage.intro')} about={t('admin.usage.title')} />
+      </div>
 
       <form className="row row--end" onSubmit={(e) => e.preventDefault()} aria-label={t('admin.usage.range')}>
         <span className="field field--narrow">

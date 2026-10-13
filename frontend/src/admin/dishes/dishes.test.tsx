@@ -216,7 +216,8 @@ describe('Dish form', () => {
       mainDishId: null,
       useMainDishPrice: false,
       isYesNo: false,
-      adjustmentOptional: false,
+      // Optional unless the admin unticks it.
+      adjustmentOptional: true,
       addOnGroups: [],
       addOns: [],
       questions: [],
@@ -317,6 +318,10 @@ describe('Dish form', () => {
     await user.type(within(first).getByLabelText('אפשרויות (אחת בכל שורה)'), 'עדין{Enter}חריף{Enter}')
     await user.click(within(first).getByLabelText('רשימה נפתחת'))
     await user.click(within(first).getByLabelText('חובה לענות'))
+    // The default answer is picked from an empty choice and the question's own choices.
+    const defaultAnswer = within(first).getByLabelText('תשובת ברירת מחדל')
+    expect([...(defaultAnswer as HTMLSelectElement).options].map((o) => o.text)).toEqual(['ללא', 'עדין', 'חריף'])
+    await user.selectOptions(defaultAnswer, 'חריף')
 
     await user.click(screen.getByRole('button', { name: 'הוספת שאלה' }))
     const second = screen.getByRole('group', { name: 'שאלה 2' })
@@ -326,8 +331,8 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).questions).toEqual([
-      { id: null, text: 'מה לכתוב על העוגה?', kind: 'Text', choices: [], showAsDropdown: false, isRequired: false },
-      { id: null, text: 'רמת חריפות', kind: 'SingleChoice', choices: ['עדין', 'חריף'], showAsDropdown: true, isRequired: true },
+      { id: null, text: 'מה לכתוב על העוגה?', kind: 'Text', choices: [], showAsDropdown: false, isRequired: false, defaultAnswer: null },
+      { id: null, text: 'רמת חריפות', kind: 'SingleChoice', choices: ['עדין', 'חריף'], showAsDropdown: true, isRequired: true, defaultAnswer: 'חריף' },
     ])
   })
 
@@ -335,7 +340,7 @@ describe('Dish form', () => {
     const pictured = dish(1, 'עוף בתנור', 1, {
       ...chicken,
       images: [{ id: 5, url: 'https://img/1.jpg', displayOrder: 0 }],
-      questions: [{ id: 7, text: 'חריפות', kind: 'YesNo', choices: [], showAsDropdown: false, isRequired: true }],
+      questions: [{ id: 7, text: 'חריפות', kind: 'YesNo', choices: [], showAsDropdown: false, isRequired: true, defaultAnswer: 'yes' }],
     })
     const api = fakeApi({
       ...base,
@@ -401,7 +406,7 @@ describe('Dish form', () => {
     expect(screen.getByRole('region', { name: 'שאלות ללקוח' }).querySelector('details')).not.toHaveAttribute('open')
   })
 
-  it('folds each topic of the form under a block with a line about it', async () => {
+  it('folds each topic of the form under a block with an Info button about it', async () => {
     fakeApi(base)
     renderAt('/admin/dishes/1')
     const basics = await screen.findByRole('region', { name: 'פרטים בסיסיים' })
@@ -410,10 +415,16 @@ describe('Dish form', () => {
     expect(basics.querySelector('details')).toHaveAttribute('open')
     for (const name of ['מחיר וכמויות', 'זמינות ואופן הצגה', 'תוספת למנות אחרות', 'שאלות ללקוח', 'תמונות'])
       expect(screen.getByRole('region', { name }).querySelector('details')).not.toHaveAttribute('open')
-    const toggle = within(price).getByText('מחיר וכמויות').closest('summary')!
-    expect(toggle).toHaveAccessibleDescription(/איך המנה נמכרת/)
+    const user = userEvent.setup()
+    expect(within(price).queryByRole('note')).not.toBeInTheDocument()
+    // The explanation opens from its button without unfolding the block.
+    await user.click(within(price).getByRole('button', { name: 'הסבר: מחיר וכמויות' }))
+    expect(within(price).getByRole('note')).toHaveTextContent(/איך המנה נמכרת/)
+    expect(price.querySelector('details')).not.toHaveAttribute('open')
+    await user.keyboard('{Escape}')
+    expect(within(price).queryByRole('note')).not.toBeInTheDocument()
 
-    await userEvent.setup().click(toggle)
+    await user.click(within(price).getByText('מחיר וכמויות').closest('summary')!)
     expect(price.querySelector('details')).toHaveAttribute('open')
   })
 
@@ -432,6 +443,24 @@ describe('Dish form', () => {
     expect(api.sent('PUT', '/api/admin/dishes/1')).toHaveLength(0)
     await user.click(screen.getByRole('button', { name: 'שמירה בכל זאת' }))
     await waitFor(() => expect(api.sent('PUT', '/api/admin/dishes/1')).toHaveLength(1))
+  })
+
+  it('leaves an add-on link made on the parent dish unticked on the add-on, and names it there', async () => {
+    const sauce = dish(5, 'רוטב', 2)
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/dishes': () => [{ ...chicken, addOnDishIds: [3, 5] }, eggplant, leg, removed, sauce],
+      'GET /api/admin/dishes/5/affected-orders': () => ({ count: 0 }),
+      'PUT /api/admin/dishes/5': () => sauce,
+    })
+    renderAt('/admin/dishes/5')
+    const user = userEvent.setup()
+
+    expect(await screen.findByText('מוצעת גם כתוספת במנות שהוגדרו במסך שלהן: עוף בתנור')).toBeInTheDocument()
+    expect(within(screen.getByRole('group', { name: 'תוספת למנות' })).getByLabelText('עוף בתנור')).not.toBeChecked()
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/dishes/5')).toHaveLength(1))
+    expect((api.sent('PUT', '/api/admin/dishes/5')[0].body as DishInput).parentDishIds).toEqual([])
   })
 
   it('asks to save a new dish before adding pictures', async () => {

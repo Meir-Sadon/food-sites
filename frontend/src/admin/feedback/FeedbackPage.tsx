@@ -6,7 +6,7 @@ import { useToast } from '../../components/toast'
 import { useFeatures } from '../../site/useSite'
 import { sections } from '../sections'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
-import { FieldError, Loading, Section, Status } from '../ui'
+import { FieldError, Info, Loading, Section, Status } from '../ui'
 
 const kinds: FeedbackKind[] = ['Problem', 'Comment']
 const time = new Intl.DateTimeFormat('he-IL', { dateStyle: 'short', timeStyle: 'short' })
@@ -57,8 +57,10 @@ export function FeedbackPage() {
 
   return (
     <>
-      <h1>{t('admin.feedback.title')}</h1>
-      <p className="hint">{t('admin.feedback.intro')}</p>
+      <div className="with-info">
+        <h1>{t('admin.feedback.title')}</h1>
+        <Info text={t('admin.feedback.intro')} about={t('admin.feedback.title')} />
+      </div>
       <Section title={t('admin.feedback.new')}>
         <form onSubmit={handleSubmit} className="stack">
           <fieldset className="row">

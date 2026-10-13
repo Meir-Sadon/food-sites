@@ -104,7 +104,10 @@ export interface MenuDish {
   addOnGroups?: MenuAddOnGroup[]
   /** Questions the client answers when ordering the dish (a variant's main dish's first). */
   questions?: MenuQuestion[]
-  /** The client may order without adjusting each unit (picking an add-on or confirming it as it is). */
+  /**
+   * The client may order without adjusting each unit (picking an add-on or confirming it as it is) or answering its
+   * questions, required ones included.
+   */
   adjustmentOptional?: boolean
 }
 
@@ -122,6 +125,8 @@ export interface MenuQuestion {
   /** A single choice shown as a drop-down list instead of radio buttons. */
   showAsDropdown: boolean
   isRequired: boolean
+  /** The answer already picked for the client: one of the choices, or 'yes' / 'no'. */
+  defaultAnswer?: string | null
 }
 
 /** Value for text, a number, a date (yyyy-MM-dd), yes/no ('yes' | 'no') and a single choice; choices for a multiple choice. */
