@@ -1071,6 +1071,12 @@ label {
   border-radius: var(--radius);
 }
 
+/* The line total of an add-on has a place of its own (empty at zero), so the amount control never moves when it appears. */
+.addon__sum {
+  min-inline-size: 4.5rem;
+  text-align: end;
+}
+
 .addons + .addons {
   margin-block-start: 0.75rem;
 }

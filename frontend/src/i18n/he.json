@@ -1009,6 +1009,7 @@
     "variantsOf": "סוגי {{name}}",
     "added": "נוסף להזמנה",
     "groupLimit": "עד {{max}}",
+    "groupLeft": "נותרו {{count}}",
     "unitN": "מנה {{n}}: {{name}}",
     "noteFor": "שם או הערה: {{name}}",
     "answerRequiredFor": "יש לענות על השאלות המסומנות ב־* במנה {{name}}.",
