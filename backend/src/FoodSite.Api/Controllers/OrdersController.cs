@@ -222,7 +222,7 @@ public class OrdersController(
     private async Task NotifyAsync(
         Order order, string? paymentPhone, string? ownerEmail, IReadOnlyList<string> serviceCities, bool hourFull, CancellationToken ct)
     {
-        await ownerMail.NewOrderAsync(ownerEmail, order, hourFull);
+        await ownerMail.NewOrderAsync(ownerEmail, order, hourFull, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}");
         var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
         var messages = admins
             .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name, hourFull)))

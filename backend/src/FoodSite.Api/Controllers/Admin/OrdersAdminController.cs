@@ -20,7 +20,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     public record ItemDto(
         int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, string? Note = null,
-        IReadOnlyList<AnswerDto>? Answers = null);
+        IReadOnlyList<AnswerDto>? Answers = null, string? ImageUrl = null);
 
     /// <summary>A dish question and the client's answer, as shown.</summary>
     public record AnswerDto(string Question, string Answer);
@@ -92,13 +92,14 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
         var orders = await query.OrderBy(o => o.SupplyDate).ThenBy(o => o.CreatedAt).ThenBy(o => o.Id).ToListAsync();
         var overbooked = await OverbookedAsync(orders.Select(o => o.SupplyDate).Distinct().ToList());
-        return orders.Select(o => ToDto(o, overbooked));
+        var pictures = await PicturesAsync(orders);
+        return orders.Select(o => ToDto(o, overbooked, pictures));
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<OrderDto>> Get(int id) =>
         await db.Orders.AsNoTracking().Include(o => o.Items).SingleOrDefaultAsync(o => o.Id == id) is { } order
-            ? ToDto(order, await OverbookedAsync([order.SupplyDate]))
+            ? ToDto(order, await OverbookedAsync([order.SupplyDate]), await PicturesAsync([order]))
             : NotFound();
 
     /// <summary>
@@ -282,15 +283,38 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
-        return ToDto(await db.Orders.AsNoTracking().Include(o => o.Items).SingleAsync(o => o.Id == id), await OverbookedAsync([input.SupplyDate]));
+        var saved = await db.Orders.AsNoTracking().Include(o => o.Items).SingleAsync(o => o.Id == id);
+        return ToDto(saved, await OverbookedAsync([input.SupplyDate]), await PicturesAsync([saved]));
     }
 
-    private static OrderDto ToDto(Order o, HashSet<int> overbooked) => new(
+    /// <summary>The first picture of each ordered dish (a variant without one shows its main dish's), by dish id.</summary>
+    private async Task<Dictionary<int, string>> PicturesAsync(IEnumerable<Order> orders)
+    {
+        var ids = orders.SelectMany(o => o.Items).Select(i => i.DishId).Distinct().ToList();
+        if (ids.Count == 0)
+            return [];
+        var dishes = await db.Dishes.AsNoTracking()
+            .Where(d => ids.Contains(d.Id) || db.Dishes.Any(v => ids.Contains(v.Id) && v.MainDishId == d.Id))
+            .Select(d => new { d.Id, d.MainDishId, Url = d.Images.OrderBy(i => i.DisplayOrder).ThenBy(i => i.Id).Select(i => i.Url).FirstOrDefault() })
+            .ToListAsync();
+        var own = dishes.Where(d => d.Url is not null).ToDictionary(d => d.Id, d => d.Url!);
+        var mainOf = dishes.ToDictionary(d => d.Id, d => d.MainDishId);
+        var result = new Dictionary<int, string>();
+        foreach (var id in ids)
+        {
+            if (own.TryGetValue(id, out var url) || (mainOf.GetValueOrDefault(id) is { } main && own.TryGetValue(main, out url)))
+                result[id] = url;
+        }
+        return result;
+    }
+
+    private static OrderDto ToDto(Order o, HashSet<int> overbooked, Dictionary<int, string> pictures) => new(
         o.Id, o.Phone, o.Name, o.Address, o.SupplyDate, o.FulfillmentMethod, o.Notes, o.PaymentMethod, o.IsPaid,
         o.PaidWith, o.PaymentComment, o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
         o.Items.OrderBy(i => i.Id)
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.Note,
-                (i.Answers ?? []).Select(a => new AnswerDto(a.Question, a.Answer)).ToList()))
+                (i.Answers ?? []).Select(a => new AnswerDto(a.Question, a.Answer)).ToList(),
+                pictures.GetValueOrDefault(i.DishId)))
             .ToList(),
         o.DeliveryHour,
         overbooked.Contains(o.Id),

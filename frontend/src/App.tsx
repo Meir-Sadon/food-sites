@@ -9,6 +9,7 @@ import { ContactsPage } from './admin/contacts/ContactsPage'
 import { DishFormPage } from './admin/dishes/DishFormPage'
 import { DishesPage } from './admin/dishes/DishesPage'
 import { FeedbackPage } from './admin/feedback/FeedbackPage'
+import { OrderViewPage } from './admin/orders/OrderViewPage'
 import { OrdersPage } from './admin/orders/OrdersPage'
 import { MessagesPage } from './admin/messages/MessagesPage'
 import { ReportsPage } from './admin/reports/ReportsPage'
@@ -85,6 +86,7 @@ export function App() {
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/route" element={<RoutePage />} />
+          <Route path="orders/:id" element={<OrderViewPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="usage" element={<UsagePage />} />
           <Route path="messages" element={<MessagesPage />} />

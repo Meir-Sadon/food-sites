@@ -34,6 +34,8 @@ export interface AdminOrderItem {
   quantity: number
   unitPrice: number
   lineTotal: number
+  /** The dish's first picture, else its main dish's. */
+  imageUrl?: string | null
 }
 
 export interface AdminOrder {
@@ -138,6 +140,7 @@ const orders = '/api/admin/orders'
 
 export const ordersAdminApi = {
   list: (filter: OrderFilter) => apiJson<AdminOrder[]>(`${orders}${queryString(filter)}`),
+  get: (id: number) => apiJson<AdminOrder>(`${orders}/${id}`),
   summary: (date: string) => apiJson<CookingSummary>(`${orders}/summary?date=${date}`),
   setStatus: (id: number, status: OrderStatus) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status })),
   approve: (id: number) => apiJson<void>(`${orders}/${id}/approve`, send('PUT')),

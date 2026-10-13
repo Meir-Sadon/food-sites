@@ -82,6 +82,8 @@ public sealed class MailTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal(Owner, to);
         Assert.Contains("עוף בתנור", text);
         Assert.Contains("דנה", text);
+        // A link that opens this order in the admin, on the host the client ordered from.
+        Assert.Matches(@"https?://[^\s/]+/admin/orders/\d+", text);
 
         _factory.Mail.Fail = true;
         Assert.Equal(HttpStatusCode.OK, (await PlaceOrder(dish)).StatusCode);

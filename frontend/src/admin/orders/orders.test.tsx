@@ -299,4 +299,62 @@ describe('Admin Reports', () => {
     await waitFor(() => expect(api.sent('GET', '/api/admin/reports?paymentMethod=Transfer')).toHaveLength(1))
     expect(screen.getByRole('link', { name: 'ייצוא ל־Excel' })).toHaveAttribute('href', '/api/admin/reports/export?paymentMethod=Transfer')
   })
+
+  describe('one order', () => {
+    const detailed = order({
+      deliveryHour: '09:00:00',
+      notes: 'להתקשר לפני',
+      items: [
+        {
+          id: 1, parentItemId: null, dishName: 'עוף בתנור', optionLabel: 'שלם', quantity: 2, unitPrice: 70, lineTotal: 140,
+          note: 'בלי מלח', answers: [{ question: 'חריפות', answer: 'בינוני' }], imageUrl: 'https://images.test/chicken.jpg',
+        },
+        { id: 2, parentItemId: 1, dishName: 'ירך', optionLabel: 'יחידה', quantity: 3, unitPrice: 12, lineTotal: 36 },
+      ],
+    })
+
+    it('opens from a link as the basket the client saw, with pictures, remarks, answers and add-ons', async () => {
+      fakeApi({ ...adminSession, 'GET /api/admin/orders/7': () => ({ body: detailed }) })
+      renderAt('/admin/orders/7')
+
+      const basket = await screen.findByRole('region', { name: 'הזמנה כפי שהלקוח רואה בסל' })
+      expect(within(basket).getByText('עוף בתנור')).toBeInTheDocument()
+      expect(basket.querySelector('img')).toHaveAttribute('src', 'https://images.test/chicken.jpg')
+      expect(within(basket).getByText(/בלי מלח/)).toBeInTheDocument()
+      expect(within(basket).getByText(/בינוני/)).toBeInTheDocument()
+      expect(within(basket).getByText(/\+ 3 × ירך \(יחידה\)/)).toBeInTheDocument()
+      expect(within(basket).getByText('₪176')).toBeInTheDocument()
+      expect(screen.getByText(/בשעה 09:00/)).toBeInTheDocument()
+    })
+
+    it('shares the preparation report on WhatsApp: what to prepare, then the other details', async () => {
+      fakeApi({ ...adminSession, 'GET /api/admin/orders/7': () => ({ body: detailed }) })
+      renderAt('/admin/orders/7')
+
+      const report = (await screen.findByRole('textbox', { name: 'דוח הכנה לשיתוף' })) as HTMLTextAreaElement
+      const text = report.value
+      expect(text.indexOf('מה להכין')).toBeLessThan(text.indexOf('פרטי ההזמנה'))
+      for (const part of ['דוח הכנה להזמנה #7', '• 2 × עוף בתנור (שלם)', 'הערה: בלי מלח', 'חריפות: בינוני', '+ 3 × ירך (יחידה)', 'דנה, 0501234567', '09:00', 'חיפה', 'להתקשר לפני', 'סה״כ: ₪176'])
+        expect(text).toContain(part)
+
+      const link = screen.getByRole('link', { name: 'שיתוף בוואטסאפ כדוח הכנה' })
+      expect(link).toHaveAttribute('href', `https://wa.me/?text=${encodeURIComponent(text)}`)
+
+      await userEvent.setup().type(report, '\nתודה')
+      expect(screen.getByRole('link', { name: 'שיתוף בוואטסאפ כדוח הכנה' }).getAttribute('href')).toContain(encodeURIComponent('\nתודה'))
+    })
+
+    it('says so when the order does not exist', async () => {
+      fakeApi({ ...adminSession, 'GET /api/admin/orders/9': () => ({ status: 404, body: {} }) })
+      renderAt('/admin/orders/9')
+      expect(await screen.findByText('ההזמנה לא נמצאה.')).toBeInTheDocument()
+    })
+
+    it('is reached from the order in the list', async () => {
+      fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [order()] })
+      renderAt('/admin/orders')
+      const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+      expect(within(card).getByRole('link', { name: /תצוגת סל/ })).toHaveAttribute('href', '/admin/orders/7')
+    })
+  })
 })

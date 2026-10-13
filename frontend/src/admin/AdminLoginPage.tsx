@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { adminLogin } from '../api/admin'
 import { ApiError } from '../api/client'
@@ -7,6 +7,7 @@ import { ApiError } from '../api/client'
 export function AdminLoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const from = (useLocation().state as { from?: unknown } | null)?.from
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -18,7 +19,7 @@ export function AdminLoginPage() {
     setError(null)
     try {
       await adminLogin(username.trim(), password)
-      navigate('/admin', { replace: true })
+      navigate(typeof from === 'string' && /^\/admin(\/|\?|$)/.test(from) ? from : '/admin', { replace: true })
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 0
       setError(
