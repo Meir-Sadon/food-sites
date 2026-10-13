@@ -13,9 +13,9 @@ export interface Contact {
 export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
-export type SiteStyle = 'classic' | 'street'
+export type SiteStyle = 'classic' | 'street' | 'tiles'
 
-export const SITE_STYLES: readonly SiteStyle[] = ['classic', 'street']
+export const SITE_STYLES: readonly SiteStyle[] = ['classic', 'street', 'tiles']
 
 /** Where the order total sits (FoodSite.Api `OrderLayout`): a bar at the bottom, or on a wide screen a panel at the side. */
 export type OrderTotalPosition = 'bottom' | 'side'
