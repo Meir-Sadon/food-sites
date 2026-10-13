@@ -95,6 +95,9 @@ export function OrderPage() {
   // The admin's order layout: where the total sits, and whether the menu is paged one category at a time.
   const { totalPosition, flow } = useOrderLayout()
   const steps = flow === 'steps'
+  // Whole menu on one page, with the order details behind a button until the client is done choosing.
+  const deferred = flow === 'continue'
+  const [detailsOpen, setDetailsOpen] = useState(false)
   // The shown step: a category's position, or the number of categories for the contact and payment details.
   const [step, setStep] = useState(0)
   // Bumped on every move to another step: the page then scrolls to the steps header.
@@ -141,6 +144,11 @@ export function OrderPage() {
         block: 'center',
       })
   }, [quickFills])
+
+  // Opening the details brings the client to them.
+  useEffect(() => {
+    if (detailsOpen) formRef.current?.scrollIntoView?.({ behavior: scrollBehavior(), block: 'start' })
+  }, [detailsOpen])
 
   useEffect(() => {
     if (stepMoves > 0)
@@ -221,7 +229,7 @@ export function OrderPage() {
     .filter((group) => group.dishes.length > 0)
   const detailsStep = categories.length
   const currentStep = steps ? Math.min(step, detailsStep) : 0
-  const showDetails = !steps || currentStep === detailsStep
+  const showDetails = deferred ? detailsOpen : !steps || currentStep === detailsStep
   const shownCategories = steps ? categories.slice(currentStep, currentStep + 1) : categories
 
   function goToStep(next: number) {
@@ -232,6 +240,7 @@ export function OrderPage() {
   /** The side total's button: the details step when paged, else down to the form. */
   function goToDetails() {
     if (steps) goToStep(detailsStep)
+    else if (deferred) setDetailsOpen(true)
     else
       formRef.current?.scrollIntoView?.({
         behavior: scrollBehavior(),
@@ -301,6 +310,7 @@ export function OrderPage() {
     setSubmitError(null)
     clearDraft()
     setStep(0)
+    setDetailsOpen(false)
   }
 
   // A block with a field the server (or the phone check) refused opens, so the message is seen.
@@ -321,6 +331,7 @@ export function OrderPage() {
     setQuickFills((n) => n + 1)
     // Paged: the filled order is ready to send, so go to its details.
     if (steps) setStep(detailsStep)
+    if (deferred) setDetailsOpen(true)
   }
 
   function leave(save: boolean) {
@@ -468,6 +479,15 @@ export function OrderPage() {
           </details>
         ))}
         {steps && currentStep < detailsStep && <CategoryStepsFooter current={currentStep} last={detailsStep - 1} onChange={goToStep} />}
+
+        {deferred && !detailsOpen && categories.length > 0 && (
+          <div className="order-continue">
+            <button type="button" className="order-steps__forward" disabled={count === 0} onClick={goToDetails}>
+              {t('order.continueToDetails')}
+            </button>
+            {count === 0 && <p className="hint">{t('order.continueHint')}</p>}
+          </div>
+        )}
 
         {showDetails && (
           <form ref={formRef} className="order-form stack" onSubmit={handleSubmit} aria-labelledby="order-details-title" noValidate>
@@ -699,7 +719,7 @@ export function OrderPage() {
         <strong className="numeric" aria-live="polite">
           {t('order.total')}: {formatMoney(total)}
         </strong>
-        {totalPosition === 'side' && (
+        {(totalPosition === 'side' || (deferred && !detailsOpen)) && (
           <button type="button" className="total-bar__details" onClick={goToDetails}>
             {t('order.toDetails')}
           </button>

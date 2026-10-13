@@ -3168,6 +3168,32 @@ label {
   background: radial-gradient(circle, var(--color-accent) 0.2rem, transparent 0.21rem) 0 0 / 1.25rem 100%;
 }
 
+/* A drawing of the continue flow: lines of dishes, then one button. */
+.layout-preview--flow-continue::before {
+  inset: 0.5rem 0.5rem 1.5rem;
+}
+
+.layout-preview--flow-continue::after {
+  inset: auto 25% 0.375rem;
+  block-size: 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+
+/* The button between the dishes and the (still hidden) order details. */
+.order-continue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+  margin-block: 1rem;
+}
+
+.order-continue > p {
+  margin: 0;
+  text-align: center;
+}
+
 /* One ordered unit's choices (add-ons, name, questions): closed until opened, with its state in the heading. */
 .addon-units {
   display: grid;
