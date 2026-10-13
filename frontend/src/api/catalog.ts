@@ -122,6 +122,7 @@ export interface Dish {
   questions: DishQuestion[]
   /** The client may order without adjusting each unit or answering its questions (a variant follows its main dish). */
   adjustmentOptional: boolean
+  isRecommended: boolean
 }
 
 export interface DishQuestion {
@@ -189,6 +190,7 @@ export interface DishInput {
   /** On a new dish: give it the images of this dish (it is a copy of it). */
   copyImagesFrom?: number
   adjustmentOptional?: boolean
+  isRecommended?: boolean
 }
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024

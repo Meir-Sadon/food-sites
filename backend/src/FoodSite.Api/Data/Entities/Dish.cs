@@ -68,6 +68,12 @@ public class Dish
     public bool AdjustmentOptional { get; set; } = true;
 
     /// <summary>
+    /// Marked by the admin as recommended: the order page also lists it under "מנות מומלצות" at the top of the menu,
+    /// besides its own category. A variant is recommended through its main dish (the card they share).
+    /// </summary>
+    public bool IsRecommended { get; set; }
+
+    /// <summary>
     /// Set on a variant: the main dish whose card it is shown in, with the main dish's images and description
     /// (e.g. "סיגר כבד" under "סיגרים עבודת יד"). It sits in the main dish's category. Variants are ordered and
     /// listed in orders as dishes of their own; a main dish with variants is not ordered itself.

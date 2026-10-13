@@ -21,7 +21,7 @@ import { CartSheet } from '../order/CartSheet'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
-import { categorySectionId } from '../order/categorySection'
+import { RECOMMENDED_SECTION, categorySectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { formatMoney, formatSlot, formatSupplyDate } from '../order/format'
@@ -37,6 +37,7 @@ import {
   clampToDate,
   orderTotal,
   pickedInCategory,
+  recommendedDishes,
   restoreSelections,
   round2,
   standaloneDishes,
@@ -237,6 +238,7 @@ export function OrderPage() {
       dishes: standaloneDishes(menu, category.id),
     }))
     .filter((group) => group.dishes.length > 0)
+  const recommended = recommendedDishes(menu)
   const detailsStep = categories.length
   const currentStep = steps ? Math.min(step, detailsStep) : 0
   const showDetails = deferred ? detailsOpen : !steps || currentStep === detailsStep
@@ -497,7 +499,14 @@ export function OrderPage() {
                 onChange={goToStep}
               />
             )}
-            {!steps && !searching && categories.length > 1 && <CategoryJumpBar categories={categories.map(({ category }) => ({ id: category.id, name: category.name }))} />}
+            {!steps && !searching && categories.length + (recommended.length > 0 ? 1 : 0) > 1 && (
+              <CategoryJumpBar
+                categories={[
+                  ...(recommended.length > 0 ? [{ id: RECOMMENDED_SECTION, name: t('order.recommended.title') }] : []),
+                  ...categories.map(({ category }) => ({ id: category.id, name: category.name })),
+                ]}
+              />
+            )}
           </div>
         )}
         {searching && (
@@ -513,6 +522,14 @@ export function OrderPage() {
               <div className="category__dishes">{results.map(renderDish)}</div>
             )}
           </section>
+        )}
+        {!searching && recommended.length > 0 && (!steps || currentStep === 0) && (
+          <details id={categorySectionId(RECOMMENDED_SECTION)} open className="category category--recommended">
+            <summary>
+              <h2>{t('order.recommended.title')}</h2>
+            </summary>
+            <div className="category__dishes">{recommended.map(renderDish)}</div>
+          </details>
         )}
         {!searching && shownCategories.map(({ category, dishes: list }) => (
           <details key={category.id} id={categorySectionId(category.id)} open className="category">

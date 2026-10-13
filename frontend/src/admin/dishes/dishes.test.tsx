@@ -218,6 +218,7 @@ describe('Dish form', () => {
       isYesNo: false,
       // Optional unless the admin unticks it.
       adjustmentOptional: true,
+      isRecommended: false,
       addOnGroups: [],
       addOns: [],
       questions: [],
@@ -248,6 +249,19 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).adjustmentOptional).toBe(true)
+  })
+
+  it('saves a dish as recommended', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    await user.click(screen.getByLabelText('מנה מומלצת'))
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).isRecommended).toBe(true)
   })
 
   it('saves a per-supply-date limit on a dish', async () => {

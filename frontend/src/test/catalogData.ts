@@ -66,6 +66,7 @@ export const dish = (id: number, name: string, categoryId: number, patch: Partia
   addOns: [],
   questions: [],
   adjustmentOptional: false,
+  isRecommended: false,
   ...patch,
 })
 

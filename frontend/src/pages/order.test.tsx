@@ -382,6 +382,22 @@ describe('Order page', () => {
     expect(total().getByText('סה"כ: ₪' + String(3 * 70 + 3 * 12))).toBeInTheDocument()
   })
 
+  it('lists the recommended dishes first, also in their own category, and nothing when none is marked', async () => {
+    const withPicks = menu()
+    withPicks.dishes[1] = { ...withPicks.dishes[1], isRecommended: true }
+    await openOrderPage({ 'GET /api/menu': () => withPicks })
+    const section = screen.getByRole('heading', { level: 2, name: 'מנות מומלצות' }).closest('details') as HTMLElement
+    expect(within(section).getByRole('article', { name: 'בשר טחון' })).toBeInTheDocument()
+    expect(within(section).queryByRole('article', { name: 'עוף בתנור' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('article', { name: 'בשר טחון' })).toHaveLength(2)
+    expect(screen.getByRole('button', { name: 'מנות מומלצות' })).toBeInTheDocument()
+  })
+
+  it('shows no recommended section when no dish is marked', async () => {
+    await openOrderPage()
+    expect(screen.queryByRole('heading', { name: 'מנות מומלצות' })).not.toBeInTheDocument()
+  })
+
   it('lets the client send units left unadjusted when the dish makes adjusting optional', async () => {
     const optional = menu()
     optional.dishes[0] = { ...optional.dishes[0], adjustmentOptional: true }

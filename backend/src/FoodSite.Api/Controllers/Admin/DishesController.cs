@@ -50,7 +50,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         IReadOnlyList<AddOnGroupDto>? AddOnGroups = null,
         IReadOnlyList<AddOnLinkDto>? AddOns = null,
         IReadOnlyList<QuestionDto>? Questions = null,
-        bool AdjustmentOptional = false);
+        bool AdjustmentOptional = false,
+        bool IsRecommended = false);
 
     public record QuestionDto(
         int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
@@ -89,6 +90,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     /// Questions, when sent, is the whole list of the dish's questions; left out, they stay as they are.
     /// AdjustmentOptional (on unless sent false) lets the client order without adjusting each unit or answering its
     /// questions; a variant follows its main dish, so it is ignored there.
+    /// IsRecommended lists the dish under "מנות מומלצות" on the order page; a variant follows its main dish, so it is
+    /// ignored there.
     /// CopyImagesFrom, on a new dish only, gives it the images of that dish (a copy of it); the picture files are shared.
     /// </summary>
     public record DishInput(
@@ -117,7 +120,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         List<AddOnLinkInput>? AddOns = null,
         List<QuestionInput>? Questions = null,
         int? CopyImagesFrom = null,
-        bool AdjustmentOptional = true);
+        bool AdjustmentOptional = true,
+        bool IsRecommended = false);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -553,6 +557,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         dish.UseMainDishPrice = main is not null && input.UseMainDishPrice;
         dish.IsYesNo = input.IsYesNo;
         dish.AdjustmentOptional = main is null && input.AdjustmentOptional;
+        dish.IsRecommended = main is null && input.IsRecommended;
         dish.Description = Clean(input.Description);
         dish.AllergenInfo = Clean(input.AllergenInfo);
         dish.SellBy = input.SellBy;
@@ -707,5 +712,6 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             .Select(a => new AddOnLinkDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
         d.Questions.OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)
             .Select(q => new QuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
-        d.AdjustmentOptional);
+        d.AdjustmentOptional,
+        d.IsRecommended);
 }

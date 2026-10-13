@@ -56,6 +56,7 @@ interface DishForm {
   useMainDishPrice: boolean
   isYesNo: boolean
   adjustmentOptional: boolean
+  isRecommended: boolean
   groups: GroupForm[]
   addOns: AddOnForm[]
   questions: QuestionForm[]
@@ -74,6 +75,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       useMainDishPrice: !!main,
       isYesNo: false,
       adjustmentOptional: true,
+      isRecommended: false,
       groups: [],
       addOns: [],
       questions: [],
@@ -138,13 +140,14 @@ function copyForm(source: Dish, categories: Category[], name: string): DishForm 
   }
 }
 
-function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice' | 'isYesNo' | 'adjustmentOptional' | 'groups' | 'addOns'> {
+function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice' | 'isYesNo' | 'adjustmentOptional' | 'isRecommended' | 'groups' | 'addOns'> {
   const groups = dish.addOnGroups.map((g) => ({ key: formKey(), id: g.id, name: g.name, maxUnits: str(g.maxUnits) }))
   return {
     mainDishId: dish.mainDishId === null ? '' : String(dish.mainDishId),
     useMainDishPrice: dish.useMainDishPrice,
     isYesNo: dish.isYesNo,
     adjustmentOptional: dish.adjustmentOptional,
+    isRecommended: dish.isRecommended,
     groups,
     addOns: dish.addOns.map((a) => ({
       key: formKey(),
@@ -180,6 +183,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
     useMainDishPrice: form.mainDishId !== '' && form.useMainDishPrice,
     isYesNo: form.isYesNo,
     adjustmentOptional: form.mainDishId === '' && form.adjustmentOptional,
+    isRecommended: form.mainDishId === '' && form.isRecommended,
     name: form.name,
     categoryId: Number(form.categoryId),
     description: form.description || null,
@@ -626,6 +630,15 @@ export function DishFormPage() {
               {t('admin.dishes.adjustmentOptionalLabel')}
             </label>
             <Info text={t('admin.dishes.adjustmentOptionalHint')} about={t('admin.dishes.adjustmentOptionalLabel')} />
+          </span>
+        )}
+        {form.mainDishId === '' && !form.isAddOnOnly && (
+          <span className="with-info">
+            <label className="checkbox">
+              <input type="checkbox" checked={form.isRecommended} onChange={(e) => set({ isRecommended: e.target.checked })} />
+              {t('admin.dishes.recommendedLabel')}
+            </label>
+            <Info text={t('admin.dishes.recommendedHint')} about={t('admin.dishes.recommendedLabel')} />
           </span>
         )}
         <label className="checkbox">
