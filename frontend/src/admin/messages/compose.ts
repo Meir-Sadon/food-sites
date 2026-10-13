@@ -27,3 +27,6 @@ export function whatsAppUrl(phone: string, text: string): string | null {
   const local = normalizePhone(phone)
   return local ? `https://wa.me/972${local.slice(1)}?text=${encodeURIComponent(text)}` : null
 }
+
+/** A wa.me link that opens WhatsApp with the text typed in and lets the admin pick who gets it. */
+export const whatsAppShareUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(text)}`

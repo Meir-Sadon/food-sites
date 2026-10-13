@@ -8,11 +8,11 @@ namespace FoodSite.Api.Mail;
 public class OwnerNotifier(IMailer mailer, IOptions<SiteOptions> site, ILogger<OwnerNotifier> logger)
 {
     /// <summary>A failed mail never fails the order: it is already saved and shows in the admin's Orders tab.</summary>
-    public async Task NewOrderAsync(string? ownerEmail, Order order, bool hourFull)
+    public async Task NewOrderAsync(string? ownerEmail, Order order, bool hourFull, string? adminUrl = null)
     {
         if (string.IsNullOrWhiteSpace(ownerEmail))
             return;
-        await SendAsync(ownerEmail, OwnerMessages.NewOrder(order, site.Value.Name, hourFull), $"order {order.Id}");
+        await SendAsync(ownerEmail, OwnerMessages.NewOrder(order, site.Value.Name, hourFull, adminUrl), $"order {order.Id}");
     }
 
     public Task ChangesAsync(string? ownerEmail, IReadOnlyList<AuditEntry> entries, CancellationToken ct)

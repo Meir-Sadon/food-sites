@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ordersAdminApi, orderStatuses, type AdminOrder, type OrderStatus } from '../../api/operations'
 import { formatMoney, formatTime } from '../../order/format'
@@ -10,7 +11,8 @@ import { PaidForm } from './PaidForm'
 import { SendMessage } from './SendMessage'
 import { ItemAnswers } from '../../components/ItemAnswers'
 
-export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (order: AdminOrder) => void }) {
+/** `compact` leaves out the header and dish list, for the order page that shows them in its own way. */
+export function OrderCard({ order, onChange, compact = false }: { order: AdminOrder; onChange: (order: AdminOrder) => void; compact?: boolean }) {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
   const [editing, setEditing] = useState(false)
@@ -45,6 +47,8 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
 
   return (
     <article className={`order-card${cancelled ? ' order-card--cancelled' : ''}`} aria-label={t('admin.orders.orderN', { id: order.id })}>
+      {!compact && (
+        <>
       <header className="row row--between">
         <h4>
           {t('admin.orders.orderN', { id: order.id })} · {order.name}
@@ -61,6 +65,8 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
         {t(order.paymentMethod === 'Transfer' ? 'admin.orders.transfer' : 'admin.orders.onDelivery')}
         {order.isGuest && <span className="badge">{t('admin.orders.guest')}</span>}
       </p>
+        </>
+      )}
       {order.hourFull && (
         <p role="status" className="notice notice--warning">
           {t('admin.orders.hourFull')}
@@ -79,6 +85,7 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
         </p>
       )}
 
+      {!compact && (
       <ul className="list">
         {order.items.map((item) => (
           <li key={item.id} className="list__row">
@@ -93,6 +100,7 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
           </li>
         ))}
       </ul>
+      )}
       {order.isPaid && order.paidWith && (
         <p className="muted">
           {t('admin.orders.paidVia', { method: t(`admin.orders.paidMethods.${order.paidWith}`) })}
@@ -101,7 +109,7 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
         </p>
       )}
       {order.delivery && <DeliveryReport order={order} />}
-      {order.notes && (
+      {!compact && order.notes && (
         <p>
           {t('admin.orders.notes')}: {order.notes}
         </p>
@@ -131,6 +139,12 @@ export function OrderCard({ order, onChange }: { order: AdminOrder; onChange: (o
           {t('admin.edit')}
           <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
         </button>
+        {!compact && (
+          <Link className="button-quiet" to={`/admin/orders/${order.id}`}>
+            {t('admin.orders.viewOrder')}
+            <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+          </Link>
+        )}
         <button type="button" className="button-quiet" onClick={() => setMessaging(!messaging)} aria-expanded={messaging}>
           {t('admin.messages.send')}
           <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>

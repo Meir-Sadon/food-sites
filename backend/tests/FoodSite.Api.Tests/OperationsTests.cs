@@ -106,6 +106,21 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task An_ordered_dish_comes_with_its_first_picture_and_one_order_can_be_fetched()
+    {
+        var id = await SeedOrder(Sunday);
+        var plain = await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>();
+        Assert.All(plain.Items, i => Assert.Null(i.ImageUrl));
+
+        var withImage = await (await _admin.PostAsync($"/api/admin/dishes/{_chicken}/images", TestFiles.Upload(TestFiles.Jpeg))).Read<DishDto>();
+        var order = await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>();
+        Assert.Equal(withImage.Images[0].Url, order.Items[0].ImageUrl);
+        Assert.Null(order.Items[1].ImageUrl);
+        Assert.Equal(withImage.Images[0].Url, (await List()).Single().Items[0].ImageUrl);
+        Assert.Equal(HttpStatusCode.NotFound, (await _admin.GetAsync("/api/admin/orders/99999")).StatusCode);
+    }
+
+    [Fact]
     public async Task Status_and_paid_can_be_changed()
     {
         var id = await SeedOrder(Sunday, payment: PaymentMethod.Transfer);

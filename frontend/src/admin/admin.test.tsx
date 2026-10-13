@@ -56,6 +56,23 @@ describe('admin login', () => {
     expect(login.headers['X-Food-Site-Request']).toBe('1')
   })
 
+  it('returns to the page a link asked for after signing in', async () => {
+    let signedIn = false
+    fakeApi({
+      'POST /api/admin/login': () => {
+        signedIn = true
+      },
+      'GET /api/admin/me': () => (signedIn ? { role: 'admin', actor: 'owner', username: 'admin' } : { status: 401 }),
+      'GET /api/admin/orders/7': () => ({ status: 404, body: {} }),
+    })
+    renderAt('/admin/orders/7')
+
+    await screen.findByLabelText('סיסמה')
+    await submitPassword('secret', 'admin')
+
+    expect(await screen.findByText('ההזמנה לא נמצאה.')).toBeInTheDocument()
+  })
+
   it('shows an error for a wrong password', async () => {
     fakeApi({ 'POST /api/admin/login': () => ({ status: 401 }) })
     renderAt('/admin/login')
