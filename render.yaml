@@ -39,6 +39,9 @@ services:
         sync: false
       - key: WhatsApp__PhoneNumberId
         sync: false
+      # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
+      - key: Mail__ResendApiKey
+        sync: false
       - key: Jwt__Secret
         generateValue: true
       - key: Database__MigrateOnStartup
@@ -83,6 +86,9 @@ services:
       - key: WhatsApp__Token
         sync: false
       - key: WhatsApp__PhoneNumberId
+        sync: false
+      # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
+      - key: Mail__ResendApiKey
         sync: false
       - key: Jwt__Secret
         generateValue: true
@@ -129,6 +135,9 @@ services:
         sync: false
       - key: WhatsApp__PhoneNumberId
         sync: false
+      # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
+      - key: Mail__ResendApiKey
+        sync: false
       - key: Jwt__Secret
         generateValue: true
       - key: Database__MigrateOnStartup
@@ -170,6 +179,9 @@ services:
       - key: WhatsApp__Token
         sync: false
       - key: WhatsApp__PhoneNumberId
+        sync: false
+      # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
+      - key: Mail__ResendApiKey
         sync: false
       - key: Jwt__Secret
         generateValue: true
@@ -213,6 +225,9 @@ services:
         sync: false
       - key: WhatsApp__PhoneNumberId
         sync: false
+      # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
+      - key: Mail__ResendApiKey
+        sync: false
       - key: Jwt__Secret
         generateValue: true
       - key: Database__MigrateOnStartup
@@ -250,6 +265,9 @@ services:
         sync: false
       - key: WhatsApp__PhoneNumberId
         sync: false
+      # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
+      - key: Mail__ResendApiKey
+        sync: false
       - key: Jwt__Secret
         generateValue: true
       - key: Database__MigrateOnStartup
@@ -286,6 +304,9 @@ services:
       - key: WhatsApp__Token
         sync: false
       - key: WhatsApp__PhoneNumberId
+        sync: false
+      # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
+      - key: Mail__ResendApiKey
         sync: false
       - key: Jwt__Secret
         generateValue: true

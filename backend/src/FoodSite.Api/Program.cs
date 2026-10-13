@@ -73,6 +73,15 @@ builder.Services.AddSingleton<UserTokenService>();
 builder.Services.AddSingleton<SiteClock>();
 // Site usage (visits, started and sent orders): per-device events pruned after Usage:RawEventDays.
 builder.Services.Configure<UsageOptions>(config.GetSection(UsageOptions.Section));
+// Mail to the business owner goes out through Resend once Mail__ResendApiKey is set; without it nothing is sent.
+builder.Services.Configure<FoodSite.Api.Mail.MailOptions>(config.GetSection(FoodSite.Api.Mail.MailOptions.Section));
+if (config.GetSection(FoodSite.Api.Mail.MailOptions.Section).Get<FoodSite.Api.Mail.MailOptions>()?.IsConfigured == true)
+    builder.Services.AddHttpClient<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.ResendMailer>(c => c.Timeout = TimeSpan.FromSeconds(15));
+else
+    builder.Services.AddSingleton<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.NoopMailer>();
+builder.Services.AddScoped<FoodSite.Api.Mail.OwnerNotifier>();
+builder.Services.AddSingleton<FoodSite.Api.Mail.ChangeDigest>();
+builder.Services.AddHostedService<FoodSite.Api.Mail.ChangeDigestService>();
 builder.Services.AddScoped<UsageRecorder>();
 builder.Services.AddScoped<UsageRetention>();
 builder.Services.AddScoped<UsageReportBuilder>();

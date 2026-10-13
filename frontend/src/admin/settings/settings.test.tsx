@@ -124,7 +124,20 @@ describe('General settings', () => {
       serviceCities: 'אשקלון',
       ordersPerHour: null,
       portionsPerSupplyDate: null,
+      ownerEmail: '',
     })
+  })
+
+  it('saves the owner mail address', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    await user.type(within(form).getByLabelText('כתובת מייל לעדכונים'), 'owner@example.com')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ownerEmail: 'owner@example.com' })
   })
 
   it('saves the service cities as typed', async () => {
