@@ -109,6 +109,10 @@ export interface MenuDish {
    * questions, required ones included.
    */
   adjustmentOptional?: boolean
+  /** The heading over the fixed options ("בחרו גודל"); null for the default one. */
+  optionsTitle?: string | null
+  /** Show each option as what it adds to the default option's price. */
+  showOptionDifference?: boolean
 }
 
 /** How a dish question is answered (FoodSite.Api `QuestionKind`). */

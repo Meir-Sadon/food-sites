@@ -5,7 +5,7 @@ import { useSiteStyle } from '../site/useSite'
 import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
-import { formatMoney, priceText, unitLabel } from './format'
+import { formatMoney, optionPriceText, priceText, unitLabel } from './format'
 import { ImageCarousel } from './ImageCarousel'
 import {
   addOnLineTotal,
@@ -718,7 +718,7 @@ function OptionCards({
   const marked = dish.openByDefault ? defaultOption(dish)?.id : undefined
   return (
     <fieldset>
-      <legend>{t('order.optionFor', { name: dish.name })}</legend>
+      <legend>{dish.optionsTitle || t('order.optionFor', { name: dish.name })}</legend>
       <div className="option-cards">
         {dish.options.map((option) => (
           <label key={option.id} className="option-card">
@@ -731,7 +731,7 @@ function OptionCards({
             />
             {option.id === marked && <span className="option-card__default">★ {t('order.defaultOption')}</span>}
             <span className="option-card__label">{option.label}</span>
-            <span className="option-card__price numeric">{formatMoney(option.price)}</span>
+            <span className="option-card__price numeric">{optionPriceText(dish, option)}</span>
           </label>
         ))}
       </div>

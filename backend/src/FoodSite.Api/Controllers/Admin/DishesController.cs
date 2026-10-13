@@ -50,7 +50,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         IReadOnlyList<AddOnGroupDto>? AddOnGroups = null,
         IReadOnlyList<AddOnLinkDto>? AddOns = null,
         IReadOnlyList<QuestionDto>? Questions = null,
-        bool AdjustmentOptional = false);
+        bool AdjustmentOptional = false,
+        string? OptionsTitle = null,
+        bool ShowOptionDifference = false);
 
     public record QuestionDto(
         int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
@@ -89,6 +91,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     /// Questions, when sent, is the whole list of the dish's questions; left out, they stay as they are.
     /// AdjustmentOptional (on unless sent false) lets the client order without adjusting each unit or answering its
     /// questions; a variant follows its main dish, so it is ignored there.
+    /// OptionsTitle is the heading over the fixed options ("בחרו גודל"), ShowOptionDifference shows each option on the
+    /// order page as what it adds to the default option's price; both only matter for fixed options.
     /// CopyImagesFrom, on a new dish only, gives it the images of that dish (a copy of it); the picture files are shared.
     /// </summary>
     public record DishInput(
@@ -117,7 +121,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         List<AddOnLinkInput>? AddOns = null,
         List<QuestionInput>? Questions = null,
         int? CopyImagesFrom = null,
-        bool AdjustmentOptional = true);
+        bool AdjustmentOptional = true,
+        string? OptionsTitle = null,
+        bool ShowOptionDifference = false);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -492,6 +498,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             return;
         }
 
+        errors.Text(nameof(input.OptionsTitle), input.OptionsTitle, Dish.OptionsTitleMaxLength);
         for (var i = 0; i < options.Count; i++)
         {
             var option = options[i];
@@ -563,6 +570,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         dish.OpenByDefault = input.OpenByDefault;
         dish.IsSideDish = input.IsSideDish;
 
+        (dish.OptionsTitle, dish.ShowOptionDifference) = (null, false);
         if (dish.UseMainDishPrice)
         {
             // Sold the same way as the main dish, so per-date and portion limits count it the same way.
@@ -574,6 +582,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         {
             (dish.MinAmount, dish.MaxAmount, dish.AmountStep, dish.UnitPrice, dish.UnitName) = (null, null, null, null, null);
             ApplyOptions(input.Options!, dish);
+            dish.OptionsTitle = Clean(input.OptionsTitle);
+            dish.ShowOptionDifference = input.ShowOptionDifference;
         }
         else
         {
@@ -707,5 +717,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             .Select(a => new AddOnLinkDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
         d.Questions.OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)
             .Select(q => new QuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
-        d.AdjustmentOptional);
+        d.AdjustmentOptional,
+        d.OptionsTitle,
+        d.ShowOptionDifference);
 }

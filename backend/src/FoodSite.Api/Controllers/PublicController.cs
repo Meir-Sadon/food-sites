@@ -61,7 +61,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<MenuAddOnDto>? AddOns = null,
         IReadOnlyList<MenuAddOnGroupDto>? AddOnGroups = null,
         IReadOnlyList<MenuQuestionDto>? Questions = null,
-        bool AdjustmentOptional = false);
+        bool AdjustmentOptional = false,
+        string? OptionsTitle = null,
+        bool ShowOptionDifference = false);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
     /// <summary>DefaultAnswer is the answer already picked for the client (a choice, or yes / no), if the admin set one.</summary>
@@ -160,7 +162,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                     .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
                 DishRules.Questions(d)
                     .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
-                (d.MainDish ?? d).AdjustmentOptional);
+                (d.MainDish ?? d).AdjustmentOptional,
+                p.OptionsTitle, p.ShowOptionDifference);
         }).ToList();
 
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList());
