@@ -22,7 +22,10 @@ public static class OrderLayout
     /// <summary>One category at a time, paged with arrows, then a last step with the order details.</summary>
     public const string FlowSteps = "steps";
 
-    public static readonly IReadOnlyList<string> Flows = [FlowPage, FlowSteps];
+    /// <summary>The whole menu on one page; the order details (address, payment, remarks) appear only after the client presses a continue button.</summary>
+    public const string FlowContinue = "continue";
+
+    public static readonly IReadOnlyList<string> Flows = [FlowPage, FlowSteps, FlowContinue];
 
     public const int MaxLength = 20;
 

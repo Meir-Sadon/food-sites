@@ -114,3 +114,19 @@ describe('Category jump bar', () => {
     expect(screen.queryByRole('navigation', { name: 'מעבר בין קטגוריות' })).not.toBeInTheDocument()
   })
 })
+
+describe('Order flow with a continue button', () => {
+  it('hides the order details until the client presses continue', async () => {
+    const user = await open({ orderFlow: 'continue' })
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+    expect(screen.getByRole('heading', { level: 2, name: 'בשרים' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'שליחת ההזמנה' })).not.toBeInTheDocument()
+    const forward = screen.getByRole('button', { name: 'המשך לפרטי ההזמנה' })
+    expect(forward).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'הוספה להזמנה: בשר טחון' }))
+    await user.click(forward)
+    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'המשך לפרטי ההזמנה' })).not.toBeInTheDocument()
+  })
+})
