@@ -904,6 +904,9 @@
     }
   },
   "order": {
+    "categoryJump": {
+      "label": "מעבר בין קטגוריות"
+    },
     "steps": {
       "label": "שלבי ההזמנה",
       "previous": "לשלב הקודם",
