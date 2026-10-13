@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { scrollBehavior } from '../components/motion'
-import { categorySectionId } from './categorySection'
 
 export interface JumpItem {
-  id: number
+  /** The id of the section the chip scrolls to. */
+  sectionId: string
   name: string
 }
 
@@ -18,16 +18,16 @@ const stickyBottom = (nav: HTMLElement | null) => (nav?.closest('.order-sticky')
 export function CategoryJumpBar({ categories }: { categories: JumpItem[] }) {
   const { t } = useTranslation()
   const ref = useRef<HTMLElement>(null)
-  const [current, setCurrent] = useState<number | null>(null)
+  const [current, setCurrent] = useState<string | null>(null)
 
   // The current category is the last one whose title has passed the line under the bars.
   useEffect(() => {
-    const sections = categories.map((c) => document.getElementById(categorySectionId(c.id)))
+    const sections = categories.map((c) => document.getElementById(c.sectionId))
     const update = () => {
       const line = (stickyBottom(ref.current)) + 8
-      let found: number | null = null
+      let found: string | null = null
       sections.forEach((section, i) => {
-        if (section && section.getBoundingClientRect().top <= line) found = categories[i].id
+        if (section && section.getBoundingClientRect().top <= line) found = categories[i].sectionId
       })
       setCurrent(found)
     }
@@ -50,8 +50,8 @@ export function CategoryJumpBar({ categories }: { categories: JumpItem[] }) {
     nav.scrollBy({ left: box.left + box.width / 2 - (row.left + row.width / 2), behavior: scrollBehavior() })
   }, [current])
 
-  function jump(id: number) {
-    const section = document.getElementById(categorySectionId(id))
+  function jump(sectionId: string) {
+    const section = document.getElementById(sectionId)
     const nav = ref.current
     if (!section || !nav) return
     // Land with the category's title just under the pinned bars.
@@ -63,11 +63,11 @@ export function CategoryJumpBar({ categories }: { categories: JumpItem[] }) {
     <nav ref={ref} className="category-jump" aria-label={t('order.categoryJump.label')}>
       {categories.map((c) => (
         <button
-          key={c.id}
+          key={c.sectionId}
           type="button"
           className="category-jump__chip"
-          aria-current={c.id === current ? 'true' : undefined}
-          onClick={() => jump(c.id)}
+          aria-current={c.sectionId === current ? 'true' : undefined}
+          onClick={() => jump(c.sectionId)}
         >
           {c.name}
         </button>

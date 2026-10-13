@@ -82,6 +82,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
 
     public record MenuCategoryDto(int Id, string Name);
 
+    /// <summary>A custom group of dishes (such as "מומלצות"), shown in its own section; DishIds are in menu order.</summary>
+    public record MenuGroupDto(int Id, string Name, IReadOnlyList<int> DishIds);
+
     /// <summary>
     /// A date the client can order for, when ordering for it closes (local time), and the hours they can ask for
     /// (empty when the day has no supply hours). How full an hour is stays hidden until one is picked.
@@ -94,7 +97,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     public record MenuDto(
         IReadOnlyList<MenuCategoryDto> Categories,
         IReadOnlyList<MenuDishDto> Dishes,
-        IReadOnlyList<SupplyDateDto> SupplyDates);
+        IReadOnlyList<SupplyDateDto> SupplyDates,
+        IReadOnlyList<MenuGroupDto>? Groups = null);
 
     [HttpGet("site")]
     public async Task<SiteDto> GetSite()
@@ -166,7 +170,15 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 p.OptionsTitle, p.ShowOptionDifference);
         }).ToList();
 
-        return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList());
+        // Groups list only dishes ordered on their own that are on the menu, in menu order; an empty group is left out.
+        var standalone = shown.Where(d => !d.IsAddOnOnly && d.MainDishId is null && visible.Contains(d.CategoryId)).Select(d => d.Id).ToList();
+        var groupRows = await db.DishGroups.AsNoTracking().Include(g => g.Dishes)
+            .OrderBy(g => g.DisplayOrder).ThenBy(g => g.Id).ToListAsync();
+        var groups = groupRows
+            .Select(g => new MenuGroupDto(g.Id, g.Name, standalone.Where(id => g.Dishes.Any(x => x.DishId == id)).ToList()))
+            .Where(g => g.DishIds.Count > 0).ToList();
+
+        return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList(), groups);
     }
 
     /// <summary>Asked when the client picks an hour, so a full one gets a note; the menu never says which hours are full.</summary>

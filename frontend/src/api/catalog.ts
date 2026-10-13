@@ -238,6 +238,24 @@ export const categoriesApi = {
   remove: (id: number) => apiJson<void>(`${admin}/categories/${id}`, send('DELETE')),
 }
 
+export interface DishGroup {
+  id: number
+  name: string
+  displayOrder: number
+  /** Dishes ordered on their own (not variants or add-ons), from any category. */
+  dishIds: number[]
+}
+
+export const dishGroupsApi = {
+  get: () => apiJson<DishGroup[]>(`${admin}/dish-groups`),
+  add: (name: string, dishIds: number[]) => apiJson<DishGroup>(`${admin}/dish-groups`, send('POST', { name, dishIds })),
+  update: (id: number, name: string, dishIds: number[]) =>
+    apiJson<DishGroup>(`${admin}/dish-groups/${id}`, send('PUT', { name, dishIds })),
+  move: (id: number, direction: Direction) =>
+    apiJson<DishGroup[]>(`${admin}/dish-groups/${id}/move`, send('POST', { direction })),
+  remove: (id: number) => apiJson<void>(`${admin}/dish-groups/${id}`, send('DELETE')),
+}
+
 export const dishesApi = {
   getAll: () => apiJson<Dish[]>(`${admin}/dishes`),
   get: (id: number) => apiJson<Dish>(`${admin}/dishes/${id}`),

@@ -282,6 +282,42 @@ namespace FoodSite.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DishGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DishGroups");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DishGroupDish", b =>
+                {
+                    b.Property<int>("GroupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DishId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("GroupId", "DishId");
+
+                    b.HasIndex("DishId");
+
+                    b.ToTable("DishGroupDishes");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DishImage", b =>
                 {
                     b.Property<int>("Id")
@@ -1174,6 +1210,25 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("ParentDish");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DishGroupDish", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
+                        .WithMany()
+                        .HasForeignKey("DishId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodSite.Api.Data.Entities.DishGroup", "Group")
+                        .WithMany("Dishes")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dish");
+
+                    b.Navigation("Group");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DishImage", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
@@ -1412,6 +1467,11 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("Questions");
 
                     b.Navigation("Variants");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DishGroup", b =>
+                {
+                    b.Navigation("Dishes");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DriverRoute", b =>
