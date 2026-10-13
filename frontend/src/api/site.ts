@@ -109,8 +109,6 @@ export interface MenuDish {
    * questions, required ones included.
    */
   adjustmentOptional?: boolean
-  /** Also listed under "מנות מומלצות" at the top of the menu. */
-  isRecommended?: boolean
 }
 
 /** How a dish question is answered (FoodSite.Api `QuestionKind`). */

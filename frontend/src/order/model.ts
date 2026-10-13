@@ -449,10 +449,6 @@ export function pickedInCategory(selections: Record<number, Selection>, dishes: 
   return Object.keys(selections).filter((id) => dishes.get(Number(id))?.categoryId === categoryId).length
 }
 
-/** The dishes the admin marked as recommended, in menu order: they are also listed in their own category. */
-export const recommendedDishes = (menu: Menu) =>
-  menu.categories.flatMap((c) => standaloneDishes(menu, c.id)).filter((d) => d.isRecommended)
-
 /** The dishes a client can order on their own, grouped by category in the admin's order; variants are in their main dish's card. */
 export function standaloneDishes(menu: Menu, categoryId: number) {
   return menu.dishes.filter((d) => d.categoryId === categoryId && !d.isAddOnOnly && d.mainDishId == null)

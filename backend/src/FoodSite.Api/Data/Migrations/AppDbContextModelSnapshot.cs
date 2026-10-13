@@ -176,9 +176,6 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsRecommended")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsSideDish")
                         .HasColumnType("boolean");
 
