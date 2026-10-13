@@ -17,6 +17,8 @@ import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DishSearch } from '../order/DishSearch'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
+import { CartButton, CartSheet } from '../order/CartSheet'
+import { OrderSummary } from '../order/OrderSummary'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
@@ -102,6 +104,7 @@ export function OrderPage() {
   // Whole menu on one page, with the order details behind a button until the client is done choosing.
   const deferred = flow === 'continue'
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false)
   // The shown step: a category's position, or the number of categories for the contact and payment details.
   const [step, setStep] = useState(0)
   const [query, setQuery] = useState('')
@@ -262,6 +265,18 @@ export function OrderPage() {
         onChange={(selection) => setSelection(dish.id, selection)}
       />
     )
+  }
+
+  /** Closes the basket and brings the client to the dish's own card, where its adjustments are changed. */
+  function revealDish(dishId: number) {
+    setCartOpen(false)
+    setQuery('')
+    const category = categories.findIndex((group) => group.category.id === dishes.get(dishId)?.categoryId)
+    if (steps && category >= 0) setStep(category)
+    setTimeout(() => {
+      const card = document.querySelector<HTMLElement>(`[data-dish-id="${dishId}"], [data-variants~="${dishId}"]`)
+      if (card) bringIntoView(card)
+    }, 0)
   }
 
   function goToStep(next: number) {
@@ -702,6 +717,7 @@ export function OrderPage() {
                 {submitError}
               </p>
             )}
+            <OrderSummary selections={state.selections} dishes={dishes} />
             <div className="row">
               <button
                 ref={submitRef}
@@ -751,6 +767,19 @@ export function OrderPage() {
           </button>
         )}
       </div>
+
+      <CartButton count={totals.main + totals.side + totals.drinks} onClick={() => setCartOpen(true)} />
+      {cartOpen && (
+        <CartSheet
+          selections={state.selections}
+          dishes={dishes}
+          date={supplyDate?.date}
+          total={total}
+          onChange={setSelection}
+          onEdit={revealDish}
+          onClose={() => setCartOpen(false)}
+        />
+      )}
 
       {leaveTo && <LeaveDialog onSave={() => leave(true)} onDiscard={() => leave(false)} onStay={() => setLeaveTo(null)} />}
       {confirmation && (

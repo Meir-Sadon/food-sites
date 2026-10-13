@@ -3317,3 +3317,131 @@ label {
   color: #6b4a0b;
   font-weight: 700;
 }
+
+/* The basket that stays on screen on every layout and style: a bold round button with the number of dishes, sides and
+   drinks chosen so far. It sits above the total bar at the start side (right in Hebrew), away from the scroll buttons. */
+.cart-button {
+  position: fixed;
+  inset-inline-start: 1rem;
+  inset-block-end: 5rem;
+  z-index: 21;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  box-shadow: var(--shadow-md);
+}
+
+.cart-button__badge {
+  position: absolute;
+  inset-block-start: -0.5rem;
+  inset-inline-end: -0.5rem;
+  display: grid;
+  place-items: center;
+  min-inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding-inline: 0.3rem;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@media (min-width: 64rem) {
+  .order-page[data-total='side'] .cart-button {
+    inset-block-end: 1.5rem;
+  }
+}
+
+/* The order so far, read only (above the send button) and in the basket's sheet. */
+.order-summary {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-soft);
+}
+
+.order-summary h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+
+.order-summary__list {
+  display: grid;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-summary__row {
+  display: grid;
+  gap: 0.25rem;
+  padding-block: 0.375rem;
+  border-block-end: 1px solid var(--color-border);
+}
+
+.order-summary__row:last-child {
+  border-block-end: 0;
+}
+
+.order-summary__main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.order-summary__name {
+  flex: 1;
+  min-inline-size: 0;
+  font-weight: 700;
+}
+
+.order-summary__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-accent);
+}
+
+.summary-details {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.cart-sheet__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cart-sheet__total {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: 0.5rem;
+  font-size: 1.125rem;
+}

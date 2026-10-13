@@ -198,10 +198,18 @@ function TileIcon({ name }: { name: 'plus' | 'sliders' | 'close' | 'check' }) {
   )
 }
 
+/** The tile's picture: the dish's first image, or a mosaic of up to four (a group borrowing its variants' pictures), else a plain block. */
 function TileMedia({ images, name, children }: { images: string[]; name: string; children: ReactNode }) {
+  const shown = images.slice(0, 4)
   return (
-    <div className="tile__media">
-      {images.length > 0 ? <img src={images[0]} alt={name} loading="lazy" /> : <span className="tile__placeholder" aria-hidden="true" />}
+    <div className={`tile__media${shown.length > 1 ? ` tile__media--mosaic tile__media--${shown.length}` : ''}`}>
+      {shown.length > 1 ? (
+        shown.map((src, i) => <img key={i} src={src} alt="" loading="lazy" />)
+      ) : shown.length === 1 ? (
+        <img src={shown[0]} alt={name} loading="lazy" />
+      ) : (
+        <span className="tile__placeholder" aria-hidden="true" />
+      )}
       {children}
     </div>
   )
@@ -304,8 +312,12 @@ function DishGroupTile(props: GroupProps) {
   const [open, setOpen] = useState(false)
   const count = variants.filter((v) => selections[v.id]).length
   return (
-    <article className={`dish dish--tile dish--group${count > 0 ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
-      <TileMedia images={dish.images} name={dish.name}>
+    <article
+      className={`dish dish--tile dish--group${count > 0 ? ' dish--chosen' : ''}`}
+      aria-labelledby={`${id}-name`}
+      data-variants={variants.map((v) => v.id).join(' ')}
+    >
+      <TileMedia images={dish.images.length > 0 ? dish.images : variants.flatMap((v) => v.images.slice(0, 1))} name={dish.name}>
         <button type="button" className="tile__add" aria-label={t('order.chooseVariant', { name: dish.name })} onClick={() => setOpen(true)}>
           <TileIcon name="plus" />
         </button>
@@ -313,6 +325,7 @@ function DishGroupTile(props: GroupProps) {
       <div className="tile__body">
         <h3 id={`${id}-name`}>{dish.name}</h3>
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
+        <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
         {count > 0 && <p className="badge">{t('order.chosenCount', { count })}</p>}
       </div>
       {open && (

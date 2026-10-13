@@ -928,6 +928,28 @@
     "categoryJump": {
       "label": "מעבר בין קטגוריות"
     },
+    "summary": {
+      "title": "סיכום ההזמנה",
+      "showDetails": "הצגת ההתאמות של {{name}}",
+      "hideDetails": "הסתרת ההתאמות של {{name}}",
+      "unit": "מנה {{n}}",
+      "note": "הערה",
+      "price": "מחיר",
+      "empty": "עדיין לא נבחרו מנות."
+    },
+    "cart": {
+      "button": "הסל שלי",
+      "buttonCount": "הסל שלי, {{count}} פריטים",
+      "title": "הסל שלי",
+      "empty": "הסל ריק. בחרו מנות מהתפריט כדי להוסיף אותן.",
+      "edit": "עריכת ההתאמות של {{name}}",
+      "keepChoosing": "המשך בחירת מנות",
+      "details": "פירוט",
+      "hideDetails": "הסתר פירוט",
+      "editShort": "עריכה",
+      "close": "סגירה",
+      "total": "סה\"כ"
+    },
     "steps": {
       "label": "שלבי ההזמנה",
       "previous": "לשלב הקודם",

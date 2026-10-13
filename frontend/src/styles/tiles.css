@@ -160,3 +160,31 @@
 [data-style='tiles'] .modal .dish-variants {
   margin-block: 0.5rem;
 }
+
+/* A group with no picture of its own borrows its variants': up to four side by side in the tile. */
+.tile__media--mosaic {
+  display: grid;
+  gap: 2px;
+}
+
+.tile__media--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.tile__media--3 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.tile__media--3 img:first-child {
+  grid-row: span 2;
+}
+
+.tile__media--4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.tile__variants {
+  font-size: 0.9rem;
+}
