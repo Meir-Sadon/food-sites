@@ -996,6 +996,7 @@
     "customizeDish": "התאמת המנה: {{name}}",
     "chooseVariant": "בחירה מתוך סוגי {{name}}",
     "chosenCount": "{{count}} נבחרו",
+    "showSlide": "הצגת {{name}}",
     "doneCustomizing": "סיום",
     "showAdjustments": "הצג התאמת מנות",
     "hideAdjustments": "הסתר התאמת מנות",

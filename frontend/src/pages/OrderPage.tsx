@@ -17,7 +17,8 @@ import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DishSearch } from '../order/DishSearch'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
-import { CartButton, CartSheet } from '../order/CartSheet'
+import { CartSheet } from '../order/CartSheet'
+import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId } from '../order/categorySection'
@@ -122,6 +123,7 @@ export function OrderPage() {
   )
   const totals = dishTotals(state.selections, dishes, drinksCategoryIds)
   const dirty = count > 0 && !confirmation
+  useRegisterCart(totals.main + totals.side + totals.drinks, total, () => setCartOpen(true), !!menu)
   // Set when the profile page's "Reorder" put a past order in the draft.
   const filledSkipped = (location.state as { filled?: { skipped: number } } | null)?.filled?.skipped
 
@@ -464,24 +466,40 @@ export function OrderPage() {
 
   return (
     <div className="order-page" data-total={totalPosition}>
+      {(!steps || currentStep === 0) && (
+        <header className="order-hero">
+          {siteLogo && <img className="order-hero__logo" src={siteLogo} alt="" />}
+          <h1>{t('pages.order.title')}</h1>
+          <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
+          <ul className="order-hero__chips">
+            <li>{t('order.hero.fresh')}</li>
+            <li>{t('order.hero.homemade')}</li>
+            <li>{t('order.hero.kosher')}</li>
+          </ul>
+        </header>
+      )}
       <div className="order-main">
-        {(!steps || currentStep === 0) && (
-          <header className="order-hero">
-            {siteLogo && <img className="order-hero__logo" src={siteLogo} alt="" />}
-            <h1>{t('pages.order.title')}</h1>
-            <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
-            <ul className="order-hero__chips">
-              <li>{t('order.hero.fresh')}</li>
-              <li>{t('order.hero.homemade')}</li>
-              <li>{t('order.hero.kosher')}</li>
-            </ul>
-          </header>
-        )}
-
         {user && (!steps || currentStep === 0) && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 
         {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
-        {searchable && <DishSearch value={query} onChange={setQuery} />}
+        {(searchable || categories.length > 0) && (
+          <div className="order-sticky">
+            {searchable && <DishSearch value={query} onChange={setQuery} />}
+            {steps && !searching && categories.length > 0 && (
+              <CategorySteps
+                ref={stepsRef}
+                categories={categories.map(({ category }) => ({
+                  id: category.id,
+                  name: category.name,
+                  picked: pickedInCategory(state.selections, dishes, category.id),
+                }))}
+                current={currentStep}
+                onChange={goToStep}
+              />
+            )}
+            {!steps && !searching && categories.length > 1 && <CategoryJumpBar categories={categories.map(({ category }) => ({ id: category.id, name: category.name }))} />}
+          </div>
+        )}
         {searching && (
           <section className="category dish-results" aria-labelledby="dish-results-title">
             <h2 id="dish-results-title" className="dish-results__title">
@@ -496,19 +514,6 @@ export function OrderPage() {
             )}
           </section>
         )}
-        {steps && !searching && categories.length > 0 && (
-          <CategorySteps
-            ref={stepsRef}
-            categories={categories.map(({ category }) => ({
-              id: category.id,
-              name: category.name,
-              picked: pickedInCategory(state.selections, dishes, category.id),
-            }))}
-            current={currentStep}
-            onChange={goToStep}
-          />
-        )}
-        {!steps && !searching && categories.length > 1 && <CategoryJumpBar categories={categories.map(({ category }) => ({ id: category.id, name: category.name }))} />}
         {!searching && shownCategories.map(({ category, dishes: list }) => (
           <details key={category.id} id={categorySectionId(category.id)} open className="category">
             <summary>
@@ -768,7 +773,6 @@ export function OrderPage() {
         )}
       </div>
 
-      <CartButton count={totals.main + totals.side + totals.drinks} onClick={() => setCartOpen(true)} />
       {cartOpen && (
         <CartSheet
           selections={state.selections}
@@ -777,6 +781,10 @@ export function OrderPage() {
           total={total}
           onChange={setSelection}
           onEdit={revealDish}
+          onContinue={() => {
+            setCartOpen(false)
+            goToDetails()
+          }}
           onClose={() => setCartOpen(false)}
         />
       )}

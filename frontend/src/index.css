@@ -3049,10 +3049,22 @@ label {
     padding-block-end: 1.5rem;
   }
 
+  /* The banner keeps the full width above; the panel and the menu share the row below it. */
+  .order-page[data-total='side'] > .order-hero {
+    grid-column: 1 / -1;
+  }
+
+  .order-page[data-total='side'] > .order-main {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
   .order-page[data-total='side'] .total-bar {
+    grid-column: 2;
+    grid-row: 2;
     position: sticky;
     inset-inline: auto;
-    inset-block: 5rem auto;
+    inset-block: calc(var(--top-bar-height) + 1rem) auto;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
@@ -3078,20 +3090,36 @@ label {
   }
 }
 
-/* One-page flows: the category chips stay under the top bar while the menu scrolls. */
-.category-jump {
+/* The search box and the category chips (or the steps header) stay pinned under the top bar while the menu scrolls. */
+.order-sticky {
   position: sticky;
-  inset-block-start: 3.5rem;
+  inset-block-start: var(--top-bar-height);
   z-index: 9;
-  display: flex;
+  display: grid;
   gap: 0.5rem;
-  margin-block-end: 1rem;
   padding: 0.5rem;
-  overflow-x: auto;
-  scrollbar-width: none;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.order-sticky .dish-search {
+  margin: 0;
+}
+
+.order-sticky .order-steps {
+  position: static;
+  padding: 0;
+  border: 0;
+  scroll-margin-block-start: 0;
+}
+
+.category-jump {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .category-jump::-webkit-scrollbar {
@@ -3318,50 +3346,144 @@ label {
   font-weight: 700;
 }
 
-/* The basket that stays on screen on every layout and style: a bold round button with the number of dishes, sides and
-   drinks chosen so far. It sits above the total bar at the start side (right in Hebrew), away from the scroll buttons. */
-.cart-button {
-  position: fixed;
-  inset-inline-start: 1rem;
-  inset-block-end: 5rem;
-  z-index: 21;
+/* The basket button in the top bar (order page only): bold, filled with the accent, with the number of dishes, sides and
+   drinks chosen and the running total. The badge pops when the number changes. */
+.top-bar__cart {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  inline-size: 3.5rem;
-  block-size: 3.5rem;
+  gap: 0.5rem;
+  position: relative;
+  block-size: 2.75rem;
   min-block-size: 0;
   margin: 0;
-  padding: 0;
-  border: 3px solid var(--color-surface);
-  border-radius: 50%;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: var(--radius-pill);
   background: var(--color-accent);
   color: var(--color-accent-contrast);
-  box-shadow: var(--shadow-md);
+  font-weight: 800;
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  white-space: nowrap;
 }
 
-.cart-button__badge {
-  position: absolute;
-  inset-block-start: -0.5rem;
-  inset-inline-end: -0.5rem;
+.top-bar__cart-badge {
   display: grid;
   place-items: center;
   min-inline-size: 1.5rem;
   block-size: 1.5rem;
   padding-inline: 0.3rem;
-  border: 2px solid var(--color-accent);
   border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-accent);
-  font-size: 0.8rem;
-  font-weight: 800;
+  font-size: 0.85rem;
   line-height: 1;
 }
 
-@media (min-width: 64rem) {
-  .order-page[data-total='side'] .cart-button {
-    inset-block-end: 1.5rem;
+@media (prefers-reduced-motion: no-preference) {
+  .top-bar__cart-badge,
+  .cart-row__price,
+  .cart-sheet__sum {
+    animation: cart-pop 0.35s ease-out;
   }
+
+  .cart-row {
+    animation: cart-row-in 0.25s ease-out;
+  }
+
+  .modal--wide:has(.cart-sheet__list, .cart-sheet__empty) {
+    animation: cart-sheet-in 0.25s ease-out;
+  }
+}
+
+@keyframes cart-pop {
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+@keyframes cart-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@keyframes cart-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+}
+
+/* The basket sheet: each dish with its picture, amount stepper and price. */
+.cart-sheet__list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cart-sheet__empty {
+  padding-block: 1rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.cart-row {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-soft);
+}
+
+.cart-row__top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cart-row__picture {
+  flex: none;
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  border-radius: calc(0.75rem * var(--corner-scale));
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+}
+
+.cart-row__picture--empty {
+  background: linear-gradient(135deg, var(--color-soft), color-mix(in srgb, var(--color-accent) 22%, var(--color-soft)));
+}
+
+.cart-row__text {
+  display: grid;
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.cart-row__name {
+  font-weight: 800;
+}
+
+.cart-row__unit {
+  font-size: 0.9rem;
+}
+
+.cart-row__price {
+  color: var(--color-accent);
+  font-size: 1.125rem;
+}
+
+.cart-row__remove {
+  margin-inline-start: auto;
+}
+
+.cart-sheet__actions {
+  display: grid;
+  gap: 0.5rem;
 }
 
 /* The order so far, read only (above the send button) and in the basket's sheet. */
@@ -3444,4 +3566,15 @@ label {
   justify-content: space-between;
   margin-block-start: 0.5rem;
   font-size: 1.125rem;
+}
+
+@media (max-width: 29.99rem) {
+  /* On a narrow screen the basket button keeps the number and drops the total, so the other icons stay in view. */
+  .top-bar__cart {
+    padding-inline: 0.75rem;
+  }
+
+  .top-bar__cart-total {
+    display: none;
+  }
 }

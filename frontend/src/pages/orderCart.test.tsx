@@ -68,6 +68,18 @@ describe('The basket button', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('is in the top bar, and the sheet shows each dish with its picture', async () => {
+    const user = open({ style: 'tiles' })
+    const button = await screen.findByRole('button', { name: 'הסל שלי' })
+    expect(button.closest('header')).toHaveClass('top-bar')
+    const tile = (await screen.findByRole('heading', { level: 3, name: 'כריך הבית' })).closest('article')!
+    await user.click(within(tile).getByRole('button', { name: 'בחירה מתוך סוגי כריך הבית' }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'הוספה להזמנה: כריך שניצל' }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'סיום' }))
+    await user.click(screen.getByRole('button', { name: 'הסל שלי, 1 פריטים' }))
+    expect(screen.getByRole('dialog', { name: 'הסל שלי' }).querySelector('img')).toHaveAttribute('src', 'https://img/schnitzel.jpg')
+  })
+
   it('says the basket is empty before anything is chosen', async () => {
     const user = open()
     await user.click(await screen.findByRole('button', { name: 'הסל שלי' }))
@@ -92,10 +104,12 @@ describe('The order summary above the send button', () => {
 })
 
 describe('A group in the tiles style with no picture of its own', () => {
-  it('shows its variants pictures and opens the choice of variant from the plus', async () => {
+  it('rotates through its variants pictures and opens the choice of variant from the plus', async () => {
     const user = open({ style: 'tiles' })
     const tile = (await screen.findByRole('heading', { level: 3, name: 'כריך הבית' })).closest('article')!
-    expect(tile.querySelectorAll('.tile__media img')).toHaveLength(2)
+    // One picture at a time, with a dot for each sub dish.
+    expect(tile.querySelectorAll('.tile__dot')).toHaveLength(2)
+    expect(within(tile).getByRole('button', { name: 'הצגת כריך חביתה' })).toBeInTheDocument()
 
     await user.click(within(tile).getByRole('button', { name: 'בחירה מתוך סוגי כריך הבית' }))
     const dialog = screen.getByRole('dialog', { name: 'כריך הבית' })
