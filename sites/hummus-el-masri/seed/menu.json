@@ -30,6 +30,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p00.jpg"
           ]
         },
         {
@@ -59,6 +62,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p01.jpg"
           ]
         },
         {
@@ -88,6 +94,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p02.jpg"
           ]
         },
         {
@@ -117,6 +126,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p03.jpg"
           ]
         },
         {
@@ -146,6 +158,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p04.jpg"
           ]
         }
       ]
@@ -180,6 +195,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p05.webp"
           ]
         },
         {
@@ -209,6 +227,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p06.webp"
           ]
         },
         {
@@ -238,6 +259,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p07.webp"
           ]
         },
         {
@@ -277,6 +301,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p08.webp"
           ]
         },
         {
@@ -306,6 +333,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p09.webp"
           ]
         },
         {
@@ -335,6 +365,9 @@
               "group": "תוספות לחומוס",
               "maxQuantity": 5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p10.webp"
           ]
         }
       ]
@@ -467,6 +500,9 @@
               "group": "בחרו שתיה",
               "isCheckbox": true
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p11.webp"
           ]
         }
       ]
@@ -481,7 +517,10 @@
           "unitPrice": 10,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p12.webp"
+          ]
         },
         {
           "name": "צ'יפס",
@@ -498,7 +537,10 @@
             }
           ],
           "optionsTitle": "בחרו גודל",
-          "showOptionDifference": true
+          "showOptionDifference": true,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p13.webp"
+          ]
         },
         {
           "name": "דואט של צ'יפס ופלאפל",
@@ -506,7 +548,10 @@
           "unitPrice": 25,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p14.webp"
+          ]
         },
         {
           "name": "סלט ירקות קצוץ",
@@ -523,7 +568,10 @@
             }
           ],
           "optionsTitle": "בחרו גודל",
-          "showOptionDifference": true
+          "showOptionDifference": true,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p15.webp"
+          ]
         },
         {
           "name": "סלט גרגירים",
@@ -532,7 +580,10 @@
           "unitPrice": 36,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p16.webp"
+          ]
         },
         {
           "name": "קובה בשר",
@@ -548,7 +599,10 @@
           "unitPrice": 39,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p17.webp"
+          ]
         },
         {
           "name": "3 קציצות פרסה",
@@ -607,6 +661,9 @@
               "group": "בחרו סלטים וממרחים",
               "isCheckbox": true
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p18.webp"
           ]
         },
         {
@@ -653,6 +710,9 @@
               "group": "בחרו סלטים וממרחים",
               "isCheckbox": true
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p19.webp"
           ]
         },
         {
@@ -709,6 +769,9 @@
               "group": "בחרו סלטים וממרחים",
               "isCheckbox": true
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p20.webp"
           ]
         },
         {
@@ -755,6 +818,9 @@
               "group": "בחרו סלטים וממרחים",
               "isCheckbox": true
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p23.webp"
           ]
         },
         {
@@ -801,6 +867,9 @@
               "group": "בחרו סלטים וממרחים",
               "isCheckbox": true
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p22.webp"
           ]
         },
         {
@@ -858,6 +927,9 @@
               "group": "בחרו סלטים וממרחים",
               "isCheckbox": true
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p21.webp"
           ]
         },
         {
@@ -1027,7 +1099,10 @@
             }
           ],
           "optionsTitle": "בחרו משקל",
-          "showOptionDifference": true
+          "showOptionDifference": true,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p24.webp"
+          ]
         },
         {
           "name": "חומוס מסבחה במשקל",
@@ -1046,7 +1121,10 @@
             }
           ],
           "optionsTitle": "בחרו משקל",
-          "showOptionDifference": true
+          "showOptionDifference": true,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p25.webp"
+          ]
         },
         {
           "name": "פול במשקל",
@@ -1065,7 +1143,10 @@
             }
           ],
           "optionsTitle": "בחרו משקל",
-          "showOptionDifference": true
+          "showOptionDifference": true,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p26.webp"
+          ]
         },
         {
           "name": "טחינה במשקל",
@@ -1084,7 +1165,10 @@
             }
           ],
           "optionsTitle": "בחרו משקל",
-          "showOptionDifference": true
+          "showOptionDifference": true,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p27.webp"
+          ]
         },
         {
           "name": "תערובת לפלאפל",
@@ -1120,7 +1204,10 @@
           "unitPrice": 8,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p28.webp"
+          ]
         },
         {
           "name": "מים בטעם אפרסק",
@@ -1129,7 +1216,10 @@
           "unitPrice": 12,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p29.webp"
+          ]
         },
         {
           "name": "מים בטעם תפוח",
@@ -1138,7 +1228,10 @@
           "unitPrice": 12,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p30.webp"
+          ]
         },
         {
           "name": "מים בטעם ענבים",
@@ -1147,7 +1240,10 @@
           "unitPrice": 12,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p31.webp"
+          ]
         },
         {
           "name": "פיוז טי אפרסק",
@@ -1156,7 +1252,10 @@
           "unitPrice": 12,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p32.webp"
+          ]
         },
         {
           "name": "תפוזינה תפוזים - בקבוק זכוכית",
@@ -1165,7 +1264,10 @@
           "unitPrice": 12,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p33.webp"
+          ]
         },
         {
           "name": "תפוזינה ענבים - בקבוק זכוכית",
@@ -1174,7 +1276,10 @@
           "unitPrice": 12,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p34.webp"
+          ]
         },
         {
           "name": "שוופס סודה",
@@ -1183,7 +1288,10 @@
           "unitPrice": 8,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p36.webp"
+          ]
         },
         {
           "name": "קינלי סודה",
@@ -1192,7 +1300,10 @@
           "unitPrice": 8,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p37.webp"
+          ]
         },
         {
           "name": "בירה שחורה נשר מאלט - בקבוק",
@@ -1201,7 +1312,10 @@
           "unitPrice": 14,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p35.webp"
+          ]
         },
         {
           "name": "פחית קוקה קולה",
@@ -1210,7 +1324,10 @@
           "unitPrice": 10,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p38.webp"
+          ]
         },
         {
           "name": "פחית קולה זירו",
@@ -1219,7 +1336,10 @@
           "unitPrice": 10,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p39.webp"
+          ]
         },
         {
           "name": "פחית פאנטה",
@@ -1228,7 +1348,10 @@
           "unitPrice": 10,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p42.webp"
+          ]
         },
         {
           "name": "פחית ספרייט",
@@ -1237,7 +1360,10 @@
           "unitPrice": 10,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p41.webp"
+          ]
         },
         {
           "name": "פחית ספרייט זירו",
@@ -1246,7 +1372,10 @@
           "unitPrice": 10,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/hummus-el-masri/dishes/p40.webp"
+          ]
         }
       ]
     },
