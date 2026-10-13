@@ -1,4 +1,6 @@
-import { useId, useState } from 'react'
+import { useId, useState, type ReactNode } from 'react'
+import { Modal } from '../components/Modal'
+import { useSiteStyle } from '../site/useSite'
 import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
@@ -80,7 +82,11 @@ function DishDetails({ dish, nameId, variant }: { dish: MenuDish; nameId: string
   )
 }
 
-export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
+export function DishCard(props: Props) {
+  return useSiteStyle() === 'tiles' ? <DishTile {...props} /> : <PlainDishCard {...props} />
+}
+
+function PlainDishCard({ dish, dishes, selection, date, onChange }: Props) {
   const id = useId()
   return (
     <article className={`dish${selection ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
@@ -107,21 +113,21 @@ const isCompact = (variant: MenuDish, dishes: Map<number, MenuDish>) =>
  * A main dish with variants: one card with the main dish's images and description, and each variant under it with its
  * own price and choices. Each variant is ordered (and listed in the order) as a dish of its own.
  */
-export function DishGroupCard({
-  dish,
-  variants,
-  dishes,
-  selections,
-  date,
-  onChange,
-}: {
+type GroupProps = {
   dish: MenuDish
   variants: MenuDish[]
   dishes: Map<number, MenuDish>
   selections: Record<number, Selection>
   date: string | undefined
   onChange: (dishId: number, selection: Selection | undefined) => void
-}) {
+}
+
+export function DishGroupCard(props: GroupProps) {
+  return useSiteStyle() === 'tiles' ? <DishGroupTile {...props} /> : <PlainDishGroupCard {...props} />
+}
+
+function PlainDishGroupCard(props: GroupProps) {
+  const { dish, variants, selections } = props
   const { t } = useTranslation()
   const id = useId()
   const chosen = variants.some((v) => selections[v.id])
@@ -136,26 +142,191 @@ export function DishGroupCard({
             {t('order.allergens')}: {dish.allergenInfo}
           </p>
         )}
-        <ul className="dish-variants" aria-label={t('order.variantsOf', { name: dish.name })}>
-          {variants.map((variant) => (
-            <li
-              key={variant.id}
-              className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}${isCompact(variant, dishes) ? ' dish-variant--compact' : ''}`}
-            >
-              {/* A variant with pictures of its own shows them; without, the card's pictures (the main dish's) stay. */}
-              <ImageCarousel images={variant.images} name={variant.name} />
-              <DishDetails dish={variant} nameId={`${id}-${variant.id}`} variant />
-              <DishChoice
-                dish={variant}
-                dishes={dishes}
-                selection={selections[variant.id]}
-                date={date}
-                onChange={(selection) => onChange(variant.id, selection)}
-              />
-            </li>
-          ))}
-        </ul>
+        <VariantList {...props} idPrefix={id} />
       </div>
+    </article>
+  )
+}
+
+/** The variants of a main dish, each with its own price and choices. */
+function VariantList({ dish, variants, dishes, selections, date, onChange, idPrefix }: GroupProps & { idPrefix: string }) {
+  const { t } = useTranslation()
+  return (
+    <ul className="dish-variants" aria-label={t('order.variantsOf', { name: dish.name })}>
+      {variants.map((variant) => (
+        <li
+          key={variant.id}
+          className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}${isCompact(variant, dishes) ? ' dish-variant--compact' : ''}`}
+        >
+          {/* A variant with pictures of its own shows them; without, the card's pictures (the main dish's) stay. */}
+          <ImageCarousel images={variant.images} name={variant.name} />
+          <DishDetails dish={variant} nameId={`${idPrefix}-${variant.id}`} variant />
+          <DishChoice
+            dish={variant}
+            dishes={dishes}
+            selection={selections[variant.id]}
+            date={date}
+            onChange={(selection) => onChange(variant.id, selection)}
+          />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// ---------- The "tiles" style: square tiles side by side, the choices in a dialog ----------
+
+/** Whether adding the dish must first ask the client something: set options, or add-ons/questions they have to settle. */
+function needsDialog(dish: MenuDish, dishes: Map<number, MenuDish>) {
+  if (dish.isYesNo) return false
+  const options = dish.choiceMode === 'Fixed' && dish.options.length > 1
+  const customizable = addOnsOf(dish, dishes).length > 0 || (dish.questions ?? []).length > 0
+  return options || !!dish.openByDefault || (customizable && !dish.adjustmentOptional)
+}
+
+function TileIcon({ name }: { name: 'plus' | 'sliders' | 'close' | 'check' }) {
+  const paths = {
+    plus: 'M12 5v14M5 12h14',
+    sliders: 'M4 7h9M17 7h3M4 17h3M11 17h9M13 4v6M7 14v6',
+    close: 'M6 6l12 12M18 6L6 18',
+    check: 'M5 12.5l4.5 4.5L19 7.5',
+  }
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={paths[name]} />
+    </svg>
+  )
+}
+
+function TileMedia({ images, name, children }: { images: string[]; name: string; children: ReactNode }) {
+  return (
+    <div className="tile__media">
+      {images.length > 0 ? <img src={images[0]} alt={name} loading="lazy" /> : <span className="tile__placeholder" aria-hidden="true" />}
+      {children}
+    </div>
+  )
+}
+
+function DishTile({ dish, dishes, selection, date, onChange }: Props) {
+  const { t } = useTranslation()
+  const id = useId()
+  const [open, setOpen] = useState(false)
+  const remaining = remainingOn(dish, date)
+  const range = limitedRange(dish, remaining)
+  const yesNo = !!dish.isYesNo
+  const unavailable = !!dish.isSoldOut || (range.max < range.min && !selection)
+  const unitName = unitLabel(dish, t)
+
+  function add() {
+    // An open-by-default dish picks its own first choice in the dialog.
+    if (!(dish.openByDefault && !yesNo)) onChange(newSelection(dish))
+    if (needsDialog(dish, dishes)) setOpen(true)
+  }
+
+  return (
+    <article
+      className={`dish dish--tile${selection ? ' dish--chosen' : ''}`}
+      aria-labelledby={`${id}-name`}
+      data-dish-id={selection ? dish.id : undefined}
+    >
+      <TileMedia images={dish.images} name={dish.name}>
+        {unavailable ? null : selection ? (
+          <span className="tile__count numeric" aria-hidden="true">
+            {yesNo ? <TileIcon name="check" /> : number.format(selection.quantity)}
+          </span>
+        ) : (
+          <button type="button" className="tile__add" aria-label={t('order.addDish', { name: dish.name })} onClick={add}>
+            <TileIcon name="plus" />
+          </button>
+        )}
+      </TileMedia>
+      <div className="tile__body">
+        <h3 id={`${id}-name`}>{dish.name}</h3>
+        <p className="dish__price">{priceText(dish, t)}</p>
+        {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
+        {dish.isSoldOut ? (
+          <p className="badge" role="status">
+            {t('order.soldOut')}
+          </p>
+        ) : unavailable ? (
+          <p className="badge" role="status">
+            {t('order.soldOutForDate')}
+          </p>
+        ) : (
+          remaining !== null && remaining > 0 && (
+            <p className="badge" role="status">
+              {t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}
+            </p>
+          )
+        )}
+        {selection && !unavailable && (
+          <div className="tile__controls">
+            {!yesNo && (
+              <AmountControl
+                name={dish.name}
+                value={selection.quantity}
+                {...range}
+                max={Math.max(range.max, range.min)}
+                unit={unitName}
+                onChange={(quantity) => onChange(fitAddOns(dish, { ...selection, quantity }, dishes))}
+              />
+            )}
+            <button type="button" className="tile__icon" aria-label={t('order.customizeDish', { name: dish.name })} onClick={() => setOpen(true)}>
+              <TileIcon name="sliders" />
+            </button>
+            <button type="button" className="tile__icon" aria-label={t('order.removeDish', { name: dish.name })} onClick={() => onChange(undefined)}>
+              <TileIcon name="close" />
+            </button>
+          </div>
+        )}
+      </div>
+      {open && (
+        <Modal title={dish.name} onClose={() => setOpen(false)} wide>
+          <ImageCarousel images={dish.images} name={dish.name} />
+          {dish.description && <p className="dish__description">{dish.description}</p>}
+          <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
+          <div className="modal__actions">
+            <button type="button" onClick={() => setOpen(false)}>
+              {t('order.doneCustomizing')}
+            </button>
+          </div>
+        </Modal>
+      )}
+    </article>
+  )
+}
+
+/** A main dish with variants as a tile; the variants and their choices are in the dialog it opens. */
+function DishGroupTile(props: GroupProps) {
+  const { dish, variants, selections } = props
+  const { t } = useTranslation()
+  const id = useId()
+  const [open, setOpen] = useState(false)
+  const count = variants.filter((v) => selections[v.id]).length
+  return (
+    <article className={`dish dish--tile dish--group${count > 0 ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
+      <TileMedia images={dish.images} name={dish.name}>
+        <button type="button" className="tile__add" aria-label={t('order.chooseVariant', { name: dish.name })} onClick={() => setOpen(true)}>
+          <TileIcon name="plus" />
+        </button>
+      </TileMedia>
+      <div className="tile__body">
+        <h3 id={`${id}-name`}>{dish.name}</h3>
+        {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
+        {count > 0 && <p className="badge">{t('order.chosenCount', { count })}</p>}
+      </div>
+      {open && (
+        <Modal title={dish.name} onClose={() => setOpen(false)} wide>
+          <ImageCarousel images={dish.images} name={dish.name} />
+          {dish.description && <p className="dish__description">{dish.description}</p>}
+          <VariantList {...props} idPrefix={id} />
+          <div className="modal__actions">
+            <button type="button" onClick={() => setOpen(false)}>
+              {t('order.doneCustomizing')}
+            </button>
+          </div>
+        </Modal>
+      )}
     </article>
   )
 }

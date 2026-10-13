@@ -25,7 +25,7 @@ const idPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 // site.json → settings: the fields of SiteSettingsDefaults (backend/src/FoodSite.Api/Sites/SiteOptions.cs).
 const settingKeys = ['contactName', 'contactPhone', 'contactAddress', 'contactEmail', 'contactOpeningHours', 'deliveryAreaText', 'deliveryFeeText', 'kashrutText', 'backgroundImageUrl', 'style', 'orderTotalPosition', 'orderFlow', 'corners']
 // site.json → settings.style: one of SiteStyles.All (backend/src/FoodSite.Api/Sites/SiteStyles.cs).
-const styles = ['classic', 'street']
+const styles = ['classic', 'street', 'tiles']
 // site.json → settings.orderTotalPosition and settings.orderFlow: OrderLayout.TotalPositions and OrderLayout.Flows (Sites/OrderLayout.cs).
 const orderTotalPositions = ['bottom', 'side']
 const orderFlows = ['page', 'steps', 'continue']
