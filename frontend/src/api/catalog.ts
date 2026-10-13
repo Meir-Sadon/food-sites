@@ -31,6 +31,8 @@ export interface Settings {
   orderFlow: OrderFlow
   /** How round the client site's corners are. */
   corners: Corners
+  /** Where the owner is mailed about new orders and changes; empty means no mail. */
+  ownerEmail: string
 }
 /** Leaving out the style, the order layout or the corners keeps it: each has its own section, and saving one never pins the others' defaults. */
 export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'> &

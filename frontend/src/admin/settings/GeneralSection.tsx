@@ -97,6 +97,23 @@ export function GeneralSection() {
           {text('paymentPhone', t('admin.settings.paymentPhone'), false)}
           <span className="field">
             <span className="with-info">
+              <label htmlFor="settings-ownerEmail">{t('admin.settings.ownerEmail')}</label>
+              <Info text={t('admin.settings.ownerEmailHint')} about={t('admin.settings.ownerEmail')} />
+            </span>
+            <input
+              id="settings-ownerEmail"
+              type="email"
+              inputMode="email"
+              dir="ltr"
+              maxLength={200}
+              value={settings.ownerEmail}
+              aria-describedby="settings-ownerEmail-error"
+              onChange={(e) => change({ ownerEmail: e.target.value })}
+            />
+            <FieldError errors={errors} field="ownerEmail" id="settings-ownerEmail-error" />
+          </span>
+          <span className="field">
+            <span className="with-info">
               <label htmlFor="settings-minimumOrderAmount">{t('admin.settings.minimumOrder')}</label>
               <Info text={t('admin.settings.minimumOrderHint')} about={t('admin.settings.minimumOrder')} />
             </span>

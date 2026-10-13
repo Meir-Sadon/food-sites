@@ -1,6 +1,7 @@
 using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Mail;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Phones;
@@ -19,6 +20,7 @@ public class OrdersController(
     AppDbContext db,
     SiteClock clock,
     IWhatsAppSender whatsApp,
+    OwnerNotifier ownerMail,
     IOptions<SiteOptions> site,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
@@ -157,7 +159,7 @@ public class OrdersController(
         db.Orders.Add(order);
         await db.SaveChangesAsync(ct);
 
-        await NotifyAsync(order, settings.PaymentPhone, serviceCities, hourFull, ct);
+        await NotifyAsync(order, settings.PaymentPhone, settings.OwnerEmail, serviceCities, hourFull, ct);
 
         return new ConfirmationDto(
             order.Id, order.SupplyDate, order.FulfillmentMethod, order.PaymentMethod, order.Total,
@@ -218,8 +220,9 @@ public class OrdersController(
     /// order: it is already saved and shows in the admin's Orders tab.
     /// </summary>
     private async Task NotifyAsync(
-        Order order, string? paymentPhone, IReadOnlyList<string> serviceCities, bool hourFull, CancellationToken ct)
+        Order order, string? paymentPhone, string? ownerEmail, IReadOnlyList<string> serviceCities, bool hourFull, CancellationToken ct)
     {
+        await ownerMail.NewOrderAsync(ownerEmail, order, hourFull);
         var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
         var messages = admins
             .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name, hourFull)))

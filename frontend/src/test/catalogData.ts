@@ -19,6 +19,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   orderTotalPosition: 'bottom',
   orderFlow: 'page',
   corners: 'rounded',
+  ownerEmail: '',
   ...patch,
 })
 
