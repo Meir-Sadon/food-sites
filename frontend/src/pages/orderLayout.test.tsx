@@ -98,6 +98,23 @@ describe('Order flow by category steps', () => {
   })
 })
 
+describe('Category jump bar', () => {
+  it('lists the categories at the top of the one-page flows and not when paged', async () => {
+    fakeApi(publicApi)
+    renderAt('/')
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+    const bar = screen.getByRole('navigation', { name: 'מעבר בין קטגוריות' })
+    expect(within(bar).getAllByRole('button').map((b) => b.textContent)).toEqual(['עופות', 'בשרים'])
+    expect(screen.getByRole('heading', { level: 2, name: 'בשרים' }).closest('details')).toHaveAttribute('id', 'category-2')
+  })
+
+  it('is left out when the menu is paged one category at a time', async () => {
+    await open({ orderFlow: 'steps' })
+    await screen.findByRole('navigation', { name: 'שלבי ההזמנה' })
+    expect(screen.queryByRole('navigation', { name: 'מעבר בין קטגוריות' })).not.toBeInTheDocument()
+  })
+})
+
 describe('Order flow with a continue button', () => {
   it('hides the order details until the client presses continue', async () => {
     const user = await open({ orderFlow: 'continue' })

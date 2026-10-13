@@ -15,6 +15,8 @@ import { bringIntoView } from '../components/scrollToInvalid'
 import { useFeature, useOrderLayout, useSite, useSiteFailed } from '../site/useSite'
 import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DetailsBlock } from '../order/DetailsBlock'
+import { CategoryJumpBar } from '../order/CategoryJumpBar'
+import { categorySectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { formatMoney, formatSlot, formatSupplyDate } from '../order/format'
@@ -446,8 +448,9 @@ export function OrderPage() {
             onChange={goToStep}
           />
         )}
+        {!steps && categories.length > 1 && <CategoryJumpBar categories={categories.map(({ category }) => ({ id: category.id, name: category.name }))} />}
         {shownCategories.map(({ category, dishes: list }) => (
-          <details key={category.id} open className="category">
+          <details key={category.id} id={categorySectionId(category.id)} open className="category">
             <summary>
               <h2>{category.name}</h2>
             </summary>
