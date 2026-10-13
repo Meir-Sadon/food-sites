@@ -252,7 +252,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         };
         var dish = await CreateDish(new DishInput(
             "שקשוקה", category, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
-            [new OptionInput(null, "מנה", 1, 50, true)], [], Questions: questions));
+            [new OptionInput(null, "מנה", 1, 50, true)], [], Questions: questions, AdjustmentOptional: false));
         var menuQuestions = (await Menu()).Dishes.Single(d => d.Id == dish.Id).Questions!;
         Assert.Equal(["חריפות", "הערה לשף"], menuQuestions.Select(q => q.Text));
         Assert.Equal((QuestionKind.SingleChoice, true, true), (menuQuestions[0].Kind, menuQuestions[0].ShowAsDropdown, menuQuestions[0].IsRequired));

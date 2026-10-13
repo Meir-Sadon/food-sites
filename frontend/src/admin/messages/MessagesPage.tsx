@@ -11,7 +11,7 @@ import {
 } from '../../api/reviews'
 import { useFeature } from '../../site/useSite'
 import { fieldErrorsOf, useErrorMessage, useFormErrorMessage, useLoad } from '../hooks'
-import { ConfirmRemove, FieldError, Loading, Section, Status } from '../ui'
+import { ConfirmRemove, FieldError, Info, Loading, Section, Status } from '../ui'
 import { PLACEHOLDERS } from './compose'
 
 const empty: MessageTemplateInput = { name: '', text: '', includeReviewLink: false, forStatus: null }
@@ -36,8 +36,10 @@ export function MessagesPage() {
 
   return (
     <>
-      <h1>{t('admin.messages.title')}</h1>
-      <p className="hint">{t('admin.messages.intro')}</p>
+      <div className="with-info">
+        <h1>{t('admin.messages.title')}</h1>
+        <Info text={t('admin.messages.intro')} about={t('admin.messages.title')} />
+      </div>
       {!templates ? (
         <Loading failed={failed} />
       ) : (
@@ -141,11 +143,13 @@ function TemplateForm({
         <FieldError errors={errors} field="name" id={`${idPrefix}-name-error`} />
       </span>
       <span className="field">
-        <label htmlFor={`${idPrefix}-type`}>{t('admin.messages.type')}</label>
+        <span className="with-info">
+          <label htmlFor={`${idPrefix}-type`}>{t('admin.messages.type')}</label>
+          <Info text={t('admin.messages.typeHint')} about={t('admin.messages.type')} />
+        </span>
         <select
           id={`${idPrefix}-type`}
           value={input.forStatus ?? ''}
-          aria-describedby={`${idPrefix}-type-hint`}
           onChange={(e) => setInput({ ...input, forStatus: (e.target.value || null) as OrderStatus | null })}
         >
           <option value="">{t('admin.messages.general')}</option>
@@ -155,23 +159,20 @@ function TemplateForm({
             </option>
           ))}
         </select>
-        <span id={`${idPrefix}-type-hint`} className="hint">
-          {t('admin.messages.typeHint')}
-        </span>
       </span>
       <span className="field">
-        <label htmlFor={`${idPrefix}-text`}>{t('admin.messages.text')}</label>
+        <span className="with-info">
+          <label htmlFor={`${idPrefix}-text`}>{t('admin.messages.text')}</label>
+          <Info text={t('admin.messages.textHint', { placeholders: PLACEHOLDERS.join(' ') })} about={t('admin.messages.text')} />
+        </span>
         <textarea
           id={`${idPrefix}-text`}
           rows={4}
           value={input.text}
           maxLength={TEMPLATE_TEXT_MAX_LENGTH}
-          aria-describedby={`${idPrefix}-text-hint ${idPrefix}-text-error`}
+          aria-describedby={`${idPrefix}-text-error`}
           onChange={(e) => setInput({ ...input, text: e.target.value })}
         />
-        <span id={`${idPrefix}-text-hint`} className="hint">
-          {t('admin.messages.textHint', { placeholders: PLACEHOLDERS.join(' ') })}
-        </span>
         <FieldError errors={errors} field="text" id={`${idPrefix}-text-error`} />
       </span>
       {reviewsOn && (

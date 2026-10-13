@@ -39,8 +39,14 @@ public class DishQuestion
     /// <summary>A single choice shown as a drop-down list instead of radio buttons.</summary>
     public bool ShowAsDropdown { get; set; }
 
-    /// <summary>The order can't be sent without an answer.</summary>
+    /// <summary>The order can't be sent without an answer (unless the dish's adjustment is optional).</summary>
     public bool IsRequired { get; set; }
+
+    /// <summary>
+    /// The answer already picked for the client: one of the choices, or "yes" / "no" for a yes or no question. Null
+    /// leaves the question unanswered until the client answers it.
+    /// </summary>
+    public string? DefaultAnswer { get; set; }
 
     public int DisplayOrder { get; set; }
 }

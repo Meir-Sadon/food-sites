@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
@@ -25,6 +25,7 @@ import {
   type Answer,
   type Answers,
   type Selection,
+  answerOf,
   unitAnswers,
   unitNote,
   unitConfirmed,
@@ -92,8 +93,15 @@ export function DishCard({ dish, dishes, selection, date, onChange }: Props) {
   )
 }
 
-/** A variant with no pictures, description or allergens of its own has nothing to fill a row with. */
-const isCompact = (variant: MenuDish) => variant.images.length === 0 && !variant.description && !variant.allergenInfo
+/**
+ * A variant with no pictures of its own and nothing to choose but the amount (no options, add-ons or questions) is a
+ * small box, side by side with the others like it.
+ */
+const isCompact = (variant: MenuDish, dishes: Map<number, MenuDish>) =>
+  variant.images.length === 0 &&
+  !(variant.choiceMode === 'Fixed' && variant.options.length > 1) &&
+  (variant.questions ?? []).length === 0 &&
+  addOnsOf(variant, dishes).length === 0
 
 /**
  * A main dish with variants: one card with the main dish's images and description, and each variant under it with its
@@ -132,7 +140,7 @@ export function DishGroupCard({
           {variants.map((variant) => (
             <li
               key={variant.id}
-              className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}${isCompact(variant) && !selections[variant.id] ? ' dish-variant--compact' : ''}`}
+              className={`dish-variant${selections[variant.id] ? ' dish-variant--chosen' : ''}${isCompact(variant, dishes) ? ' dish-variant--compact' : ''}`}
             >
               {/* A variant with pictures of its own shows them; without, the card's pictures (the main dish's) stay. */}
               <ImageCarousel images={variant.images} name={variant.name} />
@@ -165,6 +173,13 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
   const options = dish.choiceMode === 'Fixed' && dish.options.length > 1 && !yesNo
   const questions = dish.questions ?? []
   const customizable = addOns.length > 0 || questions.length > 0
+  const optional = !!dish.adjustmentOptional
+  // Each unit is shown open only when there is something to set besides a remark and the client must set it; otherwise
+  // the units (or the dish's one remark) wait behind a show/hide button.
+  const unitsAlwaysShown = customizable && !optional
+  const [unitsShown, setUnitsShown] = useState<boolean | null>(null)
+  const showUnits = unitsAlwaysShown || (unitsShown ?? units.some((unit) => Object.keys(unit).length > 0))
+  const toggleLabel = t(showUnits ? 'order.hideAdjustments' : 'order.showAdjustments')
 
   /** Changes one add-on of one ordered unit. */
   function setAddOn(unit: number, addOn: MenuDish, next: AddOnSelection | undefined) {
@@ -252,7 +267,18 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
             </button>
           </div>
 
-          {customizable ? (
+          {!unitsAlwaysShown && (customizable || !yesNo) && (
+            <button
+              type="button"
+              className="button-quiet adjust-toggle"
+              aria-expanded={showUnits}
+              aria-label={t('order.toggleAdjustmentsFor', { action: toggleLabel, name: dish.name })}
+              onClick={() => setUnitsShown(!showUnits)}
+            >
+              {toggleLabel}
+            </button>
+          )}
+          {!showUnits ? null : customizable ? (
             <div className="addon-units">
               {units.map((unit, i) => {
                 const adjusted = isAdjusted(selection, i, unit)
@@ -260,7 +286,6 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                   .map((addOnId) => dishes.get(Number(addOnId))?.name)
                   .filter(Boolean)
                   .join(', ')
-                const optional = !!dish.adjustmentOptional
                 const status =
                   addOns.length === 0
                     ? ''
@@ -369,7 +394,7 @@ function QuestionFields({
   return (
     <div className="dish-questions">
       {questions.map((q) => (
-        <QuestionField key={q.id} question={q} answer={answers[q.id]} onChange={(answer) => onChange(q.id, answer)} />
+        <QuestionField key={q.id} question={q} answer={answerOf(q, answers)} onChange={(answer) => onChange(q.id, answer)} />
       ))}
     </div>
   )

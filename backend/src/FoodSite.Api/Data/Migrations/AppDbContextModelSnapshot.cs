@@ -252,6 +252,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("IsCheckbox")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("LinkedFromAddOn")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal?>("MaxQuantity")
                         .HasPrecision(10, 3)
                         .HasColumnType("numeric(10,3)");
@@ -345,6 +348,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.PrimitiveCollection<List<string>>("Choices")
                         .IsRequired()
                         .HasColumnType("text[]");
+
+                    b.Property<string>("DefaultAnswer")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("DishId")
                         .HasColumnType("integer");

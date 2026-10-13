@@ -52,10 +52,17 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         IReadOnlyList<QuestionDto>? Questions = null,
         bool AdjustmentOptional = false);
 
-    public record QuestionDto(int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired);
+    public record QuestionDto(
+        int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
+        string? DefaultAnswer = null);
 
-    /// <summary>A question to keep (with Id) or add (without). Choices are for a single or multiple choice only.</summary>
-    public record QuestionInput(int? Id, string? Text, QuestionKind Kind, List<string>? Choices, bool ShowAsDropdown, bool IsRequired);
+    /// <summary>
+    /// A question to keep (with Id) or add (without). Choices are for a single or multiple choice only. DefaultAnswer,
+    /// for a choice or yes/no question, is the answer already picked for the client: one of the choices, or yes / no.
+    /// </summary>
+    public record QuestionInput(
+        int? Id, string? Text, QuestionKind Kind, List<string>? Choices, bool ShowAsDropdown, bool IsRequired,
+        string? DefaultAnswer = null);
 
     public record AddOnGroupDto(int Id, string Name, int? MaxUnits);
 
@@ -72,15 +79,16 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     public record OptionInput(int? Id, string? Label, decimal Amount, decimal Price, bool IsDefault);
 
     /// <summary>
-    /// ParentDishIds lists the dishes this dish is offered under as an add-on:
-    /// ticking A and B on dish C makes C an add-on of A and B.
+    /// ParentDishIds lists the dishes this dish is offered under as an add-on, as ticked on this dish's form:
+    /// ticking A and B on dish C makes C an add-on of A and B. Links A set up among its own add-ons are not listed and
+    /// stay as they are.
     /// AddOns, when sent, is the whole list of this dish's own add-ons with their settings (and AddOnGroups its groups);
     /// left out, the add-ons stay as they are.
     /// MainDishId makes the dish a variant shown in that dish's card, in its category; with UseMainDishPrice it is
     /// priced like it and its own choice mode and options are not needed.
     /// Questions, when sent, is the whole list of the dish's questions; left out, they stay as they are.
-    /// AdjustmentOptional lets the client order without adjusting each unit; a variant follows its main dish, so it is
-    /// ignored there.
+    /// AdjustmentOptional (on unless sent false) lets the client order without adjusting each unit or answering its
+    /// questions; a variant follows its main dish, so it is ignored there.
     /// CopyImagesFrom, on a new dish only, gives it the images of that dish (a copy of it); the picture files are shared.
     /// </summary>
     public record DishInput(
@@ -109,7 +117,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         List<AddOnLinkInput>? AddOns = null,
         List<QuestionInput>? Questions = null,
         int? CopyImagesFrom = null,
-        bool AdjustmentOptional = false);
+        bool AdjustmentOptional = true);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -451,10 +459,12 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
                 errors.Add($"{path}.kind", "invalid");
             if (question.Id is { } id && dish.Questions.All(q => q.Id != id))
                 errors.Add($"{path}.id", "notFound");
+            var choices = (question.Choices ?? []).Select(c => c?.Trim() ?? "").ToList();
+            if (Clean(question.DefaultAnswer) is { } answer && !DefaultAnswerFits(question.Kind, choices, answer))
+                errors.Add($"{path}.defaultAnswer", "defaultAnswerInvalid");
             if (question.Kind is not (QuestionKind.SingleChoice or QuestionKind.MultiChoice))
                 continue;
 
-            var choices = (question.Choices ?? []).Select(c => c?.Trim() ?? "").ToList();
             if (choices.Count < (question.Kind == QuestionKind.SingleChoice ? 2 : 1))
                 errors.Add($"{path}.choices", "choicesRequired");
             else if (choices.Count > DishQuestion.MaxChoices)
@@ -465,6 +475,13 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
                 errors.Add($"{path}.choices", "duplicateChoice");
         }
     }
+
+    private static bool DefaultAnswerFits(QuestionKind kind, List<string> choices, string answer) => kind switch
+    {
+        QuestionKind.YesNo => answer is "yes" or "no",
+        QuestionKind.SingleChoice or QuestionKind.MultiChoice => choices.Contains(answer),
+        _ => false,
+    };
 
     private static void ValidateOptions(DishInput input, Dish dish, Errors errors)
     {
@@ -565,10 +582,13 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             db.DishOptions.RemoveRange(dish.Options);
         }
 
+        // Only the links ticked on this form are this form's; the ones a parent set up among its own add-ons stay.
         var parentIds = (input.ParentDishIds ?? []).Distinct().ToHashSet();
-        db.DishAddOns.RemoveRange(dish.AddOnOf.Where(a => !parentIds.Contains(a.ParentDishId)));
+        db.DishAddOns.RemoveRange(dish.AddOnOf.Where(a => a.LinkedFromAddOn && !parentIds.Contains(a.ParentDishId)));
+        foreach (var link in dish.AddOnOf.Where(a => parentIds.Contains(a.ParentDishId)))
+            link.LinkedFromAddOn = true;
         foreach (var parentId in parentIds.Except(dish.AddOnOf.Select(a => a.ParentDishId)))
-            dish.AddOnOf.Add(new DishAddOn { ParentDishId = parentId, AddOnDish = dish });
+            dish.AddOnOf.Add(new DishAddOn { ParentDishId = parentId, AddOnDish = dish, LinkedFromAddOn = true });
 
         if (input.AddOns is not null)
             ApplyOwnAddOns(input.AddOnGroups ?? [], input.AddOns, dish);
@@ -593,6 +613,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             question.Choices = choices ? input.Choices!.Select(c => c.Trim()).ToList() : [];
             question.ShowAsDropdown = input.Kind == QuestionKind.SingleChoice && input.ShowAsDropdown;
             question.IsRequired = input.IsRequired;
+            question.DefaultAnswer = input.Kind is QuestionKind.YesNo || choices ? Clean(input.DefaultAnswer) : null;
             question.DisplayOrder = i;
         }
     }
@@ -672,7 +693,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.MinAmount, d.MaxAmount, d.AmountStep, d.UnitPrice, d.IsAddOnOnly, d.IsSoldOut, d.IsHidden,
         d.Options.OrderBy(o => o.Id).Select(o => new OptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
         d.Images.OrderBy(i => i.DisplayOrder).Select(i => new ImageDto(i.Id, i.Url, i.DisplayOrder)).ToList(),
-        d.AddOnOf.Select(a => a.ParentDishId).Order().ToList(),
+        d.AddOnOf.Where(a => a.LinkedFromAddOn).Select(a => a.ParentDishId).Order().ToList(),
         d.AddOns.Select(a => a.AddOnDishId).Order().ToList(),
         d.MaxPerSupplyDate,
         d.OpenByDefault,
@@ -685,6 +706,6 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.AddOns.OrderBy(a => a.DisplayOrder).ThenBy(a => a.AddOnDishId)
             .Select(a => new AddOnLinkDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
         d.Questions.OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)
-            .Select(q => new QuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired)).ToList(),
+            .Select(q => new QuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
         d.AdjustmentOptional);
 }

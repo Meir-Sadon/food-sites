@@ -249,6 +249,59 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task An_add_on_set_up_on_its_parent_is_not_ticked_on_the_add_on_s_own_form()
+    {
+        var category = await AddCategory("מאפים");
+        var sabaya = await CreateOk(Fixed("סביאה", category.Id));
+        var small = await CreateOk(Fixed("סביאה קטנה", category.Id));
+        var option = new OptionInput(sabaya.Options[0].Id, sabaya.Options[0].Label, 1, sabaya.Options[0].Price, true);
+        (await Update(sabaya.Id, Fixed("סביאה", category.Id, option) with { AddOns = [new AddOnLinkInput(small.Id, null, null, null, false)] }))
+            .EnsureSuccessStatusCode();
+
+        var fetched = await GetDish(small.Id);
+        Assert.Empty(fetched.ParentDishIds);
+
+        // Saving the add-on's own form leaves the parent's link alone.
+        var smallOption = new OptionInput(fetched.Options[0].Id, fetched.Options[0].Label, 1, fetched.Options[0].Price, true);
+        (await Update(small.Id, Fixed("סביאה קטנה", category.Id, smallOption) with { ParentDishIds = [] })).EnsureSuccessStatusCode();
+        Assert.Equal([small.Id], (await GetDish(sabaya.Id)).AddOnDishIds);
+
+        // Ticked on the add-on's form too, it shows there, and unticking it there takes it off.
+        (await Update(small.Id, Fixed("סביאה קטנה", category.Id, smallOption) with { ParentDishIds = [sabaya.Id] })).EnsureSuccessStatusCode();
+        Assert.Equal([sabaya.Id], (await GetDish(small.Id)).ParentDishIds);
+        (await Update(small.Id, Fixed("סביאה קטנה", category.Id, smallOption) with { ParentDishIds = [] })).EnsureSuccessStatusCode();
+        Assert.Empty((await GetDish(sabaya.Id)).AddOnDishIds);
+    }
+
+    [Fact]
+    public async Task A_question_s_default_answer_is_one_of_its_choices_or_yes_or_no()
+    {
+        var category = await AddCategory("כריכים");
+        QuestionInput Question(QuestionKind kind, string? answer, params string[] choices) =>
+            new(null, "שאלה", kind, [.. choices], false, false, answer);
+
+        var dish = await CreateOk(Fixed("כריך", category.Id) with
+        {
+            Questions =
+            [
+                Question(QuestionKind.SingleChoice, " חריף ", "עדין", "חריף"),
+                Question(QuestionKind.YesNo, "no"),
+                Question(QuestionKind.MultiChoice, "", "בצל", "טחינה"),
+            ],
+        });
+        Assert.Equal(["חריף", "no", null], dish.Questions!.Select(q => q.DefaultAnswer));
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        Assert.Equal("חריף", menu.Dishes.Single(d => d.Id == dish.Id).Questions![0].DefaultAnswer);
+
+        await (await Create(Fixed("x", category.Id) with { Questions = [Question(QuestionKind.SingleChoice, "בינוני", "עדין", "חריף")] }))
+            .AssertInvalid("questions[0].defaultAnswer", "defaultAnswerInvalid");
+        await (await Create(Fixed("x", category.Id) with { Questions = [Question(QuestionKind.YesNo, "maybe")] }))
+            .AssertInvalid("questions[0].defaultAnswer", "defaultAnswerInvalid");
+        await (await Create(Fixed("x", category.Id) with { Questions = [Question(QuestionKind.Text, "שלום")] }))
+            .AssertInvalid("questions[0].defaultAnswer", "defaultAnswerInvalid");
+    }
+
+    [Fact]
     public async Task Add_on_links_are_checked()
     {
         var category = await AddCategory("עופות");
@@ -532,18 +585,20 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
     public async Task Optional_adjustment_is_saved_on_a_main_dish_and_followed_by_its_variants()
     {
         var category = await AddCategory("סיגרים");
-        var main = await CreateOk(Fixed("סיגרים", category.Id) with { AdjustmentOptional = true });
+        // On unless the admin turns it off.
+        var main = await CreateOk(Fixed("סיגרים", category.Id));
         // A variant follows its main dish, whatever it sends.
         var variant = await CreateOk(Fixed("סיגר כבד", category.Id) with { MainDishId = main.Id, AdjustmentOptional = true });
-        var plain = await CreateOk(Fixed("כריך", category.Id));
+        var required = await CreateOk(Fixed("כריך", category.Id) with { AdjustmentOptional = false });
 
-        Assert.Equal((true, false, false), (main.AdjustmentOptional, variant.AdjustmentOptional, plain.AdjustmentOptional));
+        Assert.Equal((true, false, false), (main.AdjustmentOptional, variant.AdjustmentOptional, required.AdjustmentOptional));
 
         var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
         Assert.True(menu.Dishes.Single(d => d.Id == variant.Id).AdjustmentOptional);
-        Assert.False(menu.Dishes.Single(d => d.Id == plain.Id).AdjustmentOptional);
+        Assert.False(menu.Dishes.Single(d => d.Id == required.Id).AdjustmentOptional);
 
-        (await Update(main.Id, Fixed("סיגרים", category.Id, new OptionInput(main.Options[0].Id, main.Options[0].Label, 1, main.Options[0].Price, true)))).EnsureSuccessStatusCode();
+        var option = new OptionInput(main.Options[0].Id, main.Options[0].Label, 1, main.Options[0].Price, true);
+        (await Update(main.Id, Fixed("סיגרים", category.Id, option) with { AdjustmentOptional = false })).EnsureSuccessStatusCode();
         Assert.False((await GetDish(main.Id)).AdjustmentOptional);
     }
 

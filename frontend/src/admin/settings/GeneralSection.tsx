@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi, type Settings } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
-import { FieldError, Loading, Section, Status } from '../ui'
+import { FieldError, Info, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
 import { useToast } from '../../components/toast'
 
@@ -79,24 +79,27 @@ export function GeneralSection() {
           <FieldError errors={errors} field="deliveryEnabled" id="settings-deliveryEnabled-error" />
           {text('deliveryAreaText', t('admin.settings.deliveryArea'))}
           <span className="field">
-            <label htmlFor="settings-serviceCities">{t('admin.settings.serviceCities')}</label>
+            <span className="with-info">
+              <label htmlFor="settings-serviceCities">{t('admin.settings.serviceCities')}</label>
+              <Info text={t('admin.settings.serviceCitiesHint')} about={t('admin.settings.serviceCities')} />
+            </span>
             <input
               id="settings-serviceCities"
               value={settings.serviceCities}
               maxLength={500}
-              aria-describedby="settings-serviceCities-hint settings-serviceCities-error"
+              aria-describedby="settings-serviceCities-error"
               onChange={(e) => change({ serviceCities: e.target.value })}
             />
-            <span id="settings-serviceCities-hint" className="hint">
-              {t('admin.settings.serviceCitiesHint')}
-            </span>
             <FieldError errors={errors} field="serviceCities" id="settings-serviceCities-error" />
           </span>
           {text('deliveryFeeText', t('admin.settings.deliveryFee'))}
           {text('kashrutText', t('admin.settings.kashrut'))}
           {text('paymentPhone', t('admin.settings.paymentPhone'), false)}
           <span className="field">
-            <label htmlFor="settings-minimumOrderAmount">{t('admin.settings.minimumOrder')}</label>
+            <span className="with-info">
+              <label htmlFor="settings-minimumOrderAmount">{t('admin.settings.minimumOrder')}</label>
+              <Info text={t('admin.settings.minimumOrderHint')} about={t('admin.settings.minimumOrder')} />
+            </span>
             <span className="field__inline">
               <input
                 id="settings-minimumOrderAmount"
@@ -106,7 +109,7 @@ export function GeneralSection() {
                 step="any"
                 dir="ltr"
                 value={settings.minimumOrderAmount ?? ''}
-                aria-describedby="settings-minimumOrderAmount-hint settings-minimumOrderAmount-error"
+                aria-describedby="settings-minimumOrderAmount-error"
                 onChange={(e) => change({ minimumOrderAmount: e.target.value === '' ? null : Number(e.target.value) })}
               />
               {settings.pickupEnabled && (
@@ -120,13 +123,13 @@ export function GeneralSection() {
                 </label>
               )}
             </span>
-            <span id="settings-minimumOrderAmount-hint" className="hint">
-              {t('admin.settings.minimumOrderHint')}
-            </span>
             <FieldError errors={errors} field="minimumOrderAmount" id="settings-minimumOrderAmount-error" />
           </span>
           <span className="field">
-            <label htmlFor="settings-ordersPerHour">{t('admin.settings.ordersPerHour')}</label>
+            <span className="with-info">
+              <label htmlFor="settings-ordersPerHour">{t('admin.settings.ordersPerHour')}</label>
+              <Info text={t('admin.settings.ordersPerHourHint')} about={t('admin.settings.ordersPerHour')} />
+            </span>
             <input
               id="settings-ordersPerHour"
               type="number"
@@ -136,16 +139,16 @@ export function GeneralSection() {
               dir="ltr"
               className="input-narrow"
               value={settings.ordersPerHour ?? ''}
-              aria-describedby="settings-ordersPerHour-hint settings-ordersPerHour-error"
+              aria-describedby="settings-ordersPerHour-error"
               onChange={(e) => change({ ordersPerHour: e.target.value === '' ? null : Number(e.target.value) })}
             />
-            <span id="settings-ordersPerHour-hint" className="hint">
-              {t('admin.settings.ordersPerHourHint')}
-            </span>
             <FieldError errors={errors} field="ordersPerHour" id="settings-ordersPerHour-error" />
           </span>
           <span className="field">
-            <label htmlFor="settings-portionsPerSupplyDate">{t('admin.settings.portionsPerSupplyDate')}</label>
+            <span className="with-info">
+              <label htmlFor="settings-portionsPerSupplyDate">{t('admin.settings.portionsPerSupplyDate')}</label>
+              <Info text={t('admin.settings.portionsPerSupplyDateHint')} about={t('admin.settings.portionsPerSupplyDate')} />
+            </span>
             <input
               id="settings-portionsPerSupplyDate"
               type="number"
@@ -155,12 +158,9 @@ export function GeneralSection() {
               dir="ltr"
               className="input-narrow"
               value={settings.portionsPerSupplyDate ?? ''}
-              aria-describedby="settings-portionsPerSupplyDate-hint settings-portionsPerSupplyDate-error"
+              aria-describedby="settings-portionsPerSupplyDate-error"
               onChange={(e) => change({ portionsPerSupplyDate: e.target.value === '' ? null : Number(e.target.value) })}
             />
-            <span id="settings-portionsPerSupplyDate-hint" className="hint">
-              {t('admin.settings.portionsPerSupplyDateHint')}
-            </span>
             <FieldError errors={errors} field="portionsPerSupplyDate" id="settings-portionsPerSupplyDate-error" />
           </span>
           <div className="row">

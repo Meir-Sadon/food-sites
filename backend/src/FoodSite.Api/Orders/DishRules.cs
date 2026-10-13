@@ -13,7 +13,8 @@ public static class DishRules
 
     /// <summary>
     /// The add-ons offered under a dish: a variant's main dish's add-ons, then its own (its own settings win for an
-    /// add-on in both). AddOns (and MainDish.AddOns) must be loaded.
+    /// add-on in both). A variant is never offered under itself, though its main dish offers it. AddOns (and
+    /// MainDish.AddOns) must be loaded.
     /// </summary>
     public static IReadOnlyList<DishAddOn> AddOnLinks(Dish dish)
     {
@@ -21,7 +22,7 @@ public static class DishRules
         if (dish.MainDish is not { } main)
             return own;
         var ownIds = own.Select(a => a.AddOnDishId).ToHashSet();
-        return main.AddOns.Where(a => !ownIds.Contains(a.AddOnDishId))
+        return main.AddOns.Where(a => !ownIds.Contains(a.AddOnDishId) && a.AddOnDishId != dish.Id)
             .OrderBy(a => a.Group?.DisplayOrder ?? int.MaxValue).ThenBy(a => a.DisplayOrder)
             .Concat(own).ToList();
     }

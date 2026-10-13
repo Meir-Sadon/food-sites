@@ -118,7 +118,7 @@ export interface Dish {
   addOns: AddOnLink[]
   /** Questions the client answers when ordering the dish, in order. */
   questions: DishQuestion[]
-  /** The client may order without adjusting each unit (a variant follows its main dish). */
+  /** The client may order without adjusting each unit or answering its questions (a variant follows its main dish). */
   adjustmentOptional: boolean
 }
 
@@ -129,6 +129,8 @@ export interface DishQuestion {
   choices: string[]
   showAsDropdown: boolean
   isRequired: boolean
+  /** The answer already picked for the client: one of the choices, or 'yes' / 'no'; null for none. */
+  defaultAnswer: string | null
 }
 
 export interface AddOnGroup {
@@ -173,7 +175,15 @@ export interface DishInput {
   /** The whole list of this dish's add-ons; left out, they stay as they are. */
   addOns?: { dishId: number; group: number | null; price: number | null; maxQuantity: number | null; isCheckbox: boolean }[]
   /** The whole list of the dish's questions; left out, they stay as they are. */
-  questions?: { id: number | null; text: string; kind: QuestionKind; choices: string[]; showAsDropdown: boolean; isRequired: boolean }[]
+  questions?: {
+    id: number | null
+    text: string
+    kind: QuestionKind
+    choices: string[]
+    showAsDropdown: boolean
+    isRequired: boolean
+    defaultAnswer: string | null
+  }[]
   /** On a new dish: give it the images of this dish (it is a copy of it). */
   copyImagesFrom?: number
   adjustmentOptional?: boolean

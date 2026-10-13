@@ -227,34 +227,46 @@ export function withAnswer(selection: Selection, unit: number, questionId: numbe
 
 const answered = (answer: Answer | undefined) => (Array.isArray(answer) ? answer.length > 0 : !!answer?.trim())
 
+/**
+ * A unit's answer to a question: the client's, else the admin's default answer, picked for them until they change it
+ * (a cleared answer stays cleared).
+ */
+export function answerOf(question: MenuQuestion, answers: Answers): Answer | undefined {
+  const answer = answers[question.id]
+  if (answer !== undefined || !question.defaultAnswer) return answer
+  return question.kind === 'MultiChoice' ? [question.defaultAnswer] : question.defaultAnswer
+}
+
 /** The answers worth sending: only the dish's current questions, and not empty ones. */
 function answerInputs(questions: MenuQuestion[], answers: Answers): AnswerInput[] {
-  return questions
-    .filter((q) => answered(answers[q.id]))
-    .map((q) => {
-      const answer = answers[q.id]
-      return Array.isArray(answer) ? { questionId: q.id, choices: answer } : { questionId: q.id, value: answer.trim() }
-    })
+  return questions.flatMap((q): AnswerInput[] => {
+    const answer = answerOf(q, answers)
+    if (!answered(answer)) return []
+    return Array.isArray(answer) ? [{ questionId: q.id, choices: answer }] : [{ questionId: q.id, value: answer!.trim() }]
+  })
 }
+
+/** The questions the client must answer for each unit: the required ones, unless adjusting the dish is optional. */
+const requiredQuestions = (dish: MenuDish) => (dish.adjustmentOptional ? [] : (dish.questions?.filter((q) => q.isRequired) ?? []))
 
 /** The dishes in the order that still have a required question with no answer, for any of their units. */
 export function unansweredDishes(selections: Record<number, Selection>, dishes: Map<number, MenuDish>): MenuDish[] {
   return Object.entries(selections).flatMap(([id, selection]) => {
     const dish = dishes.get(Number(id))
-    const required = dish?.questions?.filter((q) => q.isRequired) ?? []
+    const required = dish ? requiredQuestions(dish) : []
     if (!dish || required.length === 0) return []
     const units = unitCount(dish, selection.quantity)
-    const missing = Array.from({ length: units }, (_, i) => unitAnswers(selection, i)).some((a) => required.some((q) => !answered(a[q.id])))
+    const missing = Array.from({ length: units }, (_, i) => unitAnswers(selection, i)).some((a) => required.some((q) => !answered(answerOf(q, a))))
     return missing ? [dish] : []
   })
 }
 
 /** The first ordered unit of the dish the client still has to fill: not adjusted, or a required question unanswered. */
 export function firstIncompleteUnit(dish: MenuDish, selection: Selection, dishes: Map<number, MenuDish>): number {
-  const adjustable = !dish.isYesNo && addOnsOf(dish, dishes).length > 0
-  const required = dish.questions?.filter((q) => q.isRequired) ?? []
+  const adjustable = !dish.isYesNo && !dish.adjustmentOptional && addOnsOf(dish, dishes).length > 0
+  const required = requiredQuestions(dish)
   return unitsOf(dish, selection).findIndex(
-    (unit, i) => (adjustable && !isAdjusted(selection, i, unit)) || required.some((q) => !answered(unitAnswers(selection, i)[q.id])),
+    (unit, i) => (adjustable && !isAdjusted(selection, i, unit)) || required.some((q) => !answered(answerOf(q, unitAnswers(selection, i)))),
   )
 }
 

@@ -389,8 +389,14 @@ describe('Order page', () => {
     const card = dishCard('עוף בתנור')
     await user.click(within(card).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.click(within(card).getByRole('button', { name: 'הוספה: עוף בתנור' }))
+    // The units wait behind a button until the client asks for them.
+    expect(within(card).queryByRole('group', { name: 'מנה 1: עוף בתנור' })).not.toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'הצג התאמת מנות: עוף בתנור' }))
     const first = within(card).getByRole('group', { name: 'מנה 1: עוף בתנור' })
     await user.click(within(first).getByRole('button', { name: 'הוספה: ירך' }))
+    await user.click(within(card).getByRole('button', { name: 'הסתר התאמת מנות: עוף בתנור' }))
+    expect(within(card).queryByRole('group', { name: 'מנה 1: עוף בתנור' })).not.toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'הצג התאמת מנות: עוף בתנור' }))
 
     expect(screen.queryByText(/יש להתאים כל מנה/)).not.toBeInTheDocument()
     expect(within(card).queryAllByText(/נדרשת התאמה/)).toHaveLength(0)
@@ -411,6 +417,9 @@ describe('Order page', () => {
     const card = dishCard('קוסקוס')
     await user.click(within(card).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.click(within(card).getByRole('button', { name: 'הוספה: קוסקוס' }))
+    // A remark alone waits behind the show/hide button.
+    expect(within(card).queryAllByRole('textbox')).toHaveLength(0)
+    await user.click(within(card).getByRole('button', { name: 'הצג התאמת מנות: קוסקוס' }))
     expect(within(card).getAllByRole('textbox')).toHaveLength(1)
     expect(within(card).queryByRole('group', { name: /מנה 1/ })).not.toBeInTheDocument()
     expect(screen.queryByText(/יש להתאים כל מנה/)).not.toBeInTheDocument()
@@ -479,6 +488,38 @@ describe('Order page', () => {
           ],
         },
       ],
+    })
+  })
+
+  it('preselects default answers and, with adjusting optional, sends without the required ones answered', async () => {
+    const cake = menuDish(4, 'עוגה', 1, {
+      adjustmentOptional: true,
+      questions: [
+        { id: 1, text: 'גודל', kind: 'SingleChoice', choices: ['קטן', 'גדול'], showAsDropdown: false, isRequired: true, defaultAnswer: 'גדול' },
+        { id: 2, text: 'ברכה', kind: 'Text', choices: [], showAsDropdown: false, isRequired: true },
+        { id: 3, text: 'קישוטים', kind: 'MultiChoice', choices: ['פרחים', 'נרות'], showAsDropdown: false, isRequired: false, defaultAnswer: 'נרות' },
+      ],
+    })
+    const { api, user } = await openOrderPage({
+      'GET /api/menu': () => menu({ dishes: [...menu().dishes, cake] }),
+      'POST /api/orders': () => confirmation,
+    })
+    const card = dishCard('עוגה')
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: עוגה' }))
+    await user.click(within(card).getByRole('button', { name: 'הצג התאמת מנות: עוגה' }))
+    const unit = within(within(card).getByRole('group', { name: 'התאמה אישית: עוגה' }))
+    expect(within(unit.getByRole('group', { name: /גודל/ })).getByLabelText('גדול')).toBeChecked()
+    expect(unit.getByLabelText('נרות')).toBeChecked()
+    await user.click(unit.getByLabelText('נרות'))
+
+    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
+    await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({
+      items: [{ dishId: 4, quantity: 1, addOnUnits: [{ answers: [{ questionId: 1, value: 'גדול' }] }] }],
     })
   })
 

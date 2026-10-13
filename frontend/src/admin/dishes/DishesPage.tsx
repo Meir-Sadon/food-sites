@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, dishesApi, type Category, type Dish } from '../../api/catalog'
-import { ConfirmRemove, DragHandle, Loading, MoveButtons, Status } from '../ui'
+import { ConfirmRemove, DragHandle, Info, Loading, MoveButtons, Status } from '../ui'
 import { moved, useDragSort } from '../sortable'
 import { useErrorMessage } from '../hooks'
 import { priceSummary } from '../format'
@@ -59,7 +59,10 @@ export function DishesPage() {
   return (
     <>
       <div className="row row--between">
-        <h1>{t('admin.dishes.title')}</h1>
+        <div className="with-info">
+          <h1>{t('admin.dishes.title')}</h1>
+          {visible.length > 1 && <Info text={t('admin.dishes.orderHint')} about={t('admin.dishes.title')} />}
+        </div>
         {categories.length > 0 && (
           <Link className="button-link" to="/admin/dishes/new">
             {t('admin.dishes.new')}
@@ -70,7 +73,6 @@ export function DishesPage() {
       {categories.length > 0 && visible.length === 0 && <p>{t('admin.dishes.empty')}</p>}
       {error && <Status message={error} error />}
 
-      {visible.length > 1 && <p className="hint">{t('admin.dishes.orderHint')}</p>}
       {categories.map((category) => {
         const inCategory = visible.filter((d) => d.categoryId === category.id)
         if (inCategory.length === 0) return null

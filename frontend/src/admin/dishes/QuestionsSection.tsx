@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../../api/client'
 import { QUESTION_KINDS, type QuestionKind } from '../../api/site'
-import { FieldError, MoveButtons } from '../ui'
+import { FieldError, Info, MoveButtons } from '../ui'
 import { moved } from '../sortable'
 import { formKey } from './addOnForm'
-import { hasChoices, type QuestionForm } from './questionForm'
+import { answerChoices, hasChoices, type QuestionForm } from './questionForm'
 
 interface Props {
   questions: QuestionForm[]
@@ -23,11 +23,11 @@ export function QuestionsSection({ questions, inherited, errors, onChange }: Pro
   const keys = questions.map((q) => q.key)
 
   return (
-    <fieldset className="stack" aria-describedby="dish-questions-hint dish-questions-error">
-      <legend>{t('admin.dishes.questions')}</legend>
-      <p id="dish-questions-hint" className="hint">
-        {t('admin.dishes.questionsHint')}
-      </p>
+    <fieldset className="stack" aria-labelledby="dish-questions-title" aria-describedby="dish-questions-error">
+      <legend className="with-info">
+        <span id="dish-questions-title">{t('admin.dishes.questions')}</span>
+        <Info text={t('admin.dishes.questionsHint')} about={t('admin.dishes.questions')} />
+      </legend>
       {inherited.length > 0 && <p className="hint">{t('admin.dishes.inheritedQuestions', { names: inherited.join(', ') })}</p>}
       {questions.length === 0 && <p>{t('admin.dishes.noQuestions')}</p>}
 
@@ -35,6 +35,9 @@ export function QuestionsSection({ questions, inherited, errors, onChange }: Pro
         const n = index + 1
         const field = (name: string) => `questions[${index}].${name}`
         const prefix = `question-${question.key}`
+        const answers = answerChoices(question.kind, question.choices, t('order.yes'), t('order.no'))
+        // A default the choices no longer offer is shown as none (and not sent).
+        const defaultAnswer = answers.some((a) => a.value === question.defaultAnswer) ? question.defaultAnswer : ''
         return (
           <div key={question.key} className="question-row stack" role="group" aria-label={t('admin.dishes.questionN', { n })}>
             <div className="row row--end">
@@ -65,18 +68,42 @@ export function QuestionsSection({ questions, inherited, errors, onChange }: Pro
               </span>
             </div>
 
-            {hasChoices(question.kind) && (
-              <span className="field">
-                <label htmlFor={`${prefix}-choices`}>{t('admin.dishes.questionChoices')}</label>
-                <textarea
-                  id={`${prefix}-choices`}
-                  rows={3}
-                  value={question.choices}
-                  onChange={(e) => set(question.key, { choices: e.target.value })}
-                  {...described(field('choices'))}
-                />
-                {fieldError(field('choices'))}
-              </span>
+            {(hasChoices(question.kind) || question.kind === 'YesNo') && (
+              <div className="row row--start">
+                {hasChoices(question.kind) && (
+                  <span className="field field--grow">
+                    <label htmlFor={`${prefix}-choices`}>{t('admin.dishes.questionChoices')}</label>
+                    <textarea
+                      id={`${prefix}-choices`}
+                      rows={3}
+                      value={question.choices}
+                      onChange={(e) => set(question.key, { choices: e.target.value })}
+                      {...described(field('choices'))}
+                    />
+                    {fieldError(field('choices'))}
+                  </span>
+                )}
+                <span className="field">
+                  <span className="with-info">
+                    <label htmlFor={`${prefix}-default`}>{t('admin.dishes.questionDefault')}</label>
+                    <Info text={t('admin.dishes.questionDefaultHint')} about={t('admin.dishes.questionDefault')} />
+                  </span>
+                  <select
+                    id={`${prefix}-default`}
+                    value={defaultAnswer}
+                    onChange={(e) => set(question.key, { defaultAnswer: e.target.value })}
+                    {...described(field('defaultAnswer'))}
+                  >
+                    <option value="">{t('admin.dishes.questionNoDefault')}</option>
+                    {answers.map((a) => (
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldError(field('defaultAnswer'))}
+                </span>
+              </div>
             )}
 
             <div className="row">
@@ -129,7 +156,7 @@ export function QuestionsSection({ questions, inherited, errors, onChange }: Pro
         type="button"
         className="button-quiet"
         onClick={() =>
-          onChange([...questions, { key: formKey(), id: null, text: '', kind: 'Text', choices: '', showAsDropdown: false, isRequired: false }])
+          onChange([...questions, { key: formKey(), id: null, text: '', kind: 'Text', choices: '', showAsDropdown: false, isRequired: false, defaultAnswer: '' }])
         }
       >
         {t('admin.dishes.addQuestion')}

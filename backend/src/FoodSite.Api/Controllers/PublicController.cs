@@ -64,7 +64,10 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         bool AdjustmentOptional = false);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
-    public record MenuQuestionDto(int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired);
+    /// <summary>DefaultAnswer is the answer already picked for the client (a choice, or yes / no), if the admin set one.</summary>
+    public record MenuQuestionDto(
+        int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
+        string? DefaultAnswer = null);
 
     /// <summary>
     /// How an add-on is offered under this dish (the same order as AddOnDishIds). Price, when set, is its price per unit
@@ -156,7 +159,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 links.Where(a => a.Group is not null).Select(a => a.Group!).DistinctBy(g => g.Id)
                     .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
                 DishRules.Questions(d)
-                    .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired)).ToList(),
+                    .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
                 (d.MainDish ?? d).AdjustmentOptional);
         }).ToList();
 

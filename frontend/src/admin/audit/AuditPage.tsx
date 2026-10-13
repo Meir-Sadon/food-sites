@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { auditPageSize, listAudit, type AuditChange, type AuditEntry } from '../../api/admin'
 import { useErrorMessage, useLoad } from '../hooks'
-import { Loading, Status } from '../ui'
+import { Info, Loading, Status } from '../ui'
 
 const time = new Intl.DateTimeFormat('he-IL', { dateStyle: 'short', timeStyle: 'short' })
 
@@ -34,8 +34,10 @@ export function AuditPage() {
 
   return (
     <>
-      <h1>{t('admin.audit.title')}</h1>
-      <p className="hint">{t('admin.audit.intro')}</p>
+      <div className="with-info">
+        <h1>{t('admin.audit.title')}</h1>
+        <Info text={t('admin.audit.intro')} about={t('admin.audit.title')} />
+      </div>
       {!data ? (
         <Loading failed={failed} />
       ) : data.length === 0 ? (

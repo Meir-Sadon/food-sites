@@ -13,7 +13,7 @@ import {
   type SellBy,
 } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
-import { FieldError, FormBlock, Loading, Status } from '../ui'
+import { FieldError, FormBlock, Info, Loading, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { DishImagesSection } from './DishImagesSection'
 import { useToast } from '../../components/toast'
@@ -73,7 +73,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       mainDishId: main ? String(main.id) : '',
       useMainDishPrice: !!main,
       isYesNo: false,
-      adjustmentOptional: false,
+      adjustmentOptional: true,
       groups: [],
       addOns: [],
       questions: [],
@@ -315,6 +315,10 @@ export function DishFormPage() {
     .map((a) => allDishes.find((d) => d.id === a.dishId)?.name)
     .filter((name): name is string => !!name)
   const addOnCandidates = allDishes.filter((d) => !d.isHidden && d.id !== dishId)
+  // Dishes that offer this one among their own add-ons: set up on their forms, so not ticked here.
+  const parentLinks = allDishes
+    .filter((d) => dishId !== null && !d.isHidden && d.addOnDishIds.includes(dishId) && !form.parentDishIds.includes(d.id) && !(dish?.parentDishIds ?? []).includes(d.id))
+    .map((d) => d.name)
   const inheritedQuestions = (mainDish?.questions ?? []).map((q) => q.text)
   /** Whether a field under one of these names (or lists, like `options[0].price`) failed validation. */
   const invalid = (...names: string[]) =>
@@ -356,12 +360,15 @@ export function DishFormPage() {
 
         {(advanced || isVariant) && variants.length === 0 && (
           <span className="field">
-            <label htmlFor="dish-mainDishId">{t('admin.dishes.variantOf')}</label>
+            <span className="with-info">
+              <label htmlFor="dish-mainDishId">{t('admin.dishes.variantOf')}</label>
+              <Info text={t('admin.dishes.variantOfHint')} about={t('admin.dishes.variantOf')} />
+            </span>
             <select
               id="dish-mainDishId"
               value={form.mainDishId}
               onChange={(e) => set({ mainDishId: e.target.value })}
-              aria-describedby="dish-mainDishId-hint dish-mainDishId-error"
+              aria-describedby="dish-mainDishId-error"
             >
               <option value="">{t('admin.dishes.variantOfNone')}</option>
               {categories.map((category) => {
@@ -377,9 +384,6 @@ export function DishFormPage() {
                 )
               })}
             </select>
-            <span id="dish-mainDishId-hint" className="hint">
-              {t('admin.dishes.variantOfHint')}
-            </span>
             {fieldError('mainDishId')}
           </span>
         )}
@@ -402,8 +406,10 @@ export function DishFormPage() {
 
         {variants.length > 0 && (
           <section className="stack" aria-labelledby="dish-variants-title">
-            <h2 id="dish-variants-title">{t('admin.dishes.variants')}</h2>
-            <p className="hint">{t('admin.dishes.variantsHint')}</p>
+            <div className="with-info">
+              <h2 id="dish-variants-title">{t('admin.dishes.variants')}</h2>
+              <Info text={t('admin.dishes.variantsHint')} about={t('admin.dishes.variants')} />
+            </div>
             <ul>
               {variants.map((v) => (
                 <li key={v.id}>
@@ -420,7 +426,14 @@ export function DishFormPage() {
         )}
 
         <span className="field">
-          <label htmlFor="dish-description">{t('admin.dishes.description')}</label>
+          {isVariant ? (
+            <span className="with-info">
+              <label htmlFor="dish-description">{t('admin.dishes.description')}</label>
+              <Info text={t('admin.dishes.variantDescriptionHint')} about={t('admin.dishes.description')} />
+            </span>
+          ) : (
+            <label htmlFor="dish-description">{t('admin.dishes.description')}</label>
+          )}
           <textarea
             id="dish-description"
             rows={3}
@@ -431,7 +444,6 @@ export function DishFormPage() {
           />
           <span id="dish-description-count" className="hint">
             {t('admin.dishes.charsLeft', { count: DESCRIPTION_MAX_LENGTH - form.description.length })}
-            {isVariant && ` · ${t('admin.dishes.variantDescriptionHint')}`}
           </span>
           {fieldError('description')}
         </span>
@@ -532,18 +544,18 @@ export function DishFormPage() {
         ) : (
           <>
             <span className="field">
-              <label htmlFor="dish-unitName">{t('admin.dishes.unitName')}</label>
+              <span className="with-info">
+                <label htmlFor="dish-unitName">{t('admin.dishes.unitName')}</label>
+                <Info text={t('admin.dishes.unitNameHint')} about={t('admin.dishes.unitName')} />
+              </span>
               <input
                 id="dish-unitName"
                 maxLength={UNIT_NAME_MAX_LENGTH}
                 placeholder={t(weight ? 'order.kilo' : 'admin.dishes.unit')}
                 value={form.unitName}
                 onChange={(e) => set({ unitName: e.target.value })}
-                aria-describedby="dish-unitName-hint dish-unitName-error"
+                aria-describedby="dish-unitName-error"
               />
-              <span id="dish-unitName-hint" className="hint">
-                {t('admin.dishes.unitNameHint')}
-              </span>
               {fieldError('unitName')}
             </span>
             <fieldset className="row row--end">
@@ -608,20 +620,13 @@ export function DishFormPage() {
           </label>
         )}
         {(advanced || form.adjustmentOptional) && form.mainDishId === '' && (
-          <>
+          <span className="with-info">
             <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={form.adjustmentOptional}
-                onChange={(e) => set({ adjustmentOptional: e.target.checked })}
-                aria-describedby="dish-adjustmentOptional-hint"
-              />
+              <input type="checkbox" checked={form.adjustmentOptional} onChange={(e) => set({ adjustmentOptional: e.target.checked })} />
               {t('admin.dishes.adjustmentOptionalLabel')}
             </label>
-            <span id="dish-adjustmentOptional-hint" className="hint">
-              {t('admin.dishes.adjustmentOptionalHint')}
-            </span>
-          </>
+            <Info text={t('admin.dishes.adjustmentOptionalHint')} about={t('admin.dishes.adjustmentOptionalLabel')} />
+          </span>
         )}
         <label className="checkbox">
           <input type="checkbox" checked={form.isSoldOut} onChange={(e) => set({ isSoldOut: e.target.checked })} />
@@ -637,7 +642,10 @@ export function DishFormPage() {
         </label>
 
         <span className="field field--narrow">
-          <label htmlFor="dish-maxPerSupplyDate">{t(weight ? 'admin.dishes.maxPerSupplyDateWeight' : 'admin.dishes.maxPerSupplyDate')}</label>
+          <span className="with-info">
+            <label htmlFor="dish-maxPerSupplyDate">{t(weight ? 'admin.dishes.maxPerSupplyDateWeight' : 'admin.dishes.maxPerSupplyDate')}</label>
+            <Info text={t('admin.dishes.maxPerSupplyDateHint')} about={t(weight ? 'admin.dishes.maxPerSupplyDateWeight' : 'admin.dishes.maxPerSupplyDate')} />
+          </span>
           <input
             id="dish-maxPerSupplyDate"
             type="number"
@@ -646,21 +654,19 @@ export function DishFormPage() {
             step="any"
             value={form.maxPerSupplyDate}
             onChange={(e) => set({ maxPerSupplyDate: e.target.value })}
-            aria-describedby="dish-maxPerSupplyDate-hint dish-maxPerSupplyDate-error"
+            aria-describedby="dish-maxPerSupplyDate-error"
           />
-          <span id="dish-maxPerSupplyDate-hint" className="hint">
-            {t('admin.dishes.maxPerSupplyDateHint')}
-          </span>
           {fieldError('maxPerSupplyDate')}
         </span>
         </FormBlock>
 
         <FormBlock title={t('admin.dishes.blocks.parents')} about={t('admin.dishes.blocks.parentsAbout')} invalid={invalid('parentDishIds')}>
-        <fieldset className="stack" aria-describedby="dish-parents-hint dish-parentDishIds-error">
-          <legend>{t('admin.dishes.parents')}</legend>
-          <p id="dish-parents-hint" className="hint">
-            {t('admin.dishes.parentsHint')}
-          </p>
+        <fieldset className="stack" aria-labelledby="dish-parents-title" aria-describedby="dish-parentDishIds-error">
+          <legend className="with-info">
+            <span id="dish-parents-title">{t('admin.dishes.parents')}</span>
+            <Info text={t('admin.dishes.parentsHint')} about={t('admin.dishes.parents')} />
+          </legend>
+          {parentLinks.length > 0 && <p className="hint">{t('admin.dishes.parentLinks', { names: parentLinks.join(', ') })}</p>}
           {parentCandidates.length === 0 && <p>{t('admin.dishes.noParents')}</p>}
           {categories.map((category) => {
             const inCategory = parentCandidates.filter((d) => d.categoryId === category.id)

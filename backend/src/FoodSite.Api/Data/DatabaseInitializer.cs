@@ -121,7 +121,7 @@ public static class DatabaseInitializer
             {
                 var parent = parentsByName.FirstOrDefault(d => d.Name == name)
                     ?? throw new InvalidDataException($"Seed dish '{dish.Name}' is an add-on of '{name}', which is not a dish.");
-                db.DishAddOns.Add(new Entities.DishAddOn { ParentDishId = parent.Id, AddOnDishId = dish.Id });
+                db.DishAddOns.Add(new Entities.DishAddOn { ParentDishId = parent.Id, AddOnDishId = dish.Id, LinkedFromAddOn = true });
             }
         }
         await db.SaveChangesAsync();
