@@ -297,6 +297,10 @@
         "street": {
           "name": "דוכן רחוב",
           "description": "קווי מתאר עבים, צלליות חדות, מדבקות ותמונות גדולות."
+        },
+        "tiles": {
+          "name": "אריחים",
+          "description": "המנות בריבועים זו לצד זו, כפתור פלוס עגול, והתאמות בחלון."
         }
       },
       "corners": "עיגול פינות",
@@ -945,6 +949,10 @@
     "chooseAnswer": "בחירה…",
     "unitNote": "שם או הערה למנה {{n}}",
     "customize": "התאמה אישית: {{name}}",
+    "customizeDish": "התאמת המנה: {{name}}",
+    "chooseVariant": "בחירה מתוך סוגי {{name}}",
+    "chosenCount": "{{count}} נבחרו",
+    "doneCustomizing": "סיום",
     "showAdjustments": "הצג התאמת מנות",
     "hideAdjustments": "הסתר התאמת מנות",
     "toggleAdjustmentsFor": "{{action}}: {{name}}",

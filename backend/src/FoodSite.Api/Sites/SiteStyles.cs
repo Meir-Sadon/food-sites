@@ -13,7 +13,10 @@ public static class SiteStyles
     /// <summary>Thick outlines, hard offset shadows, sticker labels and big picture cards.</summary>
     public const string Street = "street";
 
-    public static readonly IReadOnlyList<string> All = [Classic, Street];
+    /// <summary>Dishes as square tiles side by side, a round add button on each, and a dialog for the choices.</summary>
+    public const string Tiles = "tiles";
+
+    public static readonly IReadOnlyList<string> All = [Classic, Street, Tiles];
 
     public const int MaxLength = 20;
 
