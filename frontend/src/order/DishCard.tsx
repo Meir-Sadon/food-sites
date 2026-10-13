@@ -198,6 +198,11 @@ function useOpenOnRequest(ref: RefObject<HTMLElement | null>, open: () => void) 
   }, [ref, open])
 }
 
+/** Whether a tap landed on the tile itself and not on one of its own buttons, fields or links, or inside a dialog it opened. */
+function tappedTileSurface(event: React.MouseEvent) {
+  return !(event.target as HTMLElement).closest('button, a, input, select, textarea, label, .modal-backdrop')
+}
+
 function TileIcon({ name }: { name: 'plus' | 'sliders' | 'close' | 'check' }) {
   const paths = {
     plus: 'M12 5v14M5 12h14',
@@ -271,12 +276,23 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
     if (needsDialog(dish, dishes)) setOpen(true)
   }
 
+  // The whole tile works like its round button, so a dish with no picture is as easy to tap as one with.
+  const customizable = needsDialog(dish, dishes) || addOnsOf(dish, dishes).length > 0 || (dish.questions ?? []).length > 0
+  const tappable = !unavailable && (!selection || (customizable && !yesNo))
+  function tapped(event: React.MouseEvent) {
+    if (!tappable || !tappedTileSurface(event)) return
+    if (selection) setOpen(true)
+    else add()
+  }
+
   return (
     <article
       ref={articleRef}
       className={`dish dish--tile${selection ? ' dish--chosen' : ''}`}
       aria-labelledby={`${id}-name`}
       data-dish-id={selection ? dish.id : undefined}
+      onClick={tapped}
+      style={tappable ? { cursor: 'pointer' } : undefined}
     >
       <TileMedia images={dish.images} name={dish.name}>
         {unavailable ? null : selection ? (
@@ -365,6 +381,8 @@ function DishGroupTile(props: GroupProps) {
       className={`dish dish--tile dish--group${count > 0 ? ' dish--chosen' : ''}`}
       aria-labelledby={`${id}-name`}
       data-variants={variants.map((v) => v.id).join(' ')}
+      onClick={(event) => tappedTileSurface(event) && setOpen(true)}
+      style={{ cursor: 'pointer' }}
     >
       <TileMedia slides={groupSlides(dish, variants)} name={dish.name}>
         <button type="button" className="tile__add" aria-label={t('order.chooseVariant', { name: dish.name })} onClick={() => setOpen(true)}>
