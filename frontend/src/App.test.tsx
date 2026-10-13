@@ -45,6 +45,13 @@ describe('client site', () => {
     expect(within(screen.getByRole('contentinfo')).queryByRole('link', { name: '050-1234567' })).not.toBeInTheDocument()
   })
 
+  it('offers map and Waze links to the business address on the About page', async () => {
+    renderAt('/about')
+    const maps = await screen.findByRole('link', { name: 'הצגה במפה וניווט' })
+    expect(maps).toHaveAttribute('href', expect.stringContaining('google.com/maps/search/?api=1&query='))
+    expect(screen.getByRole('link', { name: 'ניווט ב־Waze' })).toHaveAttribute('href', expect.stringContaining('waze.com/ul?q='))
+  })
+
   it('links to About from the footer and shows the terms and policy', async () => {
     const user = userEvent.setup()
     renderAt('/')

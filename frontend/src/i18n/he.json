@@ -14,6 +14,11 @@
     "about": "אודות",
     "logout": "התנתקות"
   },
+  "map": {
+    "show": "הצגה במפה וניווט",
+    "waze": "ניווט ב־Waze",
+    "pickupAddress": "כתובת האיסוף"
+  },
   "pages": {
     "order": {
       "title": "הזמנה"

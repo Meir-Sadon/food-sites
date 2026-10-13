@@ -1859,6 +1859,13 @@ label {
   font-style: normal;
 }
 
+.map-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 0.5rem;
+}
+
 .site-footer__links {
   display: flex;
   flex-wrap: wrap;
