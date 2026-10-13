@@ -8,8 +8,11 @@ export interface JumpItem {
   name: string
 }
 
+/** The bottom edge of the pinned search and category bar (`.order-sticky`) the chips sit in. */
+const stickyBottom = (nav: HTMLElement | null) => (nav?.closest('.order-sticky') ?? nav)?.getBoundingClientRect().bottom ?? 0
+
 /**
- * A row of category chips pinned under the top bar on the one-page order flows: a tap scrolls to that category, and
+ * A row of category chips pinned (with the search box above it) under the top bar on the one-page order flows: a tap scrolls to that category, and
  * the chip of the category being read is marked as current (and kept in view when the row scrolls sideways).
  */
 export function CategoryJumpBar({ categories }: { categories: JumpItem[] }) {
@@ -17,24 +20,11 @@ export function CategoryJumpBar({ categories }: { categories: JumpItem[] }) {
   const ref = useRef<HTMLElement>(null)
   const [current, setCurrent] = useState<number | null>(null)
 
-  // Sit right under the top bar, whatever its height (it wraps on a narrow screen).
-  useEffect(() => {
-    const bar = document.querySelector<HTMLElement>('.top-bar')
-    const nav = ref.current
-    if (!bar || !nav) return
-    const place = () => nav.style.insetBlockStart = `${bar.offsetHeight}px`
-    place()
-    if (typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(place)
-    observer.observe(bar)
-    return () => observer.disconnect()
-  }, [])
-
   // The current category is the last one whose title has passed the line under the bars.
   useEffect(() => {
     const sections = categories.map((c) => document.getElementById(categorySectionId(c.id)))
     const update = () => {
-      const line = (ref.current?.getBoundingClientRect().bottom ?? 0) + 8
+      const line = (stickyBottom(ref.current)) + 8
       let found: number | null = null
       sections.forEach((section, i) => {
         if (section && section.getBoundingClientRect().top <= line) found = categories[i].id
@@ -65,7 +55,7 @@ export function CategoryJumpBar({ categories }: { categories: JumpItem[] }) {
     const nav = ref.current
     if (!section || !nav) return
     // Land with the category's title just under the pinned bars.
-    const top = section.getBoundingClientRect().top + window.scrollY - nav.getBoundingClientRect().bottom - 8
+    const top = section.getBoundingClientRect().top + window.scrollY - stickyBottom(nav) - 8
     window.scrollTo?.({ top, behavior: scrollBehavior() })
   }
 

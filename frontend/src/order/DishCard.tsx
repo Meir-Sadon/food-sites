@@ -1,4 +1,5 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
+import { prefersReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
 import { useSiteStyle } from '../site/useSite'
 import { useTranslation } from 'react-i18next'
@@ -198,10 +199,42 @@ function TileIcon({ name }: { name: 'plus' | 'sliders' | 'close' | 'check' }) {
   )
 }
 
-function TileMedia({ images, name, children }: { images: string[]; name: string; children: ReactNode }) {
+/** One picture of a tile's carousel: a dish's or variant's picture, with the variant's name when it has one. */
+interface TileSlide {
+  src: string | null
+  label?: string
+}
+
+const SLIDE_MS = 3500
+
+/** The tile's picture: the dish's first image, a carousel through every sub dish for a group, else a plain block. */
+function TileMedia({ images, slides, name, children }: { images?: string[]; slides?: TileSlide[]; name: string; children: ReactNode }) {
+  const { t } = useTranslation()
+  const list: TileSlide[] = slides ?? (images ?? []).slice(0, 1).map((src) => ({ src }))
+  const [index, setIndex] = useState(0)
+  const many = list.length > 1
+  useEffect(() => {
+    if (!many || prefersReducedMotion()) return
+    const timer = setInterval(() => setIndex((i) => (i + 1) % list.length), SLIDE_MS)
+    return () => clearInterval(timer)
+  }, [many, list.length])
+  const current = list.length > 0 ? index % list.length : 0
+  const slide = list[current]
   return (
-    <div className="tile__media">
-      {images.length > 0 ? <img src={images[0]} alt={name} loading="lazy" /> : <span className="tile__placeholder" aria-hidden="true" />}
+    <div className={`tile__media${many ? ' tile__media--carousel' : ''}`}>
+      {slide?.src ? <img key={slide.src + current} src={slide.src} alt={slide.label ?? name} loading="lazy" /> : <span className="tile__placeholder" aria-hidden="true" />}
+      {many && slide?.label && (
+        <span className="tile__slide-label" aria-hidden="true">
+          {slide.label}
+        </span>
+      )}
+      {many && (
+        <span className="tile__dots">
+          {list.map((item, i) => (
+            <button key={i} type="button" className="tile__dot" aria-label={t('order.showSlide', { name: item.label ?? name })} aria-current={i === current ? 'true' : undefined} onClick={() => setIndex(i)} />
+          ))}
+        </span>
+      )}
       {children}
     </div>
   )
@@ -297,6 +330,11 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
 }
 
 /** A main dish with variants as a tile; the variants and their choices are in the dialog it opens. */
+/** A group tile's pictures: the main dish's own, then each variant's first one (a variant with none shows its name alone). */
+function groupSlides(dish: MenuDish, variants: MenuDish[]): TileSlide[] {
+  return [...dish.images.map((src): TileSlide => ({ src })), ...variants.map((v): TileSlide => ({ src: v.images[0] ?? null, label: v.name }))]
+}
+
 function DishGroupTile(props: GroupProps) {
   const { dish, variants, selections } = props
   const { t } = useTranslation()
@@ -304,8 +342,12 @@ function DishGroupTile(props: GroupProps) {
   const [open, setOpen] = useState(false)
   const count = variants.filter((v) => selections[v.id]).length
   return (
-    <article className={`dish dish--tile dish--group${count > 0 ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
-      <TileMedia images={dish.images} name={dish.name}>
+    <article
+      className={`dish dish--tile dish--group${count > 0 ? ' dish--chosen' : ''}`}
+      aria-labelledby={`${id}-name`}
+      data-variants={variants.map((v) => v.id).join(' ')}
+    >
+      <TileMedia slides={groupSlides(dish, variants)} name={dish.name}>
         <button type="button" className="tile__add" aria-label={t('order.chooseVariant', { name: dish.name })} onClick={() => setOpen(true)}>
           <TileIcon name="plus" />
         </button>
@@ -313,6 +355,7 @@ function DishGroupTile(props: GroupProps) {
       <div className="tile__body">
         <h3 id={`${id}-name`}>{dish.name}</h3>
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
+        <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
         {count > 0 && <p className="badge">{t('order.chosenCount', { count })}</p>}
       </div>
       {open && (
