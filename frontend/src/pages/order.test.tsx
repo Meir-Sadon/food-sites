@@ -759,3 +759,22 @@ describe('Grouped dishes and add-on settings', () => {
     expect(total().getByText('סה"כ: ₪56')).toBeInTheDocument()
   })
 })
+
+describe('Dish search', () => {
+  it('searches dishes from two characters and shows the best match first', async () => {
+    const { user } = await openOrderPage()
+    const search = screen.getByRole('searchbox', { name: 'חיפוש מנה' })
+    await user.type(search, 'ע')
+    expect(screen.getByRole('heading', { level: 2, name: 'עופות' })).toBeInTheDocument()
+    await user.type(search, 'ו')
+    expect(screen.queryByRole('heading', { level: 2, name: 'עופות' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'נמצאה מנה אחת' })).toBeInTheDocument()
+    // The result is a normal dish card: it can be added to the order.
+    await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+    await user.type(search, 'xyz')
+    expect(screen.getByRole('heading', { level: 2, name: 'לא נמצאו מנות' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'ניקוי החיפוש' }))
+    expect(screen.getByRole('heading', { level: 2, name: 'עופות' })).toBeInTheDocument()
+    expect(total().getByText(/70/)).toBeInTheDocument()
+  })
+})

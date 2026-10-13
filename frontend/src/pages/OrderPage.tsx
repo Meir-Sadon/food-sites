@@ -14,6 +14,8 @@ import { scrollBehavior } from '../components/motion'
 import { bringIntoView } from '../components/scrollToInvalid'
 import { useFeature, useOrderLayout, useSite, useSiteFailed } from '../site/useSite'
 import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
+import { DishSearch } from '../order/DishSearch'
+import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
@@ -97,6 +99,7 @@ export function OrderPage() {
   const steps = flow === 'steps'
   // The shown step: a category's position, or the number of categories for the contact and payment details.
   const [step, setStep] = useState(0)
+  const [query, setQuery] = useState('')
   // Bumped on every move to another step: the page then scrolls to the steps header.
   const [stepMoves, setStepMoves] = useState(0)
   const stepsRef = useRef<HTMLElement>(null)
@@ -222,7 +225,34 @@ export function OrderPage() {
   const detailsStep = categories.length
   const currentStep = steps ? Math.min(step, detailsStep) : 0
   const showDetails = !steps || currentStep === detailsStep
+  const searchable = categories.length > 0 && !(steps && currentStep === detailsStep)
+  const searching = searchable && normalizeSearchText(query).length >= SEARCH_MIN_LENGTH
+  const results = searching ? searchDishes(menu, query, categories.flatMap((group) => group.dishes)) : []
   const shownCategories = steps ? categories.slice(currentStep, currentStep + 1) : categories
+
+  function renderDish(dish: MenuDish) {
+    const variants = variantsOf(dish, menu!)
+    return variants.length > 0 ? (
+      <DishGroupCard
+        key={dish.id}
+        dish={dish}
+        variants={variants}
+        dishes={dishes}
+        selections={state.selections}
+        date={supplyDate?.date}
+        onChange={setSelection}
+      />
+    ) : (
+      <DishCard
+        key={dish.id}
+        dish={dish}
+        dishes={dishes}
+        selection={state.selections[dish.id]}
+        date={supplyDate?.date}
+        onChange={(selection) => setSelection(dish.id, selection)}
+      />
+    )
+  }
 
   function goToStep(next: number) {
     setStep(Math.max(0, Math.min(next, detailsStep)))
@@ -423,7 +453,22 @@ export function OrderPage() {
         {user && (!steps || currentStep === 0) && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 
         {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
-        {steps && categories.length > 0 && (
+        {searchable && <DishSearch value={query} onChange={setQuery} />}
+        {searching && (
+          <section className="category dish-results" aria-labelledby="dish-results-title">
+            <h2 id="dish-results-title" className="dish-results__title">
+              {results.length === 0 ? t('order.search.noResults') : t('order.search.results', { count: results.length })}
+            </h2>
+            {results.length === 0 ? (
+              <p role="status" className="dish-results__empty">
+                {t('order.search.none')}
+              </p>
+            ) : (
+              <div className="category__dishes">{results.map(renderDish)}</div>
+            )}
+          </section>
+        )}
+        {steps && !searching && categories.length > 0 && (
           <CategorySteps
             ref={stepsRef}
             categories={categories.map(({ category }) => ({
@@ -435,39 +480,17 @@ export function OrderPage() {
             onChange={goToStep}
           />
         )}
-        {shownCategories.map(({ category, dishes: list }) => (
+        {!searching && shownCategories.map(({ category, dishes: list }) => (
           <details key={category.id} open className="category">
             <summary>
               <h2>{category.name}</h2>
             </summary>
             <div className="category__dishes">
-              {list.map((dish) => {
-                const variants = variantsOf(dish, menu)
-                return variants.length > 0 ? (
-                  <DishGroupCard
-                    key={dish.id}
-                    dish={dish}
-                    variants={variants}
-                    dishes={dishes}
-                    selections={state.selections}
-                    date={supplyDate?.date}
-                    onChange={setSelection}
-                  />
-                ) : (
-                  <DishCard
-                    key={dish.id}
-                    dish={dish}
-                    dishes={dishes}
-                    selection={state.selections[dish.id]}
-                    date={supplyDate?.date}
-                    onChange={(selection) => setSelection(dish.id, selection)}
-                  />
-                )
-              })}
+              {list.map(renderDish)}
             </div>
           </details>
         ))}
-        {steps && currentStep < detailsStep && <CategoryStepsFooter current={currentStep} last={detailsStep - 1} onChange={goToStep} />}
+        {steps && !searching && currentStep < detailsStep && <CategoryStepsFooter current={currentStep} last={detailsStep - 1} onChange={goToStep} />}
 
         {showDetails && (
           <form ref={formRef} className="order-form stack" onSubmit={handleSubmit} aria-labelledby="order-details-title" noValidate>
