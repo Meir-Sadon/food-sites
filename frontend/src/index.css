@@ -2984,6 +2984,13 @@ label {
   box-shadow: -2px 2px 0 var(--color-text);
 }
 
+.style-option__preview--tiles > span:not(:first-child) {
+  block-size: auto;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-border);
+  border-radius: calc(0.5rem * var(--corner-scale));
+}
+
 /* A tiny drawing of each corner choice: a picture, a line of text and a button. */
 .corners-preview {
   grid-column: 1 / -1;
