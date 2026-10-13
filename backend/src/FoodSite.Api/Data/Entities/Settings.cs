@@ -76,4 +76,10 @@ public class Settings
     public string? ContactAddress { get; set; }
     public string? ContactEmail { get; set; }
     public string? ContactOpeningHours { get; set; }
+
+    /// <summary>
+    /// Where the business owner is mailed about new orders and changes to the dishes and settings (see <c>OwnerNotifier</c>);
+    /// null means no mail.
+    /// </summary>
+    public string? OwnerEmail { get; set; }
 }

@@ -1,15 +1,18 @@
 using FoodSite.Api.Audit;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Mail;
 using Microsoft.EntityFrameworkCore;
 
 namespace FoodSite.Api.Data;
 
 /// <param name="auditActor">Set in the app (not at design time): changes made by a logged-in admin go to <see cref="AuditEntries"/>.</param>
 /// <param name="time">The clock audit entries are stamped with.</param>
+/// <param name="digest">Told about the saved changes the business owner is mailed about.</param>
 public class AppDbContext(
     DbContextOptions<AppDbContext> options,
     AuditActor? auditActor = null,
-    TimeProvider? time = null) : DbContext(options)
+    TimeProvider? time = null,
+    ChangeDigest? digest = null) : DbContext(options)
 {
     public DbSet<Settings> Settings => Set<Settings>();
     public DbSet<SupplyDay> SupplyDays => Set<SupplyDay>();
@@ -52,10 +55,12 @@ public class AppDbContext(
 
         await using var transaction = Database.CurrentTransaction is null ? await Database.BeginTransactionAsync(ct) : null;
         var saved = await base.SaveChangesAsync(acceptAllChangesOnSuccess, ct);
-        AuditEntries.AddRange(pending.Select(p => p.Complete()));
+        var entries = pending.Select(p => p.Complete()).ToList();
+        AuditEntries.AddRange(entries);
         await base.SaveChangesAsync(acceptAllChangesOnSuccess, ct);
         if (transaction is not null)
             await transaction.CommitAsync(ct);
+        digest?.Add(entries);
         return saved;
     }
 
@@ -67,9 +72,11 @@ public class AppDbContext(
 
         using var transaction = Database.CurrentTransaction is null ? Database.BeginTransaction() : null;
         var saved = base.SaveChanges(acceptAllChangesOnSuccess);
-        AuditEntries.AddRange(pending.Select(p => p.Complete()));
+        var entries = pending.Select(p => p.Complete()).ToList();
+        AuditEntries.AddRange(entries);
         base.SaveChanges(acceptAllChangesOnSuccess);
         transaction?.Commit();
+        digest?.Add(entries);
         return saved;
     }
 

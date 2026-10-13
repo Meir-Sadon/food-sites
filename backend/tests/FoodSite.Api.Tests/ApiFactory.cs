@@ -3,6 +3,7 @@ using FoodSite.Api.Auth;
 using FoodSite.Api.Data;
 using FoodSite.Api.Http;
 using FoodSite.Api.Images;
+using FoodSite.Api.Mail;
 using FoodSite.Api.Messaging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -47,6 +48,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["Site:Features:recommendations"] = "true",
             ["Site:Features:favorites"] = "true",
             ["Site:Features:reviews"] = "true",
+            // Changes are mailed (to the capturing mailer) as soon as the next poll sees them.
+            ["Mail:ChangeQuietSeconds"] = "0",
+            ["Mail:PollSeconds"] = "1",
         };
         foreach (var (key, value) in overrides ?? [])
             _settings[key] = value;
@@ -58,6 +62,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// <summary>Records every WhatsApp message instead of sending it.</summary>
     public CapturingWhatsAppSender WhatsApp { get; } = new();
 
+    /// <summary>Records every mail to the owner instead of sending it.</summary>
+    public CapturingMailer Mail { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         foreach (var (key, value) in _settings)
@@ -66,6 +73,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         {
             services.AddSingleton<IImageStore>(Images);
             services.AddSingleton<IWhatsAppSender>(WhatsApp);
+            services.AddSingleton<IMailer>(Mail);
         });
     }
 

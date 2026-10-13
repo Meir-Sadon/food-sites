@@ -17,6 +17,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     public const decimal MaxMinimumOrder = 100_000;
     public const int MaxOrdersPerHour = 1000;
     public const int MaxPortionsPerSupplyDate = 100_000;
+    public const int OwnerEmailMaxLength = 200;
 
     public record SettingsDto(
         string? BackgroundImageUrl,
@@ -34,7 +35,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string Style,
         string OrderTotalPosition,
         string OrderFlow,
-        string Corners);
+        string Corners,
+        string OwnerEmail);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -51,7 +53,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? Style = null,
         string? OrderTotalPosition = null,
         string? OrderFlow = null,
-        string? Corners = null);
+        string? Corners = null,
+        string? OwnerEmail = null);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -85,6 +88,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.OrderFlow), "invalid");
         if (input.Corners is not null && !Sites.Corners.IsKnown(input.Corners))
             errors.Add(nameof(input.Corners), "invalid");
+        if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !IsEmail(input.OwnerEmail.Trim()))
+            errors.Add(nameof(input.OwnerEmail), "email");
         if (errors.Any)
             return Invalid(errors);
 
@@ -116,6 +121,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.OrderFlow = input.OrderFlow;
         if (input.Corners is not null)
             settings.Corners = input.Corners;
+        // Missing (an older client) keeps the address; an empty one turns the mails off.
+        if (input.OwnerEmail is not null)
+            settings.OwnerEmail = Clean(input.OwnerEmail);
         await db.SaveChangesAsync();
         return ToDto(settings);
     }
@@ -171,7 +179,14 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
         OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
-        Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners));
+        Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
+        s.OwnerEmail ?? "");
+
+    private static bool IsEmail(string value) =>
+        value.Length <= OwnerEmailMaxLength && EmailPattern().IsMatch(value);
+
+    [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
+    private static partial Regex EmailPattern();
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]
