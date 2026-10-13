@@ -1,0 +1,23 @@
+{
+  "id": "hummus-el-masri",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אשקלון",
+  "emoji": "🧆",
+  "whatsApp": {
+    "orderConfirmationTemplate": "hummus_el_masri_order_confirmation",
+    "newOrderTemplate": "hummus_el_masri_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true
+  },
+  "settings": {
+    "contactName": "חומוס אל מסרי",
+    "contactPhone": "",
+    "contactAddress": "חיים בר לב 28, אשקלון"
+  },
+  "seed": ["seed/menu.json"]
+}

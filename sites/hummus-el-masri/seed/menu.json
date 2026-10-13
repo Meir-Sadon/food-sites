@@ -1,0 +1,476 @@
+{
+  "categories": [
+    {
+      "name": "חומוס אל מסרי",
+      "dishes": [
+        {
+          "name": "חומוס נטו",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס טחינה",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס גרגירים",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס מסבחה",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס פול",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 38,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "חומוס אל מסרי ספיישל",
+      "dishes": [
+        {
+          "name": "נטו שקשוקה",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג, רוטב לימוני ו-3 כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 45,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס סלט",
+          "description": "ירקות קצוצים וטחינה גרגירים. מוגש עם 2 פיתות ענן, חמוצים, סחוג, רוטב לימוני ו-3 כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 45,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס פטריות ובצל מטוגן",
+          "description": "מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 46,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס סביח",
+          "description": "חציל מטוגן, ביצה קשה, חומוס וטחינעמבה. מוגש עם 2 פיתות ענן, חמוצים, סחוג, רוטב לימוני ו-3 כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 46,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חמשוקה",
+          "description": "חומוס עם רוטב שקשוקה ו-2 ביצים וטחינה. מוגש עם 2 פיתות ענן, חמוצים, סחוג, רוטב לימוני ו-3 כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 46,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס פלאפל",
+          "description": "5 כדורי פלאפל וטחינה. מוגש עם 2 פיתות ענן, חמוצים, סחוג ורוטב לימוני",
+          "sellBy": "Units",
+          "unitPrice": 46,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "עסקיות אל מסרי",
+      "dishes": [
+        {
+          "name": "עסקית חומוס",
+          "description": "חומוס לבחירה, ביצה, דואט פלאפל וצ'יפס אישי, חמוצים, 2 פיתות ושתייה לבחירה",
+          "sellBy": "Units",
+          "unitPrice": 55,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "לצד החומוס",
+      "dishes": [
+        {
+          "name": "כדורי פלאפל - 5 יח'",
+          "description": "מוגש עם טחינה",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "צ'יפס",
+          "sellBy": "Units",
+          "unitPrice": 18,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "דואט של צ'יפס ופלאפל",
+          "sellBy": "Units",
+          "unitPrice": 25,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סלט ירקות קצוץ",
+          "sellBy": "Units",
+          "unitPrice": 18,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סלט גרגירים",
+          "description": "גרגירי חומוס נימוחים + סלט ירקות, טחינה וביצה קשה",
+          "sellBy": "Units",
+          "unitPrice": 36,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קובה בשר",
+          "sellBy": "Units",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חציל בטחינה",
+          "sellBy": "Units",
+          "unitPrice": 39,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "3 קציצות פרסה",
+          "sellBy": "Units",
+          "unitPrice": 20,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "אל מסרי בפיתה",
+      "dishes": [
+        {
+          "name": "פלאפל בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 25,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חביתת ירק בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 25,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סביח בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 30,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "שקשוקה בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 35,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס פול וביצה בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 22,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סביח מחוזק בפיתה",
+          "description": "עם כדורי פלאפל",
+          "sellBy": "Units",
+          "unitPrice": 30,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פיתה שניצל",
+          "sellBy": "Units",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "ארוחת פיתה שניצל",
+          "description": "פיתה שניצל, צ'יפס ושתיה לבחירה",
+          "sellBy": "Units",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "אל מסרי במשקל",
+      "dishes": [
+        {
+          "name": "חומוס במשקל",
+          "description": "מחיר ל-100 גרם",
+          "sellBy": "Units",
+          "unitPrice": 18,
+          "minAmount": 1,
+          "maxAmount": 30,
+          "amountStep": 1,
+          "unitName": "100 גרם"
+        },
+        {
+          "name": "חומוס מסבחה במשקל",
+          "description": "מחיר ל-100 גרם",
+          "sellBy": "Units",
+          "unitPrice": 18,
+          "minAmount": 1,
+          "maxAmount": 30,
+          "amountStep": 1,
+          "unitName": "100 גרם"
+        },
+        {
+          "name": "פול במשקל",
+          "description": "מחיר ל-100 גרם",
+          "sellBy": "Units",
+          "unitPrice": 18,
+          "minAmount": 1,
+          "maxAmount": 30,
+          "amountStep": 1,
+          "unitName": "100 גרם"
+        },
+        {
+          "name": "טחינה במשקל",
+          "description": "מחיר ל-100 גרם",
+          "sellBy": "Units",
+          "unitPrice": 18,
+          "minAmount": 1,
+          "maxAmount": 30,
+          "amountStep": 1,
+          "unitName": "100 גרם"
+        },
+        {
+          "name": "תערובת לפלאפל",
+          "description": "תערובת להכנת פלאפל ביתי, 1 קילו",
+          "sellBy": "Units",
+          "unitPrice": 40,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "קינוחים",
+      "dishes": [
+        {
+          "name": "מלבי",
+          "sellBy": "Units",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    },
+    {
+      "name": "שתיה קלה",
+      "dishes": [
+        {
+          "name": "מים מינרליים נביעות",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מים בטעם אפרסק",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מים בטעם תפוח",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מים בטעם ענבים",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פיוז טי אפרסק",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "תפוזינה תפוזים - בקבוק זכוכית",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "תפוזינה ענבים - בקבוק זכוכית",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "שוופס סודה",
+          "description": "0.25 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קינלי סודה",
+          "description": "0.25 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "בירה שחורה נשר מאלט - בקבוק",
+          "description": "0.5 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 14,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית קוקה קולה",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית קולה זירו",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית פאנטה",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית ספרייט",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פחית ספרייט זירו",
+          "description": "0.33 ליטר",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    }
+  ]
+}
