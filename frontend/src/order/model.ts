@@ -406,6 +406,41 @@ export function toLines(selections: Record<number, Selection>, dishes: Map<numbe
   })
 }
 
+/** One dish of the order for the read-only summary: its name and amount, and what was adjusted or written on it. */
+export interface SummaryLine {
+  dish: MenuDish
+  selection: Selection
+  /** The chosen set option's label, when the dish has several. */
+  option: string | null
+  /** What the client changed or wrote, one entry per ordered unit that has anything (`unit` is its 1-based number when several). */
+  details: { unit: number | null; add: string[]; note: string; answers: { question: string; value: string; yesNo: boolean }[] }[]
+}
+
+/** The order's dishes with their adjustments, in the order they were added. */
+export function summaryLines(selections: Record<number, Selection>, dishes: Map<number, MenuDish>): SummaryLine[] {
+  return Object.entries(selections).flatMap(([id, selection]) => {
+    const dish = dishes.get(Number(id))
+    if (!dish) return []
+    const option = dish.choiceMode === 'Fixed' && dish.options.length > 1 ? (dish.options.find((o) => o.id === selection.optionId)?.label ?? null) : null
+    const perUnit = addOnsOf(dish, dishes).length > 0 || (dish.questions ?? []).length > 0
+    const units = perUnit ? unitsOf(dish, selection) : [selection.addOns]
+    const details = units.flatMap((unit, i) => {
+      const add = Object.entries(unit).map(([addOnId, a]) => {
+        const name = dishes.get(Number(addOnId))?.name ?? ''
+        return a.quantity > 1 ? `${name} ×${a.quantity}` : name
+      })
+      const answers = (dish.questions ?? []).flatMap((q) => {
+        const answer = answerOf(q, unitAnswers(selection, i))
+        if (!answered(answer)) return []
+        return [{ question: q.text, value: Array.isArray(answer) ? answer.join(', ') : answer!.trim(), yesNo: q.kind === 'YesNo' }]
+      })
+      const note = unitNote(selection, i).trim()
+      return add.length + answers.length > 0 || note ? [{ unit: units.length > 1 ? i + 1 : null, add, note, answers }] : []
+    })
+    return [{ dish, selection, option, details }]
+  })
+}
+
 /** Dishes by id, for lookups. */
 export const dishMap = (menu: Menu) => new Map(menu.dishes.map((d) => [d.id, d]))
 

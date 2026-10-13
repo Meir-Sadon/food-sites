@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet } from 'react-router'
 import { AccountProvider } from '../account/AccountContext'
+import { CartNavProvider } from './CartNavProvider'
 import { Footer } from './Footer'
 import { WhatsAppButton } from './WhatsAppButton'
 import { LeaveGuardProvider } from './LeaveGuardProvider'
@@ -52,7 +53,9 @@ export function ClientLayout() {
     <SiteProvider>
       <AccountProvider>
         <LeaveGuardProvider>
-          <Shell />
+          <CartNavProvider>
+            <Shell />
+          </CartNavProvider>
         </LeaveGuardProvider>
       </AccountProvider>
     </SiteProvider>

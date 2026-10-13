@@ -17,6 +17,9 @@ import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DishSearch } from '../order/DishSearch'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
+import { CartSheet } from '../order/CartSheet'
+import { useRegisterCart } from '../components/cartNav'
+import { OrderSummary } from '../order/OrderSummary'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
@@ -102,6 +105,7 @@ export function OrderPage() {
   // Whole menu on one page, with the order details behind a button until the client is done choosing.
   const deferred = flow === 'continue'
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false)
   // The shown step: a category's position, or the number of categories for the contact and payment details.
   const [step, setStep] = useState(0)
   const [query, setQuery] = useState('')
@@ -119,6 +123,7 @@ export function OrderPage() {
   )
   const totals = dishTotals(state.selections, dishes, drinksCategoryIds)
   const dirty = count > 0 && !confirmation
+  useRegisterCart(totals.main + totals.side + totals.drinks, total, () => setCartOpen(true), !!menu)
   // Set when the profile page's "Reorder" put a past order in the draft.
   const filledSkipped = (location.state as { filled?: { skipped: number } } | null)?.filled?.skipped
 
@@ -262,6 +267,18 @@ export function OrderPage() {
         onChange={(selection) => setSelection(dish.id, selection)}
       />
     )
+  }
+
+  /** Closes the basket and brings the client to the dish's own card, where its adjustments are changed. */
+  function revealDish(dishId: number) {
+    setCartOpen(false)
+    setQuery('')
+    const category = categories.findIndex((group) => group.category.id === dishes.get(dishId)?.categoryId)
+    if (steps && category >= 0) setStep(category)
+    setTimeout(() => {
+      const card = document.querySelector<HTMLElement>(`[data-dish-id="${dishId}"], [data-variants~="${dishId}"]`)
+      if (card) bringIntoView(card)
+    }, 0)
   }
 
   function goToStep(next: number) {
@@ -449,24 +466,40 @@ export function OrderPage() {
 
   return (
     <div className="order-page" data-total={totalPosition}>
+      {(!steps || currentStep === 0) && (
+        <header className="order-hero">
+          {siteLogo && <img className="order-hero__logo" src={siteLogo} alt="" />}
+          <h1>{t('pages.order.title')}</h1>
+          <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
+          <ul className="order-hero__chips">
+            <li>{t('order.hero.fresh')}</li>
+            <li>{t('order.hero.homemade')}</li>
+            <li>{t('order.hero.kosher')}</li>
+          </ul>
+        </header>
+      )}
       <div className="order-main">
-        {(!steps || currentStep === 0) && (
-          <header className="order-hero">
-            {siteLogo && <img className="order-hero__logo" src={siteLogo} alt="" />}
-            <h1>{t('pages.order.title')}</h1>
-            <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
-            <ul className="order-hero__chips">
-              <li>{t('order.hero.fresh')}</li>
-              <li>{t('order.hero.homemade')}</li>
-              <li>{t('order.hero.kosher')}</li>
-            </ul>
-          </header>
-        )}
-
         {user && (!steps || currentStep === 0) && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 
         {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
-        {searchable && <DishSearch value={query} onChange={setQuery} />}
+        {(searchable || categories.length > 0) && (
+          <div className="order-sticky">
+            {searchable && <DishSearch value={query} onChange={setQuery} />}
+            {steps && !searching && categories.length > 0 && (
+              <CategorySteps
+                ref={stepsRef}
+                categories={categories.map(({ category }) => ({
+                  id: category.id,
+                  name: category.name,
+                  picked: pickedInCategory(state.selections, dishes, category.id),
+                }))}
+                current={currentStep}
+                onChange={goToStep}
+              />
+            )}
+            {!steps && !searching && categories.length > 1 && <CategoryJumpBar categories={categories.map(({ category }) => ({ id: category.id, name: category.name }))} />}
+          </div>
+        )}
         {searching && (
           <section className="category dish-results" aria-labelledby="dish-results-title">
             <h2 id="dish-results-title" className="dish-results__title">
@@ -481,19 +514,6 @@ export function OrderPage() {
             )}
           </section>
         )}
-        {steps && !searching && categories.length > 0 && (
-          <CategorySteps
-            ref={stepsRef}
-            categories={categories.map(({ category }) => ({
-              id: category.id,
-              name: category.name,
-              picked: pickedInCategory(state.selections, dishes, category.id),
-            }))}
-            current={currentStep}
-            onChange={goToStep}
-          />
-        )}
-        {!steps && !searching && categories.length > 1 && <CategoryJumpBar categories={categories.map(({ category }) => ({ id: category.id, name: category.name }))} />}
         {!searching && shownCategories.map(({ category, dishes: list }) => (
           <details key={category.id} id={categorySectionId(category.id)} open className="category">
             <summary>
@@ -702,6 +722,7 @@ export function OrderPage() {
                 {submitError}
               </p>
             )}
+            <OrderSummary selections={state.selections} dishes={dishes} />
             <div className="row">
               <button
                 ref={submitRef}
@@ -751,6 +772,22 @@ export function OrderPage() {
           </button>
         )}
       </div>
+
+      {cartOpen && (
+        <CartSheet
+          selections={state.selections}
+          dishes={dishes}
+          date={supplyDate?.date}
+          total={total}
+          onChange={setSelection}
+          onEdit={revealDish}
+          onContinue={() => {
+            setCartOpen(false)
+            goToDetails()
+          }}
+          onClose={() => setCartOpen(false)}
+        />
+      )}
 
       {leaveTo && <LeaveDialog onSave={() => leave(true)} onDiscard={() => leave(false)} onStay={() => setLeaveTo(null)} />}
       {confirmation && (

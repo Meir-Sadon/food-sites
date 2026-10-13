@@ -42,3 +42,11 @@ export function unitLabel(dish: MenuDish, t: TFunction): string {
   if (dish.choiceMode !== 'Free') return ''
   return dish.unitName || (dish.sellBy === 'Weight' ? t('order.kilo') : '')
 }
+
+const amounts = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 3 })
+
+/** An ordered amount as shown next to a name: the number, with the unit for a weight or a named unit. */
+export function amountText(dish: MenuDish, quantity: number, t: TFunction): string {
+  const unit = unitLabel(dish, t)
+  return `${amounts.format(quantity)}${unit ? ` ${unit}` : ''}`
+}

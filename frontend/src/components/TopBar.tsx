@@ -5,7 +5,9 @@ import { useAccount } from '../account/useAccount'
 import type { Feature } from '../api/site'
 import { site } from '../site/config'
 import { useFeatures } from '../site/useSite'
+import { useCartNav } from './cartNav'
 import { useLeaveCheck } from './leaveGuard'
+import { formatMoney } from '../order/format'
 import { NavIcon, type NavIconName } from './NavIcons'
 
 const links: readonly { to: string; key: string; icon: NavIconName; end: boolean; feature?: Feature }[] = [
@@ -22,6 +24,7 @@ export function TopBar() {
   const checkLeave = useLeaveCheck()
   const { user, logout } = useAccount()
   const isOn = useFeatures()
+  const cart = useCartNav()
   const header = useRef<HTMLElement>(null)
   // Publishes the bar's height so things pinned below it (a dish group's pictures) start under it, not behind it.
   useLayoutEffect(() => {
@@ -49,6 +52,32 @@ export function TopBar() {
       </NavLink>
       <nav aria-label={t('nav.label')}>
         <ul className="top-bar__links">
+          {cart && (
+            <li>
+              <button
+                type="button"
+                className="top-bar__cart"
+                aria-label={cart.count > 0 ? t('order.cart.buttonCount', { count: cart.count }) : t('order.cart.button')}
+                onClick={cart.open}
+              >
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="9" cy="20" r="1.5" />
+                  <circle cx="18" cy="20" r="1.5" />
+                  <path d="M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 7H6" />
+                </svg>
+                {cart.count > 0 && (
+                  <>
+                    <span key={cart.count} className="top-bar__cart-badge numeric" aria-hidden="true">
+                      {cart.count}
+                    </span>
+                    <span className="top-bar__cart-total numeric" aria-hidden="true">
+                      {formatMoney(cart.total)}
+                    </span>
+                  </>
+                )}
+              </button>
+            </li>
+          )}
           {links.filter((link) => !link.feature || isOn(link.feature)).map((link) => (
             <li key={link.to}>
               {link.to === '/login' && user ? (
