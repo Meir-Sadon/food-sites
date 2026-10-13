@@ -15,9 +15,13 @@
     "advancedDishes": true
   },
   "settings": {
-    "contactName": "חומוס אל מסרי",
-    "contactPhone": "",
-    "contactAddress": "חיים בר לב 28, אשקלון"
+    "contactName": "דניאל",
+    "contactPhone": "052-7864144",
+    "contactAddress": "חיים בר לב 28, אשקלון",
+    "kashrutText": "כשר למהדרין בהשגחת הרבנות אשקלון",
+    "contactOpeningHours": "א׳–ה׳ 08:30–17:15, ו׳ 08:00–15:00, שבת סגור"
   },
-  "seed": ["seed/menu.json"]
+  "seed": [
+    "seed/menu.json"
+  ]
 }

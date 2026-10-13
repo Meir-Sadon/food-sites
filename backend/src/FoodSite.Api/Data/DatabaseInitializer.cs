@@ -44,6 +44,7 @@ public static class DatabaseInitializer
     public static async Task ApplySeedAsync(AppDbContext db, MenuSeed seed, ILogger logger)
     {
         var addedAddOns = new List<(Entities.Dish Dish, IReadOnlyList<string> Parents)>();
+        var ownAddOns = new List<(Entities.Dish Parent, IReadOnlyList<MenuSeed.SeedAddOn> AddOns)>();
         foreach (var seedCategory in seed.Categories)
         {
             var category = await db.Categories.FirstOrDefaultAsync(c => c.Name == seedCategory.Name);
@@ -70,7 +71,21 @@ public static class DatabaseInitializer
                     DisplayOrder = nextDishOrder++,
                     Description = dish.Description,
                     SellBy = dish.SellBy,
-                    ChoiceMode = Entities.ChoiceMode.Free,
+                    ChoiceMode = dish.Options is { Count: > 0 } ? Entities.ChoiceMode.Fixed : Entities.ChoiceMode.Free,
+                    IsAddOnOnly = dish.IsAddOnOnly,
+                    Options = (dish.Options ?? []).Select(o => new Entities.DishOption
+                    {
+                        Label = o.Label,
+                        Amount = o.Amount,
+                        Price = o.Price,
+                        IsDefault = o.IsDefault,
+                    }).ToList(),
+                    AddOnGroups = (dish.AddOnGroups ?? []).Select((g, i) => new Entities.AddOnGroup
+                    {
+                        Name = g.Name,
+                        MaxUnits = g.MaxUnits,
+                        DisplayOrder = i,
+                    }).ToList(),
                     MinAmount = dish.MinAmount,
                     MaxAmount = dish.MaxAmount,
                     AmountStep = dish.AmountStep,
@@ -96,6 +111,8 @@ public static class DatabaseInitializer
                     }).ToList(),
                 };
                 category.Dishes.Add(entity);
+                if (dish.AddOns is { Count: > 0 } own)
+                    ownAddOns.Add((entity, own));
                 if (dish.AddOnOf is { Count: > 0 } parents)
                     addedAddOns.Add((entity, parents));
                 added++;
@@ -106,6 +123,36 @@ public static class DatabaseInitializer
 
             await db.SaveChangesAsync();
             logger.LogInformation("Seeded {Count} dishes into the '{Category}' category.", added, seedCategory.Name);
+        }
+
+        if (ownAddOns.Count > 0)
+        {
+            var addOnNames = ownAddOns.SelectMany(a => a.AddOns).Select(a => a.Dish).Distinct().ToList();
+            var addOnsByName = await db.Dishes
+                .Where(d => addOnNames.Contains(d.Name) && !d.IsHidden)
+                .ToListAsync();
+            foreach (var (parent, addOns) in ownAddOns)
+            {
+                for (var i = 0; i < addOns.Count; i++)
+                {
+                    var addOn = addOns[i];
+                    var target = addOnsByName.FirstOrDefault(d => d.Name == addOn.Dish)
+                        ?? throw new InvalidDataException($"Seed dish '{parent.Name}' offers '{addOn.Dish}' as an add-on, which is not a dish.");
+                    var group = addOn.Group is null ? null : parent.AddOnGroups.FirstOrDefault(g => g.Name == addOn.Group)
+                        ?? throw new InvalidDataException($"Seed dish '{parent.Name}' puts '{addOn.Dish}' in the group '{addOn.Group}', which it does not define.");
+                    db.DishAddOns.Add(new Entities.DishAddOn
+                    {
+                        ParentDishId = parent.Id,
+                        AddOnDishId = target.Id,
+                        DisplayOrder = i,
+                        GroupId = group?.Id,
+                        Price = addOn.Price,
+                        MaxQuantity = addOn.MaxQuantity,
+                        IsCheckbox = addOn.IsCheckbox,
+                    });
+                }
+            }
+            await db.SaveChangesAsync();
         }
 
         if (addedAddOns.Count == 0)
