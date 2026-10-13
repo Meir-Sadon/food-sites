@@ -145,6 +145,7 @@ public class AppDbContext(
             e.Property(d => d.MaxPerSupplyDate).HasPrecision(10, 3);
             e.Property(d => d.Name).HasMaxLength(Dish.NameMaxLength);
             e.Property(d => d.UnitName).HasMaxLength(Dish.UnitNameMaxLength);
+            e.Property(d => d.OptionsTitle).HasMaxLength(Dish.OptionsTitleMaxLength);
             e.HasOne(d => d.Category).WithMany(c => c.Dishes)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);

@@ -96,6 +96,10 @@ export interface Dish {
   unitPrice: number | null
   /** Free choice: what one unit of the amount is called (e.g. "מגש של 50"); null for יחידה / ק"ג. */
   unitName: string | null
+  /** Fixed options: the heading over the choices ("בחרו גודל"), or null for the default one. */
+  optionsTitle: string | null
+  /** Fixed options: shown on the order page as what each adds to the default option's price. */
+  showOptionDifference: boolean
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
@@ -189,6 +193,8 @@ export interface DishInput {
   /** On a new dish: give it the images of this dish (it is a copy of it). */
   copyImagesFrom?: number
   adjustmentOptional?: boolean
+  optionsTitle?: string | null
+  showOptionDifference?: boolean
 }
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024

@@ -218,6 +218,25 @@ describe('Order page', () => {
     expect(screen.queryByText(/המינימום להזמנה הוא/)).not.toBeInTheDocument()
   })
 
+  it('shows map links to the business address for a pickup order, and nothing without an address', async () => {
+    const { user } = await openOrderPage()
+    expect(screen.queryByRole('link', { name: 'הצגה במפה וניווט' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('radio', { name: 'איסוף עצמי' }))
+    expect(screen.getByText(/כתובת האיסוף: חיפה/)).toBeInTheDocument()
+    const maps = screen.getByRole('link', { name: 'הצגה במפה וניווט' })
+    expect(maps).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=%D7%97%D7%99%D7%A4%D7%94')
+    expect(maps).toHaveAttribute('target', '_blank')
+    expect(screen.getByRole('link', { name: 'ניווט ב־Waze' })).toHaveAttribute('href', expect.stringContaining('waze.com/ul?q='))
+  })
+
+  it('hides the map links when the business has no address', async () => {
+    const { user } = await openOrderPage({
+      'GET /api/site': () => site({ contact: { name: 'אמא', phone: '050-1234567', address: null, email: null, openingHours: null } }),
+    })
+    await user.click(screen.getByRole('radio', { name: 'איסוף עצמי' }))
+    expect(screen.queryByRole('link', { name: 'הצגה במפה וניווט' })).not.toBeInTheDocument()
+  })
+
   it('starts with the first of several service cities, offers them all, and names them in the warning', async () => {
     const { user } = await openOrderPage({ 'GET /api/site': () => site({ serviceCities: ['אשדוד', 'אשקלון', 'שדרות'] }) })
     const city = screen.getByLabelText('עיר')
@@ -689,6 +708,28 @@ describe('Order page', () => {
     await user.click(within(card).getAllByRole('radio')[1])
     expect(within(card).getAllByRole('radio')[1]).toBeChecked()
     expect(within(card).getByRole('button', { name: 'הסרה מההזמנה: עוף בתנור' })).toBeInTheDocument()
+  })
+
+  it('titles the options and shows each one as what it adds to the default option', async () => {
+    const dish = menuDish(1, 'צ׳יפס', 1, {
+      optionsTitle: 'בחרו גודל',
+      showOptionDifference: true,
+      options: [
+        { id: 11, label: 'קטן', amount: 1, price: 18, isDefault: true },
+        { id: 12, label: 'גדול', amount: 1, price: 25, isDefault: false },
+      ],
+    })
+    const { user } = await openOrderPage({ 'GET /api/menu': () => menu({ dishes: [dish, menuDish(2, 'אורז', 2)] }) })
+    const card = dishCard('צ׳יפס')
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: צ׳יפס' }))
+
+    expect(within(card).getByRole('group', { name: 'בחרו גודל' })).toBeInTheDocument()
+    expect(within(card).getByRole('radio', { name: /גדול/ })).toBeInTheDocument()
+    expect(within(card).getByText('+₪7')).toBeInTheDocument()
+    expect(card.querySelector('.option-card__price')).toHaveTextContent('₪18')
+
+    await user.click(within(card).getByRole('radio', { name: /גדול/ }))
+    expect(total().getByText('סה"כ: ₪25')).toBeInTheDocument()
   })
 
   it('shows how much of a limited dish is left on the chosen date', async () => {

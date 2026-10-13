@@ -208,9 +208,16 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("OpenByDefault")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("OptionsTitle")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("SellBy")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("ShowOptionDifference")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("UnitName")
                         .HasMaxLength(30)

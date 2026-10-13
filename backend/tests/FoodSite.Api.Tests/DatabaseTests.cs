@@ -129,6 +129,40 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
+    public async Task A_menu_seed_adds_options_add_on_groups_and_priced_add_ons()
+    {
+        var seed = new MenuSeed([
+            new("חומוס", [
+                new("חומוס נטו", UnitPrice: 38m, AddOnGroups: [new("תוספות", 5)], AddOns: [
+                    new("תוספת פיתה", Price: 3m, Group: "תוספות", MaxQuantity: 5m),
+                ]),
+                new("צ'יפס", Options: [new("קטן", 18m, true), new("גדול", 25m)]),
+            ]),
+            new("תוספות", [
+                new("תוספת פיתה", UnitPrice: 3m, IsAddOnOnly: true),
+            ]),
+        ]);
+        await using var db = _factory.CreateDbContext();
+
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+
+        db.ChangeTracker.Clear();
+        var chips = await db.Dishes.Include(d => d.Options).SingleAsync(d => d.Name == "צ'יפס");
+        Assert.Equal(ChoiceMode.Fixed, chips.ChoiceMode);
+        Assert.Equal(new[] { 18m, 25m }, chips.Options.OrderBy(o => o.Price).Select(o => o.Price));
+        Assert.Equal("קטן", Assert.Single(chips.Options, o => o.IsDefault).Label);
+        var hummus = await db.Dishes.Include(d => d.AddOns).ThenInclude(a => a.Group).Include(d => d.AddOnGroups).SingleAsync(d => d.Name == "חומוס נטו");
+        var group = Assert.Single(hummus.AddOnGroups);
+        Assert.Equal(5, group.MaxUnits);
+        var link = Assert.Single(hummus.AddOns);
+        Assert.Equal(3m, link.Price);
+        Assert.Equal(5m, link.MaxQuantity);
+        Assert.Equal(group.Id, link.GroupId);
+        Assert.True((await db.Dishes.SingleAsync(d => d.Name == "תוספת פיתה")).IsAddOnOnly);
+    }
+
+    [Fact]
     public async Task A_menu_seed_sets_limits_side_dishes_and_add_ons()
     {
         var seed = new MenuSeed([

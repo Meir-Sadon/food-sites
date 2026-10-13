@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { MapLinks } from '../components/MapLinks'
 import { useSite } from '../site/useSite'
 
 /** About the kitchen: the contact details and, when the admin filled them in, the kashrut details. */
@@ -21,6 +22,7 @@ export function AboutPage() {
             </a>
           )}
           {contact.address && <span>{contact.address}</span>}
+          <MapLinks address={contact.address} />
           {contact.email && (
             <a href={`mailto:${contact.email}`} dir="ltr">
               {contact.email}

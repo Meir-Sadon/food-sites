@@ -1,0 +1,27 @@
+{
+  "id": "hummus-el-masri",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אשקלון",
+  "emoji": "🧆",
+  "whatsApp": {
+    "orderConfirmationTemplate": "hummus_el_masri_order_confirmation",
+    "newOrderTemplate": "hummus_el_masri_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true
+  },
+  "settings": {
+    "contactName": "דניאל",
+    "contactPhone": "052-7864144",
+    "contactAddress": "חיים בר לב 28, אשקלון",
+    "kashrutText": "כשר למהדרין בהשגחת הרבנות אשקלון",
+    "contactOpeningHours": "א׳–ה׳ 08:30–17:15, ו׳ 08:00–15:00, שבת סגור"
+  },
+  "seed": [
+    "seed/menu.json"
+  ]
+}

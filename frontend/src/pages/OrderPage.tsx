@@ -5,6 +5,7 @@ import { ordersApi, siteApi, type Confirmation, type Menu, type MenuDish, type F
 import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
+import { MapLinks } from '../components/MapLinks'
 import { AddressFields } from '../account/AddressFields'
 import { addressOf, formatAddress, hasAddress, isServiceCity, noAddress } from '../account/addressParts'
 import { useAccount } from '../account/useAccount'
@@ -636,6 +637,14 @@ export function OrderPage() {
                   </label>
                 )}
               </div>
+              {fulfillment === 'Pickup' && site.contact.address && (
+                <div className="hint">
+                  <span>
+                    {t('map.pickupAddress')}: {site.contact.address}
+                  </span>
+                  <MapLinks address={site.contact.address} />
+                </div>
+              )}
               {fulfillment === 'Delivery' && (site.deliveryAreaText || site.deliveryFeeText) && (
                 <p className="hint">
                   {site.deliveryAreaText && (

@@ -50,3 +50,14 @@ export function amountText(dish: MenuDish, quantity: number, t: TFunction): stri
   const unit = unitLabel(dish, t)
   return `${amounts.format(quantity)}${unit ? ` ${unit}` : ''}`
 }
+
+/**
+ * The price shown on an option card: the full price, or for a dish that shows differences what the option adds to
+ * the default option ("+₪12"; the default option itself shows its full price as the base).
+ */
+export function optionPriceText(dish: MenuDish, option: MenuDish['options'][number]) {
+  const base = defaultOption(dish)
+  if (!dish.showOptionDifference || !base || base.id === option.id) return formatMoney(option.price)
+  const diff = Math.round((option.price - base.price) * 100) / 100
+  return `${diff < 0 ? '−' : '+'}${formatMoney(Math.abs(diff))}`
+}
