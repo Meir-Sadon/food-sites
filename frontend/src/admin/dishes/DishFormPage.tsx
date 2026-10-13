@@ -44,6 +44,8 @@ interface DishForm {
   amountStep: string
   unitPrice: string
   unitName: string
+  optionsTitle: string
+  showOptionDifference: boolean
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
@@ -88,6 +90,8 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       amountStep: '',
       unitPrice: '',
       unitName: '',
+      optionsTitle: '',
+      showOptionDifference: false,
       isAddOnOnly: false,
       isSoldOut: false,
       openByDefault: false,
@@ -108,6 +112,8 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     amountStep: str(dish.amountStep),
     unitPrice: str(dish.unitPrice),
     unitName: dish.unitName ?? '',
+    optionsTitle: dish.optionsTitle ?? '',
+    showOptionDifference: dish.showOptionDifference,
     isAddOnOnly: dish.isAddOnOnly,
     isSoldOut: dish.isSoldOut,
     openByDefault: dish.openByDefault,
@@ -191,6 +197,8 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
     amountStep: fixed ? null : num(form.amountStep),
     unitPrice: fixed ? null : num(form.unitPrice),
     unitName: fixed ? null : form.unitName.trim() || null,
+    optionsTitle: fixed ? form.optionsTitle.trim() || null : null,
+    showOptionDifference: fixed && form.options.length > 1 && form.showOptionDifference,
     isAddOnOnly: form.isAddOnOnly,
     isSoldOut: form.isSoldOut,
     openByDefault: form.openByDefault,
@@ -458,7 +466,7 @@ export function DishFormPage() {
         <FormBlock
           title={t('admin.dishes.blocks.price')}
           about={t('admin.dishes.blocks.priceAbout')}
-          invalid={invalid('useMainDishPrice', 'sellBy', 'choiceMode', 'options', 'unitName', 'minAmount', 'maxAmount', 'amountStep', 'unitPrice')}
+          invalid={invalid('useMainDishPrice', 'sellBy', 'choiceMode', 'options', 'optionsTitle', 'unitName', 'minAmount', 'maxAmount', 'amountStep', 'unitPrice')}
         >
         {isVariant && (
           <label className="checkbox">
@@ -493,6 +501,20 @@ export function DishFormPage() {
         {form.choiceMode === 'Fixed' ? (
           <fieldset className="stack" aria-describedby="dish-options-error">
             <legend>{t('admin.dishes.options')}</legend>
+            <span className="field">
+              <span className="with-info">
+                <label htmlFor="dish-optionsTitle">{t('admin.dishes.optionsTitle')}</label>
+                <Info text={t('admin.dishes.optionsTitleHint')} about={t('admin.dishes.optionsTitle')} />
+              </span>
+              <input
+                id="dish-optionsTitle"
+                maxLength={50}
+                value={form.optionsTitle}
+                onChange={(e) => set({ optionsTitle: e.target.value })}
+                aria-describedby="dish-optionsTitle-error"
+              />
+              {fieldError('optionsTitle')}
+            </span>
             {form.options.map((option, index) => {
               const n = index + 1
               const field = (name: string) => `options[${index}].${name}`
@@ -540,6 +562,15 @@ export function DishFormPage() {
             <button type="button" className="button-quiet" onClick={() => set({ options: [...form.options, emptyOption(false)] })}>
               {t('admin.dishes.addOption')}
             </button>
+            {form.options.length > 1 && (
+              <span className="with-info">
+                <label className="checkbox">
+                  <input type="checkbox" checked={form.showOptionDifference} onChange={(e) => set({ showOptionDifference: e.target.checked })} />
+                  {t('admin.dishes.showOptionDifference')}
+                </label>
+                <Info text={t('admin.dishes.showOptionDifferenceHint')} about={t('admin.dishes.showOptionDifference')} />
+              </span>
+            )}
           </fieldset>
         ) : (
           <>

@@ -203,6 +203,8 @@ describe('Dish form', () => {
       amountStep: null,
       unitPrice: null,
       unitName: null,
+      optionsTitle: null,
+      showOptionDifference: false,
       isAddOnOnly: true,
       isSoldOut: false,
       openByDefault: false,
@@ -367,6 +369,34 @@ describe('Dish form', () => {
       ],
       questions: [{ id: null, text: 'חריפות', kind: 'YesNo', isRequired: true }],
     })
+  })
+
+  it('saves a heading and the difference display for the options', async () => {
+    let body: DishInput | undefined
+    fakeApi({
+      ...base,
+      'POST /api/admin/dishes': (_, sent) => {
+        body = sent as DishInput
+        return { status: 201, body: { ...dish(9, 'x', 1), ...body, id: 9, options: [], images: [], addOnDishIds: [], addOnGroups: [], addOns: [], questions: [] } }
+      },
+    })
+    renderAt('/admin/dishes/new')
+    const user = userEvent.setup()
+    await user.type(await screen.findByLabelText('שם המנה'), 'צ׳יפס')
+    await user.selectOptions(screen.getByLabelText('קטגוריה'), 'סלטים')
+    expect(screen.queryByLabelText('הצג את התוספת למחיר ברירת המחדל')).not.toBeInTheDocument()
+    await user.type(screen.getByLabelText('כותרת האפשרויות (לא חובה)'), 'בחרו גודל')
+    await user.type(within(screen.getByRole('group', { name: 'אפשרות 1' })).getByLabelText('תיאור האפשרות'), 'קטן')
+    await user.type(within(screen.getByRole('group', { name: 'אפשרות 1' })).getByLabelText('מחיר (₪)'), '18')
+    await user.click(screen.getByRole('button', { name: 'הוספת אפשרות' }))
+    const second = screen.getByRole('group', { name: 'אפשרות 2' })
+    await user.type(within(second).getByLabelText('תיאור האפשרות'), 'גדול')
+    await user.type(within(second).getByLabelText('מחיר (₪)'), '25')
+    await user.click(screen.getByLabelText('הצג את התוספת למחיר ברירת המחדל'))
+    await user.click(screen.getByRole('button', { name: /שמירה|הוספת מנה|יצירת/ }))
+
+    await waitFor(() => expect(body).toBeDefined())
+    expect(body).toMatchObject({ optionsTitle: 'בחרו גודל', showOptionDifference: true })
   })
 
   it('keeps option ids when editing', async () => {

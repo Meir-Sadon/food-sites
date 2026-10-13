@@ -665,6 +665,28 @@ describe('Order page', () => {
     expect(within(card).getByRole('button', { name: 'הסרה מההזמנה: עוף בתנור' })).toBeInTheDocument()
   })
 
+  it('titles the options and shows each one as what it adds to the default option', async () => {
+    const dish = menuDish(1, 'צ׳יפס', 1, {
+      optionsTitle: 'בחרו גודל',
+      showOptionDifference: true,
+      options: [
+        { id: 11, label: 'קטן', amount: 1, price: 18, isDefault: true },
+        { id: 12, label: 'גדול', amount: 1, price: 25, isDefault: false },
+      ],
+    })
+    const { user } = await openOrderPage({ 'GET /api/menu': () => menu({ dishes: [dish, menuDish(2, 'אורז', 2)] }) })
+    const card = dishCard('צ׳יפס')
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: צ׳יפס' }))
+
+    expect(within(card).getByRole('group', { name: 'בחרו גודל' })).toBeInTheDocument()
+    expect(within(card).getByRole('radio', { name: /גדול/ })).toBeInTheDocument()
+    expect(within(card).getByText('+₪7')).toBeInTheDocument()
+    expect(card.querySelector('.option-card__price')).toHaveTextContent('₪18')
+
+    await user.click(within(card).getByRole('radio', { name: /גדול/ }))
+    expect(total().getByText('סה"כ: ₪25')).toBeInTheDocument()
+  })
+
   it('shows how much of a limited dish is left on the chosen date', async () => {
     const dates = menu().supplyDates.map((d) => d.date)
     const limited = menuDish(1, 'עוף בתנור', 1, { remaining: { [dates[0]]: 2, [dates[1]]: 0 } })

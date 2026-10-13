@@ -6,6 +6,7 @@ public class Dish
     public const int DescriptionMaxLength = 254;
     public const int MaxImages = 6;
     public const int UnitNameMaxLength = 30;
+    public const int OptionsTitleMaxLength = 50;
 
     public int Id { get; set; }
     public required string Name { get; set; }
@@ -32,6 +33,15 @@ public class Dish
     /// for SellBy (a unit, or a kilo); SellBy still decides whether amounts are whole numbers.
     /// </summary>
     public string? UnitName { get; set; }
+
+    /// <summary>Fixed options: the heading over the choices, e.g. "בחרו גודל". Null shows the default heading.</summary>
+    public string? OptionsTitle { get; set; }
+
+    /// <summary>
+    /// Fixed options: the order page shows each option as what it adds to the default option's price ("+12 ₪")
+    /// instead of its full price. Prices are still stored in full.
+    /// </summary>
+    public bool ShowOptionDifference { get; set; }
 
     /// <summary>Free choice: the amount moves in steps of this size, e.g. 0.25 kg.</summary>
     public decimal? AmountStep { get; set; }

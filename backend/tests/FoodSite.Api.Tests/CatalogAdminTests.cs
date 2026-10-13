@@ -582,6 +582,31 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Option_title_and_difference_display_are_saved_for_fixed_options_and_reach_the_menu()
+    {
+        var category = await AddCategory("צ׳יפס");
+        var options = new[] { new OptionInput(null, "קטן", 1, 18, true), new OptionInput(null, "גדול", 1, 25, false) };
+        var dish = await CreateOk(Fixed("צ׳יפס", category.Id, options) with { OptionsTitle = " בחרו גודל ", ShowOptionDifference = true });
+        Assert.Equal(("בחרו גודל", true), (dish.OptionsTitle, dish.ShowOptionDifference));
+
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        var shown = menu.Dishes.Single(d => d.Id == dish.Id);
+        Assert.Equal(("בחרו גודל", true), (shown.OptionsTitle, shown.ShowOptionDifference));
+
+        // Switching to a free amount drops them.
+        var free = Fixed("צ׳יפס", category.Id) with
+        {
+            ChoiceMode = ChoiceMode.Free, Options = null, MinAmount = 1, MaxAmount = 3, AmountStep = 1, UnitPrice = 10,
+            OptionsTitle = "בחרו גודל", ShowOptionDifference = true,
+        };
+        (await Update(dish.Id, free)).EnsureSuccessStatusCode();
+        var after = await GetDish(dish.Id);
+        Assert.Equal((null, false), (after.OptionsTitle, after.ShowOptionDifference));
+
+        await (await Create(Fixed("ארוך", category.Id) with { OptionsTitle = new string('א', 51) })).AssertInvalid("OptionsTitle", "tooLong");
+    }
+
+    [Fact]
     public async Task Optional_adjustment_is_saved_on_a_main_dish_and_followed_by_its_variants()
     {
         var category = await AddCategory("סיגרים");
