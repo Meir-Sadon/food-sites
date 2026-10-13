@@ -382,6 +382,32 @@ describe('Order page', () => {
     expect(total().getByText('סה"כ: ₪' + String(3 * 70 + 3 * 12))).toBeInTheDocument()
   })
 
+  it('shows each custom group as its own section above the categories, with dishes from any category', async () => {
+    const withGroups = menu()
+    withGroups.groups = [
+      { id: 1, name: 'מומלצות', dishIds: [2, 1] },
+      { id: 2, name: 'מנות במבצע', dishIds: [2] },
+    ]
+    await openOrderPage({ 'GET /api/menu': () => withGroups })
+    const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    expect(headings.slice(0, 4)).toEqual(['מומלצות', 'מנות במבצע', 'עופות', 'בשרים'])
+    const picks = screen.getByRole('heading', { level: 2, name: 'מומלצות' }).closest('details') as HTMLElement
+    expect(within(picks).getAllByRole('article').map((a) => a.querySelector('h3')?.textContent)).toEqual(['בשר טחון', 'עוף בתנור'])
+    // A dish in two groups and its category shows in each place.
+    expect(screen.getAllByRole('article', { name: 'בשר טחון' })).toHaveLength(3)
+    expect(within(screen.getByRole('navigation', { name: 'מעבר בין קטגוריות' })).getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'מומלצות',
+      'מנות במבצע',
+      'עופות',
+      'בשרים',
+    ])
+  })
+
+  it('shows no group section when the menu has no groups', async () => {
+    await openOrderPage()
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['עופות', 'בשרים', 'פרטי ההזמנה'])
+  })
+
   it('lets the client send units left unadjusted when the dish makes adjusting optional', async () => {
     const optional = menu()
     optional.dishes[0] = { ...optional.dishes[0], adjustmentOptional: true }

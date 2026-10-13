@@ -174,10 +174,19 @@ export interface SupplyDate {
   hours?: HourSlot[] | null
 }
 
+/** A custom group of dishes (such as "מומלצות"), shown as its own section above the categories; dishes in menu order. */
+export interface MenuGroup {
+  id: number
+  name: string
+  dishIds: number[]
+}
+
 export interface Menu {
   categories: MenuCategory[]
   dishes: MenuDish[]
   supplyDates: SupplyDate[]
+  /** Only groups with at least one dish on the menu. */
+  groups?: MenuGroup[]
 }
 
 export type Fulfillment = 'Delivery' | 'Pickup'

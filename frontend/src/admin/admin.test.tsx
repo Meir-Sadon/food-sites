@@ -114,6 +114,7 @@ describe('admin layout', () => {
     expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual([
       'מנות',
       'קטגוריות',
+      'קבוצות מנות',
       'עיצוב האתר',
       'אנשי קשר',
       'חוות דעת',

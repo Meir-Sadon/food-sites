@@ -449,6 +449,14 @@ export function pickedInCategory(selections: Record<number, Selection>, dishes: 
   return Object.keys(selections).filter((id) => dishes.get(Number(id))?.categoryId === categoryId).length
 }
 
+/** The admin's custom groups with their dishes, in the admin's order; a group with no dish on the menu is left out. */
+export function groupSections(menu: Menu) {
+  const dishes = dishMap(menu)
+  return (menu.groups ?? [])
+    .map((group) => ({ group, dishes: group.dishIds.flatMap((id) => dishes.get(id) ?? []) }))
+    .filter((section) => section.dishes.length > 0)
+}
+
 /** The dishes a client can order on their own, grouped by category in the admin's order; variants are in their main dish's card. */
 export function standaloneDishes(menu: Menu, categoryId: number) {
   return menu.dishes.filter((d) => d.categoryId === categoryId && !d.isAddOnOnly && d.mainDishId == null)

@@ -4,6 +4,7 @@ import { AdminLoginPage } from './admin/AdminLoginPage'
 import { AuditPage } from './admin/audit/AuditPage'
 import { RequireAdmin } from './admin/RequireAdmin'
 import { CategoriesPage } from './admin/categories/CategoriesPage'
+import { DishGroupsPage } from './admin/dish-groups/DishGroupsPage'
 import { ContactsPage } from './admin/contacts/ContactsPage'
 import { DishFormPage } from './admin/dishes/DishFormPage'
 import { DishesPage } from './admin/dishes/DishesPage'
@@ -77,6 +78,7 @@ export function App() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="appearance" element={<AppearancePage />} />
           <Route path="categories" element={<CategoriesPage />} />
+          <Route path="dish-groups" element={<DishGroupsPage />} />
           <Route path="dishes" element={<DishesPage />} />
           <Route path="dishes/new" element={<DishFormPage key="new" />} />
           <Route path="dishes/:id" element={<DishFormPage key="edit" />} />

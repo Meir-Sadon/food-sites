@@ -23,6 +23,8 @@ public class AppDbContext(
     public DbSet<DishOption> DishOptions => Set<DishOption>();
     public DbSet<DishAddOn> DishAddOns => Set<DishAddOn>();
     public DbSet<AddOnGroup> AddOnGroups => Set<AddOnGroup>();
+    public DbSet<DishGroup> DishGroups => Set<DishGroup>();
+    public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Order> Orders => Set<Order>();
@@ -151,6 +153,18 @@ public class AppDbContext(
                 .OnDelete(DeleteBehavior.Restrict);
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_Dishes_NotOwnVariant", "\"MainDishId\" <> \"Id\""));
+        });
+
+        model.Entity<DishGroup>(e =>
+        {
+            e.Property(g => g.Name).HasMaxLength(DishGroup.NameMaxLength).IsRequired();
+        });
+
+        model.Entity<DishGroupDish>(e =>
+        {
+            e.HasKey(x => new { x.GroupId, x.DishId });
+            e.HasOne(x => x.Group).WithMany(g => g.Dishes).HasForeignKey(x => x.GroupId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Dish).WithMany().HasForeignKey(x => x.DishId).OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<AddOnGroup>(e =>

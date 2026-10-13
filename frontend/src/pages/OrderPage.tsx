@@ -21,7 +21,7 @@ import { CartSheet } from '../order/CartSheet'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
-import { categorySectionId } from '../order/categorySection'
+import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { formatMoney, formatSlot, formatSupplyDate } from '../order/format'
@@ -31,6 +31,7 @@ import { ReviewsCarousel } from '../order/ReviewsCarousel'
 import {
   DRINKS_CATEGORY_NAME,
   dishMap,
+  groupSections,
   emptyOrder,
   dishTotals,
   itemCount,
@@ -237,6 +238,7 @@ export function OrderPage() {
       dishes: standaloneDishes(menu, category.id),
     }))
     .filter((group) => group.dishes.length > 0)
+  const groups = groupSections(menu)
   const detailsStep = categories.length
   const currentStep = steps ? Math.min(step, detailsStep) : 0
   const showDetails = deferred ? detailsOpen : !steps || currentStep === detailsStep
@@ -497,7 +499,14 @@ export function OrderPage() {
                 onChange={goToStep}
               />
             )}
-            {!steps && !searching && categories.length > 1 && <CategoryJumpBar categories={categories.map(({ category }) => ({ id: category.id, name: category.name }))} />}
+            {!steps && !searching && groups.length + categories.length > 1 && (
+              <CategoryJumpBar
+                categories={[
+                  ...groups.map(({ group }) => ({ sectionId: groupSectionId(group.id), name: group.name })),
+                  ...categories.map(({ category }) => ({ sectionId: categorySectionId(category.id), name: category.name })),
+                ]}
+              />
+            )}
           </div>
         )}
         {searching && (
@@ -514,6 +523,14 @@ export function OrderPage() {
             )}
           </section>
         )}
+        {!searching && (!steps || currentStep === 0) && groups.map(({ group, dishes: list }) => (
+          <details key={`group-${group.id}`} id={groupSectionId(group.id)} open className="category category--group">
+            <summary>
+              <h2>{group.name}</h2>
+            </summary>
+            <div className="category__dishes">{list.map(renderDish)}</div>
+          </details>
+        ))}
         {!searching && shownCategories.map(({ category, dishes: list }) => (
           <details key={category.id} id={categorySectionId(category.id)} open className="category">
             <summary>
