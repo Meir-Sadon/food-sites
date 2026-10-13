@@ -1,4 +1,5 @@
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { flushSync } from 'react-dom'
 import { prefersReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
 import { useSiteStyle } from '../site/useSite'
@@ -185,6 +186,18 @@ function needsDialog(dish: MenuDish, dishes: Map<number, MenuDish>) {
   return options || !!dish.openByDefault || (customizable && !dish.adjustmentOptional)
 }
 
+/** Sent to a tile's element to open its dialog, so the page can show what the client still has to settle there. */
+export const OPEN_DISH_DIALOG = 'open-dish-dialog'
+
+/** Opens a tile's dialog when the page asks (see OPEN_DISH_DIALOG). */
+function useOpenOnRequest(ref: RefObject<HTMLElement | null>, open: () => void) {
+  useEffect(() => {
+    const element = ref.current
+    element?.addEventListener(OPEN_DISH_DIALOG, open)
+    return () => element?.removeEventListener(OPEN_DISH_DIALOG, open)
+  }, [ref, open])
+}
+
 /** Whether a tap landed on the tile itself and not on one of its own buttons, fields or links, or inside a dialog it opened. */
 function tappedTileSurface(event: React.MouseEvent) {
   return !(event.target as HTMLElement).closest('button, a, input, select, textarea, label, .modal-backdrop')
@@ -249,6 +262,8 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
   const { t } = useTranslation()
   const id = useId()
   const [open, setOpen] = useState(false)
+  const articleRef = useRef<HTMLElement>(null)
+  useOpenOnRequest(articleRef, () => flushSync(() => setOpen(true)))
   const remaining = remainingOn(dish, date)
   const range = limitedRange(dish, remaining)
   const yesNo = !!dish.isYesNo
@@ -272,6 +287,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
 
   return (
     <article
+      ref={articleRef}
       className={`dish dish--tile${selection ? ' dish--chosen' : ''}`}
       aria-labelledby={`${id}-name`}
       data-dish-id={selection ? dish.id : undefined}
@@ -356,9 +372,12 @@ function DishGroupTile(props: GroupProps) {
   const { t } = useTranslation()
   const id = useId()
   const [open, setOpen] = useState(false)
+  const articleRef = useRef<HTMLElement>(null)
+  useOpenOnRequest(articleRef, () => flushSync(() => setOpen(true)))
   const count = variants.filter((v) => selections[v.id]).length
   return (
     <article
+      ref={articleRef}
       className={`dish dish--tile dish--group${count > 0 ? ' dish--chosen' : ''}`}
       aria-labelledby={`${id}-name`}
       data-variants={variants.map((v) => v.id).join(' ')}

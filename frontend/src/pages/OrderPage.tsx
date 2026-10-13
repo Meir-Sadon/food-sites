@@ -19,6 +19,7 @@ import { DishSearch } from '../order/DishSearch'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
 import { CartSheet } from '../order/CartSheet'
+import { OPEN_DISH_DIALOG } from '../order/DishCard'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
@@ -107,6 +108,8 @@ export function OrderPage() {
   // Whole menu on one page, with the order details behind a button until the client is done choosing.
   const deferred = flow === 'continue'
   const [detailsOpen, setDetailsOpen] = useState(false)
+  // Bumped on every press of a "to details and payment" button: the page then scrolls to the address and payment.
+  const [detailsMoves, setDetailsMoves] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
   // The shown step: a category's position, or the number of categories for the contact and payment details.
   const [step, setStep] = useState(0)
@@ -115,6 +118,7 @@ export function OrderPage() {
   const [stepMoves, setStepMoves] = useState(0)
   const stepsRef = useRef<HTMLElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const addressRef = useRef<HTMLFieldSetElement>(null)
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const total = orderTotal(state.selections, dishes)
@@ -157,10 +161,11 @@ export function OrderPage() {
       })
   }, [quickFills])
 
-  // Opening the details brings the client to them.
+  // Every press of a "to details and payment" button brings the client to the address and payment, also when the
+  // details are already open. They render in the same update as the press, so they are there by now.
   useEffect(() => {
-    if (detailsOpen) formRef.current?.scrollIntoView?.({ behavior: scrollBehavior(), block: 'start' })
-  }, [detailsOpen])
+    if (detailsMoves > 0) (addressRef.current ?? formRef.current)?.scrollIntoView?.({ behavior: scrollBehavior(), block: 'start' })
+  }, [detailsMoves])
 
   useEffect(() => {
     if (stepMoves > 0)
@@ -289,15 +294,11 @@ export function OrderPage() {
     setStepMoves((n) => n + 1)
   }
 
-  /** The side total's button: the details step when paged, else down to the form. */
+  /** The "to details and payment" buttons (side total, basket): open the details if they are hidden, and scroll to the address. */
   function goToDetails() {
-    if (steps) goToStep(detailsStep)
+    if (steps) setStep(detailsStep)
     else if (deferred) setDetailsOpen(true)
-    else
-      formRef.current?.scrollIntoView?.({
-        behavior: scrollBehavior(),
-        block: 'start',
-      })
+    setDetailsMoves((n) => n + 1)
   }
 
   const change = (patch: Partial<OrderState>) => {
@@ -396,16 +397,28 @@ export function OrderPage() {
     else navigate(to.to)
   }
 
-  /** Opens the first unit, in page order, of the dishes the client has not finished, and brings the client to it. */
+  /**
+   * Opens the first unit, in page order, of the dishes the client has not finished, and brings the client to it.
+   * A tile keeps its choices in a dialog, so the tile is asked to open it first.
+   */
   function showUnfinished(unfinished: MenuDish[]) {
     const ids = new Set(unfinished.map((d) => String(d.id)))
     const reveal = () => {
-      const choice = [...document.querySelectorAll<HTMLElement>('[data-dish-id]')].find((e) => ids.has(e.dataset.dishId ?? ''))
-      const dish = choice && dishes.get(Number(choice.dataset.dishId))
-      if (!choice || !dish) return
-      const unit = choice.querySelectorAll<HTMLDetailsElement>('details.addon-unit')[firstIncompleteUnit(dish, state.selections[dish.id], dishes)]
-      if (unit) unit.open = true
-      bringIntoView(unit?.querySelector('summary') ?? choice)
+      const card = [...document.querySelectorAll<HTMLElement>('[data-dish-id], [data-variants]')].find(
+        (e) => ids.has(e.dataset.dishId ?? '') || (e.dataset.variants ?? '').split(' ').some((id) => ids.has(id)),
+      )
+      if (!card) return
+      const open = () => {
+        const choice = [...document.querySelectorAll<HTMLElement>('[data-dish-id]')].find((e) => ids.has(e.dataset.dishId ?? '') && !e.matches('.dish--tile'))
+        const dish = choice && dishes.get(Number(choice.dataset.dishId))
+        if (!choice || !dish) return bringIntoView(card)
+        const unit = choice.querySelectorAll<HTMLDetailsElement>('details.addon-unit')[firstIncompleteUnit(dish, state.selections[dish.id], dishes)]
+        if (unit) unit.open = true
+        bringIntoView(unit?.querySelector('summary') ?? choice)
+      }
+      if (!card.matches('.dish--tile')) return open()
+      card.dispatchEvent(new CustomEvent(OPEN_DISH_DIALOG))
+      setTimeout(open, 0)
     }
     if (!steps) return reveal()
     // Paged: only one category is on the page, so go to the first step that has an unfinished dish, then look for it.
@@ -611,7 +624,7 @@ export function OrderPage() {
               </span>
             )}
 
-            <fieldset>
+            <fieldset ref={addressRef} className="order-address">
               <legend>{t('order.fulfillment')}</legend>
               <div className="row">
                 {site.deliveryEnabled && (

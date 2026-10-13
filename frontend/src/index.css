@@ -3585,3 +3585,8 @@ label {
     display: none;
   }
 }
+
+/* The "to details and payment" buttons scroll here: keep it clear of the pinned top bar. */
+.order-address {
+  scroll-margin-block-start: calc(var(--top-bar-height) + 0.75rem);
+}
