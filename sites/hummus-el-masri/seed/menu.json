@@ -496,7 +496,9 @@
               "label": "גדול",
               "price": 25
             }
-          ]
+          ],
+          "optionsTitle": "בחרו גודל",
+          "showOptionDifference": true
         },
         {
           "name": "דואט של צ'יפס ופלאפל",
@@ -519,7 +521,9 @@
               "label": "גדול",
               "price": 30
             }
-          ]
+          ],
+          "optionsTitle": "בחרו גודל",
+          "showOptionDifference": true
         },
         {
           "name": "סלט גרגירים",
@@ -1021,7 +1025,9 @@
               "price": 30,
               "amount": 0.5
             }
-          ]
+          ],
+          "optionsTitle": "בחרו משקל",
+          "showOptionDifference": true
         },
         {
           "name": "חומוס מסבחה במשקל",
@@ -1038,7 +1044,9 @@
               "price": 30,
               "amount": 0.5
             }
-          ]
+          ],
+          "optionsTitle": "בחרו משקל",
+          "showOptionDifference": true
         },
         {
           "name": "פול במשקל",
@@ -1055,7 +1063,9 @@
               "price": 30,
               "amount": 0.5
             }
-          ]
+          ],
+          "optionsTitle": "בחרו משקל",
+          "showOptionDifference": true
         },
         {
           "name": "טחינה במשקל",
@@ -1072,7 +1082,9 @@
               "price": 30,
               "amount": 0.5
             }
-          ]
+          ],
+          "optionsTitle": "בחרו משקל",
+          "showOptionDifference": true
         },
         {
           "name": "תערובת לפלאפל",

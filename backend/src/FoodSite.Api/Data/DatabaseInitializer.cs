@@ -73,6 +73,8 @@ public static class DatabaseInitializer
                     SellBy = dish.SellBy,
                     ChoiceMode = dish.Options is { Count: > 0 } ? Entities.ChoiceMode.Fixed : Entities.ChoiceMode.Free,
                     IsAddOnOnly = dish.IsAddOnOnly,
+                    OptionsTitle = dish.OptionsTitle,
+                    ShowOptionDifference = dish.ShowOptionDifference,
                     Options = (dish.Options ?? []).Select(o => new Entities.DishOption
                     {
                         Label = o.Label,
