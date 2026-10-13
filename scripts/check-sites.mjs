@@ -28,7 +28,7 @@ const settingKeys = ['contactName', 'contactPhone', 'contactAddress', 'contactEm
 const styles = ['classic', 'street']
 // site.json → settings.orderTotalPosition and settings.orderFlow: OrderLayout.TotalPositions and OrderLayout.Flows (Sites/OrderLayout.cs).
 const orderTotalPositions = ['bottom', 'side']
-const orderFlows = ['page', 'steps']
+const orderFlows = ['page', 'steps', 'continue']
 // site.json → settings.corners: Corners.All (Sites/Corners.cs).
 const corners = ['square', 'slight', 'rounded', 'round']
 

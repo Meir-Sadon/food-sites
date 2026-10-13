@@ -23,9 +23,9 @@ export type OrderTotalPosition = 'bottom' | 'side'
 export const ORDER_TOTAL_POSITIONS: readonly OrderTotalPosition[] = ['bottom', 'side']
 
 /** The whole menu on one page, or one category at a time. */
-export type OrderFlow = 'page' | 'steps'
+export type OrderFlow = 'page' | 'steps' | 'continue'
 
-export const ORDER_FLOWS: readonly OrderFlow[] = ['page', 'steps']
+export const ORDER_FLOWS: readonly OrderFlow[] = ['page', 'steps', 'continue']
 
 /** How round the client site's corners are (FoodSite.Api `Corners`); `rounded` is the original look. */
 export type Corners = 'square' | 'slight' | 'rounded' | 'round'
