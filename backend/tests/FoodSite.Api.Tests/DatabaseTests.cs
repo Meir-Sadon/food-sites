@@ -136,7 +136,7 @@ public sealed class DatabaseTests : IDisposable
                 new("חומוס נטו", UnitPrice: 38m, AddOnGroups: [new("תוספות", 5)], AddOns: [
                     new("תוספת פיתה", Price: 3m, Group: "תוספות", MaxQuantity: 5m),
                 ]),
-                new("צ'יפס", Options: [new("קטן", 18m, true), new("גדול", 25m)]),
+                new("צ'יפס", OptionsTitle: "בחרו גודל", ShowOptionDifference: true, Options: [new("קטן", 18m, true), new("גדול", 25m)]),
             ]),
             new("תוספות", [
                 new("תוספת פיתה", UnitPrice: 3m, IsAddOnOnly: true),
@@ -150,6 +150,8 @@ public sealed class DatabaseTests : IDisposable
         db.ChangeTracker.Clear();
         var chips = await db.Dishes.Include(d => d.Options).SingleAsync(d => d.Name == "צ'יפס");
         Assert.Equal(ChoiceMode.Fixed, chips.ChoiceMode);
+        Assert.Equal("בחרו גודל", chips.OptionsTitle);
+        Assert.True(chips.ShowOptionDifference);
         Assert.Equal(new[] { 18m, 25m }, chips.Options.OrderBy(o => o.Price).Select(o => o.Price));
         Assert.Equal("קטן", Assert.Single(chips.Options, o => o.IsDefault).Label);
         var hummus = await db.Dishes.Include(d => d.AddOns).ThenInclude(a => a.Group).Include(d => d.AddOnGroups).SingleAsync(d => d.Name == "חומוס נטו");
