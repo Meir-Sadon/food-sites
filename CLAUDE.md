@@ -13,6 +13,10 @@ This repo started as a copy of `kuskus-shel-ima` (history imported) and is being
 - This repo is public. Never commit secrets, client data, or a business's photos and texts collected for a demo; those go to Cloudinary or stay local.
 - Mark a phase's checkboxes in `docs/MIGRATION-PLAN.md` in the PR that completes them.
 
+## UI/UX design skill
+
+`.claude/skills/ui-ux-pro-max/` is the open-source UI/UX Pro Max skill (MIT, <https://github.com/nextlevelbuilder/ui-ux-pro-max-skill>, copied from v2.15.0 without its tests and provenance files; its licence is in the folder). **Use it for any UI work**: a new page or component, a restyle, a new site style or theme, or a review for accessibility, touch targets, contrast and responsive layout. Skip it for backend or non-visual work. Its search script (`python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain ux`) reads only the local CSV data and makes no network calls. Treat its output as advice: this repo's rules win, in particular Hebrew RTL, texts through `he.json`, colours only in `sites/<site-id>/theme.css`, the corner rules, and the `--persist` option must not be used (it writes a `design-system/` folder we do not keep).
+
 ## Commands
 
 Frontend (`cd frontend`):
