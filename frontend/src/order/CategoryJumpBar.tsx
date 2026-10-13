@@ -22,7 +22,7 @@ export function CategoryJumpBar({ categories }: { categories: JumpItem[] }) {
     const bar = document.querySelector<HTMLElement>('.top-bar')
     const nav = ref.current
     if (!bar || !nav) return
-    const place = () => document.documentElement.style.setProperty('--jump-top', `${bar.offsetHeight}px`)
+    const place = () => nav.style.insetBlockStart = `${bar.offsetHeight}px`
     place()
     if (typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(place)
@@ -61,7 +61,12 @@ export function CategoryJumpBar({ categories }: { categories: JumpItem[] }) {
   }, [current])
 
   function jump(id: number) {
-    document.getElementById(categorySectionId(id))?.scrollIntoView?.({ behavior: scrollBehavior(), block: 'start' })
+    const section = document.getElementById(categorySectionId(id))
+    const nav = ref.current
+    if (!section || !nav) return
+    // Land with the category's title just under the pinned bars.
+    const top = section.getBoundingClientRect().top + window.scrollY - nav.getBoundingClientRect().bottom - 8
+    window.scrollTo?.({ top, behavior: scrollBehavior() })
   }
 
   return (

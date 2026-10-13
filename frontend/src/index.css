@@ -3022,7 +3022,7 @@ label {
 /* One-page flows: the category chips stay under the top bar while the menu scrolls. */
 .category-jump {
   position: sticky;
-  inset-block-start: var(--jump-top, 3.5rem);
+  inset-block-start: 3.5rem;
   z-index: 9;
   display: flex;
   gap: 0.5rem;
@@ -3056,10 +3056,6 @@ label {
   border-color: var(--color-accent);
   background: var(--color-accent);
   color: var(--color-surface);
-}
-
-.order-main .category {
-  scroll-margin-block-start: calc(var(--jump-top, 3.5rem) + 4rem);
 }
 
 .order-steps {
