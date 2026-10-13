@@ -808,7 +808,12 @@ function AddOnGroups({
           <fieldset key={group?.id ?? 'other'} className="addons">
             <legend>
               {group ? group.name : t('order.addOns')}
-              {group?.maxUnits != null && <span className="muted"> · {t('order.groupLimit', { max: group.maxUnits })}</span>}
+              {group?.maxUnits != null && (
+                <span className="muted">
+                  {' '}
+                  · {t('order.groupLimit', { max: group.maxUnits })} · {t('order.groupLeft', { count: Math.max(0, room(-1)) })}
+                </span>
+              )}
             </legend>
             {inGroup.map(({ dish: addOn, link }) => (
               <AddOnRow
@@ -874,10 +879,11 @@ function AddOnRow({
     )
   }
 
-  // Each unit takes one from the group, a weight takes one whatever its amount.
+  // Each unit takes one from the group, a weight takes one whatever its amount. `room` already leaves this add-on's own
+  // units out, so it is the most this add-on can reach (adding the current amount again would let it take twice the limit).
   const perUnit = groupUnits(link, addOn, 2) > 1
   const value = selection?.quantity ?? 0
-  const max = perUnit ? Math.min(range.max, value + Math.max(0, room)) : room < 1 && !selection ? 0 : range.max
+  const max = perUnit ? Math.min(range.max, Math.max(0, room)) : room < 1 && !selection ? 0 : range.max
 
   return (
     <div className="addon">
@@ -910,8 +916,9 @@ function AddOnRow({
             unit={unitLabel(addOn, t)}
             onChange={(quantity) => onChange({ optionId, quantity })}
           />
-          {selection && link.price !== null && (
-            <span className="numeric muted">{formatMoney(addOnLineTotal(parent, addOn, selection))}</span>
+          {link.price !== null && (
+            // Always present, so the amount control keeps its place when the first unit brings the price in.
+            <span className="numeric muted addon__sum">{selection ? formatMoney(addOnLineTotal(parent, addOn, selection)) : null}</span>
           )}
           <RemainingNote dish={addOn} remaining={remaining} />
         </>
