@@ -11,7 +11,7 @@ interface Props {
   onClose: () => void
 }
 
-/** Shown after the order is saved: the summary the client also gets by WhatsApp. */
+/** Shown after the order is saved: the summary of what was ordered. */
 export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
   const { t } = useTranslation()
   return (
@@ -54,7 +54,6 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           {t('order.success.needsReview')}
         </p>
       )}
-      <p>{t('order.success.whatsapp')}</p>
       {contactPhone && (
         <p className="muted">
           {t('order.callToChange')} <span dir="ltr">{contactPhone}</span>
