@@ -15,6 +15,8 @@ The workflow needs, in GitHub **Settings → Secrets and variables → Actions**
 - secret `RENDER_DEPLOY_HOOK_CANARY`: the canary's deploy hook (Render: service → **Settings → Deploy Hook**)
 - one secret per other site with its deploy hook, named in the workflow's matrix, e.g. `RENDER_DEPLOY_HOOK_GRAPE_LEAVES`
 
+**Choosing which sites deploy** needs no pull request: add the variable `DEPLOY_SITES` (same place as the others), the site ids separated by spaces, e.g. `kuskus-shel-ima kuskus-liel`. Empty or missing deploys every site; a word that is no site id (e.g. `none`) deploys nothing. The canary is the site named by the variable `CANARY_SITE` (default `kuskus-shel-ima`); when it is not listed it is skipped and the listed sites deploy without waiting for it. Secrets stay as they are, and a site left out just keeps running its old version (it still gets the new code the next time it is listed and a deploy runs). To deploy one site by hand: **Actions → Deploy → Run workflow** (deploys the listed sites at the branch's commit), or the **Manual Deploy** button in the Render dashboard.
+
 Every service has Render's **Auto-Deploy** set to Off. With "After CI checks pass", Render would also wait for the Deploy workflow's own check, which waits for Render, so nothing would deploy.
 
 Migrations run on each site's start, so a migration must work with the code before it: add columns as nullable or with defaults, and drop old ones only in a later release (expand, then contract).
