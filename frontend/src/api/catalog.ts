@@ -13,6 +13,10 @@ export interface Settings {
   deliveryFeeText: string | null
   kashrutText: string | null
   paymentPhone: string | null
+  bitEnabled: boolean
+  payBoxEnabled: boolean
+  bitLink: string | null
+  payBoxLink: string | null
   /** ₪; null means no minimum. */
   minimumOrderAmount: number | null
   /** False when the minimum is for deliveries only. */

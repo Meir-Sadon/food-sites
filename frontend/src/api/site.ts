@@ -64,6 +64,9 @@ export interface Site {
   deliveryFeeText: string | null
   kashrutText: string | null
   paymentPhone: string | null
+  /** Whether the client may choose to pay with Bit / PayBox (needs the payment phone). */
+  bitEnabled: boolean
+  payBoxEnabled: boolean
   /** The smallest order total in ₪; null when there is none. */
   minimumOrderAmount: number | null
   /** False when the minimum is for deliveries only. */
@@ -227,7 +230,8 @@ export interface Menu {
 }
 
 export type Fulfillment = 'Delivery' | 'Pickup'
-export type Payment = 'OnDelivery' | 'Transfer'
+/** `Transfer` is the older combined Bit / PayBox choice; new orders use `Bit` or `PayBox`. */
+export type Payment = 'OnDelivery' | 'Transfer' | 'Bit' | 'PayBox'
 
 export interface OrderLineInput {
   dishId: number
@@ -265,6 +269,8 @@ export interface Confirmation {
   paymentMethod: Payment
   total: number
   paymentPhone: string | null
+  /** The owner's Bit / PayBox payment-request link for the chosen service, if they set one. */
+  paymentLink?: string | null
   /** A delivery outside the service city: it waits for the admin and holds no quantity yet. */
   needsReview: boolean
   items: {

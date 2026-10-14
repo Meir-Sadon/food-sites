@@ -1,3 +1,4 @@
+import { availablePayment, isTransfer, paymentKey, transferChoices } from '../order/payment'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -231,7 +232,8 @@ export function OrderPage() {
   const minimum = fulfillment === 'Pickup' && !site.minimumOrderAppliesToPickup ? 0 : (site.minimumOrderAmount ?? 0)
   const belowMinimum = count > 0 && total < minimum
   const unadjusted = unadjustedDishes(state.selections, dishes)
-  const payment: Payment = state.payment === 'Transfer' && !site.paymentPhone ? 'OnDelivery' : state.payment
+  const transfers = transferChoices(site)
+  const payment: Payment = availablePayment(state.payment, site)
   const hours = supplyDate?.hours ?? []
   // An hour from a draft that the date no longer offers is dropped.
   const deliveryHour = hours.some((h) => h.from === state.deliveryHour) ? state.deliveryHour : null
@@ -711,7 +713,7 @@ export function OrderPage() {
 
             <DetailsBlock
               title={t('order.payment')}
-              summary={t(payment === 'Transfer' ? 'order.payTransfer' : 'order.payOnDelivery')}
+              summary={t(payment === 'OnDelivery' ? 'order.payOnDelivery' : paymentKey(payment))}
               open={blocksOpen.payment}
               onToggle={(open) => setBlocksOpen((current) => ({ ...current, payment: open }))}
             >
@@ -727,19 +729,19 @@ export function OrderPage() {
                     />
                     {t('order.payOnDelivery')}
                   </label>
-                  {site.paymentPhone && (
-                    <label className="checkbox">
+                  {transfers.map((method) => (
+                    <label key={method} className="checkbox">
                       <input
                         type="radio"
                         name="payment"
-                        checked={payment === 'Transfer'}
-                        onChange={() => change({ payment: 'Transfer' })}
+                        checked={payment === method}
+                        onChange={() => change({ payment: method })}
                       />
-                      {t('order.payTransfer')}
+                      {t(paymentKey(method))}
                     </label>
-                  )}
+                  ))}
                 </div>
-                {payment === 'Transfer' && <p className="hint">{t('order.transferHint')}</p>}
+                {isTransfer(payment) && <p className="hint">{t('order.transferHint', { service: t(paymentKey(payment)) })}</p>}
                 <FieldError errors={errors} field="paymentMethod" id="order-payment-error" />
               </fieldset>
               {payment === 'OnDelivery' && <p className="pay-note">{t('order.payOnDeliveryNote')}</p>}

@@ -907,6 +907,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("BackgroundImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<bool>("BitEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BitLink")
+                        .HasColumnType("text");
+
                     b.Property<string>("ContactAddress")
                         .HasColumnType("text");
 
@@ -979,6 +985,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("Palette")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("PayBoxEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PayBoxLink")
+                        .HasColumnType("text");
 
                     b.Property<string>("PaymentPhone")
                         .HasColumnType("text");
