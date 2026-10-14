@@ -94,6 +94,13 @@ if (config.GetSection(WhatsAppOptions.Section).Get<WhatsAppOptions>()?.IsConfigu
 else
     builder.Services.AddSingleton<IWhatsAppSender, SimulatedWhatsAppSender>();
 
+// Order confirmations are also sent as SMS once Sms__Username, Sms__Token and Sms__Source are set; otherwise they are only logged.
+builder.Services.Configure<SmsOptions>(config.GetSection(SmsOptions.Section));
+if (config.GetSection(SmsOptions.Section).Get<SmsOptions>()?.IsConfigured == true)
+    builder.Services.AddHttpClient<ISmsSender, TextMeSmsSender>(c => c.Timeout = TimeSpan.FromSeconds(15));
+else
+    builder.Services.AddSingleton<ISmsSender, SimulatedSmsSender>();
+
 var jwt = config.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 jwt.UseSiteDefaults(site);
 if (System.Text.Encoding.UTF8.GetByteCount(jwt.Secret) < 32)

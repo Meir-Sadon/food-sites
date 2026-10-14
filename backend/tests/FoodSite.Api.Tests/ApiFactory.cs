@@ -62,6 +62,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// <summary>Records every WhatsApp message instead of sending it.</summary>
     public CapturingWhatsAppSender WhatsApp { get; } = new();
 
+    /// <summary>Records every SMS instead of sending it.</summary>
+    public CapturingSmsSender Sms { get; } = new();
+
     /// <summary>Records every mail to the owner instead of sending it.</summary>
     public CapturingMailer Mail { get; } = new();
 
@@ -73,6 +76,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         {
             services.AddSingleton<IImageStore>(Images);
             services.AddSingleton<IWhatsAppSender>(WhatsApp);
+            services.AddSingleton<ISmsSender>(Sms);
             services.AddSingleton<IMailer>(Mail);
         });
     }
