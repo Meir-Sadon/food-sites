@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { AdminOrder, CookingSummary, Report } from '../../api/operations'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
@@ -96,6 +96,33 @@ describe('Admin Orders', () => {
     expect(within(card).getByText(/דנה/)).toBeInTheDocument()
     expect(within(card).getByText('₪176')).toBeInTheDocument()
     expect(within(screen.getByRole('navigation', { name: 'דוחות' })).getByRole('link', { name: 'הזמנות' })).toHaveAttribute('href', '/admin/orders')
+  })
+
+  it('prints the listed orders with every dish detail, one sheet per order, leaving out cancelled ones', async () => {
+    const print = vi.fn()
+    vi.stubGlobal('print', print)
+    fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [
+        order({
+          notes: 'להגיע בשקט',
+          items: [
+            { id: 1, parentItemId: null, dishName: 'סביח', optionLabel: 'גדול', note: 'בלי חצילים', answers: [{ question: 'מה למרוח', answer: 'טחינה' }], quantity: 2, unitPrice: 30, lineTotal: 60 },
+            { id: 2, parentItemId: 1, dishName: 'ביצה', optionLabel: null, quantity: 1, unitPrice: 5, lineTotal: 5 },
+          ],
+        }),
+        order({ id: 8, name: 'יעל', status: 'Cancelled' }),
+      ],
+    })
+    renderAt('/admin/orders')
+    await userEvent.setup().click(await screen.findByRole('button', { name: /הדפסה \/ PDF של כל ההזמנות/ }))
+
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1))
+    const sheet = document.querySelector('.print-sheet') as HTMLElement
+    expect(sheet.querySelectorAll('.print-order')).toHaveLength(1)
+    for (const text of ['הזמנה #7', 'חיפה', '0501234567', 'להגיע בשקט', 'סביח', 'בלי חצילים', 'טחינה', 'ביצה'])
+      expect(within(sheet).getAllByText(new RegExp(text)).length).toBeGreaterThan(0)
+    vi.unstubAllGlobals()
   })
 
   it('changes the status', async () => {
