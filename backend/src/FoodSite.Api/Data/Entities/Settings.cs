@@ -26,6 +26,18 @@ public class Settings
     /// <summary>Phone number for manual Bit/PayBox transfers.</summary>
     public string? PaymentPhone { get; set; }
 
+    /// <summary>The client may choose to pay with Bit (a manual transfer to <see cref="PaymentPhone"/>).</summary>
+    public bool BitEnabled { get; set; }
+
+    /// <summary>The client may choose to pay with PayBox (a manual transfer to <see cref="PaymentPhone"/>).</summary>
+    public bool PayBoxEnabled { get; set; }
+
+    /// <summary>A payment-request link the owner made in the Bit app (https), shown to a client who pays with Bit.</summary>
+    public string? BitLink { get; set; }
+
+    /// <summary>A payment-request link the owner made in the PayBox app (https), shown to a client who pays with PayBox.</summary>
+    public string? PayBoxLink { get; set; }
+
     /// <summary>
     /// The cities deliveries go to, comma-separated (see <c>ServiceArea</c>). Null until seeded from the
     /// site's <c>site.json</c> on startup; empty means every city is served.

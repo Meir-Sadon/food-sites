@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { paymentKey } from '../../order/payment'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
@@ -66,7 +67,7 @@ export function OrderViewPage() {
           {delivery && order.address ? `: ${order.address}` : ''}
         </p>
         <p>
-          {t(order.paymentMethod === 'Transfer' ? 'admin.orders.transfer' : 'admin.orders.onDelivery')}
+          {t(paymentKey(order.paymentMethod))}
           {order.isPaid && order.paidWith ? ` · ${t('admin.orders.paidVia', { method: t(`admin.orders.paidMethods.${order.paidWith}`) })}` : ''}
         </p>
         {order.notes && (

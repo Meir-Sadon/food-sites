@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { isTransfer } from '../order/payment'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { IMAGE_TYPES, MAX_IMAGE_BYTES } from '../api/catalog'
@@ -121,7 +122,7 @@ export function DriverStopPage() {
                 total: formatMoney(stop.total),
                 method: t(`admin.orders.paidMethods.${stop.paidWith ?? 'Unknown'}`),
               })
-            : t(stop.paymentMethod === 'Transfer' ? 'driver.collectTransfer' : 'driver.collect', { amount: formatMoney(stop.total) })}
+            : t(isTransfer(stop.paymentMethod) ? 'driver.collectTransfer' : 'driver.collect', { amount: formatMoney(stop.total) })}
         </p>
       </section>
 

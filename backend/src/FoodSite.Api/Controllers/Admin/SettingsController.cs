@@ -27,6 +27,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? DeliveryFeeText,
         string? KashrutText,
         string? PaymentPhone,
+        bool BitEnabled,
+        bool PayBoxEnabled,
+        string? BitLink,
+        string? PayBoxLink,
         decimal? MinimumOrderAmount,
         bool MinimumOrderAppliesToPickup,
         string ServiceCities,
@@ -66,7 +70,13 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         int? LineWidth = null,
         string? Font = null,
         string? Shadows = null,
-        string? Spacing = null);
+        string? Spacing = null,
+        bool? BitEnabled = null,
+        bool? PayBoxEnabled = null,
+        string? BitLink = null,
+        string? PayBoxLink = null);
+
+    public const int LinkMaxLength = 500;
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -82,6 +92,15 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         errors.Text(nameof(input.KashrutText), input.KashrutText, TextMaxLength);
         if (!string.IsNullOrWhiteSpace(input.PaymentPhone) && !PhonePattern().IsMatch(input.PaymentPhone.Trim()))
             errors.Add(nameof(input.PaymentPhone), "phone");
+        if (!string.IsNullOrWhiteSpace(input.BitLink) && !IsHttpsLink(input.BitLink.Trim()))
+            errors.Add(nameof(input.BitLink), "link");
+        if (!string.IsNullOrWhiteSpace(input.PayBoxLink) && !IsHttpsLink(input.PayBoxLink.Trim()))
+            errors.Add(nameof(input.PayBoxLink), "link");
+        // Missing (an older client) keeps the current choice.
+        var bitOn = input.BitEnabled ?? await db.Settings.AsNoTracking().Select(s => s.BitEnabled).SingleAsync();
+        var payBoxOn = input.PayBoxEnabled ?? await db.Settings.AsNoTracking().Select(s => s.PayBoxEnabled).SingleAsync();
+        if ((bitOn || payBoxOn) && string.IsNullOrWhiteSpace(input.PaymentPhone))
+            errors.Add(nameof(input.PaymentPhone), "required");
         if (input.MinimumOrderAmount is < 0m or > MaxMinimumOrder)
             errors.Add(nameof(input.MinimumOrderAmount), "invalid");
         if (input.OrdersPerHour is < 0 or > MaxOrdersPerHour)
@@ -125,6 +144,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         settings.DeliveryFeeText = Clean(input.DeliveryFeeText);
         settings.KashrutText = Clean(input.KashrutText);
         settings.PaymentPhone = Clean(input.PaymentPhone);
+        settings.BitEnabled = bitOn;
+        settings.PayBoxEnabled = payBoxOn;
+        if (input.BitLink is not null) settings.BitLink = Clean(input.BitLink);
+        if (input.PayBoxLink is not null) settings.PayBoxLink = Clean(input.PayBoxLink);
         // Zero (or empty) means no minimum.
         settings.MinimumOrderAmount = input.MinimumOrderAmount is > 0m ? decimal.Round(input.MinimumOrderAmount.Value, 2) : null;
         // Missing (an older client) keeps the current choice.
@@ -213,7 +236,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
 
     private SettingsDto ToDto(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
-        s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
+        s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.BitEnabled, s.PayBoxEnabled, s.BitLink, s.PayBoxLink, s.MinimumOrderAmount,
         s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate,
         SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
@@ -226,6 +249,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.Effective(s.FontPair, Finish.IsKnownFont),
         Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
         Finish.Effective(s.Spacing, Finish.IsKnownSpacing));
+
+    private static bool IsHttpsLink(string value) =>
+        value.Length <= LinkMaxLength
+        && Uri.TryCreate(value, UriKind.Absolute, out var uri)
+        && uri.Scheme == Uri.UriSchemeHttps;
 
     private static bool IsEmail(string value) =>
         value.Length <= OwnerEmailMaxLength && EmailPattern().IsMatch(value);
