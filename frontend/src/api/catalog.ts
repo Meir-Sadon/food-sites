@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { Corners, OrderFlow, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { Corners, DeliveryPricing, OrderFlow, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -33,10 +33,17 @@ export interface Settings {
   corners: Corners
   /** Where the owner is mailed about new orders and changes; empty means no mail. */
   ownerEmail: string
+  /** `zones` needs the deliveryZones feature. */
+  deliveryPricing: DeliveryPricing
+  /** The deliveryZones feature is on for this site, so the zones section is shown. */
+  deliveryZonesAvailable: boolean
 }
 /** Leaving out the style, the order layout or the corners keeps it: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'> &
-  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'>>
+export type SettingsInput = Omit<
+  Settings,
+  'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'deliveryPricing' | 'deliveryZonesAvailable'
+> &
+  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'deliveryPricing'>>
 
 export interface SupplyDay {
   weekday: Weekday
@@ -244,6 +251,22 @@ export interface DishGroup {
   displayOrder: number
   /** Dishes ordered on their own (not variants or add-ons), from any category. */
   dishIds: number[]
+}
+
+/** A delivery area drawn on the map; `polygon` holds its corners as [lat, lng]. */
+export interface DeliveryZone {
+  id: number | null
+  name: string
+  fee: number
+  /** No deliveries into this area. */
+  isBlocked: boolean
+  polygon: [number, number][]
+}
+
+export const deliveryZonesApi = {
+  get: () => apiJson<DeliveryZone[]>(`${admin}/delivery-zones`),
+  /** The list sent replaces the stored one; its order is the priority where zones overlap. */
+  save: (zones: DeliveryZone[]) => apiJson<DeliveryZone[]>(`${admin}/delivery-zones`, send('PUT', { zones })),
 }
 
 export const dishGroupsApi = {

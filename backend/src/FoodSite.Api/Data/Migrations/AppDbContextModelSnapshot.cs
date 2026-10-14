@@ -138,6 +138,38 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("ClosedDates");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DeliveryZone", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Fee")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("PolygonJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeliveryZones");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Dish", b =>
                 {
                     b.Property<int>("Id")
@@ -660,6 +692,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DeliveryFee")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<TimeOnly?>("DeliveryHour")
                         .HasColumnType("time without time zone");
 
@@ -678,6 +714,9 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<DateTimeOffset?>("DeliveryReportedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveryZoneName")
+                        .HasColumnType("text");
 
                     b.Property<string>("FulfillmentMethod")
                         .IsRequired()
@@ -933,6 +972,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("DeliveryFeeText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
 
                     b.Property<string>("KashrutText")

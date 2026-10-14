@@ -11,7 +11,7 @@ using static FoodSite.Api.Controllers.Admin.Ordering;
 namespace FoodSite.Api.Controllers.Admin;
 
 [Route("api/admin/settings")]
-public partial class SettingsController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site) : AdminControllerBase
+public partial class SettingsController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site, FeatureFlags features) : AdminControllerBase
 {
     public const int TextMaxLength = 1000;
     public const decimal MaxMinimumOrder = 100_000;
@@ -36,7 +36,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string OrderTotalPosition,
         string OrderFlow,
         string Corners,
-        string OwnerEmail);
+        string OwnerEmail,
+        string DeliveryPricing,
+        bool DeliveryZonesAvailable = false);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -54,10 +56,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? OrderTotalPosition = null,
         string? OrderFlow = null,
         string? Corners = null,
-        string? OwnerEmail = null);
+        string? OwnerEmail = null,
+        string? DeliveryPricing = null);
 
     [HttpGet]
-    public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
+    public async Task<SettingsDto> Get() => await ToDtoAsync(await db.Settings.SingleAsync());
 
     [HttpPut]
     public async Task<ActionResult<SettingsDto>> Update(SettingsInput input)
@@ -90,6 +93,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.Corners), "invalid");
         if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !IsEmail(input.OwnerEmail.Trim()))
             errors.Add(nameof(input.OwnerEmail), "email");
+        if (input.DeliveryPricing is not null && !Delivery.DeliveryPricing.IsKnown(input.DeliveryPricing))
+            errors.Add(nameof(input.DeliveryPricing), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -124,8 +129,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Missing (an older client) keeps the address; an empty one turns the mails off.
         if (input.OwnerEmail is not null)
             settings.OwnerEmail = Clean(input.OwnerEmail);
+        // Missing (an older client) keeps the mode.
+        if (input.DeliveryPricing is not null)
+            settings.DeliveryPricing = input.DeliveryPricing;
         await db.SaveChangesAsync();
-        return ToDto(settings);
+        return await ToDtoAsync(settings);
     }
 
     [HttpPut("background")]
@@ -155,7 +163,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
 
         if (previous is not null)
             await images.DeleteAsync(previous, ct);
-        return ToDto(settings);
+        return await ToDtoAsync(settings);
     }
 
     [HttpDelete("background")]
@@ -169,10 +177,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
 
         if (previous is not null)
             await images.DeleteAsync(previous, ct);
-        return ToDto(settings);
+        return await ToDtoAsync(settings);
     }
 
-    private SettingsDto ToDto(Data.Entities.Settings s) => new(
+    private async Task<SettingsDto> ToDtoAsync(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount,
         s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate,
@@ -180,7 +188,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
         OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
         Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
-        s.OwnerEmail ?? "");
+        s.OwnerEmail ?? "",
+        s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
+        await features.IsEnabledAsync(Features.DeliveryZones));
 
     private static bool IsEmail(string value) =>
         value.Length <= OwnerEmailMaxLength && EmailPattern().IsMatch(value);

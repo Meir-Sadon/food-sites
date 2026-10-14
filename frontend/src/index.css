@@ -3721,3 +3721,57 @@ label {
     text-align: end;
   }
 }
+
+/* Delivery zones (admin): the map and the zone rows. Colours come from the site's theme. */
+.zones-map {
+  inline-size: 100%;
+  block-size: min(28rem, 70vh);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  z-index: 0;
+}
+
+.zones-map__zone {
+  stroke: var(--color-accent);
+  fill: var(--color-accent);
+  fill-opacity: 0.2;
+  stroke-width: 2;
+}
+
+.zones-map__zone--blocked {
+  stroke: var(--color-error);
+  fill: var(--color-error);
+  stroke-dasharray: 6 4;
+}
+
+.zones-map__zone--selected {
+  stroke-width: 4;
+  fill-opacity: 0.35;
+}
+
+.zones-map__corner {
+  inline-size: 16px;
+  block-size: 16px;
+  border: 3px solid var(--color-accent);
+  border-radius: 50%;
+  background: var(--color-surface);
+  cursor: grab;
+}
+
+.zone-row {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.zone-row--selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.field-title {
+  font-weight: 600;
+}

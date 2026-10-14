@@ -116,6 +116,15 @@ export function OrderViewPage() {
             </li>
           ))}
         </ul>
+        {!!order.deliveryFee && (
+          <p className="cart-sheet__total">
+            <span>
+              {t('order.deliveryFee')}
+              {order.deliveryZoneName ? ` (${order.deliveryZoneName})` : ''}
+            </span>{' '}
+            <strong className="numeric">{formatMoney(order.deliveryFee)}</strong>
+          </p>
+        )}
         <p className="cart-sheet__total">
           <span>{t('admin.orders.view.total')}</span> <strong className="numeric cart-sheet__sum">{formatMoney(order.total)}</strong>
         </p>

@@ -4,6 +4,7 @@ import { ConsoleTokenSection } from './ConsoleTokenSection'
 import { GeneralSection } from './GeneralSection'
 import { PasswordSection } from './PasswordSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
+import { DeliveryZonesSection } from '../delivery/DeliveryZonesSection'
 import { useAdminSession } from '../session'
 
 export function SettingsPage() {
@@ -15,6 +16,7 @@ export function SettingsPage() {
       <SupplyDaysSection />
       <ClosedDatesSection />
       <GeneralSection />
+      <DeliveryZonesSection />
       <PasswordSection />
       {actor === 'master' && <ConsoleTokenSection />}
     </>

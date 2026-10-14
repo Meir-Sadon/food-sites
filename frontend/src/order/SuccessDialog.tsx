@@ -33,6 +33,11 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           </li>
         ))}
       </ul>
+      {!!confirmation.deliveryFee && (
+        <p className="summary__total">
+          {t('order.deliveryFee')}: <strong className="numeric">{formatMoney(confirmation.deliveryFee)}</strong>
+        </p>
+      )}
       <p className="summary__total">
         {t('order.total')}: <strong className="numeric">{formatMoney(confirmation.total)}</strong>
       </p>

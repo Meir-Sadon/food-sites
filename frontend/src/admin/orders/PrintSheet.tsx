@@ -93,6 +93,12 @@ function PrintedOrder({ order }: { order: AdminOrder }) {
           ))}
         </tbody>
       </table>
+      {!!order.deliveryFee && (
+        <p className="print-order__fee">
+          {t('order.deliveryFee')}
+          {order.deliveryZoneName ? ` (${order.deliveryZoneName})` : ''}: <strong className="numeric">{formatMoney(order.deliveryFee)}</strong>
+        </p>
+      )}
       <p className="print-order__total">
         {t('admin.orders.view.total')}: <strong className="numeric">{formatMoney(order.total)}</strong>
       </p>

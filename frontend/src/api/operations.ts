@@ -67,6 +67,9 @@ export interface AdminOrder {
   paidByDriver?: boolean
   /** What the driver reported; a photo can come before the report. */
   delivery?: DeliveryReport | null
+  /** The delivery fee worked out from the zones (already inside `total`); 0 for none. */
+  deliveryFee?: number
+  deliveryZoneName?: string | null
 }
 
 export interface DeliveryReport {

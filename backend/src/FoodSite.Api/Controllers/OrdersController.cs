@@ -1,6 +1,7 @@
 using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Delivery;
 using FoodSite.Api.Mail;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Orders;
@@ -24,6 +25,7 @@ public class OrdersController(
     IOptions<SmsOptions> smsOptions,
     OwnerNotifier ownerMail,
     IOptions<SiteOptions> site,
+    DeliveryQuoter deliveryQuoter,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
@@ -56,7 +58,8 @@ public class OrdersController(
         bool NeedsReview,
         IReadOnlyList<ConfirmationItemDto> Items,
         TimeOnly? DeliveryHour = null,
-        bool HourFull = false);
+        bool HourFull = false,
+        decimal DeliveryFee = 0m);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
@@ -129,6 +132,13 @@ public class OrdersController(
         if (!errors.Any && settings.PortionsPerSupplyDate is { } portions)
             await CheckPortionLimitAsync(input.SupplyDate, items, dishes, portions, errors, ct);
 
+        // The fee comes from the address, worked out here again so a quote the client saw cannot be changed.
+        var quote = input.FulfillmentMethod == FulfillmentMethod.Delivery && !errors.Any
+            ? await deliveryQuoter.QuoteAsync(settings, input.City, input.Street, input.HouseNumber, ct)
+            : null;
+        if (quote?.Status == DeliveryQuote.Blocked)
+            errors.Add(nameof(input.City), "deliveryNotAvailable");
+
         if (errors.Any)
             return Invalid(errors);
 
@@ -152,8 +162,12 @@ public class OrdersController(
             Notes = Clean(input.Notes),
             PaymentMethod = input.PaymentMethod,
             Status = OrderStatus.New,
-            NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery && !ServiceArea.Serves(serviceCities, input.City),
-            Total = OrderBuilder.Total(items),
+            // An address the map could not place waits for the admin, like a city outside the service area.
+            NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery
+                && (!ServiceArea.Serves(serviceCities, input.City) || quote?.Status == DeliveryQuote.Unknown),
+            DeliveryFee = quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m,
+            DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
+            Total = OrderBuilder.Total(items) + (quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m),
             CreatedAt = DateTimeOffset.UtcNow,
         };
         foreach (var item in items)
@@ -171,7 +185,8 @@ public class OrdersController(
                 .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null))
                 .ToList(),
             order.DeliveryHour,
-            hourFull);
+            hourFull,
+            order.DeliveryFee);
     }
 
     /// <summary>

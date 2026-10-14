@@ -26,7 +26,13 @@ public static class Features
     /// </summary>
     public const string AdvancedDishes = "advancedDishes";
 
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes];
+    /// <summary>
+    /// The advanced delivery setting: the admin draws zones on a map, each with its own fee or no delivery at all,
+    /// and the delivery fee is worked out from the address the client enters (see <c>DeliveryZones</c>).
+    /// </summary>
+    public const string DeliveryZones = "deliveryZones";
+
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, DeliveryZones];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }

@@ -54,6 +54,8 @@ public static class OrderMessages
         }
         if (!string.IsNullOrWhiteSpace(order.Notes))
             lines.Add($"הערות: {order.Notes}");
+        if (order.DeliveryFee > 0)
+            lines.Add($"דמי משלוח: ₪{Money(order.DeliveryFee)}");
         lines.Add($"סה״כ: ₪{Money(order.Total)}");
         return string.Join('\n', lines);
     }

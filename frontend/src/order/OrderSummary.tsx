@@ -28,7 +28,16 @@ export function SummaryDetails({ line }: { line: SummaryLine }) {
  * The order so far, read only: each dish's main name and amount, and a small button beside the ones with adjustments or
  * remarks that shows what was changed.
  */
-export function OrderSummary({ selections, dishes }: { selections: Record<number, Selection>; dishes: Map<number, MenuDish> }) {
+export function OrderSummary({
+  selections,
+  dishes,
+  delivery,
+}: {
+  selections: Record<number, Selection>
+  dishes: Map<number, MenuDish>
+  /** The advanced delivery setting: the fee worked out from the address, or still waiting for it (`pending`). */
+  delivery?: { fee: number; zoneName: string | null; pending: boolean }
+}) {
   const { t } = useTranslation()
   const [shown, setShown] = useState<Record<number, boolean>>({})
   const lines = summaryLines(selections, dishes)
@@ -64,6 +73,17 @@ export function OrderSummary({ selections, dishes }: { selections: Record<number
             </li>
           )
         })}
+        {delivery && (
+          <li className="order-summary__row">
+            <div className="order-summary__main">
+              <span className="order-summary__name">
+                {t('order.deliveryFee')}
+                {delivery.zoneName ? ` (${delivery.zoneName})` : ''}
+              </span>
+              <span className="order-summary__price numeric">{delivery.pending ? '—' : formatMoney(delivery.fee)}</span>
+            </div>
+          </li>
+        )}
       </ul>
     </section>
   )
