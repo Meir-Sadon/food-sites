@@ -51,8 +51,15 @@ public static class SupplyCalendar
             if (!enabled.TryGetValue(date.DayOfWeek, out var day) || closed.Contains(date))
                 continue;
             var cutoff = CutoffFor(date, day);
-            if (nowLocal < cutoff)
-                open.Add(new OpenDate(date, cutoff, HourSlots(day)));
+            if (nowLocal >= cutoff)
+                continue;
+            // Hours already over are left out (the order page and the server both use this list), and a day
+            // whose hours have all passed is not offered at all.
+            var allSlots = HourSlots(day);
+            var slots = allSlots.Where(s => date.ToDateTime(s.To) > nowLocal).ToList();
+            if (allSlots.Count > 0 && slots.Count == 0)
+                continue;
+            open.Add(new OpenDate(date, cutoff, slots));
         }
         return open;
     }
