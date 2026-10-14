@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using FoodSite.Api.Auth;
 using FoodSite.Api.Data;
+using FoodSite.Api.Delivery;
+using FoodSite.Api.Delivery;
 using FoodSite.Api.Http;
 using FoodSite.Api.Images;
 using FoodSite.Api.Mail;
@@ -78,6 +80,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IWhatsAppSender>(WhatsApp);
             services.AddSingleton<ISmsSender>(Sms);
             services.AddSingleton<IMailer>(Mail);
+            services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
+            services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
         });
     }
 

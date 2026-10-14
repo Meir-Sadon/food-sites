@@ -12,6 +12,8 @@ interface Props {
   dishes: Map<number, MenuDish>
   date: string | undefined
   total: number
+  /** The delivery fee already inside `total`, shown as its own line; 0 for none. */
+  deliveryFee?: number
   onChange: (dishId: number, selection: Selection | undefined) => void
   /** Closes the sheet and brings the client to the dish's own card to change its adjustments. */
   onEdit: (dishId: number) => void
@@ -28,7 +30,7 @@ const pictureOf = (dish: MenuDish, dishes: Map<number, MenuDish>) =>
  * Everything chosen so far, with each dish's picture: the amount of each can be changed, a dish taken out, or its
  * adjustments edited at its card. The total follows every change.
  */
-export function CartSheet({ selections, dishes, date, total, onChange, onEdit, onContinue, onClose }: Props) {
+export function CartSheet({ selections, dishes, date, total, deliveryFee = 0, onChange, onEdit, onContinue, onClose }: Props) {
   const { t } = useTranslation()
   const [shown, setShown] = useState<Record<number, boolean>>({})
   const lines = summaryLines(selections, dishes)
@@ -83,6 +85,11 @@ export function CartSheet({ selections, dishes, date, total, onChange, onEdit, o
             )
           })}
         </ul>
+      )}
+      {deliveryFee > 0 && (
+        <p className="cart-sheet__total">
+          <span>{t('order.deliveryFee')}</span> <strong className="numeric">{formatMoney(deliveryFee)}</strong>
+        </p>
       )}
       <p className="cart-sheet__total">
         <span>{t('order.cart.total')}</span> <strong key={total} className="numeric cart-sheet__sum">{formatMoney(total)}</strong>

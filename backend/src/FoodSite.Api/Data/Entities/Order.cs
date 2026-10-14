@@ -51,6 +51,13 @@ public class Order
     public string? DeliveryProofUrl { get; set; }
     public string? DeliveryProofPublicId { get; set; }
 
+    /// <summary>The delivery fee worked out from the zones when the order was placed; part of <see cref="Total"/>. Zero when none applied.</summary>
+    public decimal DeliveryFee { get; set; }
+
+    /// <summary>The name of the zone the fee came from, as it was then.</summary>
+    public string? DeliveryZoneName { get; set; }
+
+    /// <summary>The order's total to pay, the delivery fee included.</summary>
     public decimal Total { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 

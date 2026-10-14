@@ -82,6 +82,12 @@ public class Settings
     /// <summary>How round the client site's corners are (see <c>Corners</c>); null means the site's default.</summary>
     public string? Corners { get; set; }
 
+    /// <summary>
+    /// How delivery is priced: <c>simple</c> (the text in <c>DeliveryFeeText</c>, no fee added) or <c>zones</c> (the
+    /// zones the admin drew, see <c>DeliveryZone</c>). Null means simple.
+    /// </summary>
+    public string? DeliveryPricing { get; set; }
+
     /// <summary>The ready-made colour palette (see <c>Palettes</c>); null means the site's default.</summary>
     public string? Palette { get; set; }
 

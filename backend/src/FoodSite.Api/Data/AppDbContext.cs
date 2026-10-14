@@ -24,6 +24,7 @@ public class AppDbContext(
     public DbSet<DishAddOn> DishAddOns => Set<DishAddOn>();
     public DbSet<AddOnGroup> AddOnGroups => Set<AddOnGroup>();
     public DbSet<DishGroup> DishGroups => Set<DishGroup>();
+    public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<User> Users => Set<User>();
@@ -158,6 +159,13 @@ public class AppDbContext(
                 .OnDelete(DeleteBehavior.Restrict);
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_Dishes_NotOwnVariant", "\"MainDishId\" <> \"Id\""));
+        });
+
+        model.Entity<DeliveryZone>(e =>
+        {
+            e.Property(z => z.Name).HasMaxLength(DeliveryZone.NameMaxLength).IsRequired();
+            e.Property(z => z.Fee).HasPrecision(10, 2);
+            e.Property(z => z.PolygonJson).IsRequired();
         });
 
         model.Entity<DishGroup>(e =>

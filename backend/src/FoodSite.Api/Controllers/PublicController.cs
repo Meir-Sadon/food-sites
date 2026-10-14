@@ -1,5 +1,6 @@
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Delivery;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +40,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         int? LineWidth,
         string Font,
         string Shadows,
-        string Spacing);
+        string Spacing,
+        string DeliveryPricing = "simple");
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -131,7 +133,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             s.LineWidth,
             Finish.Effective(s.FontPair, Finish.IsKnownFont),
             Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
-            Finish.Effective(s.Spacing, Finish.IsKnownSpacing));
+            Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
+            DeliveryQuoter.Mode(s));
     }
 
     [HttpGet("menu")]

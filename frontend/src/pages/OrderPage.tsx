@@ -23,6 +23,7 @@ import { CartSheet } from '../order/CartSheet'
 import { OPEN_DISH_DIALOG } from '../order/DishCard'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
+import { useDeliveryQuote } from '../order/useDeliveryQuote'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
@@ -122,7 +123,14 @@ export function OrderPage() {
   const addressRef = useRef<HTMLFieldSetElement>(null)
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
-  const total = orderTotal(state.selections, dishes)
+  const itemsTotal = orderTotal(state.selections, dishes)
+  // The advanced delivery setting: the server works out the fee from the address, so nothing is charged until it is typed.
+  const zonesOn = site?.deliveryPricing === 'zones'
+  const quote = useDeliveryQuote(zonesOn && state.fulfillment === 'Delivery' && !!site?.deliveryEnabled, state.city, state.street, state.houseNumber)
+  const quoted = quote.state === 'ready' ? quote.quote : null
+  const deliveryFee = quoted?.status === 'ok' ? quoted.fee : 0
+  const noDelivery = quoted?.status === 'blocked'
+  const total = round2(itemsTotal + deliveryFee)
   const count = itemCount(state.selections)
   const drinksCategoryIds = useMemo(
     () => new Set((menu?.categories ?? []).filter((c) => c.name === DRINKS_CATEGORY_NAME).map((c) => c.id)),
@@ -230,7 +238,8 @@ export function OrderPage() {
         ? 'Delivery'
         : state.fulfillment
   const minimum = fulfillment === 'Pickup' && !site.minimumOrderAppliesToPickup ? 0 : (site.minimumOrderAmount ?? 0)
-  const belowMinimum = count > 0 && total < minimum
+  // The minimum is on the dishes, the delivery fee does not count towards it.
+  const belowMinimum = count > 0 && itemsTotal < minimum
   const unadjusted = unadjustedDishes(state.selections, dishes)
   const transfers = transferChoices(site)
   const payment: Payment = availablePayment(state.payment, site)
@@ -660,19 +669,19 @@ export function OrderPage() {
                   <MapLinks address={site.contact.address} />
                 </div>
               )}
-              {fulfillment === 'Delivery' && (site.deliveryAreaText || site.deliveryFeeText) && (
+              {fulfillment === 'Delivery' && (site.deliveryAreaText || (site.deliveryFeeText && !zonesOn)) && (
                 <p className="hint">
                   {site.deliveryAreaText && (
                     <span>
                       {t('order.deliveryArea')}: {site.deliveryAreaText}.{' '}
                     </span>
                   )}
-                  {site.deliveryFeeText && (
+                  {site.deliveryFeeText && !zonesOn && (
                     <span>
                       {t('order.deliveryFee')}: {site.deliveryFeeText}.{' '}
                     </span>
                   )}
-                  {t('order.deliveryCall')}
+                  {!zonesOn && t('order.deliveryCall')}
                 </p>
               )}
               <FieldError errors={errors} field="fulfillmentMethod" id="order-fulfillment-error" />
@@ -763,12 +772,32 @@ export function OrderPage() {
                 {submitError}
               </p>
             )}
-            <OrderSummary selections={state.selections} dishes={dishes} />
+            {fulfillment === 'Delivery' && zonesOn && quote.state !== 'idle' && (
+              <p role={noDelivery ? 'alert' : 'status'} className={noDelivery ? 'form-error' : 'hint'}>
+                {noDelivery
+                  ? t('order.zones.blocked')
+                  : quote.state === 'loading'
+                    ? t('order.zones.loading')
+                    : quoted?.status === 'unknown' || quote.state === 'failed'
+                      ? t('order.zones.unknown')
+                      : null}
+              </p>
+            )}
+            {fulfillment === 'Delivery' && zonesOn && quote.state === 'idle' && count > 0 && (
+              <p role="status" className="hint">
+                {t('order.zones.needAddress')}
+              </p>
+            )}
+            <OrderSummary
+              selections={state.selections}
+              dishes={dishes}
+              delivery={fulfillment === 'Delivery' && zonesOn ? { fee: deliveryFee, zoneName: quoted?.zoneName ?? null, pending: !quoted } : undefined}
+            />
             <div className="row">
               <button
                 ref={submitRef}
                 type="submit"
-                disabled={submitting || count === 0 || !supplyDate || belowMinimum}
+                disabled={submitting || count === 0 || !supplyDate || belowMinimum || (fulfillment === 'Delivery' && noDelivery)}
               >
                 {submitting ? t('order.submitting') : t('order.submit')}
               </button>
@@ -788,7 +817,7 @@ export function OrderPage() {
               <p role="status" className="hint">
                 {t('order.belowMinimum', {
                   minimum: formatMoney(minimum),
-                  missing: formatMoney(round2(minimum - total)),
+                  missing: formatMoney(round2(minimum - itemsTotal)),
                 })}
               </p>
             )}
@@ -820,6 +849,7 @@ export function OrderPage() {
           dishes={dishes}
           date={supplyDate?.date}
           total={total}
+          deliveryFee={deliveryFee}
           onChange={setSelection}
           onEdit={revealDish}
           onContinue={() => {

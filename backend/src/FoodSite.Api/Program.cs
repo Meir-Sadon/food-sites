@@ -56,6 +56,13 @@ if (site.Settings.Palette is { } palette && !Palettes.IsKnown(palette))
         $"Site:Settings:Palette {palette} is not a palette. Known palettes: {string.Join(", ", Palettes.All)}.");
 builder.Services.Configure<SiteOptions>(config.GetSection(SiteOptions.Section));
 builder.Services.AddScoped<FeatureFlags>();
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<FoodSite.Api.Delivery.IAddressGeocoder, FoodSite.Api.Delivery.NominatimGeocoder>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(8);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("food-sites/1.0 (+https://github.com/Meir-Sadon/food-sites)");
+});
+builder.Services.AddScoped<FoodSite.Api.Delivery.DeliveryQuoter>();
 // Cookie names, the JWT issuer and the WhatsApp template names are built from the site id unless configured.
 builder.Services.PostConfigure<JwtOptions>(o => o.UseSiteDefaults(site));
 builder.Services.PostConfigure<FoodSite.Api.Auth.CookieOptions>(o => o.UseSiteDefaults(site));

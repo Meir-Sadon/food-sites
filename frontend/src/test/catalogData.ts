@@ -30,6 +30,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   font: 'standard',
   shadows: 'standard',
   spacing: 'standard',
+  deliveryPricing: 'simple',
   ...patch,
 })
 
@@ -107,6 +108,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   font: 'standard',
   shadows: 'standard',
   spacing: 'standard',
+  deliveryPricing: 'simple',
   ...patch,
 })
 

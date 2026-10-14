@@ -46,7 +46,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         int? LineWidth,
         string Font,
         string Shadows,
-        string Spacing);
+        string Spacing,
+        string DeliveryPricing);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -74,12 +75,13 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool? BitEnabled = null,
         bool? PayBoxEnabled = null,
         string? BitLink = null,
-        string? PayBoxLink = null);
+        string? PayBoxLink = null,
+        string? DeliveryPricing = null);
 
     public const int LinkMaxLength = 500;
 
     [HttpGet]
-    public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
+    public async Task<SettingsDto> Get() => await ToDtoAsync(await db.Settings.SingleAsync());
 
     [HttpPut]
     public async Task<ActionResult<SettingsDto>> Update(SettingsInput input)
@@ -134,6 +136,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.Spacing), "invalid");
         if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !IsEmail(input.OwnerEmail.Trim()))
             errors.Add(nameof(input.OwnerEmail), "email");
+        if (input.DeliveryPricing is not null && !Delivery.DeliveryPricing.IsKnown(input.DeliveryPricing))
+            errors.Add(nameof(input.DeliveryPricing), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -186,8 +190,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Missing (an older client) keeps the address; an empty one turns the mails off.
         if (input.OwnerEmail is not null)
             settings.OwnerEmail = Clean(input.OwnerEmail);
+        // Missing (an older client) keeps the mode.
+        if (input.DeliveryPricing is not null)
+            settings.DeliveryPricing = input.DeliveryPricing;
         await db.SaveChangesAsync();
-        return ToDto(settings);
+        return await ToDtoAsync(settings);
     }
 
     [HttpPut("background")]
@@ -217,7 +224,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
 
         if (previous is not null)
             await images.DeleteAsync(previous, ct);
-        return ToDto(settings);
+        return await ToDtoAsync(settings);
     }
 
     [HttpDelete("background")]
@@ -231,10 +238,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
 
         if (previous is not null)
             await images.DeleteAsync(previous, ct);
-        return ToDto(settings);
+        return await ToDtoAsync(settings);
     }
 
-    private SettingsDto ToDto(Data.Entities.Settings s) => new(
+    private async Task<SettingsDto> ToDtoAsync(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.BitEnabled, s.PayBoxEnabled, s.BitLink, s.PayBoxLink, s.MinimumOrderAmount,
         s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate,
@@ -248,7 +255,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         s.LineWidth,
         Finish.Effective(s.FontPair, Finish.IsKnownFont),
         Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
-        Finish.Effective(s.Spacing, Finish.IsKnownSpacing));
+        Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
+        s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple);
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

@@ -95,7 +95,12 @@ export interface Site {
   font: FontPair
   shadows: Shadows
   spacing: Spacing
+  /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
+  deliveryPricing: DeliveryPricing
 }
+
+/** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
+export type DeliveryPricing = 'simple' | 'zones'
 
 export interface MenuOption {
   id: number
@@ -284,6 +289,15 @@ export interface Confirmation {
   deliveryHour?: string | null
   /** The picked hour was already full: the admin may call to move it. */
   hourFull?: boolean
+  /** The delivery fee in ₪ (already inside `total`). */
+  deliveryFee?: number
+}
+
+/** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */
+export interface DeliveryQuote {
+  status: 'ok' | 'blocked' | 'unknown' | 'none'
+  fee: number
+  zoneName: string | null
 }
 
 export const siteApi = {
@@ -292,6 +306,11 @@ export const siteApi = {
   /** Whether an hour is already full; asked only once the client picks it. */
   hourAvailability: (date: string, hour: string) =>
     apiJson<{ full: boolean }>(`/api/hour-availability?date=${date}&hour=${encodeURIComponent(hour)}`),
+}
+
+export const deliveryApi = {
+  quote: (address: { city: string; street: string; houseNumber: string }) =>
+    apiJson<DeliveryQuote>('/api/delivery-quote', send('POST', address)),
 }
 
 export const ordersApi = {

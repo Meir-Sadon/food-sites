@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ColorSet, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -49,10 +49,12 @@ export interface Settings {
   shadows: Shadows
   /** How much air there is between things on the client site. */
   spacing: Spacing
+  /** `simple` until the admin picks `zones`. */
+  deliveryPricing: DeliveryPricing
 }
 /** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing'> &
-  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing'>>
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'deliveryPricing'> &
+  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'deliveryPricing'>>
 
 export interface SupplyDay {
   weekday: Weekday
@@ -260,6 +262,22 @@ export interface DishGroup {
   displayOrder: number
   /** Dishes ordered on their own (not variants or add-ons), from any category. */
   dishIds: number[]
+}
+
+/** A delivery area drawn on the map; `polygon` holds its corners as [lat, lng]. */
+export interface DeliveryZone {
+  id: number | null
+  name: string
+  fee: number
+  /** No deliveries into this area. */
+  isBlocked: boolean
+  polygon: [number, number][]
+}
+
+export const deliveryZonesApi = {
+  get: () => apiJson<DeliveryZone[]>(`${admin}/delivery-zones`),
+  /** The list sent replaces the stored one; its order is the priority where zones overlap. */
+  save: (zones: DeliveryZone[]) => apiJson<DeliveryZone[]>(`${admin}/delivery-zones`, send('PUT', { zones })),
 }
 
 export const dishGroupsApi = {
