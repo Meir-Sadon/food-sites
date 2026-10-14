@@ -20,6 +20,12 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   orderFlow: 'page',
   corners: 'rounded',
   ownerEmail: '',
+  palette: 'site',
+  customColors: {},
+  lineWidth: null,
+  font: 'standard',
+  shadows: 'standard',
+  spacing: 'standard',
   ...patch,
 })
 
@@ -89,6 +95,12 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   orderTotalPosition: 'bottom',
   orderFlow: 'page',
   corners: 'rounded',
+  palette: 'site',
+  customColors: {},
+  lineWidth: null,
+  font: 'standard',
+  shadows: 'standard',
+  spacing: 'standard',
   ...patch,
 })
 

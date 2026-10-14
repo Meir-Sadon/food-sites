@@ -118,6 +118,10 @@ public class AppDbContext(
             e.Property(s => s.OrderTotalPosition).HasMaxLength(Sites.OrderLayout.MaxLength);
             e.Property(s => s.OrderFlow).HasMaxLength(Sites.OrderLayout.MaxLength);
             e.Property(s => s.Corners).HasMaxLength(Sites.Corners.MaxLength);
+            e.Property(s => s.Palette).HasMaxLength(Sites.Palettes.MaxLength);
+            e.Property(s => s.FontPair).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.ShadowStrength).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.Spacing).HasMaxLength(Sites.Finish.MaxLength);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
         });
 

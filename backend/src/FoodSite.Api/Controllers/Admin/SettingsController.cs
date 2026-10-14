@@ -36,7 +36,13 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string OrderTotalPosition,
         string OrderFlow,
         string Corners,
-        string OwnerEmail);
+        string OwnerEmail,
+        string Palette,
+        IReadOnlyDictionary<string, string> CustomColors,
+        int? LineWidth,
+        string Font,
+        string Shadows,
+        string Spacing);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -54,7 +60,13 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? OrderTotalPosition = null,
         string? OrderFlow = null,
         string? Corners = null,
-        string? OwnerEmail = null);
+        string? OwnerEmail = null,
+        string? Palette = null,
+        Dictionary<string, string>? CustomColors = null,
+        int? LineWidth = null,
+        string? Font = null,
+        string? Shadows = null,
+        string? Spacing = null);
 
     [HttpGet]
     public async Task<SettingsDto> Get() => ToDto(await db.Settings.SingleAsync());
@@ -88,6 +100,19 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.OrderFlow), "invalid");
         if (input.Corners is not null && !Sites.Corners.IsKnown(input.Corners))
             errors.Add(nameof(input.Corners), "invalid");
+        if (input.Palette is not null && !Palettes.IsKnown(input.Palette))
+            errors.Add(nameof(input.Palette), "invalid");
+        if (input.CustomColors is not null
+            && input.CustomColors.Any(c => !Palettes.ColorKeys.Contains(c.Key) || !Palettes.IsColor(c.Value)))
+            errors.Add(nameof(input.CustomColors), "invalid");
+        if (input.LineWidth is < 0 or > Palettes.MaxLineWidth)
+            errors.Add(nameof(input.LineWidth), "invalid");
+        if (input.Font is not null && !Finish.IsKnownFont(input.Font))
+            errors.Add(nameof(input.Font), "invalid");
+        if (input.Shadows is not null && !Finish.IsKnownShadows(input.Shadows))
+            errors.Add(nameof(input.Shadows), "invalid");
+        if (input.Spacing is not null && !Finish.IsKnownSpacing(input.Spacing))
+            errors.Add(nameof(input.Spacing), "invalid");
         if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !IsEmail(input.OwnerEmail.Trim()))
             errors.Add(nameof(input.OwnerEmail), "email");
         if (errors.Any)
@@ -121,6 +146,20 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.OrderFlow = input.OrderFlow;
         if (input.Corners is not null)
             settings.Corners = input.Corners;
+        // Missing keeps the colours; an empty set clears the custom colours, zero the line thickness.
+        if (input.Palette is not null)
+            settings.Palette = input.Palette;
+        if (input.CustomColors is not null)
+            settings.CustomColors = Palettes.Format(input.CustomColors);
+        if (input.LineWidth is { } lineWidth)
+            settings.LineWidth = lineWidth == 0 ? null : lineWidth;
+        // Likewise the font, shadows and spacing.
+        if (input.Font is not null)
+            settings.FontPair = input.Font;
+        if (input.Shadows is not null)
+            settings.ShadowStrength = input.Shadows;
+        if (input.Spacing is not null)
+            settings.Spacing = input.Spacing;
         // Missing (an older client) keeps the address; an empty one turns the mails off.
         if (input.OwnerEmail is not null)
             settings.OwnerEmail = Clean(input.OwnerEmail);
@@ -180,7 +219,13 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
         OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
         Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
-        s.OwnerEmail ?? "");
+        s.OwnerEmail ?? "",
+        Palettes.Effective(s.Palette, site.Value.Settings.Palette),
+        Palettes.Parse(s.CustomColors),
+        s.LineWidth,
+        Finish.Effective(s.FontPair, Finish.IsKnownFont),
+        Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
+        Finish.Effective(s.Spacing, Finish.IsKnownSpacing));
 
     private static bool IsEmail(string value) =>
         value.Length <= OwnerEmailMaxLength && EmailPattern().IsMatch(value);
