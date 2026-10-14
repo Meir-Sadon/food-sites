@@ -946,6 +946,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("BackgroundImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<bool>("BitEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BitLink")
+                        .HasColumnType("text");
+
                     b.Property<string>("ContactAddress")
                         .HasColumnType("text");
 
@@ -965,6 +971,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("CustomColors")
+                        .HasColumnType("text");
+
                     b.Property<string>("DeliveryAreaText")
                         .HasColumnType("text");
 
@@ -977,8 +986,15 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
 
+                    b.Property<string>("FontPair")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("KashrutText")
                         .HasColumnType("text");
+
+                    b.Property<int?>("LineWidth")
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("MinimumOrderAmount")
                         .HasPrecision(10, 2)
@@ -1008,6 +1024,16 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("OwnerEmail")
                         .HasColumnType("text");
 
+                    b.Property<string>("Palette")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("PayBoxEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PayBoxLink")
+                        .HasColumnType("text");
+
                     b.Property<string>("PaymentPhone")
                         .HasColumnType("text");
 
@@ -1020,10 +1046,18 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");
 
+                    b.Property<string>("ShadowStrength")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<bool>("SiteDefaultsApplied")
                         .HasColumnType("boolean");
 
                     b.Property<string>("SiteStyle")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Spacing")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 

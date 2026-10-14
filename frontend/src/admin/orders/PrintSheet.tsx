@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { paymentKey } from '../../order/payment'
 import type { AdminOrder } from '../../api/operations'
 import { formatMoney, formatTime } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
@@ -51,7 +52,7 @@ function PrintedOrder({ order }: { order: AdminOrder }) {
         )}
         <div>
           <dt>{t('admin.orders.sheet.payment')}</dt>
-          <dd>{t(order.paymentMethod === 'Transfer' ? 'admin.orders.transfer' : 'admin.orders.onDelivery')}</dd>
+          <dd>{t(paymentKey(order.paymentMethod))}</dd>
           <dd>{paid}</dd>
         </div>
       </dl>

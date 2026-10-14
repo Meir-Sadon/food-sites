@@ -55,6 +55,7 @@ public class OrdersController(
         PaymentMethod PaymentMethod,
         decimal Total,
         string? PaymentPhone,
+        string? PaymentLink,
         bool NeedsReview,
         IReadOnlyList<ConfirmationItemDto> Items,
         TimeOnly? DeliveryHour = null,
@@ -94,7 +95,7 @@ public class OrdersController(
 
         if (!Enum.IsDefined(input.PaymentMethod))
             errors.Add(nameof(input.PaymentMethod), "invalid");
-        else if (input.PaymentMethod == PaymentMethod.Transfer && string.IsNullOrWhiteSpace(settings.PaymentPhone))
+        else if (input.PaymentMethod.IsTransfer() && !TransferAvailable(settings, input.PaymentMethod))
             errors.Add(nameof(input.PaymentMethod), "paymentUnavailable");
 
         var days = await db.SupplyDays.AsNoTracking().ToListAsync(ct);
@@ -160,7 +161,10 @@ public class OrdersController(
             DeliveryHour = hour,
             FulfillmentMethod = input.FulfillmentMethod,
             Notes = Clean(input.Notes),
-            PaymentMethod = input.PaymentMethod,
+            // An older page still sends the combined "Transfer": it becomes whichever service is on.
+            PaymentMethod = input.PaymentMethod == PaymentMethod.Transfer
+                ? (settings.BitEnabled ? PaymentMethod.Bit : PaymentMethod.PayBox)
+                : input.PaymentMethod,
             Status = OrderStatus.New,
             // An address the map could not place waits for the admin, like a city outside the service area.
             NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery
@@ -179,7 +183,8 @@ public class OrdersController(
 
         return new ConfirmationDto(
             order.Id, order.SupplyDate, order.FulfillmentMethod, order.PaymentMethod, order.Total,
-            order.PaymentMethod == PaymentMethod.Transfer ? settings.PaymentPhone : null,
+            order.PaymentMethod.IsTransfer() ? settings.PaymentPhone : null,
+            order.PaymentMethod switch { PaymentMethod.Bit => settings.BitLink, PaymentMethod.PayBox => settings.PayBoxLink, _ => null },
             order.NeedsReview,
             order.Items
                 .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null))
@@ -188,6 +193,15 @@ public class OrdersController(
             hourFull,
             order.DeliveryFee);
     }
+
+    /// <summary>A manual payment needs the business's number and that service switched on.</summary>
+    private static bool TransferAvailable(Settings settings, PaymentMethod method) =>
+        !string.IsNullOrWhiteSpace(settings.PaymentPhone) && method switch
+        {
+            PaymentMethod.Bit => settings.BitEnabled,
+            PaymentMethod.PayBox => settings.PayBoxEnabled,
+            _ => settings.BitEnabled || settings.PayBoxEnabled,
+        };
 
     /// <summary>
     /// A dish with a per-supply-date limit can only be ordered until the orders already placed

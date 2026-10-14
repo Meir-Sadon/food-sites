@@ -97,6 +97,23 @@ public class SupplyCalendarTests
     }
 
     [Fact]
+    public void Hours_already_over_today_are_left_out_and_a_finished_day_is_not_offered()
+    {
+        var day = FridayRule();
+        day.CutoffDay = DayOfWeek.Friday;
+        day.CutoffTime = new TimeOnly(23, 0);
+        day.DeliveryFrom = new TimeOnly(12, 0);
+        day.DeliveryTo = new TimeOnly(15, 0);
+
+        var midday = SupplyCalendar.Find(Friday, new DateTime(2026, 10, 9, 13, 30, 0), [day], []);
+        Assert.Equal([new TimeOnly(13, 0), new TimeOnly(14, 0)], midday!.Hours.Select(h => h.From));
+
+        var evening = new DateTime(2026, 10, 9, 15, 0, 0);
+        Assert.Null(SupplyCalendar.Find(Friday, evening, [day], []));
+        Assert.Equal(Friday.AddDays(7), SupplyCalendar.OpenDates(evening, [day], [], max: 1).Single().Date);
+    }
+
+    [Fact]
     public void Open_dates_carry_their_day_s_hours()
     {
         var day = FridayRule();

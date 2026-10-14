@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { isTransfer } from '../../order/payment'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../../api/client'
 import { ordersAdminApi, paidWithChoices, type AdminOrder, type PaidWith } from '../../api/operations'
@@ -6,7 +7,7 @@ import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { FieldError, Status } from '../ui'
 
 /** A transfer was asked to go by Bit or PayBox, so Bit is the likelier guess; otherwise cash at the door. */
-const suggested = (order: AdminOrder): PaidWith => (order.paymentMethod === 'Transfer' ? 'Bit' : 'Cash')
+const suggested = (order: AdminOrder): PaidWith => (order.paymentMethod === 'PayBox' ? 'PayBox' : isTransfer(order.paymentMethod) ? 'Bit' : 'Cash')
 
 /** Marks an order paid: how it was paid is required, a comment is optional. */
 export function PaidForm({

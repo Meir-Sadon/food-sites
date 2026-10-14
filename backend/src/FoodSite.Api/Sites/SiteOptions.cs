@@ -91,6 +91,9 @@ public class SiteSettingsDefaults
 
     /// <summary>The site's default corners, one of <see cref="Sites.Corners.All"/>. Applies until the admin picks one.</summary>
     public string? Corners { get; set; }
+
+    /// <summary>The site's default colour palette, one of <see cref="Sites.Palettes.All"/>. Applies until the admin picks one.</summary>
+    public string? Palette { get; set; }
 }
 
 public class SiteWhatsAppTemplates

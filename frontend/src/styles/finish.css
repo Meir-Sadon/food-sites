@@ -1,0 +1,104 @@
+/* The finish choices of Settings → fonts, shadows and spacing (FoodSite.Api Finish). They apply on top of every
+   style: ClientLayout sets <html data-font data-shadows data-spacing> on client pages only. `standard` sets nothing, so
+   the style keeps its own look. This file loads after the styles so its rules win over theirs. */
+@import '@fontsource/heebo/hebrew-400.css';
+@import '@fontsource/heebo/latin-400.css';
+@import '@fontsource/heebo/hebrew-700.css';
+@import '@fontsource/heebo/latin-700.css';
+@import '@fontsource/frank-ruhl-libre/hebrew-400.css';
+@import '@fontsource/frank-ruhl-libre/latin-400.css';
+@import '@fontsource/frank-ruhl-libre/hebrew-700.css';
+@import '@fontsource/frank-ruhl-libre/latin-700.css';
+
+/* ---------- Fonts ---------- */
+
+/* Friendly: round Rubik everywhere. */
+:root[data-font='friendly'] {
+  --font-body: 'Rubik', 'Assistant', 'Segoe UI', Arial, sans-serif;
+  --font-heading: 'Rubik', 'Assistant', 'Segoe UI', Arial, sans-serif;
+}
+
+/* Elegant: a Hebrew serif for titles over clean Heebo text. */
+:root[data-font='elegant'] {
+  --font-body: 'Heebo', 'Assistant', 'Segoe UI', Arial, sans-serif;
+  --font-heading: 'Frank Ruhl Libre', 'Times New Roman', serif;
+}
+
+:root:is([data-font='friendly'], [data-font='elegant']) {
+  font-family: var(--font-body);
+}
+
+:root:is([data-font='friendly'], [data-font='elegant'])[data-style] :is(h1, h2, h3, .top-bar__brand, .order-hero__tagline) {
+  font-family: var(--font-heading);
+}
+
+:root[data-font='elegant'][data-style] :is(h1, h2, h3, .top-bar__brand) {
+  font-weight: 700;
+}
+
+/* ---------- Shadows ---------- */
+
+:root[data-shadows='none'] {
+  --shadow-sm: none;
+  --shadow-md: none;
+  --hard: none;
+  --hard-sm: none;
+}
+
+:root[data-shadows='soft'] {
+  --shadow-sm: 0 1px 2px color-mix(in srgb, var(--color-shadow) 6%, transparent),
+    0 1px 3px color-mix(in srgb, var(--color-shadow) 8%, transparent);
+  --shadow-md: 0 4px 12px color-mix(in srgb, var(--color-shadow) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-shadow) 5%, transparent);
+  --hard: var(--shadow-md);
+  --hard-sm: var(--shadow-sm);
+}
+
+:root[data-shadows='strong'] {
+  --shadow-sm: 0 2px 6px color-mix(in srgb, var(--color-shadow) 18%, transparent);
+  --shadow-md: 0 10px 28px color-mix(in srgb, var(--color-shadow) 26%, transparent),
+    0 3px 8px color-mix(in srgb, var(--color-shadow) 14%, transparent);
+  --hard: var(--shadow-md);
+  --hard-sm: var(--shadow-sm);
+}
+
+/* The street style draws some shadows outright; they follow the choice too. */
+:root[data-shadows='none'][data-style='street'] .dish--chosen {
+  box-shadow: none;
+}
+
+/* ---------- Spacing ---------- */
+
+:root[data-spacing='compact'] .page {
+  padding-block: 0.75rem;
+}
+
+:root[data-spacing='compact'] :is(.order-page, .order-main) {
+  gap: 0.875rem;
+}
+
+:root[data-spacing='compact'][data-style='classic'] .dish {
+  padding: 0.625rem;
+  gap: 0.625rem 1rem;
+}
+
+:root[data-spacing='compact'] .category > summary {
+  padding-block: 0.625rem;
+}
+
+:root[data-spacing='spacious'] .page {
+  padding-block: 2.25rem;
+}
+
+:root[data-spacing='spacious'] :is(.order-page, .order-main) {
+  gap: 2.25rem;
+}
+
+:root[data-spacing='spacious'][data-style='classic'] .dish {
+  padding: 1.5rem;
+  gap: 1.5rem 2rem;
+}
+
+:root[data-spacing='spacious'] .category > summary {
+  padding-block: 1.5rem;
+}

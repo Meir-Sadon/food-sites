@@ -26,6 +26,18 @@ public class Settings
     /// <summary>Phone number for manual Bit/PayBox transfers.</summary>
     public string? PaymentPhone { get; set; }
 
+    /// <summary>The client may choose to pay with Bit (a manual transfer to <see cref="PaymentPhone"/>).</summary>
+    public bool BitEnabled { get; set; }
+
+    /// <summary>The client may choose to pay with PayBox (a manual transfer to <see cref="PaymentPhone"/>).</summary>
+    public bool PayBoxEnabled { get; set; }
+
+    /// <summary>A payment-request link the owner made in the Bit app (https), shown to a client who pays with Bit.</summary>
+    public string? BitLink { get; set; }
+
+    /// <summary>A payment-request link the owner made in the PayBox app (https), shown to a client who pays with PayBox.</summary>
+    public string? PayBoxLink { get; set; }
+
     /// <summary>
     /// The cities deliveries go to, comma-separated (see <c>ServiceArea</c>). Null until seeded from the
     /// site's <c>site.json</c> on startup; empty means every city is served.
@@ -75,6 +87,22 @@ public class Settings
     /// zones the admin drew, see <c>DeliveryZone</c>). Null means simple.
     /// </summary>
     public string? DeliveryPricing { get; set; }
+
+    /// <summary>The ready-made colour palette (see <c>Palettes</c>); null means the site's default.</summary>
+    public string? Palette { get; set; }
+
+    /// <summary>The admin's own colours per element as a JSON object (see <c>Palettes.ColorKeys</c>); they win over the palette. Null: none.</summary>
+    public string? CustomColors { get; set; }
+
+    /// <summary>Thickness in pixels of the lines on the client site (1 to <c>Palettes.MaxLineWidth</c>); null means the original thickness.</summary>
+    public int? LineWidth { get; set; }
+
+    /// <summary>The font pair, shadow strength and spacing of the client site (see <c>Finish</c>); null means <c>standard</c>.</summary>
+    public string? FontPair { get; set; }
+
+    public string? ShadowStrength { get; set; }
+
+    public string? Spacing { get; set; }
 
     // Main contact
     public string? ContactName { get; set; }

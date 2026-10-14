@@ -324,26 +324,93 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal(1, await db.Orders.CountAsync());
     }
 
-    [Fact]
-    public async Task Transfer_payment_shows_the_payment_phone()
+    private async Task SetPayments(bool bit, bool payBox, string? phone = "052-9999999", string? bitLink = null)
     {
         (await _admin.PutAsJsonAsync("/api/admin/settings", new
         {
             deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
-            kashrutText = (string?)null, paymentPhone = "052-9999999",
+            kashrutText = (string?)null, paymentPhone = phone, bitEnabled = bit, payBoxEnabled = payBox, bitLink,
         })).EnsureSuccessStatusCode();
-
-        var confirmation = await (await Place(await ValidOrder(o => o["paymentMethod"] = "Transfer"))).Read<ConfirmationDto>();
-
-        Assert.Equal("052-9999999", confirmation.PaymentPhone);
-        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("052-9999999"));
     }
 
     [Fact]
-    public async Task Transfer_needs_a_payment_phone_in_settings()
+    public async Task Bit_payment_shows_the_payment_phone_and_link_and_is_saved_on_the_order()
     {
-        var response = await Place(await ValidOrder(o => o["paymentMethod"] = "Transfer"));
+        await SetPayments(bit: true, payBox: true, bitLink: "https://www.bitpay.co.il/app/me/abc");
+
+        var confirmation = await (await Place(await ValidOrder(o => o["paymentMethod"] = "Bit"))).Read<ConfirmationDto>();
+
+        Assert.Equal(PaymentMethod.Bit, confirmation.PaymentMethod);
+        Assert.Equal("052-9999999", confirmation.PaymentPhone);
+        Assert.Equal("https://www.bitpay.co.il/app/me/abc", confirmation.PaymentLink);
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("052-9999999") && m.Contains("Bit"));
+        await using var db = _factory.CreateDbContext();
+        Assert.Equal(PaymentMethod.Bit, (await db.Orders.SingleAsync()).PaymentMethod);
+    }
+
+    [Fact]
+    public async Task PayBox_payment_has_no_link_unless_the_owner_set_one()
+    {
+        await SetPayments(bit: true, payBox: true, bitLink: "https://www.bitpay.co.il/app/me/abc");
+
+        var confirmation = await (await Place(await ValidOrder(o => o["paymentMethod"] = "PayBox"))).Read<ConfirmationDto>();
+
+        Assert.Equal(PaymentMethod.PayBox, confirmation.PaymentMethod);
+        Assert.Null(confirmation.PaymentLink);
+    }
+
+    [Fact]
+    public async Task A_payment_service_the_admin_switched_off_is_refused()
+    {
+        await SetPayments(bit: true, payBox: false);
+
+        await (await Place(await ValidOrder(o => o["paymentMethod"] = "PayBox"))).AssertInvalid("PaymentMethod", "paymentUnavailable");
+        Assert.Equal(HttpStatusCode.OK, (await Place(await ValidOrder(o => o["paymentMethod"] = "Bit"))).StatusCode);
+    }
+
+    [Fact]
+    public async Task The_site_lists_only_the_services_that_are_on()
+    {
+        await SetPayments(bit: false, payBox: true);
+        var site = await (await _factory.CreateApiClient().GetAsync("/api/site")).Read<SiteDto>();
+        Assert.False(site.BitEnabled);
+        Assert.True(site.PayBoxEnabled);
+
+        await SetPayments(bit: false, payBox: false, phone: null);
+        site = await (await _factory.CreateApiClient().GetAsync("/api/site")).Read<SiteDto>();
+        Assert.False(site.BitEnabled || site.PayBoxEnabled);
+    }
+
+    [Fact]
+    public async Task The_older_combined_transfer_becomes_the_service_that_is_on()
+    {
+        await SetPayments(bit: false, payBox: true);
+
+        var confirmation = await (await Place(await ValidOrder(o => o["paymentMethod"] = "Transfer"))).Read<ConfirmationDto>();
+
+        Assert.Equal(PaymentMethod.PayBox, confirmation.PaymentMethod);
+    }
+
+    [Fact]
+    public async Task Transfer_needs_a_service_switched_on_in_settings()
+    {
+        var response = await Place(await ValidOrder(o => o["paymentMethod"] = "Bit"));
         await response.AssertInvalid("PaymentMethod", "paymentUnavailable");
+    }
+
+    [Fact]
+    public async Task A_payment_service_needs_the_payment_phone_and_an_https_link()
+    {
+        await (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+            kashrutText = (string?)null, paymentPhone = (string?)null, bitEnabled = true, bitLink = "http://x.example",
+        })).AssertInvalid("PaymentPhone", "required");
+        await (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+            kashrutText = (string?)null, paymentPhone = "052-9999999", bitEnabled = true, bitLink = "http://x.example",
+        })).AssertInvalid("BitLink", "link");
     }
 
     [Fact]

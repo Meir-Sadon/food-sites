@@ -18,7 +18,7 @@ public class OwnerMessagesTests
         var order = new Order
         {
             Id = 12, Phone = "050-123-4567", Name = "דנה <b>", Address = "הרצל 1, אשקלון", SupplyDate = new DateOnly(2030, 1, 6),
-            DeliveryHour = new TimeOnly(9, 0), FulfillmentMethod = FulfillmentMethod.Delivery, PaymentMethod = PaymentMethod.Transfer,
+            DeliveryHour = new TimeOnly(9, 0), FulfillmentMethod = FulfillmentMethod.Delivery, PaymentMethod = PaymentMethod.PayBox,
             Notes = "להתקשר לפני", Total = 176, Items = [main, addOn],
         };
 
@@ -27,7 +27,7 @@ public class OwnerMessagesTests
         Assert.Equal("הזמנה חדשה #12 מאת דנה <b>", mail.Subject);
         foreach (var part in new[]
         {
-            "הבית של אמא", "050-123-4567", "06/01/2030", "09:00", "הרצל 1, אשקלון", "העברה", "2 × עוף בתנור (שלם) – ₪140", "(₪70 ליחידה)",
+            "הבית של אמא", "050-123-4567", "06/01/2030", "09:00", "הרצל 1, אשקלון", "העברה ב־PayBox", "2 × עוף בתנור (שלם) – ₪140", "(₪70 ליחידה)",
             "בלי מלח", "חריפות: בינוני", "+ 3 × ירך (יחידה) – ₪36", "להתקשר לפני", "סה״כ: ₪176", "השעה שנבחרה כבר מלאה",
             "https://shop.example/admin/orders/12",
         })

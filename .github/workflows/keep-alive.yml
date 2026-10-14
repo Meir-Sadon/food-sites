@@ -1,25 +1,37 @@
 # Keeps chosen free Render services awake during opening hours: a free service sleeps after 15
 # minutes without a request, and the first visitor after that waits about a minute for it to
-# start. Every 25 minutes between 09:00 and 21:00 Israel time this asks /api/health (no database,
-# no auth) of each site listed in .github/keep-alive-sites.txt, which counts as a request. Sites
-# not in that file are never pinged.
+# start. The sites and the interval are set in GitHub, not in this file, so changing them needs
+# no pull request:
+#
+#   Settings -> Secrets and variables -> Actions -> Variables
+#   KEEP_ALIVE_SITES              site ids, separated by spaces, e.g. "kuskus-liel cigars-shiraz"
+#                                 (empty or missing: nothing is pinged)
+#   KEEP_ALIVE_INTERVAL_MINUTES   minutes between pings, default 13 (5 to 15 recommended; see below)
+#
+# GitHub's schedule runs at most every 5 minutes, so the workflow runs every 5 minutes between
+# 09:00 and 21:00 Israel time and pings only when the elapsed time since 09:00 falls in the first
+# 5-minute slot of an interval. With 13 minutes that gives pings 10 to 15 minutes apart. Render
+# sleeps a service after 15 minutes without a request, so keep the interval at 10 or less if a
+# site must not sleep at all: 10 keeps it awake all opening hours; with 13, a gap of 15 minutes
+# sometimes lets it sleep, and a late GitHub run can make the gap longer.
 #
 # Free instance hours: Render gives a workspace 750 free hours a month, shared by all its free
-# services, and only an awake service uses them. With a ping every 25 minutes, a listed site is
-# awake about 15 minutes after each ping, roughly 7 to 8 hours a day (about 230 hours a month), so
-# three sites at most fit in the monthly hours, and list only what they can carry; when they run out,
-# Render suspends every free service until the next month.
+# services, and only an awake service uses them. A site awake all opening hours uses about 365
+# hours a month, so one or two sites fit comfortably and three do not; visitors who wake a site
+# outside the hours use more. Keep the list to what the hours can carry.
 #
-# GitHub runs scheduled workflows late at busy times (often several minutes, so a site can
-# still fall asleep between pings, since a 25-minute gap is longer than the 15-minute idle limit), and turns the schedule off after 60 days without a commit
-# to the repository; it is turned back on under Actions -> Keep sites awake -> Enable workflow.
+# GitHub runs scheduled workflows late at busy times, often by several minutes, so a ping can be
+# late too. GitHub also turns a schedule off after 60 days without a commit to the repository; it
+# is turned back on under Actions -> Keep sites awake -> Enable workflow.
+#
+# Run it by hand with "Run workflow": it pings the listed sites at once, at any hour, once.
 name: Keep sites awake
 
 on:
   schedule:
     # UTC hours that cover 09:00-21:00 in Israel in both summer (UTC+3) and winter (UTC+2) time;
-    # the first step checks the exact Israel time.
-    - cron: '*/25 5-19 * * *'
+    # the script checks the exact Israel time.
+    - cron: '*/5 5-19 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -36,26 +48,30 @@ jobs:
     timeout-minutes: 10
     env:
       TZ: Asia/Jerusalem
-      # Opening hours: pings start at START_HOUR:00 and stop before END_HOUR:00 (Israel time).
-      START_HOUR: '9'
-      END_HOUR: '21'
+      SITES: ${{ vars.KEEP_ALIVE_SITES }}
+      INTERVAL: ${{ vars.KEEP_ALIVE_INTERVAL_MINUTES }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: .github/keep-alive-sites.txt
-          sparse-checkout-cone-mode: false
       - name: Ping the listed sites
         run: |
-          hour=$((10#$(date +%H)))
-          if [ "$GITHUB_EVENT_NAME" = schedule ] && { [ "$hour" -lt "$START_HOUR" ] || [ "$hour" -ge "$END_HOUR" ]; }; then
-            echo "It is $(date +%H:%M) in Israel, outside $START_HOUR:00-$END_HOUR:00; nothing to do."
-            exit 0
+          interval=${INTERVAL:-13}
+          case "$interval" in ''|*[!0-9]*) echo "::error::KEEP_ALIVE_INTERVAL_MINUTES must be a whole number of minutes."; exit 1;; esac
+          if [ "$interval" -lt 5 ]; then echo "::error::KEEP_ALIVE_INTERVAL_MINUTES must be at least 5."; exit 1; fi
+          if [ -z "${SITES// /}" ]; then echo "KEEP_ALIVE_SITES is empty; nothing to ping."; exit 0; fi
+
+          # Minutes since 09:00 Israel time; the window is 09:00 to 21:00.
+          elapsed=$((10#$(date +%H) * 60 + 10#$(date +%M) - 540))
+          if [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            if [ "$elapsed" -lt 0 ] || [ "$elapsed" -ge 720 ]; then
+              echo "It is $(date +%H:%M) in Israel, outside 09:00-21:00; nothing to do."
+              exit 0
+            fi
+            # Ping in the first 5-minute slot of each interval (the schedule ticks every 5 minutes).
+            if [ $((elapsed % interval)) -ge 5 ]; then
+              echo "It is $(date +%H:%M) in Israel; the next ping is due in $((interval - elapsed % interval)) minutes."
+              exit 0
+            fi
           fi
-          sites=$(sed 's/#.*//' .github/keep-alive-sites.txt | tr -s '[:space:]' ' ')
-          if [ -z "${sites// /}" ]; then
-            echo "No site is listed in .github/keep-alive-sites.txt; nothing to do."
-            exit 0
-          fi
+
           ping() {
             url="https://$1.onrender.com"
             # A sleeping service takes up to about a minute to answer its first request.
@@ -67,7 +83,7 @@ jobs:
             fi
           }
           pids=()
-          for site in $sites; do ping "$site" & pids+=($!); done
+          for site in $SITES; do ping "$site" & pids+=($!); done
           failed=0
           for pid in "${pids[@]}"; do wait "$pid" || failed=1; done
           exit $failed

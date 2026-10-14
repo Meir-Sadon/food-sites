@@ -598,16 +598,30 @@ describe('Order page', () => {
     expect(total().getByText('סה"כ: ₪0')).toBeInTheDocument()
   })
 
-  it('shows the Bit / PayBox number after a transfer order', async () => {
-    const { user } = await openOrderPage({
-      'POST /api/orders': () => ({ ...confirmation, paymentMethod: 'Transfer', paymentPhone: '052-9999999' }),
+  it('shows the number, the amount and the owner link after a Bit order', async () => {
+    const { api, user } = await openOrderPage({
+      'POST /api/orders': () => ({
+        ...confirmation,
+        paymentMethod: 'Bit',
+        paymentPhone: '052-9999999',
+        paymentLink: 'https://www.bitpay.co.il/app/me/abc',
+      }),
     })
-    await user.click(screen.getByRole('radio', { name: /Bit/ }))
+    await user.click(screen.getByRole('radio', { name: 'Bit' }))
     await fillAndSubmit(user)
 
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ paymentMethod: 'Bit' })
     const dialog = await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
     expect(within(dialog).getByText('052-9999999')).toBeInTheDocument()
+    expect(within(dialog).getByText('82')).toBeInTheDocument()
+    expect(within(dialog).getByRole('link', { name: 'פתיחת Bit' })).toHaveAttribute('href', 'https://www.bitpay.co.il/app/me/abc')
     expect(within(dialog).queryByText('התשלום יבוצע במעמד מסירת המשלוח')).not.toBeInTheDocument()
+  })
+
+  it('offers only the payment services the admin switched on', async () => {
+    await openOrderPage({ 'GET /api/site': () => site({ payBoxEnabled: false }) })
+    expect(screen.getByRole('radio', { name: 'Bit' })).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'PayBox' })).not.toBeInTheDocument()
   })
 
   it('keeps the order and explains when the server refuses it', async () => {

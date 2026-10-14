@@ -23,7 +23,7 @@ const sharedTexts = readJson(join(root, 'frontend/src/i18n/he.json'))
 const logos = ['logo.svg', 'logo.jpg', 'logo.jpeg', 'logo.png', 'logo.webp']
 const idPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 // site.json → settings: the fields of SiteSettingsDefaults (backend/src/FoodSite.Api/Sites/SiteOptions.cs).
-const settingKeys = ['contactName', 'contactPhone', 'contactAddress', 'contactEmail', 'contactOpeningHours', 'deliveryAreaText', 'deliveryFeeText', 'kashrutText', 'backgroundImageUrl', 'style', 'orderTotalPosition', 'orderFlow', 'corners']
+const settingKeys = ['contactName', 'contactPhone', 'contactAddress', 'contactEmail', 'contactOpeningHours', 'deliveryAreaText', 'deliveryFeeText', 'kashrutText', 'backgroundImageUrl', 'style', 'orderTotalPosition', 'orderFlow', 'corners', 'palette']
 // site.json → settings.style: one of SiteStyles.All (backend/src/FoodSite.Api/Sites/SiteStyles.cs).
 const styles = ['classic', 'street', 'tiles']
 // site.json → settings.orderTotalPosition and settings.orderFlow: OrderLayout.TotalPositions and OrderLayout.Flows (Sites/OrderLayout.cs).
@@ -31,6 +31,8 @@ const orderTotalPositions = ['bottom', 'side']
 const orderFlows = ['page', 'steps', 'continue']
 // site.json → settings.corners: Corners.All (Sites/Corners.cs).
 const corners = ['square', 'slight', 'rounded', 'round']
+// site.json → settings.palette: Palettes.All (Sites/Palettes.cs).
+const palettes = ['site', 'olive', 'berry', 'ocean', 'sunset', 'graphite', 'rose']
 
 /** Every leaf key of an i18n file, as dotted paths ("order.hero.tagline"). Arrays count as one value. */
 function leafKeys(texts, prefix = '') {
@@ -40,14 +42,14 @@ function leafKeys(texts, prefix = '') {
 }
 const sharedKeys = new Set(leafKeys(sharedTexts))
 
-// Variables the shared CSS uses (var(--x)) without defining them: the theme each site's theme.css must define.
+// Variables the shared CSS uses (var(--x), without a fallback; the admin's colours like var(--btn-bg, ...) are optional) without defining them: the theme each site's theme.css must define.
 const definedVariables = (css) => new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]))
 const sharedCss = readdirSync(join(root, 'frontend/src'), { recursive: true })
   .filter((file) => file.endsWith('.css'))
   .map((file) => readFileSync(join(root, 'frontend/src', file), 'utf8'))
   .join('\n')
 const sharedDefined = definedVariables(sharedCss)
-const themeVariables = [...new Set([...sharedCss.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]))].filter((v) => !sharedDefined.has(v))
+const themeVariables = [...new Set([...sharedCss.matchAll(/var\((--[\w-]+)\s*\)/g)].map((m) => m[1]))].filter((v) => !sharedDefined.has(v))
 
 // Values that identify one business; none may appear in shared code.
 const businessValues = []
@@ -85,6 +87,7 @@ for (const name of siteNames) {
         fail(`${where}/site.json: orderTotalPosition "${value}" is not one of ${orderTotalPositions.join(', ')}`)
       else if (key === 'orderFlow' && !orderFlows.includes(value)) fail(`${where}/site.json: orderFlow "${value}" is not one of ${orderFlows.join(', ')}`)
       else if (key === 'corners' && !corners.includes(value)) fail(`${where}/site.json: corners "${value}" is not one of ${corners.join(', ')}`)
+      else if (key === 'palette' && !palettes.includes(value)) fail(`${where}/site.json: palette "${value}" is not one of ${palettes.join(', ')}`)
     }
   for (const seed of site.seed ?? [])
     if (!existsSync(join(dir, seed))) fail(`${where}/site.json: seed file ${seed} does not exist`)
