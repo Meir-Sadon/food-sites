@@ -793,7 +793,7 @@ export function OrderPage() {
           </form>
         )}
 
-        {reviewsOn && showDetails && <ReviewsCarousel />}
+        {reviewsOn && (deferred || showDetails) && <ReviewsCarousel />}
       </div>
 
       <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
