@@ -70,6 +70,15 @@ public class Settings
     /// <summary>How round the client site's corners are (see <c>Corners</c>); null means the site's default.</summary>
     public string? Corners { get; set; }
 
+    /// <summary>The ready-made colour palette (see <c>Palettes</c>); null means the site's default.</summary>
+    public string? Palette { get; set; }
+
+    /// <summary>The admin's own colours per element as a JSON object (see <c>Palettes.ColorKeys</c>); they win over the palette. Null: none.</summary>
+    public string? CustomColors { get; set; }
+
+    /// <summary>Thickness in pixels of the lines on the client site (1 to <c>Palettes.MaxLineWidth</c>); null means the original thickness.</summary>
+    public int? LineWidth { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }

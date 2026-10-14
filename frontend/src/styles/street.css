@@ -14,8 +14,8 @@
 
 :root[data-style='street'] {
   --ink: var(--color-text);
-  --line: 2.5px solid var(--ink);
-  --line-thin: 2px solid var(--ink);
+  --line: var(--line-width, 2.5px) solid var(--ink);
+  --line-thin: var(--line-width, 2px) solid var(--ink);
   /* The shadow falls toward the reading direction's end, down and to the left in RTL. */
   --hard: -4px 4px 0 var(--ink);
   --hard-sm: -2px 2px 0 var(--ink);
@@ -45,14 +45,14 @@
 /* ---------- Top bar ---------- */
 
 [data-style='street'] .top-bar {
-  background: var(--color-surface);
+  background: var(--bar-bg, var(--color-surface));
   backdrop-filter: none;
   border-block-end: var(--line);
   box-shadow: none;
 }
 
 [data-style='street'] .top-bar__brand {
-  color: var(--ink);
+  color: var(--bar-text, var(--ink));
   font-family: var(--display);
   font-weight: 400;
   font-size: 1.35rem;
@@ -63,7 +63,7 @@
 }
 
 [data-style='street'] .top-bar__link {
-  color: var(--ink);
+  color: var(--bar-text, var(--ink));
 }
 
 [data-style='street'] .top-bar__link:hover {
@@ -228,14 +228,14 @@
   padding: 0;
   border: var(--line);
   border-radius: calc(1.375rem * var(--corner-scale));
-  background: var(--color-surface);
+  background: var(--dish-bg, var(--color-surface));
   box-shadow: var(--hard);
 }
 
 [data-style='street'] .dish--chosen {
   border-color: var(--color-accent);
   box-shadow: -4px 4px 0 var(--color-accent);
-  background: var(--color-surface);
+  background: var(--dish-bg, var(--color-surface));
 }
 
 [data-style='street'] .dish > .carousel {

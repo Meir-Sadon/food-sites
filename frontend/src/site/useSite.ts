@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import { CORNERS, ORDER_FLOWS, ORDER_TOTAL_POSITIONS, SITE_STYLES, type Corners, type Feature, type OrderFlow, type OrderTotalPosition, type Site, type SiteStyle } from '../api/site'
+import { PALETTES, CORNERS, ORDER_FLOWS, ORDER_TOTAL_POSITIONS, SITE_STYLES, type ColorSet, type Corners, type Feature, type Palette, type OrderFlow, type OrderTotalPosition, type Site, type SiteStyle } from '../api/site'
 import { site as siteConfig } from './config'
 
 export interface SiteState {
@@ -52,4 +52,12 @@ export function useCorners(): Corners {
   if (site) return site.corners
   const corners = siteConfig.settings?.corners
   return CORNERS.find((known) => known === corners) ?? 'rounded'
+}
+
+/** The ready-made palette, the admin's own colours over it and the line thickness: what `/api/site` says, or the site's site.json palette until it answers. */
+export function useColors(): { palette: Palette; customColors: ColorSet; lineWidth: number | null } {
+  const site = useSite()
+  if (site) return { palette: site.palette, customColors: site.customColors, lineWidth: site.lineWidth }
+  const palette = siteConfig.settings?.palette
+  return { palette: PALETTES.find((known) => known === palette) ?? 'site', customColors: {}, lineWidth: null }
 }

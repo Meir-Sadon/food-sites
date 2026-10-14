@@ -30,7 +30,7 @@ export function OrderLayoutSection() {
     setError(null)
     try {
       // The other settings as saved now, so this never sends stale values back; the style and corners stay out so their defaults aren't pinned.
-      const { backgroundImageUrl: _, style: __, corners: ___, ...current } = await settingsApi.get()
+      const { backgroundImageUrl: _, style: __, corners: ___, palette: _p, customColors: _c, lineWidth: _l, ...current } = await settingsApi.get()
       setData(
         await settingsApi.save({
           ...current,

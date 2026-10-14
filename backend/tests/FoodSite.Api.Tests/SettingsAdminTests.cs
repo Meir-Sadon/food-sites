@@ -181,6 +181,57 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task The_admin_picks_a_palette_custom_colors_and_line_width_and_leaving_them_out_keeps_them()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Equal(("site", 0, null), (settings.Palette, settings.CustomColors.Count, settings.LineWidth));
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true, palette = "berry", lineWidth = 3,
+            customColors = new Dictionary<string, string> { ["button"] = "#AA0000", ["menuText"] = "#ffffff" },
+        })).Read<SettingsDto>();
+        Assert.Equal("berry", saved.Palette);
+        Assert.Equal(3, saved.LineWidth);
+        Assert.Equal("#aa0000", saved.CustomColors["button"]);
+
+        var site = await _factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal(("berry", 2, 3), (site.Palette, site.CustomColors.Count, site.LineWidth));
+
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.Equal(("berry", 2, 3), (saved.Palette, saved.CustomColors.Count, saved.LineWidth));
+
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true, lineWidth = 0, customColors = new Dictionary<string, string>(),
+        })).Read<SettingsDto>();
+        Assert.Equal(("berry", 0, null), (saved.Palette, saved.CustomColors.Count, saved.LineWidth));
+
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, palette = "neon" })).AssertInvalid("Palette", "invalid");
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, customColors = new Dictionary<string, string> { ["button"] = "red" } })).AssertInvalid("CustomColors", "invalid");
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, customColors = new Dictionary<string, string> { ["sidebar"] = "#000000" } })).AssertInvalid("CustomColors", "invalid");
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, lineWidth = 9 })).AssertInvalid("LineWidth", "invalid");
+    }
+
+    [Fact]
+    public async Task The_site_default_palette_applies_until_the_admin_picks_one()
+    {
+        using var factory = new ApiFactory(postgres, new() { ["Site:Settings:Palette"] = "olive" });
+        var admin = await factory.CreateAdminClientAsync();
+        var site = await factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal("olive", site.Palette);
+
+        (await admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, palette = "ocean" })).EnsureSuccessStatusCode();
+        site = await factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal("ocean", site.Palette);
+    }
+
+    [Fact]
     public async Task A_service_city_longer_than_an_address_part_is_rejected()
     {
         var response = await _admin.PutAsJsonAsync("/api/admin/settings", Input(cities: "אשקלון, " + new string('א', 101)));
@@ -217,7 +268,8 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
         Assert.Equal("050-1234567", saved.PaymentPhone);
         Assert.Equal(80m, saved.MinimumOrderAmount);
         Assert.True(saved.MinimumOrderAppliesToPickup);
-        Assert.Equal(saved, await (await _admin.GetAsync("/api/admin/settings")).Read<SettingsDto>());
+        var loaded = await (await _admin.GetAsync("/api/admin/settings")).Read<SettingsDto>();
+        Assert.Equal(saved with { CustomColors = loaded.CustomColors }, loaded);
     }
 
     [Fact]

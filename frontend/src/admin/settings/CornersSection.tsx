@@ -26,7 +26,7 @@ export function CornersSection() {
     setSaving(true)
     setError(null)
     try {
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, ...current } = await settingsApi.get()
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, palette: _p, customColors: _c, lineWidth: _l, ...current } = await settingsApi.get()
       setData(await settingsApi.save({ ...current, corners }))
       setPicked(null)
       toast(t('admin.saved'))

@@ -32,6 +32,22 @@ export type Corners = 'square' | 'slight' | 'rounded' | 'round'
 
 export const CORNERS: readonly Corners[] = ['square', 'slight', 'rounded', 'round']
 
+/** The ready-made colour palettes (FoodSite.Api `Palettes`); `site` is the site's own colours from its theme.css. */
+export const PALETTES = ['site', 'olive', 'berry', 'ocean', 'sunset', 'graphite', 'rose'] as const
+export type Palette = (typeof PALETTES)[number]
+
+/** The elements the admin can set a colour for (FoodSite.Api `Palettes.ColorKeys`). */
+export const COLOR_KEYS = [
+  'background', 'text', 'accent', 'button', 'buttonText', 'menu', 'menuText',
+  'banner', 'bannerText', 'dishBackground', 'dishText', 'line',
+] as const
+export type ColorKey = (typeof COLOR_KEYS)[number]
+
+/** Colours by element as `#rrggbb`. */
+export type ColorSet = Partial<Record<ColorKey, string>>
+
+export const MAX_LINE_WIDTH = 4
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -59,6 +75,12 @@ export interface Site {
   orderFlow: OrderFlow
   /** The admin's choice, else the site's default from site.json. */
   corners: Corners
+  /** The admin's choice, else the site's default from site.json. */
+  palette: Palette
+  /** The admin's own colours; they win over the palette. */
+  customColors: ColorSet
+  /** Thickness in pixels of the lines; null keeps the original. */
+  lineWidth: number | null
 }
 
 export interface MenuOption {
