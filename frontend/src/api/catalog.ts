@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ColorSet, Corners, OrderFlow, Palette, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -39,10 +39,16 @@ export interface Settings {
   customColors: ColorSet
   /** Thickness in pixels of the lines (1 to 4); null keeps the original. Send 0 to clear. */
   lineWidth: number | null
+  /** The font pair of the client site. */
+  font: FontPair
+  /** How strong the shadows of the client site are. */
+  shadows: Shadows
+  /** How much air there is between things on the client site. */
+  spacing: Spacing
 }
 /** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth'> &
-  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth'>>
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing'> &
+  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing'>>
 
 export interface SupplyDay {
   weekday: Weekday

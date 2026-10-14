@@ -9,11 +9,11 @@ import { ScrollButtons } from './ScrollButtons'
 import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
 import { colorVariables } from '../site/palettes'
-import { useColors, useCorners, useSite, useSiteStyle } from '../site/useSite'
+import { useColors, useCorners, useFinish, useSite, useSiteStyle } from '../site/useSite'
 import { trackUsage } from '../usage/track'
 
 /**
- * Marks the page with the site's style and corners (`<html data-style data-corners>`), which `styles/*.css` and
+ * Marks the page with the site's style, corners and finish (`<html data-style data-corners data-font data-shadows data-spacing>`), which `styles/*.css` and
  * `--corner-scale` in index.css select on; the admin keeps its own look. The palette and the admin's colours are set
  * as CSS variables on the same element (`site/palettes.ts`) and removed when the client pages unmount.
  */
@@ -21,16 +21,23 @@ function useStyleAttribute() {
   const style = useSiteStyle()
   const corners = useCorners()
   const { palette, customColors, lineWidth } = useColors()
+  const { font, shadows, spacing } = useFinish()
   const colorsKey = JSON.stringify([palette, customColors, lineWidth])
   useEffect(() => {
     const root = document.documentElement
     root.dataset.style = style
     root.dataset.corners = corners
+    root.dataset.font = font
+    root.dataset.shadows = shadows
+    root.dataset.spacing = spacing
     return () => {
       delete root.dataset.style
       delete root.dataset.corners
+      delete root.dataset.font
+      delete root.dataset.shadows
+      delete root.dataset.spacing
     }
-  }, [style, corners])
+  }, [style, corners, font, shadows, spacing])
   useEffect(() => {
     const root = document.documentElement
     const [palette, customColors, lineWidth] = JSON.parse(colorsKey) as Parameters<typeof colorVariables>

@@ -79,6 +79,13 @@ public class Settings
     /// <summary>Thickness in pixels of the lines on the client site (1 to <c>Palettes.MaxLineWidth</c>); null means the original thickness.</summary>
     public int? LineWidth { get; set; }
 
+    /// <summary>The font pair, shadow strength and spacing of the client site (see <c>Finish</c>); null means <c>standard</c>.</summary>
+    public string? FontPair { get; set; }
+
+    public string? ShadowStrength { get; set; }
+
+    public string? Spacing { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }

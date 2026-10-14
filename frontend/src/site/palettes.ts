@@ -108,7 +108,10 @@ export function ensureReadable(colors: ColorSet): { colors: ColorSet; fixed: Col
 export function colorVariables(palette: Palette, custom: ColorSet, lineWidth: number | null): Record<string, string> {
   const { colors } = ensureReadable(mergeColors(palette, custom))
   const vars: Record<string, string> = {}
-  if (colors.background) vars['--color-bg'] = colors.background
+  if (colors.background) {
+    vars['--color-bg'] = colors.background
+    vars['--page-bg'] = colors.background
+  }
   if (colors.text) {
     vars['--color-text'] = colors.text
     vars['--color-muted'] = `color-mix(in srgb, ${colors.text} 72%, ${colors.background ?? '#ffffff'})`
@@ -117,6 +120,8 @@ export function colorVariables(palette: Palette, custom: ColorSet, lineWidth: nu
     vars['--color-accent'] = colors.accent
     vars['--color-accent-hover'] = `color-mix(in srgb, ${colors.accent} 82%, #000000)`
     vars['--color-accent-contrast'] = readableOn(colors.accent)
+    // The street style's stickers and highlights follow the accent too, so every style shows the palette.
+    vars['--color-gold'] = `color-mix(in srgb, ${colors.accent} 55%, #ffffff)`
     vars['--color-soft'] = `color-mix(in srgb, ${colors.accent} 9%, ${colors.background ?? '#ffffff'})`
   }
   if (colors.button) {
@@ -133,7 +138,10 @@ export function colorVariables(palette: Palette, custom: ColorSet, lineWidth: nu
   }
   if (colors.bannerText) vars['--banner-text'] = colors.bannerText
   else if (colors.banner) vars['--banner-text'] = readableOn(colors.banner)
-  if (colors.dishBackground) vars['--dish-bg'] = colors.dishBackground
+  if (colors.dishBackground) {
+    vars['--dish-bg'] = colors.dishBackground
+    vars['--dish-pad'] = '0.5rem'
+  }
   if (colors.dishText) vars['--dish-text'] = colors.dishText
   else if (colors.dishBackground) vars['--dish-text'] = readableOn(colors.dishBackground)
   if (colors.line) vars['--color-border'] = colors.line

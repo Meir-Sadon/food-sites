@@ -938,6 +938,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("DeliveryFeeText")
                         .HasColumnType("text");
 
+                    b.Property<string>("FontPair")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("KashrutText")
                         .HasColumnType("text");
 
@@ -988,10 +992,18 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");
 
+                    b.Property<string>("ShadowStrength")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<bool>("SiteDefaultsApplied")
                         .HasColumnType("boolean");
 
                     b.Property<string>("SiteStyle")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Spacing")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 

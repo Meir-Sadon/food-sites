@@ -34,7 +34,10 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string Corners,
         string Palette,
         IReadOnlyDictionary<string, string> CustomColors,
-        int? LineWidth);
+        int? LineWidth,
+        string Font,
+        string Shadows,
+        string Spacing);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -121,7 +124,10 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
             Palettes.Effective(s.Palette, site.Value.Settings.Palette),
             Palettes.Parse(s.CustomColors),
-            s.LineWidth);
+            s.LineWidth,
+            Finish.Effective(s.FontPair, Finish.IsKnownFont),
+            Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
+            Finish.Effective(s.Spacing, Finish.IsKnownSpacing));
     }
 
     [HttpGet("menu")]

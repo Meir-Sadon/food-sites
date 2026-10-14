@@ -23,6 +23,9 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   palette: 'site',
   customColors: {},
   lineWidth: null,
+  font: 'standard',
+  shadows: 'standard',
+  spacing: 'standard',
   ...patch,
 })
 
@@ -95,6 +98,9 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   palette: 'site',
   customColors: {},
   lineWidth: null,
+  font: 'standard',
+  shadows: 'standard',
+  spacing: 'standard',
   ...patch,
 })
 

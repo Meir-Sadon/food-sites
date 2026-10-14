@@ -29,7 +29,7 @@ export function GeneralSection() {
     setErrors({})
     try {
       // The style, the order layout, the corners and the colours are saved by their own sections; leaving them out keeps them.
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, ...input } = settings
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, ...input } = settings
       setData(await settingsApi.save(input))
       setError(null)
       toast(t('admin.saved'))

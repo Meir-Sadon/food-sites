@@ -63,7 +63,7 @@ export function ColorsSection() {
     setSaving(true)
     setError(null)
     try {
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, ...current } = await settingsApi.get()
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, font: _f, shadows: _sh, spacing: _sp, ...current } = await settingsApi.get()
       setData(await settingsApi.save({ ...current, palette, customColors: custom, lineWidth: lineWidth ?? 0 }))
       setPickedPalette(null)
       setPickedColors(null)

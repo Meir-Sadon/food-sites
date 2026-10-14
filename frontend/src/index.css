@@ -3464,10 +3464,10 @@ label {
   padding: 0 1rem;
   border: 0;
   border-radius: var(--radius-pill);
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
+  background: var(--btn-bg, var(--color-accent));
+  color: var(--btn-text, var(--color-accent-contrast));
   font-weight: 800;
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--btn-bg, var(--color-accent)) 35%, transparent);
   white-space: nowrap;
 }
 

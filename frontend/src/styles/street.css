@@ -30,7 +30,7 @@
 
 :root[data-style='street'] body,
 [data-style='street'] .client-shell {
-  background-color: color-mix(in srgb, var(--color-gold) 26%, var(--color-bg));
+  background-color: var(--page-bg, color-mix(in srgb, var(--color-gold) 26%, var(--color-bg)));
 }
 
 [data-style='street'] :is(h1, h2) {

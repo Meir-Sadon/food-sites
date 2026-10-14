@@ -99,6 +99,16 @@ describe('site style', () => {
     expect(document.documentElement.dataset.corners).toBeUndefined()
   })
 
+  it('marks client pages with the font, shadows and spacing /api/site names', async () => {
+    fakeApi({ ...publicApi, 'GET /api/site': () => site({ font: 'elegant', shadows: 'none', spacing: 'compact' }) })
+    const { unmount } = renderAt('/about')
+    const root = document.documentElement
+    await waitFor(() => expect(root.dataset.font).toBe('elegant'))
+    expect([root.dataset.shadows, root.dataset.spacing]).toEqual(['none', 'compact'])
+    unmount()
+    expect([root.dataset.font, root.dataset.shadows, root.dataset.spacing]).toEqual([undefined, undefined, undefined])
+  })
+
   it('sets the palette and the admin colours as CSS variables on client pages, and removes them again', async () => {
     fakeApi({ ...publicApi, 'GET /api/site': () => site({ palette: 'ocean', customColors: { button: '#aa0000' }, lineWidth: 3 }) })
     const { unmount } = renderAt('/about')

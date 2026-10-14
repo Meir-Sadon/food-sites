@@ -24,11 +24,12 @@
   gap: 0.5rem;
   padding: 0;
   border: 0;
-  background: none;
+  border-radius: var(--radius);
+  background: var(--dish-bg, none);
 }
 
 [data-style='tiles'] .dish--tile.dish--chosen {
-  background: none;
+  background: var(--dish-bg, none);
 }
 
 .tile__media {
@@ -77,18 +78,18 @@
 }
 
 .tile__add {
-  background: var(--color-surface);
-  color: var(--color-accent);
+  background: var(--btn-bg, var(--color-surface));
+  color: var(--btn-text, var(--color-accent));
 }
 
 .tile__add:hover {
-  background: var(--color-accent);
-  color: var(--color-surface);
+  background: var(--btn-bg-hover, var(--color-accent));
+  color: var(--btn-text, var(--color-surface));
 }
 
 .tile__count {
-  background: var(--color-accent);
-  color: var(--color-surface);
+  background: var(--btn-bg, var(--color-accent));
+  color: var(--btn-text, var(--color-surface));
   font-weight: 700;
 }
 
@@ -97,6 +98,8 @@
   flex-direction: column;
   gap: 0.25rem;
   min-inline-size: 0;
+  /* Air around the text only when the admin gave the dishes a background (palettes.ts sets --dish-pad). */
+  padding: 0 var(--dish-pad, 0) var(--dish-pad, 0);
 }
 
 .tile__body h3,

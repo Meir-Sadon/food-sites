@@ -41,6 +41,13 @@ describe('palettes', () => {
     expect(contrastRatio(colors.menuText!, '#ffffff')).toBeGreaterThanOrEqual(MIN_CONTRAST)
   })
 
+  it('makes the page, highlights and tile padding follow the colours, so every style shows them', () => {
+    const vars = colorVariables('site', { background: '#112233', accent: '#336699', dishBackground: '#ffffff' }, null)
+    expect(vars['--page-bg']).toBe('#112233')
+    expect(vars['--color-gold']).toContain('#336699')
+    expect(vars['--dish-pad']).toBe('0.5rem')
+  })
+
   it('picks readable text itself when only a background is set', () => {
     const vars = colorVariables('site', { menu: '#101820', banner: '#ffee88' }, 2)
     expect(vars['--bar-text']).toBe('#ffffff')

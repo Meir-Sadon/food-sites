@@ -218,6 +218,29 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task The_admin_picks_font_shadows_and_spacing_and_leaving_them_out_keeps_them()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Equal(("standard", "standard", "standard"), (settings.Font, settings.Shadows, settings.Spacing));
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, font = "elegant", shadows = "soft", spacing = "compact" })).Read<SettingsDto>();
+        Assert.Equal(("elegant", "soft", "compact"), (saved.Font, saved.Shadows, saved.Spacing));
+        var site = await _factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal(("elegant", "soft", "compact"), (site.Font, site.Shadows, site.Spacing));
+
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.Equal(("elegant", "soft", "compact"), (saved.Font, saved.Shadows, saved.Spacing));
+
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, font = "comic" })).AssertInvalid("Font", "invalid");
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, shadows = "glow" })).AssertInvalid("Shadows", "invalid");
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, spacing = "huge" })).AssertInvalid("Spacing", "invalid");
+    }
+
+    [Fact]
     public async Task The_site_default_palette_applies_until_the_admin_picks_one()
     {
         using var factory = new ApiFactory(postgres, new() { ["Site:Settings:Palette"] = "olive" });

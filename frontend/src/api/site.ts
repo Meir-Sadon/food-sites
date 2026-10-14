@@ -48,6 +48,14 @@ export type ColorSet = Partial<Record<ColorKey, string>>
 
 export const MAX_LINE_WIDTH = 4
 
+/** Font pair, shadow strength and spacing of the client site (FoodSite.Api `Finish`); `standard` keeps what the style does. */
+export const FONTS = ['standard', 'friendly', 'elegant'] as const
+export type FontPair = (typeof FONTS)[number]
+export const SHADOWS = ['standard', 'none', 'soft', 'strong'] as const
+export type Shadows = (typeof SHADOWS)[number]
+export const SPACINGS = ['standard', 'compact', 'spacious'] as const
+export type Spacing = (typeof SPACINGS)[number]
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -81,6 +89,9 @@ export interface Site {
   customColors: ColorSet
   /** Thickness in pixels of the lines; null keeps the original. */
   lineWidth: number | null
+  font: FontPair
+  shadows: Shadows
+  spacing: Spacing
 }
 
 export interface MenuOption {

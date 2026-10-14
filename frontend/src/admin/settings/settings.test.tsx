@@ -155,6 +155,32 @@ describe('Colours', () => {
   })
 })
 
+describe('Finish', () => {
+  it('saves the font, shadows and spacing and nothing the other sections own', async () => {
+    let saved = settings({ kashrutText: 'נשמר בינתיים' })
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('גופן, צללים וריווח')
+
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    expect(save).toBeDisabled()
+    await user.click(within(form).getByRole('radio', { name: /אלגנטי/ }))
+    await user.click(within(form).getByRole('radio', { name: /עדינים/ }))
+    await user.click(within(form).getByRole('radio', { name: /צפוף/ }))
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    const body = api.sent('PUT', '/api/admin/settings')[0].body
+    expect(body).toMatchObject({ font: 'elegant', shadows: 'soft', spacing: 'compact', kashrutText: 'נשמר בינתיים' })
+    for (const key of ['style', 'corners', 'palette', 'customColors', 'lineWidth']) expect(body).not.toHaveProperty(key)
+  })
+})
+
 describe('General settings', () => {
   it('saves delivery, kashrut and payment details', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
