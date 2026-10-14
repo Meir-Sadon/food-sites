@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
 import { prefersReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
@@ -179,6 +179,9 @@ function VariantList({ dish, variants, dishes, selections, date, onChange, idPre
 // ---------- The "tiles" style: square tiles side by side, the choices in a dialog ----------
 
 /** Whether adding the dish must first ask the client something: set options, or add-ons/questions they have to settle. */
+/** True inside a tile's dialog, where a dish's adjustments are shown open at once instead of behind a toggle. */
+const InTileDialog = createContext(false)
+
 function needsDialog(dish: MenuDish, dishes: Map<number, MenuDish>) {
   if (dish.isYesNo) return false
   const options = dish.choiceMode === 'Fixed' && dish.options.length > 1
@@ -349,7 +352,9 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         <Modal title={dish.name} onClose={() => setOpen(false)} wide>
           <ImageCarousel images={dish.images} name={dish.name} />
           {dish.description && <p className="dish__description">{dish.description}</p>}
-          <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
+          <InTileDialog.Provider value>
+            <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
+          </InTileDialog.Provider>
           <div className="modal__actions">
             <button type="button" onClick={() => setOpen(false)}>
               {t('order.doneCustomizing')}
@@ -399,7 +404,9 @@ function DishGroupTile(props: GroupProps) {
         <Modal title={dish.name} onClose={() => setOpen(false)} wide>
           <ImageCarousel images={dish.images} name={dish.name} />
           {dish.description && <p className="dish__description">{dish.description}</p>}
-          <VariantList {...props} idPrefix={id} />
+          <InTileDialog.Provider value>
+            <VariantList {...props} idPrefix={id} />
+          </InTileDialog.Provider>
           <div className="modal__actions">
             <button type="button" onClick={() => setOpen(false)}>
               {t('order.doneCustomizing')}
@@ -427,9 +434,10 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
   const optional = !!dish.adjustmentOptional
   // Each unit is shown open only when there is something to set besides a remark and the client must set it; otherwise
   // the units (or the dish's one remark) wait behind a show/hide button.
+  const inDialog = useContext(InTileDialog)
   const unitsAlwaysShown = customizable && !optional
   const [unitsShown, setUnitsShown] = useState<boolean | null>(null)
-  const showUnits = unitsAlwaysShown || (unitsShown ?? units.some((unit) => Object.keys(unit).length > 0))
+  const showUnits = unitsAlwaysShown || inDialog || (unitsShown ?? units.some((unit) => Object.keys(unit).length > 0))
   const toggleLabel = t(showUnits ? 'order.hideAdjustments' : 'order.showAdjustments')
 
   /** Changes one add-on of one ordered unit. */
@@ -518,7 +526,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
             </button>
           </div>
 
-          {!unitsAlwaysShown && (customizable || !yesNo) && (
+          {!unitsAlwaysShown && !inDialog && (customizable || !yesNo) && (
             <button
               type="button"
               className="button-quiet adjust-toggle"
@@ -545,7 +553,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                 const others = units.map((_, k) => k).filter((k) => k !== i)
                 const waiting = others.some((k) => !isAdjusted(selection, k, units[k]))
                 return (
-                  <details key={i} className="addon-unit">
+                  <details key={i} className="addon-unit" open={inDialog || undefined}>
                     <summary className="addon-unit__title">
                       {title}
                       {status && <span className={adjusted || optional ? 'muted' : 'addon-unit__missing'}> · {status}</span>}
