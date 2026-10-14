@@ -129,4 +129,17 @@ describe('Order flow with a continue button', () => {
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'המשך לפרטי ההזמנה' })).not.toBeInTheDocument()
   })
+
+  it('shows the approved reviews before the details are opened', async () => {
+    fakeApi({
+      ...publicApi,
+      'GET /api/site': () => site({ orderFlow: 'continue', features: ['reviews'] }),
+      'GET /api/reviews': () => [
+        { id: 1, name: 'משה', rating: 5, comment: 'היה ממש טעים', images: [], submittedAt: '2026-10-14T19:52:06Z' },
+      ],
+    })
+    renderAt('/')
+    expect(await screen.findByText('היה ממש טעים')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'שליחת ההזמנה' })).not.toBeInTheDocument()
+  })
 })
