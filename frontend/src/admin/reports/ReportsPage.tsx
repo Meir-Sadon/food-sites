@@ -1,3 +1,4 @@
+import { paymentKey } from '../../order/payment'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, dishesApi, type Category, type Dish } from '../../api/catalog'
@@ -81,7 +82,9 @@ export function ReportsPage() {
           <select id="report-payment" value={filter.paymentMethod} onChange={(e) => set({ paymentMethod: e.target.value as ReportFilter['paymentMethod'] })}>
             <option value="">{t('admin.reports.all')}</option>
             <option value="OnDelivery">{t('admin.orders.onDelivery')}</option>
-            <option value="Transfer">{t('admin.orders.transfer')}</option>
+            <option value="Bit">{t(paymentKey('Bit'))}</option>
+            <option value="PayBox">{t(paymentKey('PayBox'))}</option>
+            <option value="Transfer">{t(paymentKey('Transfer'))}</option>
           </select>
         </span>
         <a className="button-link" href={reportsApi.exportUrl(filter)} download>

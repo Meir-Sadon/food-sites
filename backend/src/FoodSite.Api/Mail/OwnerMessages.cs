@@ -112,7 +112,9 @@ public static class OwnerMessages
             when.Add($"כתובת: {order.Address}");
         sections.Add(new("אספקה", when));
 
-        var payment = order.PaymentMethod == PaymentMethod.Transfer ? "העברה (Bit / PayBox)" : "תשלום במעמד המסירה";
+        var payment = order.PaymentMethod.IsTransfer()
+            ? $"העברה ב־{OrderMessages.PaymentLabel(order.PaymentMethod)}"
+            : "תשלום במעמד המסירה";
         sections.Add(new("תשלום", [payment, $"סה״כ לתשלום: ₪{Money(order.Total)}"]));
 
         var dishes = new List<string>();

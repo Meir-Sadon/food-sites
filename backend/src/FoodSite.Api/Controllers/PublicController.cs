@@ -22,6 +22,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string? DeliveryFeeText,
         string? KashrutText,
         string? PaymentPhone,
+        bool BitEnabled,
+        bool PayBoxEnabled,
         decimal? MinimumOrderAmount,
         bool MinimumOrderAppliesToPickup,
         ContactDto Contact,
@@ -106,6 +108,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<SupplyDateDto> SupplyDates,
         IReadOnlyList<MenuGroupDto>? Groups = null);
 
+    private static bool PaymentOn(Data.Entities.Settings s) => !string.IsNullOrWhiteSpace(s.PaymentPhone);
+
     [HttpGet("site")]
     public async Task<SiteDto> GetSite()
     {
@@ -113,7 +117,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Phone).ToListAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
-            s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount, s.MinimumOrderAppliesToPickup,
+            s.KashrutText, s.PaymentPhone, s.BitEnabled && PaymentOn(s), s.PayBoxEnabled && PaymentOn(s), s.MinimumOrderAmount, s.MinimumOrderAppliesToPickup,
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
             whatsAppPhones,
             ServiceArea.Parse(s.ServiceCities),

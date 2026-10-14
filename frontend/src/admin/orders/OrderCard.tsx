@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { paymentKey } from '../../order/payment'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ordersAdminApi, orderStatuses, type AdminOrder, type OrderStatus } from '../../api/operations'
@@ -64,7 +65,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
         {t(order.fulfillmentMethod === 'Delivery' ? 'admin.orders.delivery' : 'admin.orders.pickup')}
         {order.fulfillmentMethod === 'Delivery' && order.address ? `: ${order.address}` : ''}
         {' · '}
-        {t(order.paymentMethod === 'Transfer' ? 'admin.orders.transfer' : 'admin.orders.onDelivery')}
+        {t(paymentKey(order.paymentMethod))}
         {order.isGuest && <span className="badge">{t('admin.orders.guest')}</span>}
       </p>
         </>

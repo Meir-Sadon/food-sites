@@ -21,7 +21,17 @@ public enum FulfillmentMethod
 public enum PaymentMethod
 {
     OnDelivery,
+    /// <summary>Legacy: "Bit / PayBox" before the client picked one. Kept so old orders still read; new orders use Bit or PayBox.</summary>
     Transfer,
+    Bit,
+    PayBox,
+}
+
+public static class PaymentMethods
+{
+    /// <summary>A payment the client makes by hand to the business's number (Bit, PayBox or the legacy combined choice).</summary>
+    public static bool IsTransfer(this PaymentMethod method) =>
+        method is PaymentMethod.Transfer or PaymentMethod.Bit or PaymentMethod.PayBox;
 }
 
 /// <summary>How a paid order was actually paid. Unknown is for orders marked paid before this was recorded.</summary>

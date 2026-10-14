@@ -58,7 +58,7 @@ All sites share one Cloudinary account; each site's pictures sit under `<site-id
 
 - `render.yaml`: a new service copied from an existing non-canary entry: `name` and `SITE` = the id, `autoDeployTrigger: "off"`, and **no** `Database__ApplySeeds` line (a new site wants its seed).
 - `.github/workflows/deploy.yml`: a matrix line `- site: <id>` / `hook: RENDER_DEPLOY_HOOK_<ID_UPPER>`.
-- `.github/keep-alive-sites.txt`: the site id on its own line, only if the owner wants it awake 09:00-21:00 and the free instance hours allow another awake site (see `docs/DEPLOY.md`, "Keeping sites awake"); otherwise say in the owner's checklist that the site sleeps when idle.
+- Keep-alive: nothing in the repo. If the owner wants the site awake 09:00-21:00 and the free instance hours allow another awake site, add its id to the `KEEP_ALIVE_SITES` GitHub variable (see `docs/DEPLOY.md`, "Keeping sites awake"); otherwise say in the owner's checklist that the site sleeps when idle.
 
 ## 5. Check it
 

@@ -1,4 +1,5 @@
 import { apiJson, send } from './client'
+import type { Payment } from './site'
 import type { ReviewStatus } from './reviews'
 
 export interface Profile {
@@ -49,7 +50,7 @@ export interface HistoryOrder {
   supplyDate: string
   status: OrderStatus
   fulfillmentMethod: 'Delivery' | 'Pickup'
-  paymentMethod: 'OnDelivery' | 'Transfer'
+  paymentMethod: Payment
   isPaid: boolean
   total: number
   createdAt: string
