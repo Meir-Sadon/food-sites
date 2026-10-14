@@ -53,6 +53,11 @@ services:
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
         sync: false
+      # Or a Brevo API key (used instead of Resend when set), with Mail__From a sender address verified in Brevo
+      - key: Mail__BrevoApiKey
+        sync: false
+      - key: Mail__From
+        sync: false
       - key: Jwt__Secret
         generateValue: true
       - key: Database__MigrateOnStartup
@@ -111,6 +116,11 @@ services:
         sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
+        sync: false
+      # Or a Brevo API key (used instead of Resend when set), with Mail__From a sender address verified in Brevo
+      - key: Mail__BrevoApiKey
+        sync: false
+      - key: Mail__From
         sync: false
       - key: Jwt__Secret
         generateValue: true
@@ -171,6 +181,11 @@ services:
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
         sync: false
+      # Or a Brevo API key (used instead of Resend when set), with Mail__From a sender address verified in Brevo
+      - key: Mail__BrevoApiKey
+        sync: false
+      - key: Mail__From
+        sync: false
       - key: Jwt__Secret
         generateValue: true
       - key: Database__MigrateOnStartup
@@ -226,6 +241,11 @@ services:
         sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
+        sync: false
+      # Or a Brevo API key (used instead of Resend when set), with Mail__From a sender address verified in Brevo
+      - key: Mail__BrevoApiKey
+        sync: false
+      - key: Mail__From
         sync: false
       - key: Jwt__Secret
         generateValue: true
@@ -283,6 +303,11 @@ services:
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
         sync: false
+      # Or a Brevo API key (used instead of Resend when set), with Mail__From a sender address verified in Brevo
+      - key: Mail__BrevoApiKey
+        sync: false
+      - key: Mail__From
+        sync: false
       - key: Jwt__Secret
         generateValue: true
       - key: Database__MigrateOnStartup
@@ -334,6 +359,11 @@ services:
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
         sync: false
+      # Or a Brevo API key (used instead of Resend when set), with Mail__From a sender address verified in Brevo
+      - key: Mail__BrevoApiKey
+        sync: false
+      - key: Mail__From
+        sync: false
       - key: Jwt__Secret
         generateValue: true
       - key: Database__MigrateOnStartup
@@ -384,6 +414,11 @@ services:
         sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
+        sync: false
+      # Or a Brevo API key (used instead of Resend when set), with Mail__From a sender address verified in Brevo
+      - key: Mail__BrevoApiKey
+        sync: false
+      - key: Mail__From
         sync: false
       - key: Jwt__Secret
         generateValue: true
@@ -440,6 +475,11 @@ services:
         sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
+        sync: false
+      # Or a Brevo API key (used instead of Resend when set), with Mail__From a sender address verified in Brevo
+      - key: Mail__BrevoApiKey
+        sync: false
+      - key: Mail__From
         sync: false
       - key: Jwt__Secret
         generateValue: true

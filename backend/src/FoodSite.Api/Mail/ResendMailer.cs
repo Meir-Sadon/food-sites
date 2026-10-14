@@ -18,6 +18,14 @@ public class MailOptions
     /// </summary>
     public string From { get; set; } = "onboarding@resend.dev";
 
+    /// <summary>
+    /// A Brevo API key (brevo.com, free: 300 mails a day). When set, Brevo is used instead of Resend, and
+    /// <see cref="From"/> must be a sender address verified in Brevo (no domain needed).
+    /// </summary>
+    public string? BrevoApiKey { get; set; }
+
+    public string BrevoBaseUrl { get; set; } = "https://api.brevo.com";
+
     public string BaseUrl { get; set; } = "https://api.resend.com";
 
     /// <summary>Edits are held this long after the last one, so a burst of changes goes out as one mail.</summary>
@@ -29,7 +37,9 @@ public class MailOptions
     /// <summary>How often held edits are checked.</summary>
     public int PollSeconds { get; set; } = 15;
 
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(ResendApiKey);
+    public bool UsesBrevo => !string.IsNullOrWhiteSpace(BrevoApiKey);
+
+    public bool IsConfigured => UsesBrevo || !string.IsNullOrWhiteSpace(ResendApiKey);
 }
 
 /// <summary>Sends mail through Resend's HTTP API (SMTP ports are often blocked on free hosting).</summary>

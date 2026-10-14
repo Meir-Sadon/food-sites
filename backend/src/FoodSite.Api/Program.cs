@@ -76,9 +76,13 @@ builder.Services.AddSingleton<UserTokenService>();
 builder.Services.AddSingleton<SiteClock>();
 // Site usage (visits, started and sent orders): per-device events pruned after Usage:RawEventDays.
 builder.Services.Configure<UsageOptions>(config.GetSection(UsageOptions.Section));
-// Mail to the business owner goes out through Resend once Mail__ResendApiKey is set; without it nothing is sent.
+// Mail to the business owner goes out through Brevo once Mail__BrevoApiKey is set, else through Resend once
+// Mail__ResendApiKey is set; without either nothing is sent.
 builder.Services.Configure<FoodSite.Api.Mail.MailOptions>(config.GetSection(FoodSite.Api.Mail.MailOptions.Section));
-if (config.GetSection(FoodSite.Api.Mail.MailOptions.Section).Get<FoodSite.Api.Mail.MailOptions>()?.IsConfigured == true)
+var mailOptions = config.GetSection(FoodSite.Api.Mail.MailOptions.Section).Get<FoodSite.Api.Mail.MailOptions>();
+if (mailOptions?.UsesBrevo == true)
+    builder.Services.AddHttpClient<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.BrevoMailer>(c => c.Timeout = TimeSpan.FromSeconds(15));
+else if (mailOptions?.IsConfigured == true)
     builder.Services.AddHttpClient<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.ResendMailer>(c => c.Timeout = TimeSpan.FromSeconds(15));
 else
     builder.Services.AddSingleton<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.NoopMailer>();
