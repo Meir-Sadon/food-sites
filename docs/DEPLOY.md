@@ -88,6 +88,7 @@ Pick a long passphrase for the master password (four or five random words). The 
    | `Admin__MasterPasswordHash` | Your master hash from step 3, the same on every site |
    | `Cloudinary__Url` | The Cloudinary value from step 2, or leave it empty |
    | `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | From Meta's WhatsApp Cloud API, or leave both empty (messages are only logged) |
+   | `Sms__Username`, `Sms__Token`, `Sms__Source` | From a TextMe account (textme.co.il): user name, API token, and the verified sender name the client sees (up to 11 English letters or digits). All three set turns on an SMS order confirmation to the client; empty: SMS is only logged. Optional `Sms__ConfirmationTemplate`: this site's text, with `{siteName} {name} {orderId} {date} {time} {method} {total}` |
 | `Mail__ResendApiKey` | A Resend API key (resend.com, free: about 100 mails a day), or leave it empty (no mail to the owner). Optional `Mail__From`: the sender address, `onboarding@resend.dev` by default, which Resend lets send only to your own Resend account address; to mail the business owner at another address, verify a domain in Resend and set e.g. `Mail__From=orders@your-domain.com` |
 
    Render generates the login-signing secret (`Jwt__Secret`) itself. The `SITE` value in `render.yaml` picks the folder under `sites/` the service is built from; Render passes it to the `Dockerfile` as a build argument.

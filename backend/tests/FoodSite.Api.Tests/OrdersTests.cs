@@ -285,6 +285,16 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Client_gets_an_sms_and_a_failing_sms_does_not_fail_the_order()
+    {
+        await Place(await ValidOrder());
+        Assert.Contains(_factory.Sms.Sent, m => m.Phone == ClientPhone && m.Message.StartsWith(ApiFactory.SiteName) && m.Message.Contains("₪311"));
+
+        _factory.Sms.Fail = true;
+        Assert.True((await Place(await ValidOrder())).IsSuccessStatusCode);
+    }
+
+    [Fact]
     public async Task Client_and_every_admin_phone_get_a_whatsapp_message()
     {
         (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0521111111" })).EnsureSuccessStatusCode();

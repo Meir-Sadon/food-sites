@@ -39,6 +39,17 @@ services:
         sync: false
       - key: WhatsApp__PhoneNumberId
         sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
+        sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
         sync: false
@@ -86,6 +97,17 @@ services:
       - key: WhatsApp__Token
         sync: false
       - key: WhatsApp__PhoneNumberId
+        sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
         sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
@@ -135,6 +157,17 @@ services:
         sync: false
       - key: WhatsApp__PhoneNumberId
         sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
+        sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
         sync: false
@@ -179,6 +212,17 @@ services:
       - key: WhatsApp__Token
         sync: false
       - key: WhatsApp__PhoneNumberId
+        sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
         sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
@@ -225,6 +269,17 @@ services:
         sync: false
       - key: WhatsApp__PhoneNumberId
         sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
+        sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
         sync: false
@@ -265,6 +320,17 @@ services:
         sync: false
       - key: WhatsApp__PhoneNumberId
         sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
+        sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
         sync: false
@@ -304,6 +370,17 @@ services:
       - key: WhatsApp__Token
         sync: false
       - key: WhatsApp__PhoneNumberId
+        sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
         sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey
@@ -349,6 +426,17 @@ services:
       - key: WhatsApp__Token
         sync: false
       - key: WhatsApp__PhoneNumberId
+        sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
         sync: false
       # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
       - key: Mail__ResendApiKey

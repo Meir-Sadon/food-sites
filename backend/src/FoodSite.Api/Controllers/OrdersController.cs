@@ -20,6 +20,8 @@ public class OrdersController(
     AppDbContext db,
     SiteClock clock,
     IWhatsAppSender whatsApp,
+    ISmsSender sms,
+    IOptions<SmsOptions> smsOptions,
     OwnerNotifier ownerMail,
     IOptions<SiteOptions> site,
     ILogger<OrdersController> logger) : PublicControllerBase
@@ -237,6 +239,15 @@ public class OrdersController(
             {
                 logger.LogError(ex, "WhatsApp message for order {OrderId} to {Phone} failed", order.Id, phone);
             }
+        }
+
+        try
+        {
+            await sms.SendAsync(order.Phone, SmsMessages.Confirmation(order, site.Value.Name, smsOptions.Value.ConfirmationTemplate), CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "SMS for order {OrderId} to {Phone} failed", order.Id, order.Phone);
         }
     }
 }
