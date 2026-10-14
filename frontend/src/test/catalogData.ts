@@ -21,7 +21,6 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   corners: 'rounded',
   ownerEmail: '',
   deliveryPricing: 'simple',
-  deliveryZonesAvailable: false,
   ...patch,
 })
 

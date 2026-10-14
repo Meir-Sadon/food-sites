@@ -11,7 +11,7 @@ using static FoodSite.Api.Controllers.Admin.Ordering;
 namespace FoodSite.Api.Controllers.Admin;
 
 [Route("api/admin/settings")]
-public partial class SettingsController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site, FeatureFlags features) : AdminControllerBase
+public partial class SettingsController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site) : AdminControllerBase
 {
     public const int TextMaxLength = 1000;
     public const decimal MaxMinimumOrder = 100_000;
@@ -37,8 +37,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string OrderFlow,
         string Corners,
         string OwnerEmail,
-        string DeliveryPricing,
-        bool DeliveryZonesAvailable = false);
+        string DeliveryPricing);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -189,8 +188,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
         Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
         s.OwnerEmail ?? "",
-        s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
-        await features.IsEnabledAsync(Features.DeliveryZones));
+        s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple);
 
     private static bool IsEmail(string value) =>
         value.Length <= OwnerEmailMaxLength && EmailPattern().IsMatch(value);

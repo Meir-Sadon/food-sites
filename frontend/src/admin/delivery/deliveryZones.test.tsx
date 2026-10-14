@@ -20,7 +20,7 @@ const zone = (patch: Partial<DeliveryZone> = {}): DeliveryZone => ({
 })
 
 function api(zones: DeliveryZone[] = [], mode: 'simple' | 'zones' = 'zones') {
-  let current = settings({ deliveryPricing: mode, deliveryZonesAvailable: true })
+  let current = settings({ deliveryPricing: mode })
   let saved = zones
   return fakeApi({
     ...adminSession,
@@ -89,7 +89,7 @@ describe('Delivery zones settings', () => {
   it('shows what the server rejects', async () => {
     const mock = fakeApi({
       ...adminSession,
-      'GET /api/admin/settings': () => settings({ deliveryPricing: 'zones', deliveryZonesAvailable: true }),
+      'GET /api/admin/settings': () => settings({ deliveryPricing: 'zones' }),
       'GET /api/admin/supply-days': () => [],
       'GET /api/admin/closed-dates': () => [],
       'GET /api/admin/delivery-zones': () => [zone({ name: '' })],

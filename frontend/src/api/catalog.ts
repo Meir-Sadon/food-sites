@@ -33,15 +33,13 @@ export interface Settings {
   corners: Corners
   /** Where the owner is mailed about new orders and changes; empty means no mail. */
   ownerEmail: string
-  /** `zones` needs the deliveryZones feature. */
+  /** `simple` until the admin picks `zones`. */
   deliveryPricing: DeliveryPricing
-  /** The deliveryZones feature is on for this site, so the zones section is shown. */
-  deliveryZonesAvailable: boolean
 }
 /** Leaving out the style, the order layout or the corners keeps it: each has its own section, and saving one never pins the others' defaults. */
 export type SettingsInput = Omit<
   Settings,
-  'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'deliveryPricing' | 'deliveryZonesAvailable'
+  'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'deliveryPricing'
 > &
   Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'deliveryPricing'>>
 

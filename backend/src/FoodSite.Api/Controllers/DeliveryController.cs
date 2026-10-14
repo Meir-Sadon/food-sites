@@ -13,7 +13,6 @@ namespace FoodSite.Api.Controllers;
 /// <summary>The delivery fee for an address, so the order page can show it before the order is sent.</summary>
 [Route("api/delivery-quote")]
 [EnableRateLimiting(PublicControllerBase.WriteRateLimitPolicy)]
-[RequireFeature(Features.DeliveryZones)]
 public class DeliveryController(AppDbContext db, DeliveryQuoter quoter) : PublicControllerBase
 {
     public record QuoteInput(string? City, string? Street, string? HouseNumber);

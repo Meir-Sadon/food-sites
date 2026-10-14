@@ -64,7 +64,7 @@ public class DeliveryZonesUnitTests
 [Collection(PostgresCollection.Name)]
 public sealed class DeliveryZonesTests(PostgresFixture postgres) : IAsyncLifetime
 {
-    private readonly ApiFactory _factory = new(postgres, new() { ["Site:Features:deliveryZones"] = "true" });
+    private readonly ApiFactory _factory = new(postgres);
     private HttpClient _admin = null!;
     private HttpClient _client = null!;
     private int _dish;
@@ -198,14 +198,5 @@ public sealed class DeliveryZonesTests(PostgresFixture postgres) : IAsyncLifetim
         await SaveZones(new ZoneInput(saved[1].Id, "ב", 25, false, [P(0, 0), P(0, 1), P(1, 1)]));
         var after = await _admin.GetAsync("/api/admin/delivery-zones").Read<List<ZoneDto>>();
         Assert.Equal([(saved[1].Id, 25m)], after.Select(z => (z.Id, z.Fee)));
-    }
-
-    [Fact]
-    public async Task Everything_is_off_without_the_feature()
-    {
-        await using var off = new ApiFactory(postgres);
-        var admin = await off.CreateAdminClientAsync();
-        Assert.Equal(HttpStatusCode.NotFound, (await admin.GetAsync("/api/admin/delivery-zones")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await off.CreateApiClient().PostAsJsonAsync("/api/delivery-quote", new { city = "א", street = "ב", houseNumber = "1" })).StatusCode);
     }
 }

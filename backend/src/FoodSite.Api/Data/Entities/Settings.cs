@@ -72,7 +72,7 @@ public class Settings
 
     /// <summary>
     /// How delivery is priced: <c>simple</c> (the text in <c>DeliveryFeeText</c>, no fee added) or <c>zones</c> (the
-    /// zones the admin drew, see <c>DeliveryZone</c>; only with the <c>deliveryZones</c> feature). Null means simple.
+    /// zones the admin drew, see <c>DeliveryZone</c>). Null means simple.
     /// </summary>
     public string? DeliveryPricing { get; set; }
 

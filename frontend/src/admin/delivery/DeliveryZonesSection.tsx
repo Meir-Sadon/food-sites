@@ -12,14 +12,14 @@ const ZonesMap = lazy(() => import('./ZonesMap'))
 
 async function loadAll() {
   const settings = await settingsApi.get()
-  // The zones are asked for only where the feature is on (the API answers 404 elsewhere).
-  return { settings, zones: settings.deliveryZonesAvailable ? await deliveryZonesApi.get() : [] }
+  // The zones are asked for only once the advanced setting is chosen.
+  return { settings, zones: settings.deliveryPricing === 'zones' ? await deliveryZonesApi.get() : [] }
 }
 
 const emptyZone = (): DeliveryZone => ({ id: null, name: '', fee: 0, isBlocked: false, polygon: [] })
 
 /**
- * The advanced delivery setting (feature `deliveryZones`): the admin picks "simple" (the text on the order page, as
+ * The advanced delivery setting: the admin picks "simple" (the text on the order page, as
  * before) or "advanced" (areas drawn on a map, each with its fee or no delivery at all).
  */
 export function DeliveryZonesSection() {
@@ -46,9 +46,9 @@ export function DeliveryZonesSection() {
     setError(null)
     try {
       // The style, the order layout and the corners are saved by their own sections; leaving them out keeps them.
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, deliveryPricing: ______, deliveryZonesAvailable: _______, ...input } = await settingsApi.get()
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, deliveryPricing: ______, ...input } = await settingsApi.get()
       const settings: Settings = await settingsApi.save({ ...input, deliveryPricing })
-      setData({ ...data, settings })
+      setData({ ...data, settings, zones: deliveryPricing === 'zones' && data.zones.length === 0 ? await deliveryZonesApi.get() : data.zones })
       toast(t('admin.saved'))
     } catch (err) {
       setError(errorMessage(err))
@@ -76,8 +76,6 @@ export function DeliveryZonesSection() {
   const fieldError = (index: number, field: string) => (
     <FieldError errors={errors} field={`zones[${index}].${field}`} id={`zone-${index}-${field}-error`} />
   )
-
-  if (data && !data.settings.deliveryZonesAvailable) return null
 
   return (
     <Section title={t('admin.zones.title')}>

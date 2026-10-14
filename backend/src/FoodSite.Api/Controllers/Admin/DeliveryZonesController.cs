@@ -10,7 +10,6 @@ namespace FoodSite.Api.Controllers.Admin;
 
 /// <summary>The areas of the advanced delivery setting, saved together: the list sent replaces the list stored.</summary>
 [Route("api/admin/delivery-zones")]
-[RequireFeature(Features.DeliveryZones)]
 public class DeliveryZonesController(AppDbContext db) : AdminControllerBase
 {
     public record ZoneDto(int Id, string Name, decimal Fee, bool IsBlocked, int Priority, IReadOnlyList<double[]> Polygon);

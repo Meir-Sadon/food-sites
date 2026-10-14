@@ -106,7 +106,6 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     public async Task<SiteDto> GetSite()
     {
         var s = await db.Settings.AsNoTracking().SingleAsync();
-        var enabledFeatures = await features.EnabledAsync();
         var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Phone).ToListAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
@@ -114,14 +113,12 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
             whatsAppPhones,
             ServiceArea.Parse(s.ServiceCities),
-            enabledFeatures,
+            await features.EnabledAsync(),
             SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
             OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
             OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
             Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
-            s.DeliveryPricing == Delivery.DeliveryPricing.Zones && enabledFeatures.Contains(Features.DeliveryZones)
-                ? Delivery.DeliveryPricing.Zones
-                : Delivery.DeliveryPricing.Simple);
+            DeliveryQuoter.Mode(s));
     }
 
     [HttpGet("menu")]

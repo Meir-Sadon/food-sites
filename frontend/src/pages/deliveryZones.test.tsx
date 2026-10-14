@@ -15,7 +15,7 @@ beforeEach(() => {
 
 async function open(patch: Partial<Site>, quote: (address: unknown) => DeliveryQuote) {
   const api = fakeApi({
-    'GET /api/site': () => site({ features: ['deliveryZones'], ...patch }),
+    'GET /api/site': () => site(patch),
     'GET /api/menu': menuWithPlainDish,
     'POST /api/delivery-quote': (_, body) => ({ body: quote(body) }),
   })
