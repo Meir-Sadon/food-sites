@@ -67,7 +67,7 @@ jobs:
     name: Deploy ${{ matrix.site }}
     needs: canary
     # Runs after a skipped canary too (not listed in DEPLOY_SITES), never after a failed one.
-    if: always() && vars.CANARY_URL != '' && needs.canary.result != 'failure' && needs.canary.result != 'cancelled' && (vars.DEPLOY_SITES == '' || contains(format(' {0} ', vars.DEPLOY_SITES), format(' {0} ', matrix.site))) && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
+    if: always() && vars.CANARY_URL != '' && needs.canary.result != 'failure' && needs.canary.result != 'cancelled' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -90,6 +90,8 @@ jobs:
             hook: RENDER_DEPLOY_HOOK_HUMMUS_EL_MASRI
     steps:
       - name: Trigger the deploy hook
+        # matrix is not available in a job-level if, so the DEPLOY_SITES choice is made here.
+        if: vars.DEPLOY_SITES == '' || contains(format(' {0} ', vars.DEPLOY_SITES), format(' {0} ', matrix.site))
         env:
           HOOK: ${{ secrets[matrix.hook] }}
           SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
