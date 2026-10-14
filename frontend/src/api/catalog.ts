@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { Corners, OrderFlow, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -13,6 +13,10 @@ export interface Settings {
   deliveryFeeText: string | null
   kashrutText: string | null
   paymentPhone: string | null
+  bitEnabled: boolean
+  payBoxEnabled: boolean
+  bitLink: string | null
+  payBoxLink: string | null
   /** ₪; null means no minimum. */
   minimumOrderAmount: number | null
   /** False when the minimum is for deliveries only. */
@@ -33,10 +37,22 @@ export interface Settings {
   corners: Corners
   /** Where the owner is mailed about new orders and changes; empty means no mail. */
   ownerEmail: string
+  /** The ready-made colour palette the client site shows. */
+  palette: Palette
+  /** Colours the admin set per element; they win over the palette. */
+  customColors: ColorSet
+  /** Thickness in pixels of the lines (1 to 4); null keeps the original. Send 0 to clear. */
+  lineWidth: number | null
+  /** The font pair of the client site. */
+  font: FontPair
+  /** How strong the shadows of the client site are. */
+  shadows: Shadows
+  /** How much air there is between things on the client site. */
+  spacing: Spacing
 }
-/** Leaving out the style, the order layout or the corners keeps it: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'> &
-  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'>>
+/** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing'> &
+  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing'>>
 
 export interface SupplyDay {
   weekday: Weekday

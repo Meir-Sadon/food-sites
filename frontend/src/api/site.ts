@@ -32,6 +32,30 @@ export type Corners = 'square' | 'slight' | 'rounded' | 'round'
 
 export const CORNERS: readonly Corners[] = ['square', 'slight', 'rounded', 'round']
 
+/** The ready-made colour palettes (FoodSite.Api `Palettes`); `site` is the site's own colours from its theme.css. */
+export const PALETTES = ['site', 'olive', 'berry', 'ocean', 'sunset', 'graphite', 'rose'] as const
+export type Palette = (typeof PALETTES)[number]
+
+/** The elements the admin can set a colour for (FoodSite.Api `Palettes.ColorKeys`). */
+export const COLOR_KEYS = [
+  'background', 'text', 'accent', 'button', 'buttonText', 'menu', 'menuText',
+  'banner', 'bannerText', 'dishBackground', 'dishText', 'line',
+] as const
+export type ColorKey = (typeof COLOR_KEYS)[number]
+
+/** Colours by element as `#rrggbb`. */
+export type ColorSet = Partial<Record<ColorKey, string>>
+
+export const MAX_LINE_WIDTH = 4
+
+/** Font pair, shadow strength and spacing of the client site (FoodSite.Api `Finish`); `standard` keeps what the style does. */
+export const FONTS = ['standard', 'friendly', 'elegant'] as const
+export type FontPair = (typeof FONTS)[number]
+export const SHADOWS = ['standard', 'none', 'soft', 'strong'] as const
+export type Shadows = (typeof SHADOWS)[number]
+export const SPACINGS = ['standard', 'compact', 'spacious'] as const
+export type Spacing = (typeof SPACINGS)[number]
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -40,6 +64,9 @@ export interface Site {
   deliveryFeeText: string | null
   kashrutText: string | null
   paymentPhone: string | null
+  /** Whether the client may choose to pay with Bit / PayBox (needs the payment phone). */
+  bitEnabled: boolean
+  payBoxEnabled: boolean
   /** The smallest order total in ₪; null when there is none. */
   minimumOrderAmount: number | null
   /** False when the minimum is for deliveries only. */
@@ -59,6 +86,15 @@ export interface Site {
   orderFlow: OrderFlow
   /** The admin's choice, else the site's default from site.json. */
   corners: Corners
+  /** The admin's choice, else the site's default from site.json. */
+  palette: Palette
+  /** The admin's own colours; they win over the palette. */
+  customColors: ColorSet
+  /** Thickness in pixels of the lines; null keeps the original. */
+  lineWidth: number | null
+  font: FontPair
+  shadows: Shadows
+  spacing: Spacing
 }
 
 export interface MenuOption {
@@ -194,7 +230,8 @@ export interface Menu {
 }
 
 export type Fulfillment = 'Delivery' | 'Pickup'
-export type Payment = 'OnDelivery' | 'Transfer'
+/** `Transfer` is the older combined Bit / PayBox choice; new orders use `Bit` or `PayBox`. */
+export type Payment = 'OnDelivery' | 'Transfer' | 'Bit' | 'PayBox'
 
 export interface OrderLineInput {
   dishId: number
@@ -232,6 +269,8 @@ export interface Confirmation {
   paymentMethod: Payment
   total: number
   paymentPhone: string | null
+  /** The owner's Bit / PayBox payment-request link for the chosen service, if they set one. */
+  paymentLink?: string | null
   /** A delivery outside the service city: it waits for the admin and holds no quantity yet. */
   needsReview: boolean
   items: {

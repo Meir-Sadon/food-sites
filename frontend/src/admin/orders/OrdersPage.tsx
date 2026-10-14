@@ -6,12 +6,17 @@ import { formatDate } from '../format'
 import { Loading } from '../ui'
 import { CookingSummary } from './CookingSummary'
 import { OrderCard } from './OrderCard'
+import { usePrintOrders } from './usePrintOrders'
 
 const today = () => {
   const now = new Date()
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 }
+
+/** Cancelled orders are left out of a printed list unless the list is filtered to them. */
+const printable = (orders: AdminOrder[], status: OrderStatus | '') =>
+  status ? orders : orders.filter((o) => o.status !== 'Cancelled')
 
 /** Orders grouped by supply day, with a printable cooking summary for each day. */
 export function OrdersPage() {
@@ -22,6 +27,7 @@ export function OrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [summaryDate, setSummaryDate] = useState<string | null>(null)
+  const printer = usePrintOrders()
 
   useEffect(() => {
     let current = true
@@ -73,6 +79,16 @@ export function OrdersPage() {
         </span>
       </form>
 
+      {orders && orders.length > 0 && (
+        <p className="row no-print">
+          <button type="button" onClick={() => printer.print(printable(orders, status))}>
+            {t('admin.orders.printAll')}
+          </button>
+          <span className="hint">{t('admin.orders.printHint')}</span>
+        </p>
+      )}
+      {printer.sheet}
+
       {!orders ? (
         <Loading failed={failed} />
       ) : (
@@ -91,6 +107,10 @@ export function OrdersPage() {
                   <span className="row no-print">
                     <button type="button" className="button-quiet" aria-expanded={open} onClick={() => setSummaryDate(open ? null : date)}>
                       {t('admin.orders.cookingSummary')}
+                      <span className="visually-hidden"> {formatDate(date)}</span>
+                    </button>
+                    <button type="button" className="button-quiet" onClick={() => printer.print(printable(ofDay, status))}>
+                      {t('admin.orders.printDay')}
                       <span className="visually-hidden"> {formatDate(date)}</span>
                     </button>
                     {ofDay.some((o) => o.fulfillmentMethod === 'Delivery' && o.status !== 'Cancelled') && (

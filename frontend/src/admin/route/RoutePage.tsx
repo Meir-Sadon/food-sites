@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { isTransfer } from '../../order/payment'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -295,7 +296,7 @@ function StopCard({
       <p className={order.isPaid ? 'muted' : 'route-stop__collect'}>
         {order.isPaid
           ? t('admin.route.paid')
-          : t(order.paymentMethod === 'Transfer' ? 'admin.route.collectTransfer' : 'admin.route.collect', {
+          : t(isTransfer(order.paymentMethod) ? 'admin.route.collectTransfer' : 'admin.route.collect', {
               total: formatMoney(order.total),
             })}
       </p>
@@ -339,7 +340,7 @@ function shareUrl(stops: Stop[], date: string, apartmentPrefix: string, t: TFunc
         : t('admin.route.noHour'),
       order.isPaid
         ? t('admin.route.paid')
-        : t(order.paymentMethod === 'Transfer' ? 'admin.route.collectTransfer' : 'admin.route.collect', { total: formatMoney(order.total) }),
+        : t(isTransfer(order.paymentMethod) ? 'admin.route.collectTransfer' : 'admin.route.collect', { total: formatMoney(order.total) }),
       ...(order.notes ? [`${t('admin.orders.notes')}: ${order.notes}`] : []),
       wazeUrl(navigationAddress(order.address, apartmentPrefix)),
       ...(link ? [t('admin.route.driverPage', { url: driverUrl(link.token, order.id) })] : []),

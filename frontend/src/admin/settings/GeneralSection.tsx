@@ -6,7 +6,7 @@ import { FieldError, Info, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
 import { useToast } from '../../components/toast'
 
-type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'paymentPhone'
+type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'paymentPhone' | 'bitLink' | 'payBoxLink'
 
 export function GeneralSection() {
   const { t } = useTranslation()
@@ -28,8 +28,8 @@ export function GeneralSection() {
     setSaving(true)
     setErrors({})
     try {
-      // The style, the order layout and the corners are saved by their own sections; leaving them out keeps them.
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, ...input } = settings
+      // The style, the order layout, the corners and the colours are saved by their own sections; leaving them out keeps them.
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, ...input } = settings
       setData(await settingsApi.save(input))
       setError(null)
       toast(t('admin.saved'))
@@ -41,7 +41,7 @@ export function GeneralSection() {
     }
   }
 
-  const text = (field: TextField, label: string, multiline = true) => {
+  const text = (field: TextField, label: string, multiline = true, kind: 'tel' | 'url' = 'tel') => {
     const id = `settings-${field}`
     const props = {
       id,
@@ -53,7 +53,7 @@ export function GeneralSection() {
     return (
       <span className="field">
         <label htmlFor={id}>{label}</label>
-        {multiline ? <textarea rows={2} {...props} /> : <input inputMode="tel" dir="ltr" {...props} />}
+        {multiline ? <textarea rows={2} {...props} /> : <input inputMode={kind} type={kind === 'url' ? 'url' : undefined} dir="ltr" {...props} />}
         <FieldError errors={errors} field={field} id={`${id}-error`} />
       </span>
     )
@@ -94,7 +94,21 @@ export function GeneralSection() {
           </span>
           {text('deliveryFeeText', t('admin.settings.deliveryFee'))}
           {text('kashrutText', t('admin.settings.kashrut'))}
+          <fieldset className="field" aria-labelledby="settings-payments-legend">
+            <legend id="settings-payments-legend">{t('admin.settings.payments')}</legend>
+            <label className="checkbox">
+              <input type="checkbox" checked={settings.bitEnabled} onChange={(e) => change({ bitEnabled: e.target.checked })} />
+              {t('admin.settings.bitEnabled')}
+            </label>
+            <label className="checkbox">
+              <input type="checkbox" checked={settings.payBoxEnabled} onChange={(e) => change({ payBoxEnabled: e.target.checked })} />
+              {t('admin.settings.payBoxEnabled')}
+            </label>
+            <p className="hint">{t('admin.settings.paymentsHint')}</p>
+          </fieldset>
           {text('paymentPhone', t('admin.settings.paymentPhone'), false)}
+          {settings.bitEnabled && text('bitLink', t('admin.settings.bitLink'), false, 'url')}
+          {settings.payBoxEnabled && text('payBoxLink', t('admin.settings.payBoxLink'), false, 'url')}
           <span className="field">
             <span className="with-info">
               <label htmlFor="settings-ownerEmail">{t('admin.settings.ownerEmail')}</label>

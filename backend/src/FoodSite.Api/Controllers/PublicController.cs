@@ -22,6 +22,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string? DeliveryFeeText,
         string? KashrutText,
         string? PaymentPhone,
+        bool BitEnabled,
+        bool PayBoxEnabled,
         decimal? MinimumOrderAmount,
         bool MinimumOrderAppliesToPickup,
         ContactDto Contact,
@@ -31,7 +33,13 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string Style,
         string OrderTotalPosition,
         string OrderFlow,
-        string Corners);
+        string Corners,
+        string Palette,
+        IReadOnlyDictionary<string, string> CustomColors,
+        int? LineWidth,
+        string Font,
+        string Shadows,
+        string Spacing);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -100,6 +108,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<SupplyDateDto> SupplyDates,
         IReadOnlyList<MenuGroupDto>? Groups = null);
 
+    private static bool PaymentOn(Data.Entities.Settings s) => !string.IsNullOrWhiteSpace(s.PaymentPhone);
+
     [HttpGet("site")]
     public async Task<SiteDto> GetSite()
     {
@@ -107,7 +117,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Phone).ToListAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
-            s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount, s.MinimumOrderAppliesToPickup,
+            s.KashrutText, s.PaymentPhone, s.BitEnabled && PaymentOn(s), s.PayBoxEnabled && PaymentOn(s), s.MinimumOrderAmount, s.MinimumOrderAppliesToPickup,
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
             whatsAppPhones,
             ServiceArea.Parse(s.ServiceCities),
@@ -115,7 +125,13 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
             OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
             OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
-            Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners));
+            Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
+            Palettes.Effective(s.Palette, site.Value.Settings.Palette),
+            Palettes.Parse(s.CustomColors),
+            s.LineWidth,
+            Finish.Effective(s.FontPair, Finish.IsKnownFont),
+            Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
+            Finish.Effective(s.Spacing, Finish.IsKnownSpacing));
     }
 
     [HttpGet("menu")]

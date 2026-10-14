@@ -12,6 +12,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@fontsource/frank-ruhl-libre": "^5.3.0",
+    "@fontsource/heebo": "^5.3.0",
     "@fontsource/rubik": "^5.3.0",
     "@fontsource/secular-one": "^5.3.0",
     "i18next": "^26.4.2",

@@ -9,7 +9,7 @@ export interface SiteConfig {
   features?: Partial<Record<Feature, boolean>>
   /**
    * The admin settings a new site starts with, plus its default look (`style`), order page layout
-   * (`orderTotalPosition`, `orderFlow`) and `corners`; the API's answer (`/api/site`) wins once loaded.
+   * (`orderTotalPosition`, `orderFlow`), `corners` and `palette`; the API's answer (`/api/site`) wins once loaded.
    */
   settings?: Record<string, string>
 }

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../../api/client'
 import { ordersAdminApi, type AdminOrder } from '../../api/operations'
+import { paymentKey } from '../../order/payment'
 import type { Fulfillment, Payment } from '../../api/site'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { FieldError, Info, Status } from '../ui'
@@ -109,7 +110,9 @@ export function OrderEditor({
         <label htmlFor={id('payment')}>{t('admin.orders.payment')}</label>
         <select id={id('payment')} value={payment} onChange={(e) => setPayment(e.target.value as Payment)}>
           <option value="OnDelivery">{t('admin.orders.onDelivery')}</option>
-          <option value="Transfer">{t('admin.orders.transfer')}</option>
+          <option value="Bit">{t(paymentKey('Bit'))}</option>
+          <option value="PayBox">{t(paymentKey('PayBox'))}</option>
+          {payment === 'Transfer' && <option value="Transfer">{t(paymentKey('Transfer'))}</option>}
         </select>
       </span>
       <span className="field">

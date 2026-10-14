@@ -1,3 +1,5 @@
+import { isTransfer } from './payment'
+import { TransferPay } from './TransferPay'
 import { useTranslation } from 'react-i18next'
 import type { Confirmation } from '../api/site'
 import { Modal } from '../components/Modal'
@@ -36,11 +38,13 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
       <p className="summary__total">
         {t('order.total')}: <strong className="numeric">{formatMoney(confirmation.total)}</strong>
       </p>
-      {confirmation.paymentMethod === 'Transfer' && confirmation.paymentPhone ? (
-        <p>
-          {t('order.success.transfer', { total: formatMoney(confirmation.total) })}{' '}
-          <strong dir="ltr">{confirmation.paymentPhone}</strong>
-        </p>
+      {isTransfer(confirmation.paymentMethod) && confirmation.paymentPhone ? (
+        <TransferPay
+          method={confirmation.paymentMethod}
+          phone={confirmation.paymentPhone}
+          total={confirmation.total}
+          link={confirmation.paymentLink}
+        />
       ) : (
         <p>{t('order.payOnDeliveryNote')}</p>
       )}
