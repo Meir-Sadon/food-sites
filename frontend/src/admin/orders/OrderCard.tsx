@@ -9,6 +9,7 @@ import { ConfirmRemove, Status } from '../ui'
 import { OrderEditor } from './OrderEditor'
 import { PaidForm } from './PaidForm'
 import { SendMessage } from './SendMessage'
+import { usePrintOrders } from './usePrintOrders'
 import { ItemAnswers } from '../../components/ItemAnswers'
 
 /** `compact` leaves out the header and dish list, for the order page that shows them in its own way. */
@@ -19,6 +20,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
   const [markingPaid, setMarkingPaid] = useState(false)
   const [messaging, setMessaging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const printer = usePrintOrders()
 
   /** Shows the change at once and undoes it when saving fails. */
   async function apply(change: Partial<AdminOrder>, save: () => Promise<void>) {
@@ -145,6 +147,13 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
             <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
           </Link>
         )}
+        {!compact && (
+          <button type="button" className="button-quiet" onClick={() => printer.print([order])}>
+            {t('admin.orders.printOrder')}
+            <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+          </button>
+        )}
+        {printer.sheet}
         <button type="button" className="button-quiet" onClick={() => setMessaging(!messaging)} aria-expanded={messaging}>
           {t('admin.messages.send')}
           <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>

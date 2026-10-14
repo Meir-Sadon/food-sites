@@ -9,6 +9,7 @@ import { formatDate, formatNumber } from '../format'
 import { whatsAppShareUrl } from '../messages/compose'
 import { Loading } from '../ui'
 import { OrderCard } from './OrderCard'
+import { usePrintOrders } from './usePrintOrders'
 import { orderLines, prepReport } from './report'
 
 /**
@@ -20,6 +21,7 @@ export function OrderViewPage() {
   const { t } = useTranslation()
   const id = Number(useParams().id)
   const [order, setOrder] = useState<AdminOrder | null>(null)
+  const printer = usePrintOrders()
   const [state, setState] = useState<'loading' | 'failed' | 'missing'>('loading')
 
   useEffect(() => {
@@ -118,6 +120,15 @@ export function OrderViewPage() {
           <span>{t('admin.orders.view.total')}</span> <strong className="numeric cart-sheet__sum">{formatMoney(order.total)}</strong>
         </p>
       </section>
+
+      <p className="no-print">
+        <button type="button" onClick={() => printer.print([order])}>
+          {t('admin.orders.printOrder')}
+          <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+        </button>{' '}
+        <span className="hint">{t('admin.orders.printHint')}</span>
+      </p>
+      {printer.sheet}
 
       <ShareReport key={`${order.id}-${order.status}-${order.isPaid}`} order={order} />
 
