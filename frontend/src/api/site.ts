@@ -295,6 +295,8 @@ export interface Confirmation {
     unitPrice: number
     lineTotal: number
     isAddOn: boolean
+    /** The dish's allergens as the business wrote them; null when it has none. */
+    allergenInfo?: string | null
   }[]
   deliveryHour?: string | null
   /** The picked hour was already full: the admin may call to move it. */

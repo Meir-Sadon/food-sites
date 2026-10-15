@@ -16,6 +16,8 @@ interface Props {
 /** Shown after the order is saved: the summary of what was ordered. */
 export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
   const { t } = useTranslation()
+  // Each dish with allergens once, with what the business wrote about it.
+  const allergens = [...new Map(confirmation.items.filter((i) => i.allergenInfo).map((i) => [i.dishName, i.allergenInfo as string])).entries()]
   return (
     <Modal title={t('order.success.title')} onClose={onClose}>
       <p>{t('order.success.number', { id: confirmation.id })}</p>
@@ -35,6 +37,18 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           </li>
         ))}
       </ul>
+      {allergens.length > 0 && (
+        <div className="notice notice--warning" role="note">
+          <strong>{t('order.success.allergensTitle')}</strong>
+          <ul>
+            {allergens.map(([name, info]) => (
+              <li key={name}>
+                {name}: {info}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {!!confirmation.deliveryFee && (
         <p className="summary__total">
           {t('order.deliveryFee')}: <strong className="numeric">{formatMoney(confirmation.deliveryFee)}</strong>
