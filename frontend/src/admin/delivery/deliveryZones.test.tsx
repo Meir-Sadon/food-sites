@@ -54,9 +54,11 @@ describe('Delivery zones settings', () => {
     await user.click(within(general).getByRole('radio', { name: /מתקדמת/ }))
     expect(within(general).queryByLabelText('דמי משלוח קבועים (₪)')).not.toBeInTheDocument()
     expect(within(general).queryByLabelText('ערי משלוח')).not.toBeInTheDocument()
+    // The zones editor shows at once, without saving or reloading.
+    expect(await screen.findByRole('button', { name: 'הוספת אזור' })).toBeInTheDocument()
     await user.click(within(general).getByRole('button', { name: 'שמירה' }))
 
-    expect(await screen.findByRole('button', { name: 'הוספת אזור' })).toBeInTheDocument()
+    await waitFor(() => expect(mock.sent('PUT', '/api/admin/settings')).toHaveLength(1))
     expect(mock.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ deliveryPricing: 'zones' })
   })
 

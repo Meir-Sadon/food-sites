@@ -64,9 +64,10 @@ public class ChangeDigestService(
                 if (due.Count == 0)
                     continue;
                 await using var scope = scopes.CreateAsyncScope();
-                var email = await scope.ServiceProvider.GetRequiredService<AppDbContext>().Settings.AsNoTracking()
-                    .Select(s => s.OwnerEmail).SingleOrDefaultAsync(stoppingToken);
-                await scope.ServiceProvider.GetRequiredService<OwnerNotifier>().ChangesAsync(email, due, stoppingToken);
+                var owner = await scope.ServiceProvider.GetRequiredService<AppDbContext>().Settings.AsNoTracking()
+                    .Select(s => new { s.OwnerEmail, s.OwnerChangeMails }).SingleOrDefaultAsync(stoppingToken);
+                await scope.ServiceProvider.GetRequiredService<OwnerNotifier>()
+                    .ChangesAsync(owner?.OwnerEmail, owner?.OwnerChangeMails ?? false, due, stoppingToken);
             }
             catch (OperationCanceledException)
             {

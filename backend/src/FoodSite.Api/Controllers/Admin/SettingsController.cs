@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using FoodSite.Api.Data;
 using FoodSite.Api.Images;
+using FoodSite.Api.Mail;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     public const decimal MaxMinimumOrder = 100_000;
     public const int MaxOrdersPerHour = 1000;
     public const int MaxPortionsPerSupplyDate = 100_000;
-    public const int OwnerEmailMaxLength = 200;
+    public const int OwnerEmailMaxLength = 500;
 
     public record SettingsDto(
         string? BackgroundImageUrl,
@@ -41,6 +42,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string OrderFlow,
         string Corners,
         string OwnerEmail,
+        bool OwnerChangeMails,
         string Palette,
         IReadOnlyDictionary<string, string> CustomColors,
         int? LineWidth,
@@ -69,6 +71,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? OrderFlow = null,
         string? Corners = null,
         string? OwnerEmail = null,
+        bool? OwnerChangeMails = null,
         string? Palette = null,
         Dictionary<string, string>? CustomColors = null,
         int? LineWidth = null,
@@ -143,7 +146,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.Spacing), "invalid");
         if (input.TileGroups is not null && !Finish.IsKnownTileGroups(input.TileGroups))
             errors.Add(nameof(input.TileGroups), "invalid");
-        if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !IsEmail(input.OwnerEmail.Trim()))
+        if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !OwnerRecipients.IsValid(input.OwnerEmail, OwnerEmailMaxLength))
             errors.Add(nameof(input.OwnerEmail), "email");
         if (input.DeliveryPricing is not null && !Delivery.DeliveryPricing.IsKnown(input.DeliveryPricing))
             errors.Add(nameof(input.DeliveryPricing), "invalid");
@@ -206,7 +209,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.TileGroups = input.TileGroups;
         // Missing (an older client) keeps the address; an empty one turns the mails off.
         if (input.OwnerEmail is not null)
-            settings.OwnerEmail = Clean(input.OwnerEmail);
+            settings.OwnerEmail = Clean(OwnerRecipients.Normalize(input.OwnerEmail));
+        // Missing (an older client) keeps the choice; off until the admin ticks it.
+        if (input.OwnerChangeMails is not null)
+            settings.OwnerChangeMails = input.OwnerChangeMails.Value;
         // Missing (an older client) keeps the mode.
         if (input.DeliveryPricing is not null)
             settings.DeliveryPricing = input.DeliveryPricing;
@@ -267,6 +273,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
         Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
         s.OwnerEmail ?? "",
+        s.OwnerChangeMails,
         Palettes.Effective(s.Palette, site.Value.Settings.Palette),
         Palettes.Parse(s.CustomColors),
         s.LineWidth,
@@ -283,11 +290,6 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         && Uri.TryCreate(value, UriKind.Absolute, out var uri)
         && uri.Scheme == Uri.UriSchemeHttps;
 
-    private static bool IsEmail(string value) =>
-        value.Length <= OwnerEmailMaxLength && EmailPattern().IsMatch(value);
-
-    [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
-    private static partial Regex EmailPattern();
 
     // Digits with optional +, spaces or dashes, e.g. 050-1234567 or +972 50 123 4567.
     [GeneratedRegex(@"^\+?[0-9][0-9\- ]{7,18}[0-9]$")]

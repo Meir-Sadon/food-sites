@@ -256,6 +256,7 @@ describe('General settings', () => {
       ordersPerHour: null,
       portionsPerSupplyDate: null,
       ownerEmail: '',
+      ownerChangeMails: false,
     })
   })
 
@@ -269,6 +270,21 @@ describe('General settings', () => {
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ownerEmail: 'owner@example.com' })
+  })
+
+  it('saves several owner addresses and the choice to be mailed about changes, off by default', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    const changes = within(form).getByRole('checkbox', { name: 'שליחת מייל גם על עדכון פריט באתר' })
+    expect(changes).not.toBeChecked()
+    await user.type(within(form).getByLabelText('כתובת מייל לעדכונים'), 'a@example.com, b@example.com')
+    await user.click(changes)
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ownerEmail: 'a@example.com, b@example.com', ownerChangeMails: true })
   })
 
   it('saves the service cities as typed', async () => {

@@ -41,6 +41,8 @@ export interface Settings {
   corners: Corners
   /** Where the owner is mailed about new orders and changes; empty means no mail. */
   ownerEmail: string
+  /** Whether the same addresses also get the summary of admin changes to dishes and settings. */
+  ownerChangeMails: boolean
   /** The ready-made colour palette the client site shows. */
   palette: Palette
   /** Colours the admin set per element; they win over the palette. */

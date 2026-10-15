@@ -27,14 +27,14 @@ public sealed class MailTests(PostgresFixture postgres) : IAsyncLifetime
         return Task.CompletedTask;
     }
 
-    private static object Settings(string? ownerEmail) => new
+    private static object Settings(string? ownerEmail, bool? ownerChangeMails = null) => new
     {
         deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
-        kashrutText = (string?)null, paymentPhone = "050-1234567", minimumOrderAmount = (decimal?)null, ownerEmail,
+        kashrutText = (string?)null, paymentPhone = "050-1234567", minimumOrderAmount = (decimal?)null, ownerEmail, ownerChangeMails,
     };
 
-    private Task<HttpResponseMessage> SaveSettings(string? ownerEmail) =>
-        _admin.PutAsJsonAsync("/api/admin/settings", Settings(ownerEmail));
+    private Task<HttpResponseMessage> SaveSettings(string? ownerEmail, bool? ownerChangeMails = null) =>
+        _admin.PutAsJsonAsync("/api/admin/settings", Settings(ownerEmail, ownerChangeMails));
 
     private async Task<DishDto> CreateDish(string name)
     {
@@ -71,6 +71,28 @@ public sealed class MailTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Several_owner_addresses_are_validated_and_all_get_the_order_mail()
+    {
+        Assert.Equal(HttpStatusCode.BadRequest, (await SaveSettings(Owner + ", nope")).StatusCode);
+        var saved = await (await SaveSettings(" " + Owner + " ,second@example.com;" + Owner.ToUpperInvariant())).Read<SettingsDto>();
+        Assert.Equal(Owner + ", second@example.com", saved.OwnerEmail);
+
+        var dish = await CreateDish("עוף בתנור");
+        Assert.Equal(HttpStatusCode.OK, (await PlaceOrder(dish)).StatusCode);
+        await _factory.Mail.NextAsync(m => m.To == Owner && m.Subject.Contains("הזמנה חדשה"));
+        await _factory.Mail.NextAsync(m => m.To == "second@example.com" && m.Subject.Contains("הזמנה חדשה"));
+    }
+
+    [Fact]
+    public async Task The_change_mail_choice_is_off_by_default_and_kept_when_left_out()
+    {
+        Assert.False((await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).OwnerChangeMails);
+        Assert.True((await (await SaveSettings(Owner, true)).Read<SettingsDto>()).OwnerChangeMails);
+        Assert.True((await (await SaveSettings(Owner)).Read<SettingsDto>()).OwnerChangeMails);
+        Assert.False((await (await SaveSettings(Owner, false)).Read<SettingsDto>()).OwnerChangeMails);
+    }
+
+    [Fact]
     public async Task A_new_order_is_mailed_to_the_owner_and_a_mail_outage_does_not_fail_it()
     {
         var dish = await CreateDish("עוף בתנור");
@@ -101,7 +123,7 @@ public sealed class MailTests(PostgresFixture postgres) : IAsyncLifetime
     [Fact]
     public async Task Changes_to_dishes_and_settings_are_mailed_as_one_summary_saying_who_changed_what()
     {
-        (await SaveSettings(Owner)).EnsureSuccessStatusCode();
+        (await SaveSettings(Owner, true)).EnsureSuccessStatusCode();
 
         var dish = await CreateDish("שניצל");
         var edited = await _admin.PutAsJsonAsync($"/api/admin/dishes/{dish.Id}", new DishInput(
