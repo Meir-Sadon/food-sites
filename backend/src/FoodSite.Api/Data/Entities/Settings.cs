@@ -29,6 +29,9 @@ public class Settings
     /// <summary>Whether <see cref="MinimumOrderAmount"/> applies to pickup orders too, or only to deliveries.</summary>
     public bool MinimumOrderAppliesToPickup { get; set; } = true;
 
+    /// <summary>The order page first asks delivery or pickup and the contact and address, then shows the dishes. Off keeps the usual page.</summary>
+    public bool AddressFirst { get; set; }
+
     /// <summary>Phone number for manual Bit/PayBox transfers.</summary>
     public string? PaymentPhone { get; set; }
 

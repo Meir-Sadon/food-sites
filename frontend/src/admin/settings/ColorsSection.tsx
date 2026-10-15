@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { COLOR_KEYS, MAX_LINE_WIDTH, PALETTES, type ColorKey, type ColorSet, type Palette } from '../../api/site'
-import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { backgroundOf, colorVariables, contrastRatio, copySource, ensureReadable, mergeColors, MIN_CONTRAST, wouldCycle } from '../../site/palettes'
 import { Loading, Section, Status } from '../ui'
 import { announceLook } from '../useAdminLook'
@@ -32,7 +32,7 @@ function ColorPreview({ palette, colors, lineWidth }: { palette: Palette; colors
 export function ColorsSection() {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
-  const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const { data: settings, setData, failed } = useLoad(settingsApi.get)
   const [pickedPalette, setPickedPalette] = useState<Palette | null>(null)
   const [pickedColors, setPickedColors] = useState<ColorSet | null>(null)
@@ -71,7 +71,7 @@ export function ColorsSection() {
       setPickedPalette(null)
       setPickedColors(null)
       setPickedWidth(undefined)
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -174,6 +174,7 @@ export function ColorsSection() {
             <button type="submit" disabled={saving || !changed}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
+            <SavedNote show={saved} />
             {error && <Status message={error} error />}
           </div>
         </form>

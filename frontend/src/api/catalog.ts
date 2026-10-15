@@ -23,6 +23,8 @@ export interface Settings {
   minimumOrderAmount: number | null
   /** False when the minimum is for deliveries only. */
   minimumOrderAppliesToPickup: boolean
+  /** The order page first asks delivery or pickup and the address, then shows the dishes. */
+  addressFirst: boolean
   /** Comma-separated, e.g. "אשקלון, אשדוד"; empty means every city is served. */
   serviceCities: string
   /** How many orders can be supplied in one hour; null means no limit. */

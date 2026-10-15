@@ -346,6 +346,21 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task Address_first_is_off_by_default_and_kept_when_left_out()
+    {
+        var site = _factory.CreateApiClient();
+        Assert.False((await site.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).AddressFirst);
+
+        var on = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, addressFirst = true })).Read<SettingsDto>();
+        Assert.True(on.AddressFirst);
+        Assert.True((await site.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).AddressFirst);
+
+        var kept = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.True(kept.AddressFirst);
+    }
+
+    [Fact]
     public async Task A_zero_minimum_means_no_minimum_and_a_negative_one_is_rejected()
     {
         var none = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input(minimum: 0m))).Read<SettingsDto>();

@@ -937,6 +937,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("AddressFirst")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("AdminPasswordHash")
                         .HasColumnType("text");
 

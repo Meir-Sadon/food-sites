@@ -27,7 +27,14 @@ async function open(patch: Partial<Site>, quote: (address: unknown) => DeliveryQ
 
 const totalText = () => within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/^סה"כ:/).textContent ?? ''
 
+/** With the advanced setting the address fields wait behind a button. */
+async function revealAddress(user: ReturnType<typeof userEvent.setup>) {
+  const button = screen.queryByRole('button', { name: 'הזנת כתובת ידנית' })
+  if (button) await user.click(button)
+}
+
 async function typeAddress(user: ReturnType<typeof userEvent.setup>) {
+  await revealAddress(user)
   const city = screen.getByLabelText('עיר')
   if (!(city as HTMLInputElement).value) await user.type(city, 'חיפה')
   await user.type(screen.getByLabelText('רחוב'), 'הרצל')
@@ -35,6 +42,17 @@ async function typeAddress(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('Delivery fee by zones', () => {
+  it('keeps the address fields behind a button until it is pressed', async () => {
+    const { user } = await open({ deliveryPricing: 'zones' }, () => ({ status: 'ok', fee: 15, zoneName: 'קרוב' }))
+    expect(screen.queryByLabelText('רחוב')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'אתרו את המיקום שלי' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'הזנת כתובת ידנית' }))
+
+    expect(screen.getByLabelText('רחוב')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'הזנת כתובת ידנית' })).not.toBeInTheDocument()
+  })
+
   it('waits for an address, then adds the fee of its zone to the total', async () => {
     const { api, user } = await open({ deliveryPricing: 'zones' }, () => ({ status: 'ok', fee: 15, zoneName: 'החלק הקרוב' }))
     expect(screen.getByText('דמי המשלוח יחושבו אחרי שתזינו כתובת.')).toBeInTheDocument()
@@ -94,6 +112,7 @@ describe('Delivery fee by zones', () => {
       { deliveryPricing: 'zones', serviceCities: ['חיפה'], deliveryAreaText: 'חיפה', deliveryFeeText: 'עשרים שקלים' },
       () => ({ status: 'ok', fee: 15, zoneName: 'קרוב' }),
     )
+    await revealAddress(user)
     await user.clear(screen.getByLabelText('עיר'))
     await user.type(screen.getByLabelText('עיר'), 'אשדוד')
     expect(screen.queryByText(/ההזמנה תעבור בדיקה של המנהל/)).not.toBeInTheDocument()

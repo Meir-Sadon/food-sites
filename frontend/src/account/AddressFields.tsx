@@ -38,6 +38,8 @@ export function AddressFields({ value, onChange, errors, idPrefix, context, zone
   }, [serviceCities, value.city, onChange])
 
   const [locating, setLocating] = useState<Locating>('idle')
+  // With "find my location" on offer the fields wait behind a button, unless there is already an address or an error.
+  const [manual, setManual] = useState(false)
   const advanced = site?.deliveryPricing === 'zones'
 
   function locate() {
@@ -62,6 +64,9 @@ export function AddressFields({ value, onChange, errors, idPrefix, context, zone
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     )
   }
+
+  const hasErrors = (['city', 'street', 'houseNumber', 'apartment'] as const).some((name) => (errors[name]?.length ?? 0) > 0)
+  const showFields = !zones || manual || hasErrors || value.street.trim() !== '' || value.houseNumber.trim() !== ''
 
   const field = (
     name: keyof AddressParts,
@@ -94,7 +99,11 @@ export function AddressFields({ value, onChange, errors, idPrefix, context, zone
             <button type="button" onClick={locate} disabled={locating === 'busy'}>
               {locating === 'busy' ? t('address.locating') : t('address.locate')}
             </button>
-            <span className="muted">{t('address.orManual')}</span>
+            {!showFields && (
+              <button type="button" className="button-quiet" onClick={() => setManual(true)}>
+                {t('address.enterManually')}
+              </button>
+            )}
           </div>
           {locating !== 'idle' && locating !== 'busy' && (
             <p role="alert" className="form-error">
@@ -103,20 +112,24 @@ export function AddressFields({ value, onChange, errors, idPrefix, context, zone
           )}
         </>
       )}
-      <div className="row row--end">
-        {field('city', t('address.city'), 'address-level2', { required: true, className: 'field--grow', list: id('cities') })}
-        {field('street', t('address.street'), 'address-line1', { required: true, className: 'field--grow' })}
-      </div>
-      <div className="row row--end">
-        {field('houseNumber', t('address.houseNumber'), 'off', { required: true, className: 'field--narrow' })}
-        {field('apartment', t('address.apartment'), 'address-line2', { className: 'field--narrow' })}
-      </div>
-      {zones && (
-        <div className="row">
-          <button type="button" className="button-quiet" onClick={zones.onCalculate}>
-            {t('address.calculate')}
-          </button>
-        </div>
+      {showFields && (
+        <>
+          <div className="row row--end">
+            {field('city', t('address.city'), 'address-level2', { required: true, className: 'field--grow', list: id('cities') })}
+            {field('street', t('address.street'), 'address-line1', { required: true, className: 'field--grow' })}
+          </div>
+          <div className="row row--end">
+            {field('houseNumber', t('address.houseNumber'), 'off', { required: true, className: 'field--narrow' })}
+            {field('apartment', t('address.apartment'), 'address-line2', { className: 'field--narrow' })}
+          </div>
+          {zones && (
+            <div className="row">
+              <button type="button" className="button-quiet" onClick={zones.onCalculate}>
+                {t('address.calculate')}
+              </button>
+            </div>
+          )}
+        </>
       )}
       <datalist id={id('cities')}>
         {serviceCities.map((city) => (

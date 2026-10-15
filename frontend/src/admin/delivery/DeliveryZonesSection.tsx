@@ -2,7 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { deliveryZonesApi, type DeliveryZone } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
-import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { ConfirmRemove, FieldError, Info, Loading, MoveButtons, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
 
@@ -20,7 +20,7 @@ const emptyZone = (): DeliveryZone => ({ id: null, name: '', fee: 0, isBlocked: 
 export function DeliveryZonesSection() {
   const { t } = useTranslation()
   const formError = useFormErrorMessage()
-  const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const { data, setData, failed } = useLoad(loadZones)
   const [zones, setZones] = useState<DeliveryZone[] | null>(null)
   const [selected, setSelected] = useState<number | null>(null)
@@ -44,7 +44,7 @@ export function DeliveryZonesSection() {
       setZones(null)
       setSelected(null)
       setError(null)
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(formError(err))
@@ -194,6 +194,7 @@ export function DeliveryZonesSection() {
                 <button type="button" onClick={save} disabled={saving || zones === null}>
                   {saving ? t('admin.saving') : t('admin.save')}
                 </button>
+                <SavedNote show={saved} />
               </div>
             </>
           )}
