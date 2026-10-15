@@ -1253,6 +1253,8 @@
     "remove": "הסרה",
     "removeDish": "הסרה מההזמנה: {{name}}",
     "allergensShow": "הצגת אלרגנים במנה",
+    "enlargeImage": "הגדלת התמונה: {{name}}",
+    "shrinkImage": "חזרה לפרטי המנה",
     "soldOut": "אזל",
     "soldOutForDate": "אזל ליום האספקה שנבחר",
     "remaining": "נותרו {{amount}}",

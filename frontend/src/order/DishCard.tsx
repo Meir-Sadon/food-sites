@@ -278,10 +278,42 @@ function AllergenMark({ text }: { text?: string | null }) {
   )
 }
 
+/** The picture in a tile's dialog: whole, small, and a press enlarges it to fill the dialog. */
+function DialogPicture({ images, name, onZoom }: { images: string[]; name: string; onZoom: () => void }) {
+  const { t } = useTranslation()
+  if (images.length === 0) return null
+  return (
+    <button type="button" className="tile-dialog__pic" aria-label={t('order.enlargeImage', { name })} onClick={onZoom}>
+      <ImageCarousel images={images} name={name} />
+      <span className="tile-dialog__zoom-hint" aria-hidden="true">
+        ⤢
+      </span>
+    </button>
+  )
+}
+
+/** The enlarged picture: it takes the whole dialog until it is pressed again or the back button is. */
+function ZoomedPicture({ images, name, onBack }: { images: string[]; name: string; onBack: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <button type="button" className="tile-dialog__zoomed" aria-label={t('order.shrinkImage')} onClick={onBack}>
+        <ImageCarousel images={images} name={name} />
+      </button>
+      <div className="modal__actions">
+        <button type="button" onClick={onBack}>
+          {t('order.shrinkImage')}
+        </button>
+      </div>
+    </>
+  )
+}
+
 function DishTile({ dish, dishes, selection, date, onChange }: Props) {
   const { t } = useTranslation()
   const id = useId()
   const [open, setOpen] = useState(false)
+  const [zoom, setZoom] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
   useOpenOnRequest(articleRef, () => flushSync(() => setOpen(true)))
   const remaining = remainingOn(dish, date)
@@ -361,9 +393,13 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
       </div>
       {open && (
-        <Modal title={dish.name} onClose={() => setOpen(false)} wide>
+        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide>
+          {zoom ? (
+            <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
+          ) : (
+            <>
           <div className="tile-dialog__head">
-            <ImageCarousel images={dish.images} name={dish.name} />
+            <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
             <div className="tile-dialog__info">
               <p className="dish__price">{priceText(dish, t)}</p>
               {dish.description && <p className="dish__description">{dish.description}</p>}
@@ -381,6 +417,8 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
               {t('order.doneCustomizing')}
             </button>
           </div>
+            </>
+          )}
         </Modal>
       )}
     </article>
@@ -398,6 +436,7 @@ function DishGroupTile(props: GroupProps) {
   const { t } = useTranslation()
   const id = useId()
   const [open, setOpen] = useState(false)
+  const [zoom, setZoom] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
   useOpenOnRequest(articleRef, () => flushSync(() => setOpen(true)))
   const count = variants.filter((v) => selections[v.id]).length
@@ -423,9 +462,13 @@ function DishGroupTile(props: GroupProps) {
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
       </div>
       {open && (
-        <Modal title={dish.name} onClose={() => setOpen(false)} wide>
+        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide>
+          {zoom ? (
+            <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
+          ) : (
+            <>
           <div className="tile-dialog__head">
-            <ImageCarousel images={dish.images} name={dish.name} />
+            <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
             <div className="tile-dialog__info">
               {dish.description && <p className="dish__description">{dish.description}</p>}
               {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
@@ -439,6 +482,8 @@ function DishGroupTile(props: GroupProps) {
               {t('order.doneCustomizing')}
             </button>
           </div>
+            </>
+          )}
         </Modal>
       )}
     </article>
