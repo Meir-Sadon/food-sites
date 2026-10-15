@@ -1,14 +1,16 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi, type Settings } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
+import type { DeliveryPricing } from '../../api/site'
 import { FieldError, Info, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
 import { useToast } from '../../components/toast'
 
 type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'paymentPhone' | 'bitLink' | 'payBoxLink'
 
-export function GeneralSection() {
+/** `onPricing` hears the saved delivery pricing, so the page can show the zones editor only for the advanced setting. */
+export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPricing) => void }) {
   const { t } = useTranslation()
   const errorMessage = useFormErrorMessage()
   const { data: settings, setData, failed } = useLoad(settingsApi.get)
@@ -16,8 +18,16 @@ export function GeneralSection() {
   const [error, setError] = useState<string | null>(null)
   const toast = useToast()
   const [saving, setSaving] = useState(false)
+  // True while the picked pricing is not saved yet: the page keeps showing the saved one.
+  const [dirtyPricing, setDirtyPricing] = useState(false)
+
+  const savedPricing = settings?.deliveryPricing
+  useEffect(() => {
+    if (savedPricing && !dirtyPricing) onPricing?.(savedPricing)
+  }, [savedPricing, dirtyPricing, onPricing])
 
   function change(patch: Partial<Settings>) {
+    if ('deliveryPricing' in patch) setDirtyPricing(true)
     setData((current) => current && { ...current, ...patch })
     setError(null)
   }
@@ -29,8 +39,9 @@ export function GeneralSection() {
     setErrors({})
     try {
       // The style, the order layout, the corners and the colours are saved by their own sections; leaving them out keeps them.
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, deliveryPricing: _dp, ...input } = settings
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, ...input } = settings
       setData(await settingsApi.save(input))
+      setDirtyPricing(false)
       setError(null)
       toast(t('admin.saved'))
     } catch (err) {
@@ -77,22 +88,67 @@ export function GeneralSection() {
             </label>
           </fieldset>
           <FieldError errors={errors} field="deliveryEnabled" id="settings-deliveryEnabled-error" />
-          {text('deliveryAreaText', t('admin.settings.deliveryArea'))}
-          <span className="field">
-            <span className="with-info">
-              <label htmlFor="settings-serviceCities">{t('admin.settings.serviceCities')}</label>
-              <Info text={t('admin.settings.serviceCitiesHint')} about={t('admin.settings.serviceCities')} />
-            </span>
-            <input
-              id="settings-serviceCities"
-              value={settings.serviceCities}
-              maxLength={500}
-              aria-describedby="settings-serviceCities-error"
-              onChange={(e) => change({ serviceCities: e.target.value })}
-            />
-            <FieldError errors={errors} field="serviceCities" id="settings-serviceCities-error" />
-          </span>
-          {text('deliveryFeeText', t('admin.settings.deliveryFee'))}
+          {settings.deliveryEnabled && (
+            <fieldset className="field" aria-labelledby="settings-pricing-legend">
+              <span className="with-info">
+                <legend id="settings-pricing-legend">{t('admin.zones.pricing')}</legend>
+                <Info text={t('admin.zones.pricingInfo')} about={t('admin.zones.pricing')} />
+              </span>
+              <div className="row">
+                {(['simple', 'zones'] as const).map((value) => (
+                  <label key={value} className="checkbox">
+                    <input
+                      type="radio"
+                      name="delivery-pricing"
+                      checked={settings.deliveryPricing === value}
+                      onChange={() => change({ deliveryPricing: value })}
+                    />
+                    {t(`admin.zones.pricings.${value}`)}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+          {settings.deliveryEnabled && settings.deliveryPricing === 'zones' && <p className="hint">{t('admin.zones.advancedNote')}</p>}
+          {(!settings.deliveryEnabled || settings.deliveryPricing !== 'zones') && (
+            <>
+              {text('deliveryAreaText', t('admin.settings.deliveryArea'))}
+              <span className="field">
+                <span className="with-info">
+                  <label htmlFor="settings-serviceCities">{t('admin.settings.serviceCities')}</label>
+                  <Info text={t('admin.settings.serviceCitiesHint')} about={t('admin.settings.serviceCities')} />
+                </span>
+                <input
+                  id="settings-serviceCities"
+                  value={settings.serviceCities}
+                  maxLength={500}
+                  aria-describedby="settings-serviceCities-error"
+                  onChange={(e) => change({ serviceCities: e.target.value })}
+                />
+                <FieldError errors={errors} field="serviceCities" id="settings-serviceCities-error" />
+              </span>
+              <span className="field">
+                <span className="with-info">
+                  <label htmlFor="settings-deliveryFeeAmount">{t('admin.settings.deliveryFeeAmount')}</label>
+                  <Info text={t('admin.settings.deliveryFeeAmountHint')} about={t('admin.settings.deliveryFeeAmount')} />
+                </span>
+                <input
+                  id="settings-deliveryFeeAmount"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="any"
+                  dir="ltr"
+                  className="input-narrow"
+                  value={settings.deliveryFeeAmount ?? ''}
+                  aria-describedby="settings-deliveryFeeAmount-error"
+                  onChange={(e) => change({ deliveryFeeAmount: e.target.value === '' ? null : Number(e.target.value) })}
+                />
+                <FieldError errors={errors} field="deliveryFeeAmount" id="settings-deliveryFeeAmount-error" />
+              </span>
+              {text('deliveryFeeText', t('admin.settings.deliveryFee'))}
+            </>
+          )}
           {text('kashrutText', t('admin.settings.kashrut'))}
           <fieldset className="field" aria-labelledby="settings-payments-legend">
             <legend id="settings-payments-legend">{t('admin.settings.payments')}</legend>

@@ -47,7 +47,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string Font,
         string Shadows,
         string Spacing,
-        string DeliveryPricing);
+        string DeliveryPricing,
+        decimal? DeliveryFeeAmount);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -76,7 +77,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool? PayBoxEnabled = null,
         string? BitLink = null,
         string? PayBoxLink = null,
-        string? DeliveryPricing = null);
+        string? DeliveryPricing = null,
+        decimal? DeliveryFeeAmount = null);
 
     public const int LinkMaxLength = 500;
 
@@ -138,6 +140,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.OwnerEmail), "email");
         if (input.DeliveryPricing is not null && !Delivery.DeliveryPricing.IsKnown(input.DeliveryPricing))
             errors.Add(nameof(input.DeliveryPricing), "invalid");
+        if (input.DeliveryFeeAmount is < 0m or > Delivery.DeliveryZones.MaxFee)
+            errors.Add(nameof(input.DeliveryFeeAmount), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -146,6 +150,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         settings.PickupEnabled = input.PickupEnabled;
         settings.DeliveryAreaText = Clean(input.DeliveryAreaText);
         settings.DeliveryFeeText = Clean(input.DeliveryFeeText);
+        // Zero (or empty) means no fixed fee.
+        settings.DeliveryFeeAmount = input.DeliveryFeeAmount is > 0m ? decimal.Round(input.DeliveryFeeAmount.Value, 2) : null;
         settings.KashrutText = Clean(input.KashrutText);
         settings.PaymentPhone = Clean(input.PaymentPhone);
         settings.BitEnabled = bitOn;
@@ -256,7 +262,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.Effective(s.FontPair, Finish.IsKnownFont),
         Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
         Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
-        s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple);
+        s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
+        s.DeliveryFeeAmount);
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

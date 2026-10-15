@@ -40,18 +40,36 @@ async function section() {
 }
 
 describe('Delivery zones settings', () => {
-  it('switches between the simple and the advanced setting', async () => {
+  it('switches between the regular and the advanced setting, which hides the regular fields', async () => {
     const mock = api([], 'simple')
     renderAt('/admin/settings')
     const user = userEvent.setup()
-    const region = await section()
-    expect(within(region).getByRole('radio', { name: /רגילה/ })).toBeChecked()
-    expect(within(region).queryByRole('button', { name: 'הוספת אזור' })).not.toBeInTheDocument()
+    const general = await screen.findByRole('region', { name: 'משלוח, כשרות ותשלום' })
+    await within(general).findByRole('radio', { name: /רגילה/ })
+    expect(within(general).getByRole('radio', { name: /רגילה/ })).toBeChecked()
+    expect(within(general).getByLabelText('דמי משלוח קבועים (₪)')).toBeInTheDocument()
+    expect(within(general).getByLabelText('ערי משלוח')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'דמי משלוח לפי אזורים' })).not.toBeInTheDocument()
 
-    await user.click(within(region).getByRole('radio', { name: /מתקדמת/ }))
+    await user.click(within(general).getByRole('radio', { name: /מתקדמת/ }))
+    expect(within(general).queryByLabelText('דמי משלוח קבועים (₪)')).not.toBeInTheDocument()
+    expect(within(general).queryByLabelText('ערי משלוח')).not.toBeInTheDocument()
+    await user.click(within(general).getByRole('button', { name: 'שמירה' }))
 
-    expect(await within(region).findByRole('button', { name: 'הוספת אזור' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'הוספת אזור' })).toBeInTheDocument()
     expect(mock.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ deliveryPricing: 'zones' })
+  })
+
+  it('saves the fixed delivery fee of the regular setting', async () => {
+    const mock = api([], 'simple')
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const general = await screen.findByRole('region', { name: 'משלוח, כשרות ותשלום' })
+    await user.type(await within(general).findByLabelText('דמי משלוח קבועים (₪)'), '25')
+    await user.click(within(general).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect(mock.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ deliveryFeeAmount: 25, deliveryPricing: 'simple' })
   })
 
   it('draws a new zone on the map, names it, gives it a fee and saves the list', async () => {

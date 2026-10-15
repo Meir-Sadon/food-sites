@@ -3,12 +3,15 @@ using FoodSite.Api.Data.Entities;
 
 namespace FoodSite.Api.Delivery;
 
-public record GeoPoint(double Lat, double Lng);
+/// <param name="Approximate">Only the street or the city could be found, not the house: good enough for a rough place, not for a border.</param>
+public record GeoPoint(double Lat, double Lng, bool Approximate = false);
 
 /// <summary>What the zones say about one address.</summary>
-/// <param name="Status"><c>ok</c> (a fee applies, which can be zero), <c>blocked</c> (no deliveries there) or <c>unknown</c> (the address could not be placed on the map).</param>
-public record DeliveryQuote(string Status, decimal Fee, string? ZoneName)
+/// <param name="Status"><c>ok</c> (a fee applies, which can be zero), <c>blocked</c> (no deliveries there), <c>unknown</c> (the address could not be placed on the map) or <c>outside</c> (regular setting: a city the kitchen does not list, the owner calls with the price).</param>
+/// <param name="Approximate">The fee comes from a point that is only the street's or the city's, so the order should be checked.</param>
+public record DeliveryQuote(string Status, decimal Fee, string? ZoneName, bool Approximate = false)
 {
+    public const string Outside = "outside";
     public const string Ok = "ok";
     public const string Blocked = "blocked";
     public const string Unknown = "unknown";
@@ -77,7 +80,7 @@ public static class DeliveryZones
         if (holding.Find(z => z.IsBlocked) is { } blocked)
             return new(DeliveryQuote.Blocked, 0m, blocked.Name);
         return holding.FirstOrDefault() is { } zone
-            ? new(DeliveryQuote.Ok, zone.Fee, zone.Name)
+            ? new(DeliveryQuote.Ok, zone.Fee, zone.Name, point.Approximate)
             : new(DeliveryQuote.Blocked, 0m, null);
     }
 }

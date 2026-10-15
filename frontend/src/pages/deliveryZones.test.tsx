@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DeliveryQuote, Site } from '../api/site'
@@ -70,9 +70,69 @@ describe('Delivery fee by zones', () => {
   })
 
   it('asks for nothing with the simple setting', async () => {
-    const { api, user } = await open({ deliveryPricing: 'simple', deliveryFeeText: 'בין 20 ל-40 ₪' }, () => ({ status: 'none', fee: 0, zoneName: null }))
+    const { api, user } = await open({ deliveryPricing: 'simple', deliveryFeeText: 'בין 20 ל-40 ₪' }, () => ({ status: 'outside', fee: 0, zoneName: null }))
     await typeAddress(user)
     expect(screen.queryByText('דמי המשלוח יחושבו אחרי שתזינו כתובת.')).not.toBeInTheDocument()
     expect(api.sent('POST', '/api/delivery-quote')).toHaveLength(0)
+  })
+
+  it('adds the fixed fee of the regular setting for a service city, and says the business will phone about another city', async () => {
+    const { api, user } = await open({ deliveryPricing: 'simple', deliveryFeeAmount: 20, serviceCities: ['חיפה'] }, () => ({ status: 'ok', fee: 0, zoneName: null }))
+    await typeAddress(user)
+
+    expect(totalText()).toContain('60')
+    expect(api.sent('POST', '/api/delivery-quote')).toHaveLength(0)
+
+    await user.clear(screen.getByLabelText('עיר'))
+    await user.type(screen.getByLabelText('עיר'), 'אילת')
+    expect(screen.getByText(/יעדכן אתכם בטלפון בכמה יעלו דמי המשלוח/)).toBeInTheDocument()
+    expect(totalText()).toContain('40')
+  })
+
+  it('shows none of the regular messages with the advanced setting', async () => {
+    const { user } = await open(
+      { deliveryPricing: 'zones', serviceCities: ['חיפה'], deliveryAreaText: 'חיפה', deliveryFeeText: 'עשרים שקלים' },
+      () => ({ status: 'ok', fee: 15, zoneName: 'קרוב' }),
+    )
+    await user.clear(screen.getByLabelText('עיר'))
+    await user.type(screen.getByLabelText('עיר'), 'אשדוד')
+    expect(screen.queryByText(/ההזמנה תעבור בדיקה של המנהל/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/אזור המשלוחים/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/עשרים שקלים/)).not.toBeInTheDocument()
+  })
+
+  it('finds the location, fills the address and takes the fee that came with it', async () => {
+    const position = { coords: { latitude: 31.8, longitude: 34.65 } }
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (ok: (p: unknown) => void) => ok(position) },
+    })
+    const api = fakeApi({
+      'GET /api/site': () => site({ deliveryPricing: 'zones' }),
+      'GET /api/menu': menuWithPlainDish,
+      'POST /api/delivery-quote/locate': () => ({
+        body: { found: true, city: 'אשדוד', street: 'הרצל', houseNumber: '5', quote: { status: 'ok', fee: 30, zoneName: 'אשדוד' } },
+      }),
+    })
+    renderAt('/')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
+    await user.click(screen.getByRole('button', { name: 'אתרו את המיקום שלי' }))
+
+    await waitFor(() => expect(screen.getByLabelText('רחוב')).toHaveValue('הרצל'))
+    expect(screen.getByLabelText('עיר')).toHaveValue('אשדוד')
+    expect(await screen.findByText(/אשדוד\)/)).toBeInTheDocument()
+    expect(api.sent('POST', '/api/delivery-quote/locate')[0].body).toMatchObject({ lat: 31.8, lng: 34.65 })
+    expect(api.sent('POST', '/api/delivery-quote')).toHaveLength(0)
+    expect(totalText()).toContain('70')
+  })
+
+  it('calculates at once when the button is pressed', async () => {
+    const { api, user } = await open({ deliveryPricing: 'zones' }, () => ({ status: 'ok', fee: 10, zoneName: 'קרוב' }))
+    await typeAddress(user)
+    await screen.findByText(/קרוב/, {}, { timeout: 3000 })
+    expect(api.sent('POST', '/api/delivery-quote')).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'חישוב עלות משלוח' }))
+    await waitFor(() => expect(api.sent('POST', '/api/delivery-quote')).toHaveLength(2))
   })
 })

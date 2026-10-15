@@ -15,6 +15,12 @@ public class Settings
     public string? DeliveryAreaText { get; set; }
     public string? DeliveryFeeText { get; set; }
 
+    /// <summary>
+    /// The regular delivery setting's fixed fee, added to the total of a delivery to a service city; null means none.
+    /// A city outside the service area gets no fee: the owner tells the client the price by phone.
+    /// </summary>
+    public decimal? DeliveryFeeAmount { get; set; }
+
     public string? KashrutText { get; set; }
 
     /// <summary>The smallest order total (₪) a client may place; null means no minimum.</summary>

@@ -980,6 +980,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("DeliveryEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal?>("DeliveryFeeAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<string>("DeliveryFeeText")
                         .HasColumnType("text");
 
@@ -1069,8 +1073,10 @@ namespace FoodSite.Api.Data.Migrations
                         new
                         {
                             Id = 1,
+                            BitEnabled = false,
                             DeliveryEnabled = true,
                             MinimumOrderAppliesToPickup = true,
+                            PayBoxEnabled = false,
                             PickupEnabled = true,
                             SiteDefaultsApplied = false
                         });

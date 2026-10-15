@@ -150,7 +150,8 @@ public class OrdersController(
         // The order is added to that phone's account, if there is one.
         var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);
 
-        var serviceCities = ServiceArea.Parse(settings.ServiceCities);
+        // With zones there is no list of cities: a client who waits for approval waits because the map could not place the address.
+        var serviceCities = DeliveryQuoter.Mode(settings) == DeliveryPricing.Zones ? (IReadOnlyList<string>)[] : ServiceArea.Parse(settings.ServiceCities);
         var order = new Order
         {
             UserId = userId,
@@ -168,7 +169,7 @@ public class OrdersController(
             Status = OrderStatus.New,
             // An address the map could not place waits for the admin, like a city outside the service area.
             NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery
-                && (!ServiceArea.Serves(serviceCities, input.City) || quote?.Status == DeliveryQuote.Unknown),
+                && (quote is null or { Status: DeliveryQuote.Outside or DeliveryQuote.Unknown } or { Approximate: true }),
             DeliveryFee = quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m,
             DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
             Total = OrderBuilder.Total(items) + (quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m),

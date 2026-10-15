@@ -21,13 +21,30 @@ public class DeliveryQuoter(AppDbContext db, IAddressGeocoder geocoder)
     public static string Mode(Settings settings) =>
         settings.DeliveryPricing == DeliveryPricing.Zones ? DeliveryPricing.Zones : DeliveryPricing.Simple;
 
-    /// <summary>Null while the site uses the simple setting, so no fee is added.</summary>
-    public async Task<DeliveryQuote?> QuoteAsync(Settings settings, string? city, string? street, string? houseNumber, CancellationToken ct)
+    /// <summary>
+    /// The regular setting: a fixed fee for the cities the kitchen lists; any other city is <c>outside</c> and the owner tells
+    /// the client the price by phone. The advanced setting: the fee of the zone the address falls in.
+    /// </summary>
+    public async Task<DeliveryQuote> QuoteAsync(Settings settings, string? city, string? street, string? houseNumber, CancellationToken ct)
     {
         if (Mode(settings) != DeliveryPricing.Zones)
-            return null;
+        {
+            return Orders.ServiceArea.Serves(Orders.ServiceArea.Parse(settings.ServiceCities), city)
+                ? new(DeliveryQuote.Ok, settings.DeliveryFeeAmount ?? 0m, null)
+                : new(DeliveryQuote.Outside, 0m, null);
+        }
         var zones = await db.DeliveryZones.AsNoTracking().ToListAsync(ct);
         var point = zones.Count == 0 ? null : await geocoder.FindAsync(city, street, houseNumber, ct);
         return DeliveryZones.Quote(zones, point);
     }
+
+    /// <summary>The fee at a point the client's phone reported, with the address read back from it.</summary>
+    public async Task<DeliveryQuote> QuoteAtAsync(Settings settings, string city, GeoPoint point, CancellationToken ct)
+    {
+        if (Mode(settings) != DeliveryPricing.Zones)
+            return await QuoteAsync(settings, city, null, null, ct);
+        return DeliveryZones.Quote(await db.DeliveryZones.AsNoTracking().ToListAsync(ct), point);
+    }
+
+    public Task<FoundAddress?> AddressAtAsync(double lat, double lng, CancellationToken ct) => geocoder.ReverseAsync(lat, lng, ct);
 }

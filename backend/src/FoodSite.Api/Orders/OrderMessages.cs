@@ -15,7 +15,8 @@ public static class OrderMessages
     {
         var text = $"{Heading(siteName)}תודה, ההזמנה שלך התקבלה!\n{Details(order)}";
         if (order.NeedsReview)
-            text += $"\nאנחנו משלוחים רק ב{ServiceArea.Describe(serviceCities ?? [])}. ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור.";
+            text += (serviceCities is { Count: > 0 } ? $"\nאנחנו משלוחים רק ב{ServiceArea.Describe(serviceCities)}." : "\nלא הצלחנו לאתר את הכתובת.")
+                + " ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור. נעדכן בטלפון בכמה יעלו דמי המשלוח.";
         if (hourFull)
             text += "\nהשעה שבחרת כבר מלאה: ניצור איתך קשר כדי לתאם שעה אחרת.";
         if (order.PaymentMethod.IsTransfer() && !string.IsNullOrWhiteSpace(paymentPhone))

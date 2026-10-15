@@ -62,6 +62,8 @@ export interface Site {
   pickupEnabled: boolean
   deliveryAreaText: string | null
   deliveryFeeText: string | null
+  /** The regular setting's fixed delivery fee in ₪ (added to deliveries to a service city); null when there is none. */
+  deliveryFeeAmount: number | null
   kashrutText: string | null
   paymentPhone: string | null
   /** Whether the client may choose to pay with Bit / PayBox (needs the payment phone). */
@@ -295,9 +297,20 @@ export interface Confirmation {
 
 /** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */
 export interface DeliveryQuote {
-  status: 'ok' | 'blocked' | 'unknown' | 'none'
+  status: 'ok' | 'blocked' | 'unknown' | 'outside'
   fee: number
   zoneName: string | null
+  /** Only the street or the city could be placed on the map, so the order goes to the admin to check. */
+  approximate?: boolean
+}
+
+/** The address at the device's position (`found` is false outside Israel or off any road) and what delivery there costs. */
+export interface LocatedAddress {
+  found: boolean
+  city: string
+  street: string
+  houseNumber: string
+  quote: DeliveryQuote | null
 }
 
 export const siteApi = {
@@ -311,6 +324,9 @@ export const siteApi = {
 export const deliveryApi = {
   quote: (address: { city: string; street: string; houseNumber: string }) =>
     apiJson<DeliveryQuote>('/api/delivery-quote', send('POST', address)),
+  /** The address at a position ("find my location"), with its fee. */
+  locate: (position: { lat: number; lng: number }) =>
+    apiJson<LocatedAddress>('/api/delivery-quote/locate', send('POST', position)),
 }
 
 export const ordersApi = {

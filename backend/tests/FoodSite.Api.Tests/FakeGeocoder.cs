@@ -15,4 +15,7 @@ public sealed class FakeGeocoder : IAddressGeocoder
 
     public Task<GeoPoint?> FindAsync(string? city, string? street, string? houseNumber, CancellationToken ct) =>
         Task.FromResult(street is not null && Points.TryGetValue(street, out var p) ? p : (GeoPoint?)null);
+
+    public Task<FoundAddress?> ReverseAsync(double lat, double lng, CancellationToken ct) =>
+        Task.FromResult(Math.Abs(lat - 0.02) < 0.001 && Math.Abs(lng - 0.02) < 0.001 ? new FoundAddress("אשדוד", "הרצל", "1") : null);
 }

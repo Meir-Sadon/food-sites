@@ -41,7 +41,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string Font,
         string Shadows,
         string Spacing,
-        string DeliveryPricing = "simple");
+        string DeliveryPricing = "simple",
+        decimal? DeliveryFeeAmount = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -134,7 +135,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Finish.Effective(s.FontPair, Finish.IsKnownFont),
             Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
             Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
-            DeliveryQuoter.Mode(s));
+            DeliveryQuoter.Mode(s),
+            s.DeliveryFeeAmount);
     }
 
     [HttpGet("menu")]

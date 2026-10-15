@@ -175,14 +175,56 @@ public sealed class DeliveryZonesTests(PostgresFixture postgres) : IAsyncLifetim
         Assert.Equal(0, order.DeliveryFee);
     }
 
-    [Fact]
-    public async Task The_simple_setting_adds_no_fee_and_the_quote_says_so()
+    private async Task UseSimpleFee(decimal? fee)
     {
-        await SaveZones(new ZoneInput(null, "קרוב", 15, false, [P(0, 0), P(0, 0.05), P(0.05, 0.05), P(0.05, 0)]));
-        var client = WithFakeGeocoder();
-        Assert.Equal("none", (await client.PostAsJsonAsync("/api/delivery-quote", new { city = "אשקלון", street = "הרצל", houseNumber = "1" }, TestFiles.Json).Read<QuoteDto>()).Status);
-        Assert.Equal(0, (await client.PostAsJsonAsync("/api/orders", await Order(client, "הרצל"), TestFiles.Json).Read<ConfirmationDto>()).DeliveryFee);
-        Assert.Equal("simple", (await client.GetAsync("/api/site").Read<SiteDto>()).DeliveryPricing);
+        var body = System.Text.Json.Nodes.JsonNode.Parse((await _admin.GetAsync("/api/admin/settings").Read<System.Text.Json.JsonElement>()).GetRawText())!.AsObject();
+        body["deliveryFeeAmount"] = fee;
+        (await _admin.PutAsJsonAsync("/api/admin/settings", body, TestFiles.Json)).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task The_regular_setting_adds_the_fixed_fee_in_a_service_city_and_sends_other_cities_to_the_admin()
+    {
+        await UseSimpleFee(25);
+        Assert.Equal(new QuoteDto("ok", 25, null), await _client.PostAsJsonAsync("/api/delivery-quote", new { city = "אשקלון", street = "הרצל", houseNumber = "1" }, TestFiles.Json).Read<QuoteDto>());
+        Assert.Equal("outside", (await _client.PostAsJsonAsync("/api/delivery-quote", new { city = "חיפה", street = "הרצל", houseNumber = "1" }, TestFiles.Json).Read<QuoteDto>()).Status);
+
+        var pickup = await _client.PostAsJsonAsync("/api/orders", await Order(_client, "הרצל", "Pickup"), TestFiles.Json).Read<ConfirmationDto>();
+        var inside = await _client.PostAsJsonAsync("/api/orders", await Order(_client, "הרצל"), TestFiles.Json).Read<ConfirmationDto>();
+        Assert.Equal(25, inside.DeliveryFee);
+        Assert.Equal(pickup.Total + 25, inside.Total);
+        Assert.False(inside.NeedsReview);
+
+        var far = await Order(_client, "הרצל");
+        far = new Dictionary<string, object?>(System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(System.Text.Json.JsonSerializer.Serialize(far))!) { ["city"] = "חיפה" };
+        var outside = await _client.PostAsJsonAsync("/api/orders", far, TestFiles.Json).Read<ConfirmationDto>();
+        Assert.True(outside.NeedsReview);
+        Assert.Equal(0, outside.DeliveryFee);
+        Assert.Equal("simple", (await _client.GetAsync("/api/site").Read<SiteDto>()).DeliveryPricing);
+    }
+
+    [Fact]
+    public async Task Zones_ignore_the_service_cities()
+    {
+        await Configure();
+        // Beer Sheva is not a service city, but it is in the near zone, so the order goes through at the zone's fee.
+        var order = new Dictionary<string, object?>(System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(System.Text.Json.JsonSerializer.Serialize(await Order(_client, "הרצל")))!) { ["city"] = "באר שבע" };
+        var placed = await _client.PostAsJsonAsync("/api/orders", order, TestFiles.Json).Read<ConfirmationDto>();
+        Assert.False(placed.NeedsReview);
+        Assert.Equal(15, placed.DeliveryFee);
+    }
+
+    [Fact]
+    public async Task Find_my_location_fills_the_address_and_quotes_it()
+    {
+        await Configure();
+        var found = await _client.PostAsJsonAsync("/api/delivery-quote/locate", new { lat = 0.02, lng = 0.02 }, TestFiles.Json).Read<LocateDto>();
+        Assert.True(found.Found);
+        Assert.Equal(("אשדוד", "הרצל", "1"), (found.City, found.Street, found.HouseNumber));
+        Assert.Equal(new QuoteDto("ok", 15, "קרוב"), found.Quote);
+
+        Assert.False((await _client.PostAsJsonAsync("/api/delivery-quote/locate", new { lat = 5, lng = 5 }, TestFiles.Json).Read<LocateDto>()).Found);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _client.PostAsJsonAsync("/api/delivery-quote/locate", new { lat = 500, lng = 5 }, TestFiles.Json)).StatusCode);
     }
 
     [Fact]

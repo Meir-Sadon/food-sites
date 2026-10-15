@@ -161,6 +161,8 @@ public class AppDbContext(
                 "CK_Dishes_NotOwnVariant", "\"MainDishId\" <> \"Id\""));
         });
 
+        model.Entity<Settings>(e => e.Property(s => s.DeliveryFeeAmount).HasPrecision(10, 2));
+
         model.Entity<DeliveryZone>(e =>
         {
             e.Property(z => z.Name).HasMaxLength(DeliveryZone.NameMaxLength).IsRequired();
