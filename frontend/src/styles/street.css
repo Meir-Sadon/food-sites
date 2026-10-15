@@ -196,7 +196,8 @@
 [data-style='street'] .category {
   overflow: visible;
   border: 0;
-  background: none;
+  border-radius: var(--radius);
+  background: var(--category-bg, none);
   box-shadow: none;
 }
 

@@ -4,6 +4,7 @@ import { settingsApi } from '../../api/catalog'
 import { FONTS, SHADOWS, SPACINGS, type FontPair, type Shadows, type Spacing } from '../../api/site'
 import { useToast } from '../../components/toast'
 import { Loading, Section, Status } from '../ui'
+import { announceLook } from '../useAdminLook'
 import { useErrorMessage, useLoad } from '../hooks'
 
 /**
@@ -29,8 +30,10 @@ export function FinishSection() {
     setSaving(true)
     setError(null)
     try {
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, ...current } = await settingsApi.get()
-      setData(await settingsApi.save({ ...current, font: shown.font, shadows: shown.shadows, spacing: shown.spacing }))
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, tileGroups: _tg, ...current } = await settingsApi.get()
+      const result = await settingsApi.save({ ...current, font: shown.font, shadows: shown.shadows, spacing: shown.spacing })
+      setData(result)
+      announceLook(result)
       setFont(null)
       setShadows(null)
       setSpacing(null)

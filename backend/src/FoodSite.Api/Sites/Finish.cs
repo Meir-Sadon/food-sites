@@ -13,11 +13,18 @@ public static class Finish
     public static readonly IReadOnlyList<string> Shadows = [Standard, "none", "soft", "strong"];
     public static readonly IReadOnlyList<string> Spacings = [Standard, "compact", "spacious"];
 
+    /// <summary>How the tiles style shows a category: in a framed block (the original look) or, minimal, as a plain heading with the tiles under it.</summary>
+    public const string Framed = "framed";
+    public static readonly IReadOnlyList<string> TileGroups = [Framed, "minimal"];
+
     public const int MaxLength = 20;
 
     public static bool IsKnownFont(string? value) => value is not null && Fonts.Contains(value);
     public static bool IsKnownShadows(string? value) => value is not null && Shadows.Contains(value);
     public static bool IsKnownSpacing(string? value) => value is not null && Spacings.Contains(value);
+    public static bool IsKnownTileGroups(string? value) => value is not null && TileGroups.Contains(value);
+
+    public static string EffectiveTileGroups(string? chosen) => IsKnownTileGroups(chosen) ? chosen! : Framed;
 
     /// <summary>What to show: the admin's choice, else <see cref="Standard"/>.</summary>
     public static string Effective(string? chosen, Func<string?, bool> isKnown) => isKnown(chosen) ? chosen! : Standard;

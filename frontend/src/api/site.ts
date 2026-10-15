@@ -39,11 +39,11 @@ export type Palette = (typeof PALETTES)[number]
 /** The elements the admin can set a colour for (FoodSite.Api `Palettes.ColorKeys`). */
 export const COLOR_KEYS = [
   'background', 'text', 'accent', 'button', 'buttonText', 'menu', 'menuText',
-  'banner', 'bannerText', 'dishBackground', 'dishText', 'line',
+  'banner', 'bannerText', 'dishBackground', 'dishText', 'categoryBackground', 'line',
 ] as const
 export type ColorKey = (typeof COLOR_KEYS)[number]
 
-/** Colours by element as `#rrggbb`. */
+/** Colours by element as `#rrggbb`, or `=<element>` to copy another element's colour. */
 export type ColorSet = Partial<Record<ColorKey, string>>
 
 export const MAX_LINE_WIDTH = 4
@@ -55,6 +55,10 @@ export const SHADOWS = ['standard', 'none', 'soft', 'strong'] as const
 export type Shadows = (typeof SHADOWS)[number]
 export const SPACINGS = ['standard', 'compact', 'spacious'] as const
 export type Spacing = (typeof SPACINGS)[number]
+
+/** How the tiles style shows a category: in a framed block, or minimal (a plain heading with the tiles under it). */
+export const TILE_GROUPS = ['framed', 'minimal'] as const
+export type TileGroups = (typeof TILE_GROUPS)[number]
 
 export interface Site {
   backgroundImageUrl: string | null
@@ -97,6 +101,8 @@ export interface Site {
   font: FontPair
   shadows: Shadows
   spacing: Spacing
+  /** Only the tiles style uses it. */
+  tileGroups: TileGroups
   /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
   deliveryPricing: DeliveryPricing
 }

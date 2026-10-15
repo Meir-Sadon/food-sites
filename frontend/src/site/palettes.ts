@@ -63,7 +63,7 @@ const TEXT_ON: { text: ColorKey; backgrounds: (ColorKey | `#${string}`)[] }[] = 
   { text: 'buttonText', backgrounds: ['button', 'accent'] },
   { text: 'menuText', backgrounds: ['menu', '#ffffff'] },
   { text: 'bannerText', backgrounds: ['banner', 'accent'] },
-  { text: 'dishText', backgrounds: ['dishBackground', 'background', '#ffffff'] },
+  { text: 'dishText', backgrounds: ['dishBackground', 'categoryBackground', 'background', '#ffffff'] },
 ]
 
 /** The background a text colour sits on, in the colours given; undefined when the site's own colours decide it. */
@@ -76,12 +76,36 @@ export function backgroundOf(text: ColorKey, colors: ColorSet): string | undefin
   return undefined
 }
 
-/** The colours to show: the palette's, with the admin's own over them. */
+/** The element a colour is copied from (`=button` → `button`), or null when it is a plain colour. */
+export function copySource(value: string | undefined): ColorKey | null {
+  if (!value?.startsWith('=')) return null
+  return COLOR_KEYS.find((key) => key === value.slice(1)) ?? null
+}
+
+/** True when copying `source`'s colour into `key` would make a circle (`source` copies `key`, directly or through others). */
+export function wouldCycle(custom: ColorSet, key: ColorKey, source: ColorKey): boolean {
+  let at: ColorKey | null = source
+  for (let step = 0; at && step <= COLOR_KEYS.length; step++) {
+    if (at === key) return true
+    at = copySource(custom[at])
+  }
+  return false
+}
+
+/** The colours to show: the palette's, with the admin's own over them; a colour copied from another element follows that element. */
 export function mergeColors(palette: Palette, custom: ColorSet): ColorSet {
   const merged: ColorSet = { ...PALETTE_COLORS[palette] }
   for (const key of COLOR_KEYS) {
     const value = custom[key]
     if (value && HEX.test(value)) merged[key] = value.toLowerCase()
+  }
+  for (const key of COLOR_KEYS) {
+    if (!copySource(custom[key])) continue
+    // Follow the chain of copies to a colour; a circle (or a missing colour) leaves the element to the palette.
+    let source: ColorKey | null = copySource(custom[key])
+    for (let step = 0; source && copySource(custom[source]) && step < COLOR_KEYS.length; step++) source = copySource(custom[source])
+    const resolved = source && !copySource(custom[source]) ? merged[source] : undefined
+    if (resolved) merged[key] = resolved
   }
   return merged
 }
@@ -144,6 +168,7 @@ export function colorVariables(palette: Palette, custom: ColorSet, lineWidth: nu
   }
   if (colors.dishText) vars['--dish-text'] = colors.dishText
   else if (colors.dishBackground) vars['--dish-text'] = readableOn(colors.dishBackground)
+  if (colors.categoryBackground) vars['--category-bg'] = colors.categoryBackground
   if (colors.line) vars['--color-border'] = colors.line
   if (lineWidth && lineWidth >= 1 && lineWidth <= MAX_LINE_WIDTH) vars['--line-width'] = `${lineWidth}px`
   return vars

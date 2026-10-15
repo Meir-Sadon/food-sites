@@ -123,6 +123,7 @@ public class AppDbContext(
             e.Property(s => s.FontPair).HasMaxLength(Sites.Finish.MaxLength);
             e.Property(s => s.ShadowStrength).HasMaxLength(Sites.Finish.MaxLength);
             e.Property(s => s.Spacing).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.TileGroups).HasMaxLength(Sites.Finish.MaxLength);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
         });
 

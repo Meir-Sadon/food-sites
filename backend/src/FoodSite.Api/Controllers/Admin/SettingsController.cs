@@ -47,6 +47,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string Font,
         string Shadows,
         string Spacing,
+        string TileGroups,
         string DeliveryPricing,
         decimal? DeliveryFeeAmount);
 
@@ -73,6 +74,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? Font = null,
         string? Shadows = null,
         string? Spacing = null,
+        string? TileGroups = null,
         bool? BitEnabled = null,
         bool? PayBoxEnabled = null,
         string? BitLink = null,
@@ -126,7 +128,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         if (input.Palette is not null && !Palettes.IsKnown(input.Palette))
             errors.Add(nameof(input.Palette), "invalid");
         if (input.CustomColors is not null
-            && input.CustomColors.Any(c => !Palettes.ColorKeys.Contains(c.Key) || !Palettes.IsColor(c.Value)))
+            && (input.CustomColors.Any(c => !Palettes.ColorKeys.Contains(c.Key) || !Palettes.IsColorOrCopy(c.Value))
+                || Palettes.HasCopyCycle(input.CustomColors)))
             errors.Add(nameof(input.CustomColors), "invalid");
         if (input.LineWidth is < 0 or > Palettes.MaxLineWidth)
             errors.Add(nameof(input.LineWidth), "invalid");
@@ -136,6 +139,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.Shadows), "invalid");
         if (input.Spacing is not null && !Finish.IsKnownSpacing(input.Spacing))
             errors.Add(nameof(input.Spacing), "invalid");
+        if (input.TileGroups is not null && !Finish.IsKnownTileGroups(input.TileGroups))
+            errors.Add(nameof(input.TileGroups), "invalid");
         if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !IsEmail(input.OwnerEmail.Trim()))
             errors.Add(nameof(input.OwnerEmail), "email");
         if (input.DeliveryPricing is not null && !Delivery.DeliveryPricing.IsKnown(input.DeliveryPricing))
@@ -193,6 +198,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.ShadowStrength = input.Shadows;
         if (input.Spacing is not null)
             settings.Spacing = input.Spacing;
+        if (input.TileGroups is not null)
+            settings.TileGroups = input.TileGroups;
         // Missing (an older client) keeps the address; an empty one turns the mails off.
         if (input.OwnerEmail is not null)
             settings.OwnerEmail = Clean(input.OwnerEmail);
@@ -262,6 +269,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.Effective(s.FontPair, Finish.IsKnownFont),
         Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
         Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
+        Finish.EffectiveTileGroups(s.TileGroups),
         s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
         s.DeliveryFeeAmount);
 

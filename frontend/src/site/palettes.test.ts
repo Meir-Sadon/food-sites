@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { COLOR_KEYS, PALETTES } from '../api/site'
-import { MIN_CONTRAST, PALETTE_COLORS, colorVariables, contrastRatio, ensureReadable, mergeColors } from './palettes'
+import { MIN_CONTRAST, PALETTE_COLORS, colorVariables, contrastRatio, ensureReadable, mergeColors, wouldCycle } from './palettes'
 
 describe('contrastRatio', () => {
   it('is 21 for black on white and 1 for the same colour', () => {
@@ -31,6 +31,19 @@ describe('palettes', () => {
   it('lets the admin colours win over the palette', () => {
     expect(mergeColors('berry', { button: '#112233' })).toMatchObject({ button: '#112233', menu: PALETTE_COLORS.berry.menu })
     expect(colorVariables('berry', { button: '#112233' }, null)['--btn-bg']).toBe('#112233')
+  })
+
+  it('copies a colour from another element, through a chain, and ignores circles', () => {
+    expect(mergeColors('site', { button: '#aa0000', menu: '=button', banner: '=menu' })).toMatchObject({ menu: '#aa0000', banner: '#aa0000' })
+    expect(mergeColors('berry', { menu: '=banner' }).menu).toBe(PALETTE_COLORS.berry.banner)
+    expect(mergeColors('site', { menu: '=banner', banner: '=menu' })).toEqual({})
+    expect(mergeColors('site', { menu: '=categoryBackground' })).toEqual({})
+    expect(wouldCycle({ banner: '=menu' }, 'menu', 'banner')).toBe(true)
+    expect(wouldCycle({ banner: '#112233' }, 'menu', 'banner')).toBe(false)
+  })
+
+  it('sets the group block background', () => {
+    expect(colorVariables('site', { categoryBackground: '#fff0d0' }, null)['--category-bg']).toBe('#fff0d0')
   })
 
   it('swaps a text colour that cannot be read for black or white', () => {

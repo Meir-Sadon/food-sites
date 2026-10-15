@@ -155,6 +155,49 @@ describe('Colours', () => {
   })
 })
 
+describe('Colour copying', () => {
+  it('saves a colour copied from another element', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('צבעי האתר')
+
+    fireEvent.change(within(form).getByLabelText('כפתורים'), { target: { value: '#aa0000' } })
+    await user.selectOptions(within(form).getByLabelText('העתק צבע מ… עבור תפריט ראשי'), 'כפתורים')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ customColors: { button: '#aa0000', menu: '=button' } })
+  })
+})
+
+describe('Tiles groups', () => {
+  it('offers the minimal look only once tiles is picked, and saves it with the style', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    expect(within(form).queryByRole('radio', { name: /מינימלי/ })).not.toBeInTheDocument()
+    await user.click(within(form).getByRole('radio', { name: /אריחים/ }))
+    await user.click(within(form).getByRole('radio', { name: /מינימלי/ }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'tiles', tileGroups: 'minimal' })
+  })
+})
+
 describe('Finish', () => {
   it('saves the font, shadows and spacing and nothing the other sections own', async () => {
     let saved = settings({ kashrutText: 'נשמר בינתיים' })
