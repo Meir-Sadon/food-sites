@@ -9,7 +9,7 @@ import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'paymentPhone' | 'bitLink' | 'payBoxLink'
 
-/** `onPricing` hears the saved delivery pricing, so the page can show the zones editor only for the advanced setting. */
+/** `onPricing` hears the picked delivery pricing at once, so the page shows the zones editor as soon as "advanced" is picked. */
 export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPricing) => void }) {
   const { t } = useTranslation()
   const errorMessage = useFormErrorMessage()
@@ -18,16 +18,13 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
   const [error, setError] = useState<string | null>(null)
   const { saved, flash } = useSavedFlash()
   const [saving, setSaving] = useState(false)
-  // True while the picked pricing is not saved yet: the page keeps showing the saved one.
-  const [dirtyPricing, setDirtyPricing] = useState(false)
 
-  const savedPricing = settings?.deliveryPricing
+  const pricing = settings?.deliveryPricing
   useEffect(() => {
-    if (savedPricing && !dirtyPricing) onPricing?.(savedPricing)
-  }, [savedPricing, dirtyPricing, onPricing])
+    if (pricing) onPricing?.(pricing)
+  }, [pricing, onPricing])
 
   function change(patch: Partial<Settings>) {
-    if ('deliveryPricing' in patch) setDirtyPricing(true)
     setData((current) => current && { ...current, ...patch })
     setError(null)
   }
@@ -41,7 +38,6 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
       // The style, the order layout, the corners and the colours are saved by their own sections; leaving them out keeps them.
       const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, ...input } = settings
       setData(await settingsApi.save(input))
-      setDirtyPricing(false)
       setError(null)
       flash()
     } catch (err) {
@@ -181,15 +177,22 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
             </span>
             <input
               id="settings-ownerEmail"
-              type="email"
+              type="text"
               inputMode="email"
               dir="ltr"
-              maxLength={200}
+              maxLength={500}
               value={settings.ownerEmail}
               aria-describedby="settings-ownerEmail-error"
               onChange={(e) => change({ ownerEmail: e.target.value })}
             />
             <FieldError errors={errors} field="ownerEmail" id="settings-ownerEmail-error" />
+            <span className="with-info">
+              <label className="checkbox">
+                <input type="checkbox" checked={settings.ownerChangeMails} onChange={(e) => change({ ownerChangeMails: e.target.checked })} />
+                {t('admin.settings.ownerChangeMails')}
+              </label>
+              <Info text={t('admin.settings.ownerChangeMailsHint')} about={t('admin.settings.ownerChangeMails')} />
+            </span>
           </span>
           <span className="field">
             <span className="with-info">

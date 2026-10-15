@@ -1028,6 +1028,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int?>("OrdersPerHour")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("OwnerChangeMails")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("OwnerEmail")
                         .HasColumnType("text");
 

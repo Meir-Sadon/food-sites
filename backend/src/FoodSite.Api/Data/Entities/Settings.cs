@@ -128,4 +128,7 @@ public class Settings
     /// null means no mail.
     /// </summary>
     public string? OwnerEmail { get; set; }
+
+    /// <summary>Whether the owner addresses also get the summary of admin changes to dishes and settings (off by default).</summary>
+    public bool OwnerChangeMails { get; set; }
 }

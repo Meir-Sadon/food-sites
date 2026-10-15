@@ -26,6 +26,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   orderFlow: 'page',
   corners: 'rounded',
   ownerEmail: '',
+  ownerChangeMails: false,
   palette: 'site',
   customColors: {},
   lineWidth: null,
