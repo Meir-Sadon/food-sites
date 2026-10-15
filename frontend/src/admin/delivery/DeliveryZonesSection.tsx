@@ -1,66 +1,46 @@
 import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { deliveryZonesApi, settingsApi, type DeliveryZone, type Settings } from '../../api/catalog'
-import type { DeliveryPricing } from '../../api/site'
+import { deliveryZonesApi, type DeliveryZone } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
 import { useToast } from '../../components/toast'
 import { ConfirmRemove, FieldError, Info, Loading, MoveButtons, Section, Status } from '../ui'
-import { fieldErrorsOf, useErrorMessage, useFormErrorMessage, useLoad } from '../hooks'
+import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
 
 // The map library is large and only this section needs it.
 const ZonesMap = lazy(() => import('./ZonesMap'))
 
-async function loadAll() {
-  const settings = await settingsApi.get()
-  // The zones are asked for only once the advanced setting is chosen.
-  return { settings, zones: settings.deliveryPricing === 'zones' ? await deliveryZonesApi.get() : [] }
-}
+const loadZones = () => deliveryZonesApi.get()
 
 const emptyZone = (): DeliveryZone => ({ id: null, name: '', fee: 0, isBlocked: false, polygon: [] })
 
 /**
- * The advanced delivery setting: the admin picks "simple" (the text on the order page, as
- * before) or "advanced" (areas drawn on a map, each with its fee or no delivery at all).
+ * The advanced delivery setting's editor: areas drawn on a map, each with its fee or no delivery at all. The settings
+ * page shows it only while "advanced" is the saved pricing (picked in the general settings).
  */
 export function DeliveryZonesSection() {
   const { t } = useTranslation()
-  const errorMessage = useErrorMessage()
   const formError = useFormErrorMessage()
   const toast = useToast()
-  const { data, setData, failed } = useLoad(loadAll)
+  const { data, setData, failed } = useLoad(loadZones)
   const [zones, setZones] = useState<DeliveryZone[] | null>(null)
   const [selected, setSelected] = useState<number | null>(null)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const list = zones ?? data?.zones ?? []
+  const list = zones ?? data ?? []
   const update = (next: DeliveryZone[]) => {
     setZones(next)
     setError(null)
   }
   const patch = (index: number, change: Partial<DeliveryZone>) => update(list.map((z, i) => (i === index ? { ...z, ...change } : z)))
 
-  async function choosePricing(deliveryPricing: DeliveryPricing) {
-    if (!data) return
-    setError(null)
-    try {
-      // The style, the order layout and the corners are saved by their own sections; leaving them out keeps them.
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, deliveryPricing: ______, ...input } = await settingsApi.get()
-      const settings: Settings = await settingsApi.save({ ...input, deliveryPricing })
-      setData({ ...data, settings, zones: deliveryPricing === 'zones' && data.zones.length === 0 ? await deliveryZonesApi.get() : data.zones })
-      toast(t('admin.saved'))
-    } catch (err) {
-      setError(errorMessage(err))
-    }
-  }
-
   async function save() {
     setSaving(true)
     setErrors({})
     try {
       const saved = await deliveryZonesApi.save(list)
-      setData(data && { ...data, zones: saved })
+      setData(saved)
       setZones(null)
       setSelected(null)
       setError(null)
@@ -83,29 +63,7 @@ export function DeliveryZonesSection() {
         <Loading failed={failed} />
       ) : (
         <div className="stack">
-          <div role="radiogroup" aria-labelledby="zones-pricing-legend">
-            <span className="with-info">
-              <span id="zones-pricing-legend" className="field-title">
-                {t('admin.zones.pricing')}
-              </span>
-              <Info text={t('admin.zones.pricingInfo')} about={t('admin.zones.pricing')} />
-            </span>
-            <div className="row">
-              {(['simple', 'zones'] as const).map((value) => (
-                <label key={value} className="checkbox">
-                  <input
-                    type="radio"
-                    name="delivery-pricing"
-                    checked={data.settings.deliveryPricing === value}
-                    onChange={() => choosePricing(value)}
-                  />
-                  {t(`admin.zones.pricings.${value}`)}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {data.settings.deliveryPricing === 'zones' && (
+          {(
             <>
               <span className="with-info">
                 <h3 id="zones-list-title">{t('admin.zones.areas')}</h3>

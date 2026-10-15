@@ -11,6 +11,8 @@ export interface Settings {
   pickupEnabled: boolean
   deliveryAreaText: string | null
   deliveryFeeText: string | null
+  /** The regular setting's fixed delivery fee in ₪ (added for a service city); null means none. */
+  deliveryFeeAmount: number | null
   kashrutText: string | null
   paymentPhone: string | null
   bitEnabled: boolean

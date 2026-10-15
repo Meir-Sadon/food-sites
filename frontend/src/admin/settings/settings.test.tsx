@@ -198,6 +198,8 @@ describe('General settings', () => {
       pickupEnabled: false,
       deliveryAreaText: 'חיפה',
       deliveryFeeText: null,
+      deliveryFeeAmount: null,
+      deliveryPricing: 'simple',
       kashrutText: 'בהשגחת הרב',
       paymentPhone: '050-1234567',
       bitEnabled: true,

@@ -23,7 +23,7 @@ import { CartSheet } from '../order/CartSheet'
 import { OPEN_DISH_DIALOG } from '../order/DishCard'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
-import { useDeliveryQuote } from '../order/useDeliveryQuote'
+import { useDeliveryQuote, type SeededQuote } from '../order/useDeliveryQuote'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
@@ -126,10 +126,17 @@ export function OrderPage() {
   const itemsTotal = orderTotal(state.selections, dishes)
   // The advanced delivery setting: the server works out the fee from the address, so nothing is charged until it is typed.
   const zonesOn = site?.deliveryPricing === 'zones'
-  const quote = useDeliveryQuote(zonesOn && state.fulfillment === 'Delivery' && !!site?.deliveryEnabled, state.city, state.street, state.houseNumber)
+  const delivering = state.fulfillment === 'Delivery' && !!site?.deliveryEnabled
+  // The address "find my location" filled in, with the fee it brought; and a bump on every press of "calculate".
+  const [located, setLocated] = useState<SeededQuote | null>(null)
+  const [calculations, setCalculations] = useState(0)
+  const quote = useDeliveryQuote(zonesOn && delivering, state.city, state.street, state.houseNumber, located, calculations)
   const quoted = quote.state === 'ready' ? quote.quote : null
-  const deliveryFee = quoted?.status === 'ok' ? quoted.fee : 0
-  const noDelivery = quoted?.status === 'blocked'
+  // The regular setting: the fixed fee is added for a service city; elsewhere the business phones about the price.
+  const regularFee =
+    !zonesOn && delivering && site?.deliveryFeeAmount && isServiceCity(state.city, site.serviceCities) ? site.deliveryFeeAmount : 0
+  const deliveryFee = zonesOn ? (quoted?.status === 'ok' ? quoted.fee : 0) : regularFee
+  const noDelivery = zonesOn && quoted?.status === 'blocked'
   const total = round2(itemsTotal + deliveryFee)
   const count = itemCount(state.selections)
   const drinksCategoryIds = useMemo(
@@ -669,19 +676,19 @@ export function OrderPage() {
                   <MapLinks address={site.contact.address} />
                 </div>
               )}
-              {fulfillment === 'Delivery' && (site.deliveryAreaText || (site.deliveryFeeText && !zonesOn)) && (
+              {fulfillment === 'Delivery' && !zonesOn && (site.deliveryAreaText || site.deliveryFeeText) && (
                 <p className="hint">
                   {site.deliveryAreaText && (
                     <span>
                       {t('order.deliveryArea')}: {site.deliveryAreaText}.{' '}
                     </span>
                   )}
-                  {site.deliveryFeeText && !zonesOn && (
+                  {site.deliveryFeeText && (
                     <span>
                       {t('order.deliveryFee')}: {site.deliveryFeeText}.{' '}
                     </span>
                   )}
-                  {!zonesOn && t('order.deliveryCall')}
+                  {t('order.deliveryCall')}
                 </p>
               )}
               <FieldError errors={errors} field="fulfillmentMethod" id="order-fulfillment-error" />
@@ -716,7 +723,24 @@ export function OrderPage() {
               <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
 
               {fulfillment === 'Delivery' && (
-                <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" context="order" />
+                <AddressFields
+                  value={state}
+                  onChange={change}
+                  errors={errors}
+                  idPrefix="order"
+                  context="order"
+                  zones={
+                    zonesOn
+                      ? {
+                          onLocated: (found) => {
+                            change({ city: found.city, street: found.street, houseNumber: found.houseNumber })
+                            setLocated(found.quote && { city: found.city, street: found.street, houseNumber: found.houseNumber, quote: found.quote })
+                          },
+                          onCalculate: () => setCalculations((n) => n + 1),
+                        }
+                      : undefined
+                  }
+                />
               )}
             </DetailsBlock>
 
@@ -780,7 +804,9 @@ export function OrderPage() {
                     ? t('order.zones.loading')
                     : quoted?.status === 'unknown' || quote.state === 'failed'
                       ? t('order.zones.unknown')
-                      : null}
+                      : quoted?.approximate
+                        ? t('order.zones.approximate')
+                        : null}
               </p>
             )}
             {fulfillment === 'Delivery' && zonesOn && quote.state === 'idle' && count > 0 && (
@@ -791,7 +817,15 @@ export function OrderPage() {
             <OrderSummary
               selections={state.selections}
               dishes={dishes}
-              delivery={fulfillment === 'Delivery' && zonesOn ? { fee: deliveryFee, zoneName: quoted?.zoneName ?? null, pending: !quoted } : undefined}
+              delivery={
+                fulfillment !== 'Delivery'
+                  ? undefined
+                  : zonesOn
+                    ? { fee: deliveryFee, zoneName: quoted?.zoneName ?? null, pending: !quoted }
+                    : regularFee > 0
+                      ? { fee: regularFee, zoneName: null, pending: false }
+                      : undefined
+              }
             />
             <div className="row">
               <button
