@@ -251,6 +251,7 @@ describe('General settings', () => {
       payBoxLink: null,
       minimumOrderAmount: null,
       minimumOrderAppliesToPickup: true,
+      addressFirst: false,
       serviceCities: 'אשקלון',
       ordersPerHour: null,
       portionsPerSupplyDate: null,
@@ -398,6 +399,21 @@ describe('General settings', () => {
 
     await screen.findByText('נשמר.')
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ordersPerHour: 3 })
+  })
+
+  it('saves the address first setting and shows "saved" right beside the save button', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    await user.click(within(form).getByLabelText('כתובת ושיטת קבלה לפני בחירת המנות'))
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    await user.click(save)
+
+    const note = await within(form).findByText('נשמר.')
+    expect(note.parentElement).toBe(save.parentElement)
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ addressFirst: true })
   })
 
   it('saves how many portions can be ordered per supply date', async () => {

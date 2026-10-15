@@ -77,6 +77,8 @@ export interface Site {
   minimumOrderAmount: number | null
   /** False when the minimum is for deliveries only. */
   minimumOrderAppliesToPickup: boolean
+  /** The order page first asks delivery or pickup and the address, then shows the dishes. */
+  addressFirst: boolean
   contact: Contact
   /** The phones that can be chatted with on WhatsApp (the admin's notify list). */
   whatsAppPhones: string[]

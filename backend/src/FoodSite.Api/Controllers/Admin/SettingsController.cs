@@ -49,7 +49,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string Spacing,
         string TileGroups,
         string DeliveryPricing,
-        decimal? DeliveryFeeAmount);
+        decimal? DeliveryFeeAmount,
+        bool AddressFirst);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -80,6 +81,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? BitLink = null,
         string? PayBoxLink = null,
         string? DeliveryPricing = null,
+        bool? AddressFirst = null,
         decimal? DeliveryFeeAmount = null);
 
     public const int LinkMaxLength = 500;
@@ -166,6 +168,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Zero (or empty) means no minimum.
         settings.MinimumOrderAmount = input.MinimumOrderAmount is > 0m ? decimal.Round(input.MinimumOrderAmount.Value, 2) : null;
         // Missing (an older client) keeps the current choice.
+        if (input.AddressFirst is { } addressFirst)
+            settings.AddressFirst = addressFirst;
         if (input.MinimumOrderAppliesToPickup is { } appliesToPickup)
             settings.MinimumOrderAppliesToPickup = appliesToPickup;
         // Zero (or empty) means no limit.
@@ -271,7 +275,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
         Finish.EffectiveTileGroups(s.TileGroups),
         s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
-        s.DeliveryFeeAmount);
+        s.DeliveryFeeAmount,
+        s.AddressFirst);
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

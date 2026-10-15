@@ -17,6 +17,7 @@ import { FieldError, FormBlock, Info, Loading, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { DishImagesSection } from './DishImagesSection'
 import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { useFeature } from '../../site/useSite'
 import { AddOnsSection } from './AddOnsSection'
 import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
@@ -219,6 +220,7 @@ export function DishFormPage() {
   const navigate = useNavigate()
   const errorMessage = useFormErrorMessage()
   const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const advanced = useFeature('advancedDishes')
   const [search] = useSearchParams()
   const mainParam = search.get('main')
@@ -296,7 +298,7 @@ export function DishFormPage() {
       const saved = await dishesApi.update(dishId, input)
       setDish(saved)
       setForm(toForm(saved, categories!))
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
@@ -758,6 +760,7 @@ export function DishFormPage() {
           <button type="submit" disabled={saving}>
             {saving ? t('admin.saving') : t('admin.save')}
           </button>
+          <SavedNote show={saved} />
           {error && <Status message={error} error />}
         </div>
 

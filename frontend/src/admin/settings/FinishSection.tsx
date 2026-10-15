@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { FONTS, SHADOWS, SPACINGS, type FontPair, type Shadows, type Spacing } from '../../api/site'
-import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { announceLook } from '../useAdminLook'
 import { useErrorMessage, useLoad } from '../hooks'
@@ -14,7 +14,7 @@ import { useErrorMessage, useLoad } from '../hooks'
 export function FinishSection() {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
-  const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const { data: settings, setData, failed } = useLoad(settingsApi.get)
   const [font, setFont] = useState<FontPair | null>(null)
   const [shadows, setShadows] = useState<Shadows | null>(null)
@@ -37,7 +37,7 @@ export function FinishSection() {
       setFont(null)
       setShadows(null)
       setSpacing(null)
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -73,6 +73,7 @@ export function FinishSection() {
             <button type="submit" disabled={saving || !changed}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
+            <SavedNote show={saved} />
             {error && <Status message={error} error />}
           </div>
         </form>

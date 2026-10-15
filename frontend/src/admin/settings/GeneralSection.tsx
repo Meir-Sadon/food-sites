@@ -5,7 +5,7 @@ import type { FieldErrors } from '../../api/client'
 import type { DeliveryPricing } from '../../api/site'
 import { FieldError, Info, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
-import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'paymentPhone' | 'bitLink' | 'payBoxLink'
 
@@ -16,7 +16,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
   const { data: settings, setData, failed } = useLoad(settingsApi.get)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
-  const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const [saving, setSaving] = useState(false)
   // True while the picked pricing is not saved yet: the page keeps showing the saved one.
   const [dirtyPricing, setDirtyPricing] = useState(false)
@@ -43,7 +43,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
       setData(await settingsApi.save(input))
       setDirtyPricing(false)
       setError(null)
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
@@ -88,6 +88,15 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
             </label>
           </fieldset>
           <FieldError errors={errors} field="deliveryEnabled" id="settings-deliveryEnabled-error" />
+          <span className="field">
+            <span className="with-info">
+              <label className="checkbox">
+                <input type="checkbox" checked={settings.addressFirst} onChange={(e) => change({ addressFirst: e.target.checked })} />
+                {t('admin.settings.addressFirst')}
+              </label>
+              <Info text={t('admin.settings.addressFirstHint')} about={t('admin.settings.addressFirst')} />
+            </span>
+          </span>
           {settings.deliveryEnabled && (
             <fieldset className="field" aria-labelledby="settings-pricing-legend">
               <span className="with-info">
@@ -254,6 +263,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
+            <SavedNote show={saved} />
             {error && <Status message={error} error />}
           </div>
         </form>

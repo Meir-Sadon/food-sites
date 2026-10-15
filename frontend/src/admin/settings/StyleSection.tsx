@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { SITE_STYLES, TILE_GROUPS, type SiteStyle, type TileGroups } from '../../api/site'
-import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
 
@@ -10,7 +10,7 @@ import { useErrorMessage, useLoad } from '../hooks'
 export function StyleSection() {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
-  const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const { data: settings, setData, failed } = useLoad(settingsApi.get)
   const [picked, setPicked] = useState<SiteStyle | null>(null)
   const [saving, setSaving] = useState(false)
@@ -31,7 +31,7 @@ export function StyleSection() {
       setData(await settingsApi.save({ ...current, style, tileGroups }))
       setPicked(null)
       setPickedGroups(null)
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -76,6 +76,7 @@ export function StyleSection() {
             <button type="submit" disabled={saving || !changed}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
+            <SavedNote show={saved} />
             {error && <Status message={error} error />}
           </div>
         </form>

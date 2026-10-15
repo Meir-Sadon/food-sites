@@ -858,4 +858,52 @@ describe('Dish search', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'עופות' })).toBeInTheDocument()
     expect(total().getByText(/70/)).toBeInTheDocument()
   })
+
+  describe('with the address first setting', () => {
+    const addressFirst = { 'GET /api/site': () => site({ addressFirst: true }) }
+
+    it('asks for delivery or pickup and the details before it shows the dishes', async () => {
+      const api = fakeApi({ ...publicApi, ...addressFirst, 'POST /api/orders': () => confirmation } as Parameters<typeof fakeApi>[0])
+      renderAt('/')
+      const user = userEvent.setup()
+      await screen.findByRole('heading', { name: 'איך תרצו לקבל את ההזמנה?' })
+      expect(screen.queryByRole('heading', { level: 2, name: 'עופות' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('region', { name: 'סיכום הזמנה' })).not.toBeInTheDocument()
+
+      // Nothing filled: stays here and says what is missing.
+      await user.click(screen.getByRole('button', { name: 'המשך לבחירת מנות' }))
+      expect(screen.getByRole('heading', { name: 'איך תרצו לקבל את ההזמנה?' })).toBeInTheDocument()
+
+      await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+      await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+      await user.type(screen.getByLabelText('מספר בית'), '1')
+      await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+      await user.click(screen.getByRole('button', { name: 'המשך לבחירת מנות' }))
+
+      await screen.findByRole('heading', { level: 2, name: 'עופות' })
+      expect(screen.queryByLabelText('שם מלא')).not.toBeInTheDocument()
+      expect(screen.getByText(/דנה · 050-123-4567/)).toBeInTheDocument()
+
+      await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+      await confirmNoAdjustments(user)
+      await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+      await screen.findByRole('dialog')
+      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ name: 'דנה', street: 'הרצל', fulfillmentMethod: 'Delivery' })
+    })
+
+    it('goes back to the details with the change button', async () => {
+      fakeApi({ ...publicApi, ...addressFirst } as Parameters<typeof fakeApi>[0])
+      renderAt('/')
+      const user = userEvent.setup()
+      await user.click(await screen.findByRole('radio', { name: 'איסוף עצמי' }))
+      await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+      await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+      await user.click(screen.getByRole('button', { name: 'המשך לבחירת מנות' }))
+      await screen.findByRole('heading', { level: 2, name: 'עופות' })
+
+      await user.click(screen.getByRole('button', { name: 'שינוי' }))
+      expect(screen.getByRole('heading', { name: 'איך תרצו לקבל את ההזמנה?' })).toBeInTheDocument()
+      expect(screen.getByLabelText('שם מלא')).toHaveValue('דנה')
+    })
+  })
 })

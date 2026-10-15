@@ -3867,3 +3867,35 @@ label {
 .field-title {
   font-weight: 600;
 }
+
+.saved-note {
+  color: var(--color-success, var(--color-text));
+  font-weight: 600;
+  animation: toast-in 0.2s ease-out;
+}
+
+.saved-note:empty {
+  display: none;
+}
+
+.order-address-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.order-address-summary p {
+  margin: 0;
+}
+
+.order-address-summary button {
+  margin-inline-start: auto;
+}
+
+.order-address-stage {
+  margin-block-start: 1rem;
+}
