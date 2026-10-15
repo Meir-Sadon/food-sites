@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { COLOR_KEYS, MAX_LINE_WIDTH, PALETTES, type ColorKey, type ColorSet, type Palette } from '../../api/site'
 import { useToast } from '../../components/toast'
-import { colorVariables, contrastRatio, backgroundOf, ensureReadable, mergeColors, MIN_CONTRAST, PALETTE_COLORS } from '../../site/palettes'
+import { backgroundOf, colorVariables, contrastRatio, copySource, ensureReadable, mergeColors, MIN_CONTRAST, wouldCycle } from '../../site/palettes'
 import { Loading, Section, Status } from '../ui'
+import { announceLook } from '../useAdminLook'
 import { useErrorMessage, useLoad } from '../hooks'
 
 const LINE_WIDTHS = Array.from({ length: MAX_LINE_WIDTH }, (_, i) => i + 1)
@@ -63,8 +64,10 @@ export function ColorsSection() {
     setSaving(true)
     setError(null)
     try {
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, font: _f, shadows: _sh, spacing: _sp, ...current } = await settingsApi.get()
-      setData(await settingsApi.save({ ...current, palette, customColors: custom, lineWidth: lineWidth ?? 0 }))
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, ...current } = await settingsApi.get()
+      const result = await settingsApi.save({ ...current, palette, customColors: custom, lineWidth: lineWidth ?? 0 })
+      setData(result)
+      announceLook(result)
       setPickedPalette(null)
       setPickedColors(null)
       setPickedWidth(undefined)
@@ -99,11 +102,24 @@ export function ColorsSection() {
             <p className="hint">{t('admin.settings.customColorsHint')}</p>
             {COLOR_KEYS.map((key) => {
               const own = custom[key]
-              const value = own ?? PALETTE_COLORS[palette][key]
+              const source = copySource(own)
+              const value = shown[key]
               return (
                 <div key={key} className="color-field">
                   <label htmlFor={`color-${key}`}>{t(`admin.settings.colorKeys.${key}`)}</label>
                   <input id={`color-${key}`} type="color" value={value ?? '#ffffff'} onChange={(e) => setColor(key, e.target.value)} />
+                  <select
+                    aria-label={t('admin.settings.copyFromFor', { name: t(`admin.settings.colorKeys.${key}`) })}
+                    value={source ?? ''}
+                    onChange={(e) => setColor(key, e.target.value ? `=${e.target.value}` : null)}
+                  >
+                    <option value="">{t('admin.settings.copyFrom')}</option>
+                    {COLOR_KEYS.filter((other) => other !== key && !wouldCycle(custom, key, other)).map((other) => (
+                      <option key={other} value={other}>
+                        {t(`admin.settings.colorKeys.${other}`)}
+                      </option>
+                    ))}
+                  </select>
                   {own ? (
                     <button type="button" className="button-quiet" onClick={() => setColor(key, null)}>
                       {t('admin.settings.colorReset')}

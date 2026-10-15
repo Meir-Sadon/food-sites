@@ -8,7 +8,7 @@ import { LeaveGuardProvider } from './LeaveGuardProvider'
 import { ScrollButtons } from './ScrollButtons'
 import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
-import { colorVariables } from '../site/palettes'
+import { useApplyColors } from '../site/useApplyColors'
 import { useColors, useCorners, useFinish, useSite, useSiteStyle } from '../site/useSite'
 import { trackUsage } from '../usage/track'
 
@@ -21,8 +21,7 @@ function useStyleAttribute() {
   const style = useSiteStyle()
   const corners = useCorners()
   const { palette, customColors, lineWidth } = useColors()
-  const { font, shadows, spacing } = useFinish()
-  const colorsKey = JSON.stringify([palette, customColors, lineWidth])
+  const { font, shadows, spacing, tileGroups } = useFinish()
   useEffect(() => {
     const root = document.documentElement
     root.dataset.style = style
@@ -30,23 +29,17 @@ function useStyleAttribute() {
     root.dataset.font = font
     root.dataset.shadows = shadows
     root.dataset.spacing = spacing
+    root.dataset.tileGroups = tileGroups
     return () => {
       delete root.dataset.style
       delete root.dataset.corners
       delete root.dataset.font
       delete root.dataset.shadows
       delete root.dataset.spacing
+      delete root.dataset.tileGroups
     }
-  }, [style, corners, font, shadows, spacing])
-  useEffect(() => {
-    const root = document.documentElement
-    const [palette, customColors, lineWidth] = JSON.parse(colorsKey) as Parameters<typeof colorVariables>
-    const vars = colorVariables(palette, customColors, lineWidth)
-    for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value)
-    return () => {
-      for (const name of Object.keys(vars)) root.style.removeProperty(name)
-    }
-  }, [colorsKey])
+  }, [style, corners, font, shadows, spacing, tileGroups])
+  useApplyColors(palette, customColors, lineWidth)
 }
 
 function Shell() {

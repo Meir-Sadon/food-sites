@@ -241,6 +241,45 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task A_colour_can_be_copied_from_another_element_but_not_in_a_circle()
+    {
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true,
+            customColors = new Dictionary<string, string> { ["button"] = "#aa0000", ["menu"] = "=button", ["categoryBackground"] = "#ffeecc" },
+        })).Read<SettingsDto>();
+        Assert.Equal("=button", saved.CustomColors["menu"]);
+        Assert.Equal("#ffeecc", saved.CustomColors["categoryBackground"]);
+
+        foreach (var colors in new[]
+        {
+            new Dictionary<string, string> { ["menu"] = "=menu" },
+            new Dictionary<string, string> { ["menu"] = "=button", ["button"] = "=menu" },
+            new Dictionary<string, string> { ["menu"] = "=sidebar" },
+        })
+            await (await _admin.PutAsJsonAsync("/api/admin/settings",
+                new { deliveryEnabled = true, pickupEnabled = true, customColors = colors })).AssertInvalid("CustomColors", "invalid");
+    }
+
+    [Fact]
+    public async Task The_admin_picks_how_the_tiles_style_shows_categories()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Equal("framed", settings.TileGroups);
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, tileGroups = "minimal" })).Read<SettingsDto>();
+        Assert.Equal("minimal", saved.TileGroups);
+        var site = await _factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal("minimal", site.TileGroups);
+
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.Equal("minimal", saved.TileGroups);
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, tileGroups = "wild" })).AssertInvalid("TileGroups", "invalid");
+    }
+
+    [Fact]
     public async Task The_site_default_palette_applies_until_the_admin_picks_one()
     {
         using var factory = new ApiFactory(postgres, new() { ["Site:Settings:Palette"] = "olive" });

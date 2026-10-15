@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
-import { SITE_STYLES, type SiteStyle } from '../../api/site'
+import { SITE_STYLES, TILE_GROUPS, type SiteStyle, type TileGroups } from '../../api/site'
 import { useToast } from '../../components/toast'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
@@ -15,7 +15,10 @@ export function StyleSection() {
   const [picked, setPicked] = useState<SiteStyle | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pickedGroups, setPickedGroups] = useState<TileGroups | null>(null)
   const style = picked ?? settings?.style
+  const tileGroups = pickedGroups ?? settings?.tileGroups
+  const changed = !!settings && (style !== settings.style || tileGroups !== settings.tileGroups)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -25,8 +28,9 @@ export function StyleSection() {
     try {
       // The other settings as saved now, so this never sends stale values back.
       const { backgroundImageUrl: _, orderTotalPosition: __, orderFlow: ___, corners: ____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, ...current } = await settingsApi.get()
-      setData(await settingsApi.save({ ...current, style }))
+      setData(await settingsApi.save({ ...current, style, tileGroups }))
       setPicked(null)
+      setPickedGroups(null)
       toast(t('admin.saved'))
     } catch (err) {
       setError(errorMessage(err))
@@ -56,8 +60,20 @@ export function StyleSection() {
               </label>
             ))}
           </fieldset>
+          {style === 'tiles' && (
+            <fieldset className="style-options">
+              <legend>{t('admin.settings.tileGroups.title')}</legend>
+              {TILE_GROUPS.map((option) => (
+                <label key={option} className="style-option">
+                  <input type="radio" name="tile-groups" value={option} checked={tileGroups === option} onChange={() => setPickedGroups(option)} />
+                  <strong>{t(`admin.settings.tileGroups.${option}.name`)}</strong>
+                  <span className="hint">{t(`admin.settings.tileGroups.${option}.description`)}</span>
+                </label>
+              ))}
+            </fieldset>
+          )}
           <div className="row">
-            <button type="submit" disabled={saving || style === settings.style}>
+            <button type="submit" disabled={saving || !changed}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
             {error && <Status message={error} error />}

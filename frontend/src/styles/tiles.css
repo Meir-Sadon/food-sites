@@ -275,3 +275,33 @@
 .tile__variants {
   font-size: 0.9rem;
 }
+
+/* ---------- Minimal categories (Settings → tileGroups = minimal) ----------
+   No frame around a category: a plain heading with a hairline above it, the tiles straight on the page, each one its
+   own square. A background the admin set for the block (--category-bg) still applies. */
+:root[data-style='tiles'][data-tile-groups='minimal'] .category {
+  overflow: visible;
+  border: 0;
+  border-block-start: var(--line-width, 1px) solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  background: var(--category-bg, transparent);
+}
+
+:root[data-style='tiles'][data-tile-groups='minimal'] .category:first-of-type {
+  border-block-start: 0;
+}
+
+:root[data-style='tiles'][data-tile-groups='minimal'] .category > summary {
+  padding: 1rem 0.25rem 0.25rem;
+  background: none;
+}
+
+:root[data-style='tiles'][data-tile-groups='minimal'] .category > summary h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+:root[data-style='tiles'][data-tile-groups='minimal'] .category__dishes {
+  padding-inline: 0.25rem;
+}

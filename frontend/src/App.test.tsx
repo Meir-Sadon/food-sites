@@ -1,8 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { publicApi, site } from './test/catalogData'
-import { fakeApi } from './test/fakeApi'
+import { publicApi, settings, site } from './test/catalogData'
+import { adminSession, fakeApi } from './test/fakeApi'
 import { renderAt } from './test/render'
 
 describe('client site', () => {
@@ -107,6 +107,14 @@ describe('site style', () => {
     expect([root.dataset.shadows, root.dataset.spacing]).toEqual(['none', 'compact'])
     unmount()
     expect([root.dataset.font, root.dataset.shadows, root.dataset.spacing]).toEqual([undefined, undefined, undefined])
+  })
+
+  it('wears the site colours in the admin too', async () => {
+    fakeApi({ ...adminSession, 'GET /api/site': () => site({ palette: 'ocean' }), 'GET /api/admin/settings': () => settings() })
+    const { unmount } = renderAt('/admin/appearance')
+    await waitFor(() => expect(document.documentElement.style.getPropertyValue('--bar-bg')).toBe('#0b3c5d'))
+    unmount()
+    expect(document.documentElement.style.getPropertyValue('--bar-bg')).toBe('')
   })
 
   it('sets the palette and the admin colours as CSS variables on client pages, and removes them again', async () => {

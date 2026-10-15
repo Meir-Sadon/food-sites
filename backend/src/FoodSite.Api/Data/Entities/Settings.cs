@@ -110,6 +110,9 @@ public class Settings
 
     public string? Spacing { get; set; }
 
+    /// <summary>How the tiles style shows a category (see <c>Finish.TileGroups</c>); null means framed.</summary>
+    public string? TileGroups { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }

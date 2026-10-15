@@ -41,6 +41,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string Font,
         string Shadows,
         string Spacing,
+        string TileGroups,
         string DeliveryPricing = "simple",
         decimal? DeliveryFeeAmount = null);
 
@@ -135,6 +136,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Finish.Effective(s.FontPair, Finish.IsKnownFont),
             Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
             Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
+            Finish.EffectiveTileGroups(s.TileGroups),
             DeliveryQuoter.Mode(s),
             s.DeliveryFeeAmount);
     }
