@@ -362,9 +362,17 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => setOpen(false)} wide>
-          <ImageCarousel images={dish.images} name={dish.name} />
-          {dish.description && <p className="dish__description">{dish.description}</p>}
-          {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+          <div className="tile-dialog__head">
+            <ImageCarousel images={dish.images} name={dish.name} />
+            <div className="tile-dialog__info">
+              <p className="dish__price">{priceText(dish, t)}</p>
+              {dish.description && <p className="dish__description">{dish.description}</p>}
+              {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+              {remaining !== null && remaining > 0 && (
+                <p className="muted">{t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}</p>
+              )}
+            </div>
+          </div>
           <InTileDialog.Provider value>
             <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
           </InTileDialog.Provider>
@@ -416,9 +424,13 @@ function DishGroupTile(props: GroupProps) {
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => setOpen(false)} wide>
-          <ImageCarousel images={dish.images} name={dish.name} />
-          {dish.description && <p className="dish__description">{dish.description}</p>}
-          {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+          <div className="tile-dialog__head">
+            <ImageCarousel images={dish.images} name={dish.name} />
+            <div className="tile-dialog__info">
+              {dish.description && <p className="dish__description">{dish.description}</p>}
+              {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+            </div>
+          </div>
           <InTileDialog.Provider value>
             <VariantList {...props} idPrefix={id} />
           </InTileDialog.Provider>

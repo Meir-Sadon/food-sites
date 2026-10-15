@@ -12,8 +12,16 @@
 
 @media (min-width: 40rem) {
   [data-style='tiles'] .category__dishes {
-    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
     gap: 1.5rem 1rem;
+  }
+  /* Wider tiles need fewer lines for the same text. */
+  [data-style='tiles'] .tile__body {
+    block-size: 7.25rem;
+  }
+
+  [data-style='tiles'] .tile__description {
+    -webkit-line-clamp: 2;
   }
 }
 
@@ -36,19 +44,29 @@
   position: relative;
   /* The picture spans the whole tile and is the same height on every tile. */
   aspect-ratio: 1;
+  /* Always the tile's full width, whatever the picture's own size. */
+  inline-size: 100%;
+  min-inline-size: 0;
   overflow: hidden;
   border-radius: calc(1rem * var(--corner-scale));
   background: var(--color-soft);
   box-shadow: var(--shadow-sm);
 }
 
-[data-style='tiles'] .dish--chosen .tile__media {
-  outline: 3px solid var(--color-accent);
-  outline-offset: -3px;
+/* The ring is drawn over the picture (the picture fills the tile, so an outline would be hidden behind it). */
+[data-style='tiles'] .dish--chosen .tile__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--color-accent);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .tile__media img,
 .tile__placeholder {
+  position: absolute;
+  inset: 0;
   display: block;
   inline-size: 100%;
   block-size: 100%;
@@ -100,7 +118,7 @@
   gap: 0.25rem;
   min-inline-size: 0;
   /* Every tile's text block has the same height, whatever the name, description or badge: long text is clamped. */
-  block-size: 6.75rem;
+  block-size: 9rem;
   overflow: hidden;
   /* Air around the text only when the admin gave the dishes a background (palettes.ts sets --dish-pad). */
   padding: 0 var(--dish-pad, 0) var(--dish-pad, 0);
@@ -124,7 +142,7 @@
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   color: var(--color-muted);
   font-size: 0.9rem;
 }
@@ -152,11 +170,36 @@
 }
 
 .tile__stepper .amount {
-  gap: 0.125rem;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+/* Round buttons that fit inside the pill (the shared button size would push them out of it). */
+.tile__stepper .button-icon {
+  min-block-size: 0;
+  min-inline-size: 0;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--btn-bg, var(--color-accent));
+  color: var(--btn-text, var(--color-accent-contrast));
+  line-height: 1;
+}
+
+.tile__stepper .button-icon:hover:not(:disabled) {
+  background: var(--btn-bg-hover, var(--color-accent-hover, var(--color-accent)));
+  color: var(--btn-text, var(--color-accent-contrast));
+}
+
+.tile__stepper .button-icon:disabled {
+  opacity: 0.4;
+  background: var(--btn-bg, var(--color-accent));
 }
 
 .tile__stepper .amount__value {
-  min-inline-size: 1.5rem;
+  min-inline-size: 1.75rem;
   text-align: center;
   font-weight: 700;
 }
@@ -202,12 +245,46 @@
   box-shadow: var(--shadow-md);
 }
 
-/* The dialog: the picture across the top, then the dish's choices. */
-[data-style='tiles'] .modal .carousel img {
-  aspect-ratio: 16 / 5;
-  max-block-size: 5rem;
-  object-fit: cover;
+/* The dialog: the whole picture at a fixed size beside the dish's details, then the choices underneath. */
+.tile-dialog__head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.tile-dialog__head .carousel {
+  flex: 0 0 8.5rem;
+  inline-size: 8.5rem;
+  margin: 0;
+}
+
+[data-style='tiles'] .modal .tile-dialog__head .carousel img {
+  display: block;
+  inline-size: 8.5rem;
+  block-size: 8.5rem;
+  max-block-size: none;
+  aspect-ratio: auto;
+  object-fit: contain;
+  background: var(--color-soft);
   border-radius: calc(0.75rem * var(--corner-scale));
+}
+
+.tile-dialog__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.tile-dialog__info p {
+  margin: 0;
+}
+
+[data-style='tiles'] .modal .tile-dialog__info .dish__description {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
 }
 
 /* Compact, so most of a dish's choices fit without scrolling. */
