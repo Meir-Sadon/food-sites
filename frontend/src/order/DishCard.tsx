@@ -206,11 +206,9 @@ function tappedTileSurface(event: React.MouseEvent) {
   return !(event.target as HTMLElement).closest('button, a, input, select, textarea, label, .modal-backdrop')
 }
 
-function TileIcon({ name }: { name: 'plus' | 'sliders' | 'close' | 'check' }) {
+function TileIcon({ name }: { name: 'plus' | 'check' }) {
   const paths = {
     plus: 'M12 5v14M5 12h14',
-    sliders: 'M4 7h9M17 7h3M4 17h3M11 17h9M13 4v6M7 14v6',
-    close: 'M6 6l12 12M18 6L6 18',
     check: 'M5 12.5l4.5 4.5L19 7.5',
   }
   return (
@@ -261,6 +259,25 @@ function TileMedia({ images, slides, name, children }: { images?: string[]; slid
   )
 }
 
+/** A small "!" on the picture's corner; pressing it shows which allergens the dish has, without opening the dish. */
+function AllergenMark({ text }: { text?: string | null }) {
+  const { t } = useTranslation()
+  const [shown, setShown] = useState(false)
+  if (!text) return null
+  return (
+    <span className="tile__allergen" onClick={(event) => event.stopPropagation()}>
+      <button type="button" aria-label={t('order.allergensShow')} aria-expanded={shown} onClick={() => setShown(!shown)}>
+        !
+      </button>
+      {shown && (
+        <span className="tile__allergen-text" role="status">
+          {t('order.allergens')}: {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
 function DishTile({ dish, dishes, selection, date, onChange }: Props) {
   const { t } = useTranslation()
   const id = useId()
@@ -298,60 +315,56 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
       style={tappable ? { cursor: 'pointer' } : undefined}
     >
       <TileMedia images={dish.images} name={dish.name}>
-        {unavailable ? null : selection ? (
-          <span className="tile__count numeric" aria-hidden="true">
-            {yesNo ? <TileIcon name="check" /> : number.format(selection.quantity)}
-          </span>
+        {dish.isSoldOut ? (
+          <p className="badge tile__badge" role="status">
+            {t('order.soldOut')}
+          </p>
+        ) : unavailable ? (
+          <p className="badge tile__badge" role="status">
+            {t('order.soldOutForDate')}
+          </p>
         ) : (
+          remaining !== null &&
+          remaining > 0 && (
+            <p className="badge tile__badge" role="status">
+              {t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}
+            </p>
+          )
+        )}
+        <AllergenMark text={dish.allergenInfo} />
+        {unavailable ? null : !selection ? (
           <button type="button" className="tile__add" aria-label={t('order.addDish', { name: dish.name })} onClick={add}>
             <TileIcon name="plus" />
           </button>
+        ) : yesNo ? (
+          <button type="button" className="tile__count" aria-label={t('order.removeDish', { name: dish.name })} onClick={() => onChange(undefined)}>
+            <TileIcon name="check" />
+          </button>
+        ) : (
+          // Taking the amount down to 0 removes the dish from the order.
+          <span className="tile__stepper" onClick={(event) => event.stopPropagation()}>
+            <AmountControl
+              name={dish.name}
+              value={selection.quantity}
+              {...range}
+              max={Math.max(range.max, range.min)}
+              unit={unitName}
+              allowZero
+              onChange={(quantity) => onChange(quantity <= 0 ? undefined : fitAddOns(dish, { ...selection, quantity }, dishes))}
+            />
+          </span>
         )}
       </TileMedia>
       <div className="tile__body">
         <h3 id={`${id}-name`}>{dish.name}</h3>
         <p className="dish__price">{priceText(dish, t)}</p>
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
-        {dish.isSoldOut ? (
-          <p className="badge" role="status">
-            {t('order.soldOut')}
-          </p>
-        ) : unavailable ? (
-          <p className="badge" role="status">
-            {t('order.soldOutForDate')}
-          </p>
-        ) : (
-          remaining !== null && remaining > 0 && (
-            <p className="badge" role="status">
-              {t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}
-            </p>
-          )
-        )}
-        {selection && !unavailable && (
-          <div className="tile__controls">
-            {!yesNo && (
-              <AmountControl
-                name={dish.name}
-                value={selection.quantity}
-                {...range}
-                max={Math.max(range.max, range.min)}
-                unit={unitName}
-                onChange={(quantity) => onChange(fitAddOns(dish, { ...selection, quantity }, dishes))}
-              />
-            )}
-            <button type="button" className="tile__icon" aria-label={t('order.customizeDish', { name: dish.name })} onClick={() => setOpen(true)}>
-              <TileIcon name="sliders" />
-            </button>
-            <button type="button" className="tile__icon" aria-label={t('order.removeDish', { name: dish.name })} onClick={() => onChange(undefined)}>
-              <TileIcon name="close" />
-            </button>
-          </div>
-        )}
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => setOpen(false)} wide>
           <ImageCarousel images={dish.images} name={dish.name} />
           {dish.description && <p className="dish__description">{dish.description}</p>}
+          {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
           <InTileDialog.Provider value>
             <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
           </InTileDialog.Provider>
@@ -390,6 +403,8 @@ function DishGroupTile(props: GroupProps) {
       style={{ cursor: 'pointer' }}
     >
       <TileMedia slides={groupSlides(dish, variants)} name={dish.name}>
+        {count > 0 && <p className="badge tile__badge">{t('order.chosenCount', { count })}</p>}
+        <AllergenMark text={dish.allergenInfo} />
         <button type="button" className="tile__add" aria-label={t('order.chooseVariant', { name: dish.name })} onClick={() => setOpen(true)}>
           <TileIcon name="plus" />
         </button>
@@ -398,12 +413,12 @@ function DishGroupTile(props: GroupProps) {
         <h3 id={`${id}-name`}>{dish.name}</h3>
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
-        {count > 0 && <p className="badge">{t('order.chosenCount', { count })}</p>}
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => setOpen(false)} wide>
           <ImageCarousel images={dish.images} name={dish.name} />
           {dish.description && <p className="dish__description">{dish.description}</p>}
+          {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
           <InTileDialog.Provider value>
             <VariantList {...props} idPrefix={id} />
           </InTileDialog.Provider>

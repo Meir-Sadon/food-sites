@@ -36,7 +36,7 @@ describe.each(['classic', 'tiles'] as const)('A group limit in the %s style', (s
     await user.click(within(card).getByRole('button', { name: /הוספה להזמנה: חומוס/ }))
     let scope: HTMLElement = card
     if (style === 'tiles') {
-      await user.click(within(card).getByRole('button', { name: 'התאמת המנה: חומוס' }))
+      await user.click(heading) // a tap on the card opens its adjustments
       scope = screen.getByRole('dialog')
     }
     // The tiles dialog shows the adjustments open at once; the page card hides them behind a button.

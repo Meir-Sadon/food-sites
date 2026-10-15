@@ -59,6 +59,18 @@ public sealed class MailTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_confirmation_names_the_allergens_of_each_ordered_dish()
+    {
+        var category = await (await _admin.PostAsJsonAsync("/api/admin/categories", new { name = "סלטים" })).Read<CategoryDto>();
+        var dish = await (await _admin.PostAsJsonAsync("/api/admin/dishes", new DishInput(
+            "טחינה", category.Id, null, "שומשום", SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
+            [new OptionInput(null, "יחידה", 1, 20, true)], []), TestFiles.Json)).Read<DishDto>();
+
+        var confirmation = await (await PlaceOrder(dish)).Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal("שומשום", confirmation.GetProperty("items")[0].GetProperty("allergenInfo").GetString());
+    }
+
+    [Fact]
     public async Task The_owner_address_is_saved_validated_and_kept_when_left_out()
     {
         Assert.Equal("", (await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).OwnerEmail);

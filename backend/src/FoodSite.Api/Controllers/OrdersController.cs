@@ -46,7 +46,7 @@ public class OrdersController(
         TimeOnly? DeliveryHour = null);
 
     public record ConfirmationItemDto(
-        string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn);
+        string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null);
 
     public record ConfirmationDto(
         int Id,
@@ -188,7 +188,7 @@ public class OrdersController(
             order.PaymentMethod switch { PaymentMethod.Bit => settings.BitLink, PaymentMethod.PayBox => settings.PayBoxLink, _ => null },
             order.NeedsReview,
             order.Items
-                .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null))
+                .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null, i.Dish?.AllergenInfo))
                 .ToList(),
             order.DeliveryHour,
             hourFull,
