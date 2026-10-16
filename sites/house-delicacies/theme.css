@@ -1,0 +1,20 @@
+/* The site's colour palette: frozen-food ice blue with a warm kitchen-orange accent (placeholder until the business gives its own colours). Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #f2f7fa;
+  --color-surface: #ffffff;
+  --color-text: #1b2a38;
+  --color-muted: #566879;
+  --color-accent: #1d5f86;
+  --color-accent-hover: #164a69;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #e08a2e;
+  --color-border: #d8e5ed;
+  --color-error: #b42318;
+  --color-success: #2f6b3a;
+  --color-soft: #e4eff5;
+  --color-shadow: #1b2a38;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(224 138 46 / 0.18);
+  --color-badge-text: #7a4710;
+  --gradient-hero: linear-gradient(135deg, var(--color-accent-hover) 0%, #2d86b5 60%, var(--color-gold) 150%);
+}

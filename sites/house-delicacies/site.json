@@ -1,0 +1,25 @@
+{
+  "id": "house-delicacies",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "",
+  "emoji": "🥟",
+  "whatsApp": {
+    "orderConfirmationTemplate": "house_delicacies_order_confirmation",
+    "newOrderTemplate": "house_delicacies_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true
+  },
+  "settings": {
+    "contactName": "אשר",
+    "contactPhone": "053-9660693",
+    "contactAddress": "מודיעין",
+    "kashrutText": "כשר, הבשר בשרות מהדרין",
+    "deliveryFeeText": "משלוח בהזמנה מ-50 ₪"
+  },
+  "seed": []
+}
