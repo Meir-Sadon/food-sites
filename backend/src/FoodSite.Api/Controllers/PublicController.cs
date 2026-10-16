@@ -1,5 +1,6 @@
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Delivery;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string? DeliveryFeeText,
         string? KashrutText,
         string? PaymentPhone,
+        bool BitEnabled,
+        bool PayBoxEnabled,
         decimal? MinimumOrderAmount,
         bool MinimumOrderAppliesToPickup,
         ContactDto Contact,
@@ -31,7 +34,17 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string Style,
         string OrderTotalPosition,
         string OrderFlow,
-        string Corners);
+        string Corners,
+        string Palette,
+        IReadOnlyDictionary<string, string> CustomColors,
+        int? LineWidth,
+        string Font,
+        string Shadows,
+        string Spacing,
+        string TileGroups,
+        string DeliveryPricing = "simple",
+        decimal? DeliveryFeeAmount = null,
+        bool AddressFirst = false);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -63,7 +76,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<MenuQuestionDto>? Questions = null,
         bool AdjustmentOptional = false,
         string? OptionsTitle = null,
-        bool ShowOptionDifference = false);
+        bool ShowOptionDifference = false,
+        IReadOnlyList<string>? DietaryTags = null);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
     /// <summary>DefaultAnswer is the answer already picked for the client (a choice, or yes / no), if the admin set one.</summary>
@@ -100,6 +114,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<SupplyDateDto> SupplyDates,
         IReadOnlyList<MenuGroupDto>? Groups = null);
 
+    private static bool PaymentOn(Data.Entities.Settings s) => !string.IsNullOrWhiteSpace(s.PaymentPhone);
+
     [HttpGet("site")]
     public async Task<SiteDto> GetSite()
     {
@@ -107,7 +123,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Phone).ToListAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
-            s.KashrutText, s.PaymentPhone, s.MinimumOrderAmount, s.MinimumOrderAppliesToPickup,
+            s.KashrutText, s.PaymentPhone, s.BitEnabled && PaymentOn(s), s.PayBoxEnabled && PaymentOn(s), s.MinimumOrderAmount, s.MinimumOrderAppliesToPickup,
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
             whatsAppPhones,
             ServiceArea.Parse(s.ServiceCities),
@@ -115,7 +131,17 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
             OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
             OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
-            Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners));
+            Sites.Corners.Effective(s.Corners, site.Value.Settings.Corners),
+            Palettes.Effective(s.Palette, site.Value.Settings.Palette),
+            Palettes.Parse(s.CustomColors),
+            s.LineWidth,
+            Finish.Effective(s.FontPair, Finish.IsKnownFont),
+            Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
+            Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
+            Finish.EffectiveTileGroups(s.TileGroups),
+            DeliveryQuoter.Mode(s),
+            s.DeliveryFeeAmount,
+            s.AddressFirst);
     }
 
     [HttpGet("menu")]
@@ -167,7 +193,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 DishRules.Questions(d)
                     .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
                 (d.MainDish ?? d).AdjustmentOptional,
-                p.OptionsTitle, p.ShowOptionDifference);
+                p.OptionsTitle, p.ShowOptionDifference, d.DietaryTags);
         }).ToList();
 
         // Groups list only dishes ordered on their own that are on the menu, in menu order; an empty group is left out.

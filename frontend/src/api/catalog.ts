@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { Corners, OrderFlow, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -11,12 +11,20 @@ export interface Settings {
   pickupEnabled: boolean
   deliveryAreaText: string | null
   deliveryFeeText: string | null
+  /** The regular setting's fixed delivery fee in ₪ (added for a service city); null means none. */
+  deliveryFeeAmount: number | null
   kashrutText: string | null
   paymentPhone: string | null
+  bitEnabled: boolean
+  payBoxEnabled: boolean
+  bitLink: string | null
+  payBoxLink: string | null
   /** ₪; null means no minimum. */
   minimumOrderAmount: number | null
   /** False when the minimum is for deliveries only. */
   minimumOrderAppliesToPickup: boolean
+  /** The order page first asks delivery or pickup and the address, then shows the dishes. */
+  addressFirst: boolean
   /** Comma-separated, e.g. "אשקלון, אשדוד"; empty means every city is served. */
   serviceCities: string
   /** How many orders can be supplied in one hour; null means no limit. */
@@ -33,10 +41,28 @@ export interface Settings {
   corners: Corners
   /** Where the owner is mailed about new orders and changes; empty means no mail. */
   ownerEmail: string
+  /** Whether the same addresses also get the summary of admin changes to dishes and settings. */
+  ownerChangeMails: boolean
+  /** The ready-made colour palette the client site shows. */
+  palette: Palette
+  /** Colours the admin set per element; they win over the palette. */
+  customColors: ColorSet
+  /** Thickness in pixels of the lines (1 to 4); null keeps the original. Send 0 to clear. */
+  lineWidth: number | null
+  /** The font pair of the client site. */
+  font: FontPair
+  /** How strong the shadows of the client site are. */
+  shadows: Shadows
+  /** How much air there is between things on the client site. */
+  spacing: Spacing
+  /** How the tiles style shows a category. */
+  tileGroups: TileGroups
+  /** `simple` until the admin picks `zones`. */
+  deliveryPricing: DeliveryPricing
 }
-/** Leaving out the style, the order layout or the corners keeps it: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'> &
-  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners'>>
+/** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'> &
+  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'>>
 
 export interface SupplyDay {
   weekday: Weekday
@@ -74,6 +100,12 @@ export interface DishOption {
   isDefault: boolean
 }
 
+/** The special-diet marks a dish can carry (FoodSite.Api `DietaryTags`); the texts are `dietaryTags.<id>` in he.json. */
+export const DIETARY_TAGS = [
+  'glutenFree', 'vegetarian', 'vegan', 'parve', 'lactoseFree', 'sugarFree', 'nutFree', 'eggFree', 'kosherForPassover',
+] as const
+export type DietaryTag = (typeof DIETARY_TAGS)[number]
+
 export interface DishImage {
   id: number
   url: string
@@ -107,6 +139,8 @@ export interface Dish {
   /** Most that can be ordered per supply date (units, or kilos), or null for no limit. */
   maxPerSupplyDate: number | null
   isHidden: boolean
+  /** Special-diet marks (ids from DIETARY_TAGS) shown on the order page. */
+  dietaryTags: DietaryTag[]
   options: DishOption[]
   images: DishImage[]
   /** Dishes this dish is offered under as an add-on. */
@@ -195,6 +229,8 @@ export interface DishInput {
   adjustmentOptional?: boolean
   optionsTitle?: string | null
   showOptionDifference?: boolean
+  /** The whole list of the dish's special-diet marks; left out, they stay as they are. */
+  dietaryTags?: DietaryTag[]
 }
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -244,6 +280,22 @@ export interface DishGroup {
   displayOrder: number
   /** Dishes ordered on their own (not variants or add-ons), from any category. */
   dishIds: number[]
+}
+
+/** A delivery area drawn on the map; `polygon` holds its corners as [lat, lng]. */
+export interface DeliveryZone {
+  id: number | null
+  name: string
+  fee: number
+  /** No deliveries into this area. */
+  isBlocked: boolean
+  polygon: [number, number][]
+}
+
+export const deliveryZonesApi = {
+  get: () => apiJson<DeliveryZone[]>(`${admin}/delivery-zones`),
+  /** The list sent replaces the stored one; its order is the priority where zones overlap. */
+  save: (zones: DeliveryZone[]) => apiJson<DeliveryZone[]>(`${admin}/delivery-zones`, send('PUT', { zones })),
 }
 
 export const dishGroupsApi = {

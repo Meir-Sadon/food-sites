@@ -1,3 +1,5 @@
+import { isTransfer } from './payment'
+import { TransferPay } from './TransferPay'
 import { useTranslation } from 'react-i18next'
 import type { Confirmation } from '../api/site'
 import { Modal } from '../components/Modal'
@@ -11,9 +13,11 @@ interface Props {
   onClose: () => void
 }
 
-/** Shown after the order is saved: the summary the client also gets by WhatsApp. */
+/** Shown after the order is saved: the summary of what was ordered. */
 export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
   const { t } = useTranslation()
+  // Each dish with allergens once, with what the business wrote about it.
+  const allergens = [...new Map(confirmation.items.filter((i) => i.allergenInfo).map((i) => [i.dishName, i.allergenInfo as string])).entries()]
   return (
     <Modal title={t('order.success.title')} onClose={onClose}>
       <p>{t('order.success.number', { id: confirmation.id })}</p>
@@ -33,14 +37,33 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           </li>
         ))}
       </ul>
+      {allergens.length > 0 && (
+        <div className="notice notice--warning" role="note">
+          <strong>{t('order.success.allergensTitle')}</strong>
+          <ul>
+            {allergens.map(([name, info]) => (
+              <li key={name}>
+                {name}: {info}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!!confirmation.deliveryFee && (
+        <p className="summary__total">
+          {t('order.deliveryFee')}: <strong className="numeric">{formatMoney(confirmation.deliveryFee)}</strong>
+        </p>
+      )}
       <p className="summary__total">
         {t('order.total')}: <strong className="numeric">{formatMoney(confirmation.total)}</strong>
       </p>
-      {confirmation.paymentMethod === 'Transfer' && confirmation.paymentPhone ? (
-        <p>
-          {t('order.success.transfer', { total: formatMoney(confirmation.total) })}{' '}
-          <strong dir="ltr">{confirmation.paymentPhone}</strong>
-        </p>
+      {isTransfer(confirmation.paymentMethod) && confirmation.paymentPhone ? (
+        <TransferPay
+          method={confirmation.paymentMethod}
+          phone={confirmation.paymentPhone}
+          total={confirmation.total}
+          link={confirmation.paymentLink}
+        />
       ) : (
         <p>{t('order.payOnDeliveryNote')}</p>
       )}
@@ -54,7 +77,6 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           {t('order.success.needsReview')}
         </p>
       )}
-      <p>{t('order.success.whatsapp')}</p>
       {contactPhone && (
         <p className="muted">
           {t('order.callToChange')} <span dir="ltr">{contactPhone}</span>

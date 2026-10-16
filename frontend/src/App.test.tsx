@@ -1,8 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { publicApi, site } from './test/catalogData'
-import { fakeApi } from './test/fakeApi'
+import { publicApi, settings, site } from './test/catalogData'
+import { adminSession, fakeApi } from './test/fakeApi'
 import { renderAt } from './test/render'
 
 describe('client site', () => {
@@ -97,5 +97,35 @@ describe('site style', () => {
     await waitFor(() => expect(document.documentElement.dataset.corners).toBe('square'))
     unmount()
     expect(document.documentElement.dataset.corners).toBeUndefined()
+  })
+
+  it('marks client pages with the font, shadows and spacing /api/site names', async () => {
+    fakeApi({ ...publicApi, 'GET /api/site': () => site({ font: 'elegant', shadows: 'none', spacing: 'compact' }) })
+    const { unmount } = renderAt('/about')
+    const root = document.documentElement
+    await waitFor(() => expect(root.dataset.font).toBe('elegant'))
+    expect([root.dataset.shadows, root.dataset.spacing]).toEqual(['none', 'compact'])
+    unmount()
+    expect([root.dataset.font, root.dataset.shadows, root.dataset.spacing]).toEqual([undefined, undefined, undefined])
+  })
+
+  it('wears the site colours in the admin too', async () => {
+    fakeApi({ ...adminSession, 'GET /api/site': () => site({ palette: 'ocean' }), 'GET /api/admin/settings': () => settings() })
+    const { unmount } = renderAt('/admin/appearance')
+    await waitFor(() => expect(document.documentElement.style.getPropertyValue('--bar-bg')).toBe('#0b3c5d'))
+    unmount()
+    expect(document.documentElement.style.getPropertyValue('--bar-bg')).toBe('')
+  })
+
+  it('sets the palette and the admin colours as CSS variables on client pages, and removes them again', async () => {
+    fakeApi({ ...publicApi, 'GET /api/site': () => site({ palette: 'ocean', customColors: { button: '#aa0000' }, lineWidth: 3 }) })
+    const { unmount } = renderAt('/about')
+    const root = document.documentElement
+    await waitFor(() => expect(root.style.getPropertyValue('--btn-bg')).toBe('#aa0000'))
+    expect(root.style.getPropertyValue('--bar-bg')).toBe('#0b3c5d')
+    expect(root.style.getPropertyValue('--line-width')).toBe('3px')
+    unmount()
+    expect(root.style.getPropertyValue('--btn-bg')).toBe('')
+    expect(root.style.getPropertyValue('--bar-bg')).toBe('')
   })
 })

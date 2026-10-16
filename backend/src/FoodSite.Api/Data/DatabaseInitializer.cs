@@ -63,7 +63,6 @@ public static class DatabaseInitializer
                 : (await db.Dishes.Where(d => d.CategoryId == category.Id).MaxAsync(d => (int?)d.DisplayOrder) ?? -1) + 1;
 
             var added = 0;
-            var addedByName = new Dictionary<string, Entities.Dish>();
             foreach (var dish in seedCategory.Dishes.Where(d => !existing.Contains(d.Name)))
             {
                 var entity = new Entities.Dish
@@ -76,6 +75,7 @@ public static class DatabaseInitializer
                     IsAddOnOnly = dish.IsAddOnOnly,
                     OptionsTitle = dish.OptionsTitle,
                     ShowOptionDifference = dish.ShowOptionDifference,
+                    DietaryTags = Sites.DietaryTags.Clean(dish.DietaryTags),
                     Options = (dish.Options ?? []).Select(o => new Entities.DishOption
                     {
                         Label = o.Label,
@@ -113,14 +113,6 @@ public static class DatabaseInitializer
                         DisplayOrder = i,
                     }).ToList(),
                 };
-                if (dish.MainDish is { } mainName)
-                {
-                    entity.MainDish = addedByName.GetValueOrDefault(mainName)
-                        ?? await db.Dishes.FirstOrDefaultAsync(d => d.CategoryId == category.Id && d.Name == mainName && !d.IsHidden)
-                        ?? throw new InvalidDataException($"Seed dish '{dish.Name}' is a variant of '{mainName}', which is not an earlier dish of its category.");
-                    entity.UseMainDishPrice = dish.UseMainDishPrice;
-                }
-                addedByName[dish.Name] = entity;
                 category.Dishes.Add(entity);
                 if (dish.AddOns is { Count: > 0 } own)
                     ownAddOns.Add((entity, own));

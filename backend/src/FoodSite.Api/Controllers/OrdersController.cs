@@ -1,6 +1,7 @@
 using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Delivery;
 using FoodSite.Api.Mail;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Orders;
@@ -24,6 +25,7 @@ public class OrdersController(
     IOptions<SmsOptions> smsOptions,
     OwnerNotifier ownerMail,
     IOptions<SiteOptions> site,
+    DeliveryQuoter deliveryQuoter,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
@@ -44,7 +46,7 @@ public class OrdersController(
         TimeOnly? DeliveryHour = null);
 
     public record ConfirmationItemDto(
-        string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn);
+        string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null);
 
     public record ConfirmationDto(
         int Id,
@@ -53,10 +55,12 @@ public class OrdersController(
         PaymentMethod PaymentMethod,
         decimal Total,
         string? PaymentPhone,
+        string? PaymentLink,
         bool NeedsReview,
         IReadOnlyList<ConfirmationItemDto> Items,
         TimeOnly? DeliveryHour = null,
-        bool HourFull = false);
+        bool HourFull = false,
+        decimal DeliveryFee = 0m);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
@@ -91,7 +95,7 @@ public class OrdersController(
 
         if (!Enum.IsDefined(input.PaymentMethod))
             errors.Add(nameof(input.PaymentMethod), "invalid");
-        else if (input.PaymentMethod == PaymentMethod.Transfer && string.IsNullOrWhiteSpace(settings.PaymentPhone))
+        else if (input.PaymentMethod.IsTransfer() && !TransferAvailable(settings, input.PaymentMethod))
             errors.Add(nameof(input.PaymentMethod), "paymentUnavailable");
 
         var days = await db.SupplyDays.AsNoTracking().ToListAsync(ct);
@@ -129,6 +133,13 @@ public class OrdersController(
         if (!errors.Any && settings.PortionsPerSupplyDate is { } portions)
             await CheckPortionLimitAsync(input.SupplyDate, items, dishes, portions, errors, ct);
 
+        // The fee comes from the address, worked out here again so a quote the client saw cannot be changed.
+        var quote = input.FulfillmentMethod == FulfillmentMethod.Delivery && !errors.Any
+            ? await deliveryQuoter.QuoteAsync(settings, input.City, input.Street, input.HouseNumber, ct)
+            : null;
+        if (quote?.Status == DeliveryQuote.Blocked)
+            errors.Add(nameof(input.City), "deliveryNotAvailable");
+
         if (errors.Any)
             return Invalid(errors);
 
@@ -139,7 +150,8 @@ public class OrdersController(
         // The order is added to that phone's account, if there is one.
         var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);
 
-        var serviceCities = ServiceArea.Parse(settings.ServiceCities);
+        // With zones there is no list of cities: a client who waits for approval waits because the map could not place the address.
+        var serviceCities = DeliveryQuoter.Mode(settings) == DeliveryPricing.Zones ? (IReadOnlyList<string>)[] : ServiceArea.Parse(settings.ServiceCities);
         var order = new Order
         {
             UserId = userId,
@@ -150,10 +162,17 @@ public class OrdersController(
             DeliveryHour = hour,
             FulfillmentMethod = input.FulfillmentMethod,
             Notes = Clean(input.Notes),
-            PaymentMethod = input.PaymentMethod,
+            // An older page still sends the combined "Transfer": it becomes whichever service is on.
+            PaymentMethod = input.PaymentMethod == PaymentMethod.Transfer
+                ? (settings.BitEnabled ? PaymentMethod.Bit : PaymentMethod.PayBox)
+                : input.PaymentMethod,
             Status = OrderStatus.New,
-            NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery && !ServiceArea.Serves(serviceCities, input.City),
-            Total = OrderBuilder.Total(items),
+            // An address the map could not place waits for the admin, like a city outside the service area.
+            NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery
+                && (quote is null or { Status: DeliveryQuote.Outside or DeliveryQuote.Unknown } or { Approximate: true }),
+            DeliveryFee = quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m,
+            DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
+            Total = OrderBuilder.Total(items) + (quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m),
             CreatedAt = DateTimeOffset.UtcNow,
         };
         foreach (var item in items)
@@ -165,14 +184,25 @@ public class OrdersController(
 
         return new ConfirmationDto(
             order.Id, order.SupplyDate, order.FulfillmentMethod, order.PaymentMethod, order.Total,
-            order.PaymentMethod == PaymentMethod.Transfer ? settings.PaymentPhone : null,
+            order.PaymentMethod.IsTransfer() ? settings.PaymentPhone : null,
+            order.PaymentMethod switch { PaymentMethod.Bit => settings.BitLink, PaymentMethod.PayBox => settings.PayBoxLink, _ => null },
             order.NeedsReview,
             order.Items
-                .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null))
+                .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null, i.Dish?.AllergenInfo))
                 .ToList(),
             order.DeliveryHour,
-            hourFull);
+            hourFull,
+            order.DeliveryFee);
     }
+
+    /// <summary>A manual payment needs the business's number and that service switched on.</summary>
+    private static bool TransferAvailable(Settings settings, PaymentMethod method) =>
+        !string.IsNullOrWhiteSpace(settings.PaymentPhone) && method switch
+        {
+            PaymentMethod.Bit => settings.BitEnabled,
+            PaymentMethod.PayBox => settings.PayBoxEnabled,
+            _ => settings.BitEnabled || settings.PayBoxEnabled,
+        };
 
     /// <summary>
     /// A dish with a per-supply-date limit can only be ordered until the orders already placed

@@ -46,7 +46,9 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         TimeOnly? DeliveryHour = null,
         bool HourFull = false,
         bool PaidByDriver = false,
-        DeliveryReportDto? Delivery = null);
+        DeliveryReportDto? Delivery = null,
+        decimal DeliveryFee = 0m,
+        string? DeliveryZoneName = null);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -276,7 +278,13 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             item.Quantity = kept[item.Id];
             item.LineTotal = decimal.Round(item.UnitPrice * item.Quantity, 2);
         }
-        order.Total = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal);
+        // The delivery fee worked out when the order was placed stays, unless the order is no longer a delivery.
+        if (order.FulfillmentMethod != FulfillmentMethod.Delivery)
+        {
+            order.DeliveryFee = 0m;
+            order.DeliveryZoneName = null;
+        }
+        order.Total = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal) + order.DeliveryFee;
 
         // An account holds the orders of its own phone: a changed phone follows the matching account, or none.
         order.UserId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync();
@@ -319,7 +327,9 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.DeliveryHour,
         overbooked.Contains(o.Id),
         o.PaidByDriver,
-        DeliveryReport(o));
+        DeliveryReport(o),
+        o.DeliveryFee,
+        o.DeliveryZoneName);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

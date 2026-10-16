@@ -32,18 +32,53 @@ export type Corners = 'square' | 'slight' | 'rounded' | 'round'
 
 export const CORNERS: readonly Corners[] = ['square', 'slight', 'rounded', 'round']
 
+/** The ready-made colour palettes (FoodSite.Api `Palettes`); `site` is the site's own colours from its theme.css. */
+export const PALETTES = ['site', 'olive', 'berry', 'ocean', 'sunset', 'graphite', 'rose'] as const
+export type Palette = (typeof PALETTES)[number]
+
+/** The elements the admin can set a colour for (FoodSite.Api `Palettes.ColorKeys`). */
+export const COLOR_KEYS = [
+  'background', 'text', 'accent', 'button', 'buttonText', 'menu', 'menuText',
+  'banner', 'bannerText', 'dishBackground', 'dishText', 'categoryBackground', 'line',
+] as const
+export type ColorKey = (typeof COLOR_KEYS)[number]
+
+/** Colours by element as `#rrggbb`, or `=<element>` to copy another element's colour. */
+export type ColorSet = Partial<Record<ColorKey, string>>
+
+export const MAX_LINE_WIDTH = 4
+
+/** Font pair, shadow strength and spacing of the client site (FoodSite.Api `Finish`); `standard` keeps what the style does. */
+export const FONTS = ['standard', 'friendly', 'elegant'] as const
+export type FontPair = (typeof FONTS)[number]
+export const SHADOWS = ['standard', 'none', 'soft', 'strong'] as const
+export type Shadows = (typeof SHADOWS)[number]
+export const SPACINGS = ['standard', 'compact', 'spacious'] as const
+export type Spacing = (typeof SPACINGS)[number]
+
+/** How the tiles style shows a category: in a framed block, or minimal (a plain heading with the tiles under it). */
+export const TILE_GROUPS = ['framed', 'minimal'] as const
+export type TileGroups = (typeof TILE_GROUPS)[number]
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
   pickupEnabled: boolean
   deliveryAreaText: string | null
   deliveryFeeText: string | null
+  /** The regular setting's fixed delivery fee in ₪ (added to deliveries to a service city); null when there is none. */
+  deliveryFeeAmount: number | null
   kashrutText: string | null
   paymentPhone: string | null
+  /** Whether the client may choose to pay with Bit / PayBox (needs the payment phone). */
+  bitEnabled: boolean
+  payBoxEnabled: boolean
   /** The smallest order total in ₪; null when there is none. */
   minimumOrderAmount: number | null
   /** False when the minimum is for deliveries only. */
   minimumOrderAppliesToPickup: boolean
+  /** The order page first asks delivery or pickup and the address, then shows the dishes. */
+  addressFirst: boolean
   contact: Contact
   /** The phones that can be chatted with on WhatsApp (the admin's notify list). */
   whatsAppPhones: string[]
@@ -59,7 +94,23 @@ export interface Site {
   orderFlow: OrderFlow
   /** The admin's choice, else the site's default from site.json. */
   corners: Corners
+  /** The admin's choice, else the site's default from site.json. */
+  palette: Palette
+  /** The admin's own colours; they win over the palette. */
+  customColors: ColorSet
+  /** Thickness in pixels of the lines; null keeps the original. */
+  lineWidth: number | null
+  font: FontPair
+  shadows: Shadows
+  spacing: Spacing
+  /** Only the tiles style uses it. */
+  tileGroups: TileGroups
+  /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
+  deliveryPricing: DeliveryPricing
 }
+
+/** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
+export type DeliveryPricing = 'simple' | 'zones'
 
 export interface MenuOption {
   id: number
@@ -113,6 +164,8 @@ export interface MenuDish {
   optionsTitle?: string | null
   /** Show each option as what it adds to the default option's price. */
   showOptionDifference?: boolean
+  /** Special-diet marks (ids from DIETARY_TAGS in api/catalog.ts). */
+  dietaryTags?: string[]
 }
 
 /** How a dish question is answered (FoodSite.Api `QuestionKind`). */
@@ -194,7 +247,8 @@ export interface Menu {
 }
 
 export type Fulfillment = 'Delivery' | 'Pickup'
-export type Payment = 'OnDelivery' | 'Transfer'
+/** `Transfer` is the older combined Bit / PayBox choice; new orders use `Bit` or `PayBox`. */
+export type Payment = 'OnDelivery' | 'Transfer' | 'Bit' | 'PayBox'
 
 export interface OrderLineInput {
   dishId: number
@@ -232,6 +286,8 @@ export interface Confirmation {
   paymentMethod: Payment
   total: number
   paymentPhone: string | null
+  /** The owner's Bit / PayBox payment-request link for the chosen service, if they set one. */
+  paymentLink?: string | null
   /** A delivery outside the service city: it waits for the admin and holds no quantity yet. */
   needsReview: boolean
   items: {
@@ -241,10 +297,32 @@ export interface Confirmation {
     unitPrice: number
     lineTotal: number
     isAddOn: boolean
+    /** The dish's allergens as the business wrote them; null when it has none. */
+    allergenInfo?: string | null
   }[]
   deliveryHour?: string | null
   /** The picked hour was already full: the admin may call to move it. */
   hourFull?: boolean
+  /** The delivery fee in ₪ (already inside `total`). */
+  deliveryFee?: number
+}
+
+/** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */
+export interface DeliveryQuote {
+  status: 'ok' | 'blocked' | 'unknown' | 'outside'
+  fee: number
+  zoneName: string | null
+  /** Only the street or the city could be placed on the map, so the order goes to the admin to check. */
+  approximate?: boolean
+}
+
+/** The address at the device's position (`found` is false outside Israel or off any road) and what delivery there costs. */
+export interface LocatedAddress {
+  found: boolean
+  city: string
+  street: string
+  houseNumber: string
+  quote: DeliveryQuote | null
 }
 
 export const siteApi = {
@@ -253,6 +331,14 @@ export const siteApi = {
   /** Whether an hour is already full; asked only once the client picks it. */
   hourAvailability: (date: string, hour: string) =>
     apiJson<{ full: boolean }>(`/api/hour-availability?date=${date}&hour=${encodeURIComponent(hour)}`),
+}
+
+export const deliveryApi = {
+  quote: (address: { city: string; street: string; houseNumber: string }) =>
+    apiJson<DeliveryQuote>('/api/delivery-quote', send('POST', address)),
+  /** The address at a position ("find my location"), with its fee. */
+  locate: (position: { lat: number; lng: number }) =>
+    apiJson<LocatedAddress>('/api/delivery-quote/locate', send('POST', position)),
 }
 
 export const ordersApi = {

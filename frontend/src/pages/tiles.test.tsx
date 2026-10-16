@@ -37,7 +37,11 @@ describe('The tiles style', () => {
     await user.click(within(tile).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(within(tile).getByRole('group', { name: 'חומוס פשוט' })).toBeInTheDocument()
-    expect(within(tile).getByRole('button', { name: 'התאמת המנה: חומוס פשוט' })).toBeInTheDocument()
+    // The stepper sits on the picture; there is no remove or adjust button, and 0 takes the dish out of the order.
+    expect(within(tile).queryByRole('button', { name: /התאמת המנה|הסרה מההזמנה/ })).not.toBeInTheDocument()
+    await user.click(within(tile).getByRole('button', { name: 'הפחתה: חומוס פשוט' }))
+    expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
+    expect(within(tile).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' })).toBeInTheDocument()
   })
 
   it('opens the dialog straight away for a dish with set options', async () => {
@@ -51,14 +55,54 @@ describe('The tiles style', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('adds a dish whose adjustments are optional at once and customises it through the small button', async () => {
+  it('adds a dish whose adjustments are optional at once and customises it by tapping the card', async () => {
     const user = open()
     const tile = (await screen.findByRole('heading', { level: 3, name: 'פלאפל' })).closest('article')!
     await user.click(within(tile).getByRole('button', { name: 'הוספה להזמנה: פלאפל' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
-    await user.click(within(tile).getByRole('button', { name: 'התאמת המנה: פלאפל' }))
+    await user.click(screen.getByRole('heading', { level: 3, name: 'פלאפל' }))
     expect(screen.getByRole('dialog', { name: 'פלאפל' })).toBeInTheDocument()
+  })
+
+  it('marks a dish with allergens by a small "!" that shows them when pressed', async () => {
+    const data = tilesMenu()
+    data.dishes = data.dishes.map((d) => (d.name === 'חומוס פשוט' ? { ...d, allergenInfo: 'שומשום, גלוטן' } : d))
+    const user = open(data)
+    const tile = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('article')!
+    expect(within(tile).queryByText(/אלרגנים/)).not.toBeInTheDocument()
+    await user.click(within(tile).getByRole('button', { name: 'הצגת אלרגנים במנה' }))
+    expect(within(tile).getByText('אלרגנים: שומשום, גלוטן')).toBeInTheDocument()
+    // Pressing it does not add the dish.
+    expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
+  })
+
+  it('shows the dietary tags in a block of their own in the dialog', async () => {
+    const data = tilesMenu()
+    data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, dietaryTags: ['vegan', 'glutenFree'] } : d))
+    const user = open(data)
+    const heading = await screen.findByRole('heading', { level: 3, name: 'פלאפל' })
+    await user.click(heading) // adds it
+    await user.click(heading) // opens its adjustments
+    const tags = within(screen.getByRole('dialog', { name: 'פלאפל' })).getByRole('list', { name: 'התאמה לתזונה' })
+    expect(within(tags).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['טבעונית', 'ללא גלוטן'])
+  })
+
+  it('enlarges the picture in the dialog to fill it, and goes back to the details', async () => {
+    const data = tilesMenu()
+    data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, images: ['https://img/falafel.jpg'] } : d))
+    const user = open(data)
+    const heading = await screen.findByRole('heading', { level: 3, name: 'פלאפל' })
+    await user.click(heading) // adds it
+    await user.click(heading) // opens its adjustments
+    const dialog = screen.getByRole('dialog', { name: 'פלאפל' })
+
+    await user.click(within(dialog).getByRole('button', { name: 'הגדלת התמונה: פלאפל' }))
+    expect(within(dialog).queryByRole('button', { name: 'סיום' })).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('img', { name: 'פלאפל' })).toBeInTheDocument()
+
+    await user.click(within(dialog).getAllByRole('button', { name: 'חזרה לפרטי המנה' })[0])
+    expect(within(dialog).getByRole('button', { name: 'סיום' })).toBeInTheDocument()
   })
 
   it('opens the variants of a main dish in a dialog', async () => {
@@ -95,6 +139,6 @@ describe('The tiles style', () => {
 
     await user.click(dialog.parentElement!) // the dimmed area
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(within(tile).getByRole('button', { name: 'התאמת המנה: עוף בתנור' })).toBeInTheDocument()
+    expect(within(tile).getByRole('group', { name: 'עוף בתנור' })).toBeInTheDocument()
   })
 })

@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next'
+import { paymentKey } from '../../order/payment'
 import type { AdminOrder, AdminOrderItem } from '../../api/operations'
 import { formatMoney, formatTime } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
@@ -45,7 +46,7 @@ export function prepReport(order: AdminOrder, t: TFunction): string {
     `${t('admin.orders.report.customer')}: ${order.name}, ${order.phone}`,
     `${t('admin.orders.report.when')}: ${formatDate(order.supplyDate)}${order.deliveryHour ? ` · ${formatTime(order.deliveryHour)}` : ''} · ${t(delivery ? 'admin.orders.delivery' : 'admin.orders.pickup')}`,
     ...(delivery && order.address ? [`${t('admin.orders.report.address')}: ${order.address}`] : []),
-    `${t('admin.orders.report.payment')}: ${t(order.paymentMethod === 'Transfer' ? 'admin.orders.transfer' : 'admin.orders.onDelivery')} · ${paid}`,
+    `${t('admin.orders.report.payment')}: ${t(paymentKey(order.paymentMethod))} · ${paid}`,
     `${t('admin.orders.report.status')}: ${t(`admin.orders.statuses.${order.status}`)}`,
     ...(order.notes ? [`${t('admin.orders.report.notes')}: ${order.notes}`] : []),
   ]

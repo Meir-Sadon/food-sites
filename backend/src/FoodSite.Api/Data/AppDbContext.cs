@@ -24,6 +24,7 @@ public class AppDbContext(
     public DbSet<DishAddOn> DishAddOns => Set<DishAddOn>();
     public DbSet<AddOnGroup> AddOnGroups => Set<AddOnGroup>();
     public DbSet<DishGroup> DishGroups => Set<DishGroup>();
+    public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<User> Users => Set<User>();
@@ -118,6 +119,11 @@ public class AppDbContext(
             e.Property(s => s.OrderTotalPosition).HasMaxLength(Sites.OrderLayout.MaxLength);
             e.Property(s => s.OrderFlow).HasMaxLength(Sites.OrderLayout.MaxLength);
             e.Property(s => s.Corners).HasMaxLength(Sites.Corners.MaxLength);
+            e.Property(s => s.Palette).HasMaxLength(Sites.Palettes.MaxLength);
+            e.Property(s => s.FontPair).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.ShadowStrength).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.Spacing).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.TileGroups).HasMaxLength(Sites.Finish.MaxLength);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
         });
 
@@ -154,6 +160,15 @@ public class AppDbContext(
                 .OnDelete(DeleteBehavior.Restrict);
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_Dishes_NotOwnVariant", "\"MainDishId\" <> \"Id\""));
+        });
+
+        model.Entity<Settings>(e => e.Property(s => s.DeliveryFeeAmount).HasPrecision(10, 2));
+
+        model.Entity<DeliveryZone>(e =>
+        {
+            e.Property(z => z.Name).HasMaxLength(DeliveryZone.NameMaxLength).IsRequired();
+            e.Property(z => z.Fee).HasPrecision(10, 2);
+            e.Property(z => z.PolygonJson).IsRequired();
         });
 
         model.Entity<DishGroup>(e =>

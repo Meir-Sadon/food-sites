@@ -112,7 +112,9 @@ public static class OwnerMessages
             when.Add($"כתובת: {order.Address}");
         sections.Add(new("אספקה", when));
 
-        var payment = order.PaymentMethod == PaymentMethod.Transfer ? "העברה (Bit / PayBox)" : "תשלום במעמד המסירה";
+        var payment = order.PaymentMethod.IsTransfer()
+            ? $"העברה ב־{OrderMessages.PaymentLabel(order.PaymentMethod)}"
+            : "תשלום במעמד המסירה";
         sections.Add(new("תשלום", [payment, $"סה״כ לתשלום: ₪{Money(order.Total)}"]));
 
         var dishes = new List<string>();
@@ -130,6 +132,8 @@ public static class OwnerMessages
                     + (string.IsNullOrEmpty(addOn.OptionLabel) ? "" : $" ({addOn.OptionLabel})")
                     + (addOn.LineTotal > 0 ? $" – ₪{Money(addOn.LineTotal)}" : ""));
         }
+        if (order.DeliveryFee > 0)
+            dishes.Add($"דמי משלוח{(string.IsNullOrEmpty(order.DeliveryZoneName) ? "" : $" ({order.DeliveryZoneName})")} – ₪{Money(order.DeliveryFee)}");
         sections.Add(new("המנות שהוזמנו", dishes));
 
         if (!string.IsNullOrWhiteSpace(order.Notes))

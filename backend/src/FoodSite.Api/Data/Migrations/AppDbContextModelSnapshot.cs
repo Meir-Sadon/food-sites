@@ -138,6 +138,38 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("ClosedDates");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DeliveryZone", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Fee")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("PolygonJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeliveryZones");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Dish", b =>
                 {
                     b.Property<int>("Id")
@@ -166,6 +198,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
+
+                    b.PrimitiveCollection<List<string>>("DietaryTags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
@@ -660,6 +696,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DeliveryFee")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<TimeOnly?>("DeliveryHour")
                         .HasColumnType("time without time zone");
 
@@ -678,6 +718,9 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<DateTimeOffset?>("DeliveryReportedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveryZoneName")
+                        .HasColumnType("text");
 
                     b.Property<string>("FulfillmentMethod")
                         .IsRequired()
@@ -898,6 +941,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("AddressFirst")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("AdminPasswordHash")
                         .HasColumnType("text");
 
@@ -905,6 +951,12 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("BackgroundImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("BitEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BitLink")
                         .HasColumnType("text");
 
                     b.Property<string>("ContactAddress")
@@ -926,17 +978,34 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("CustomColors")
+                        .HasColumnType("text");
+
                     b.Property<string>("DeliveryAreaText")
                         .HasColumnType("text");
 
                     b.Property<bool>("DeliveryEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal?>("DeliveryFeeAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<string>("DeliveryFeeText")
                         .HasColumnType("text");
 
+                    b.Property<string>("DeliveryPricing")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FontPair")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("KashrutText")
                         .HasColumnType("text");
+
+                    b.Property<int?>("LineWidth")
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("MinimumOrderAmount")
                         .HasPrecision(10, 2)
@@ -963,7 +1032,20 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int?>("OrdersPerHour")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("OwnerChangeMails")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("OwnerEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Palette")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("PayBoxEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PayBoxLink")
                         .HasColumnType("text");
 
                     b.Property<string>("PaymentPhone")
@@ -978,10 +1060,22 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");
 
+                    b.Property<string>("ShadowStrength")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<bool>("SiteDefaultsApplied")
                         .HasColumnType("boolean");
 
                     b.Property<string>("SiteStyle")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Spacing")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TileGroups")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
@@ -993,8 +1087,10 @@ namespace FoodSite.Api.Data.Migrations
                         new
                         {
                             Id = 1,
+                            BitEnabled = false,
                             DeliveryEnabled = true,
                             MinimumOrderAppliesToPickup = true,
+                            PayBoxEnabled = false,
                             PickupEnabled = true,
                             SiteDefaultsApplied = false
                         });

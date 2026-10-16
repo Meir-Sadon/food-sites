@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../api/client'
 import { FieldError } from '../admin/ui'
+import { deliveryApi, type LocatedAddress } from '../api/site'
 import { useSite } from '../site/useSite'
 import { formatCities, isServiceCity, type AddressParts } from './addressParts'
 
@@ -13,9 +14,16 @@ interface Props {
   idPrefix: string
   /** Which note to show when the city is not the service city. */
   context: 'order' | 'profile'
+  /** The advanced delivery setting on the order page: "find my location" and "calculate" buttons. */
+  zones?: {
+    onLocated: (found: LocatedAddress) => void
+    onCalculate: () => void
+  }
 }
 
-export function AddressFields({ value, onChange, errors, idPrefix, context }: Props) {
+type Locating = 'idle' | 'busy' | 'denied' | 'notFound' | 'failed'
+
+export function AddressFields({ value, onChange, errors, idPrefix, context, zones }: Props) {
   const { t, i18n } = useTranslation()
   const id = (name: string) => `${idPrefix}-${name}`
   const site = useSite()
@@ -28,6 +36,37 @@ export function AddressFields({ value, onChange, errors, idPrefix, context }: Pr
     defaulted.current = true
     if (value.city.trim() === '') onChange({ city: serviceCities[0] })
   }, [serviceCities, value.city, onChange])
+
+  const [locating, setLocating] = useState<Locating>('idle')
+  // With "find my location" on offer the fields wait behind a button, unless there is already an address or an error.
+  const [manual, setManual] = useState(false)
+  const advanced = site?.deliveryPricing === 'zones'
+
+  function locate() {
+    if (!zones) return
+    if (!navigator.geolocation) {
+      setLocating('failed')
+      return
+    }
+    setLocating('busy')
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        deliveryApi
+          .locate({ lat: coords.latitude, lng: coords.longitude })
+          .then((found) => {
+            if (!found.found) return setLocating('notFound')
+            setLocating('idle')
+            zones.onLocated(found)
+          })
+          .catch(() => setLocating('failed'))
+      },
+      (error) => setLocating(error.code === 1 ? 'denied' : 'failed'),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    )
+  }
+
+  const hasErrors = (['city', 'street', 'houseNumber', 'apartment'] as const).some((name) => (errors[name]?.length ?? 0) > 0)
+  const showFields = !zones || manual || hasErrors || value.street.trim() !== '' || value.houseNumber.trim() !== ''
 
   const field = (
     name: keyof AddressParts,
@@ -54,20 +93,50 @@ export function AddressFields({ value, onChange, errors, idPrefix, context }: Pr
   return (
     <fieldset className="address-fields">
       <legend>{t('address.title')}</legend>
-      <div className="row row--end">
-        {field('city', t('address.city'), 'address-level2', { required: true, className: 'field--grow', list: id('cities') })}
-        {field('street', t('address.street'), 'address-line1', { required: true, className: 'field--grow' })}
-      </div>
-      <div className="row row--end">
-        {field('houseNumber', t('address.houseNumber'), 'off', { required: true, className: 'field--narrow' })}
-        {field('apartment', t('address.apartment'), 'address-line2', { className: 'field--narrow' })}
-      </div>
+      {zones && (
+        <>
+          <div className="row row--end">
+            <button type="button" onClick={locate} disabled={locating === 'busy'}>
+              {locating === 'busy' ? t('address.locating') : t('address.locate')}
+            </button>
+            {!showFields && (
+              <button type="button" className="button-quiet" onClick={() => setManual(true)}>
+                {t('address.enterManually')}
+              </button>
+            )}
+          </div>
+          {locating !== 'idle' && locating !== 'busy' && (
+            <p role="alert" className="form-error">
+              {t(`address.locateErrors.${locating}`)}
+            </p>
+          )}
+        </>
+      )}
+      {showFields && (
+        <>
+          <div className="row row--end">
+            {field('city', t('address.city'), 'address-level2', { required: true, className: 'field--grow', list: id('cities') })}
+            {field('street', t('address.street'), 'address-line1', { required: true, className: 'field--grow' })}
+          </div>
+          <div className="row row--end">
+            {field('houseNumber', t('address.houseNumber'), 'off', { required: true, className: 'field--narrow' })}
+            {field('apartment', t('address.apartment'), 'address-line2', { className: 'field--narrow' })}
+          </div>
+          {zones && (
+            <div className="row">
+              <button type="button" className="button-quiet" onClick={zones.onCalculate}>
+                {t('address.calculate')}
+              </button>
+            </div>
+          )}
+        </>
+      )}
       <datalist id={id('cities')}>
         {serviceCities.map((city) => (
           <option key={city} value={city} />
         ))}
       </datalist>
-      {value.city.trim() !== '' && !isServiceCity(value.city, serviceCities) && (
+      {!advanced && value.city.trim() !== '' && !isServiceCity(value.city, serviceCities) && (
         <p role="status" className="notice notice--warning">
           {t(context === 'order' ? 'address.outsideOrder' : 'address.outsideProfile', {
             cities: formatCities(serviceCities, i18n.language),

@@ -4,7 +4,7 @@ import { contactsApi, type Contact } from '../../api/site'
 import type { FieldErrors } from '../../api/client'
 import { FieldError, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
-import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 type Field = keyof Contact
 
@@ -14,7 +14,7 @@ export function MainContactSection() {
   const { data: contact, setData, failed } = useLoad(contactsApi.get)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
-  const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const [saving, setSaving] = useState(false)
 
   function change(patch: Partial<Contact>) {
@@ -30,7 +30,7 @@ export function MainContactSection() {
     try {
       setData(await contactsApi.save(contact))
       setError(null)
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
@@ -74,6 +74,7 @@ export function MainContactSection() {
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
+            <SavedNote show={saved} />
             {error && <Status message={error} error />}
           </div>
         </form>

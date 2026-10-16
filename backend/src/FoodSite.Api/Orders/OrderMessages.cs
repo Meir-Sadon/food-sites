@@ -15,15 +15,25 @@ public static class OrderMessages
     {
         var text = $"{Heading(siteName)}תודה, ההזמנה שלך התקבלה!\n{Details(order)}";
         if (order.NeedsReview)
-            text += $"\nאנחנו משלוחים רק ב{ServiceArea.Describe(serviceCities ?? [])}. ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור.";
+            text += (serviceCities is { Count: > 0 } ? $"\nאנחנו משלוחים רק ב{ServiceArea.Describe(serviceCities)}." : "\nלא הצלחנו לאתר את הכתובת.")
+                + " ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור. נעדכן בטלפון בכמה יעלו דמי המשלוח.";
         if (hourFull)
             text += "\nהשעה שבחרת כבר מלאה: ניצור איתך קשר כדי לתאם שעה אחרת.";
-        if (order.PaymentMethod == PaymentMethod.Transfer && !string.IsNullOrWhiteSpace(paymentPhone))
-            text += $"\nלהעברת התשלום ב־Bit / PayBox: {paymentPhone}";
+        if (order.PaymentMethod.IsTransfer() && !string.IsNullOrWhiteSpace(paymentPhone))
+            text += $"\nלהעברת ₪{Money(order.Total)} ב־{PaymentLabel(order.PaymentMethod)} למספר: {paymentPhone}";
         else if (order.PaymentMethod == PaymentMethod.OnDelivery)
             text += "\nהתשלום יבוצע במעמד מסירת המשלוח.";
         return text;
     }
+
+    /// <summary>The name of a manual payment as the client chose it ("Bit", "PayBox", or both for the legacy choice).</summary>
+    public static string PaymentLabel(PaymentMethod method) => method switch
+    {
+        PaymentMethod.Bit => "Bit",
+        PaymentMethod.PayBox => "PayBox",
+        PaymentMethod.Transfer => "Bit / PayBox",
+        _ => "תשלום במעמד המסירה",
+    };
 
     public static string AdminNotification(Order order, string? siteName = null, bool hourFull = false) =>
         $"{Heading(siteName)}הזמנה חדשה #{order.Id}\n{Details(order)}"
@@ -54,6 +64,8 @@ public static class OrderMessages
         }
         if (!string.IsNullOrWhiteSpace(order.Notes))
             lines.Add($"הערות: {order.Notes}");
+        if (order.DeliveryFee > 0)
+            lines.Add($"דמי משלוח: ₪{Money(order.DeliveryFee)}");
         lines.Add($"סה״כ: ₪{Money(order.Total)}");
         return string.Join('\n', lines);
     }

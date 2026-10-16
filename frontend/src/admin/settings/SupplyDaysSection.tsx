@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { supplyDaysApi, weekdays, type SupplyDay, type Weekday } from '../../api/catalog'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
-import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 export function SupplyDaysSection() {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
   const { data: days, setData, failed } = useLoad(supplyDaysApi.get)
   const [error, setError] = useState<string | null>(null)
-  const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const [saving, setSaving] = useState(false)
 
   function change(weekday: Weekday, patch: Partial<SupplyDay>) {
@@ -25,7 +25,7 @@ export function SupplyDaysSection() {
     try {
       setData(await supplyDaysApi.save(days))
       setError(null)
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -101,6 +101,7 @@ export function SupplyDaysSection() {
             <button type="submit" disabled={saving}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
+            <SavedNote show={saved} />
             {error && <Status message={error} error />}
           </div>
         </form>

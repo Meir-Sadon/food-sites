@@ -65,9 +65,10 @@ a {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: rgb(255 255 255 / 0.88);
+  background: var(--bar-bg, rgb(255 255 255 / 0.88));
+  color: var(--bar-text, var(--color-text));
   backdrop-filter: saturate(180%) blur(12px);
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
   box-shadow: var(--shadow-sm);
 }
 
@@ -76,7 +77,7 @@ a {
   align-items: center;
   gap: 0.5rem;
   align-self: flex-start;
-  color: var(--color-accent);
+  color: var(--bar-text, var(--color-accent));
   font-weight: 800;
   font-size: 1.25rem;
   text-decoration: none;
@@ -112,7 +113,7 @@ a {
   padding: 0;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--color-text);
+  color: var(--bar-text, var(--color-text));
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -150,7 +151,7 @@ a {
 
 .top-bar__brand.active {
   background: none;
-  color: var(--color-accent);
+  color: var(--bar-text, var(--color-accent));
 }
 
 /* The admin bar keeps text tabs: undo the fixed-size icon circle used by the client bar. */
@@ -167,7 +168,7 @@ a {
 
 /* The way out: a quiet outlined pill, set apart from the page links. */
 .top-bar__link--logout {
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   margin-inline-start: 0.5rem;
   padding: 0;
   color: var(--color-muted);
@@ -226,13 +227,13 @@ button {
   border: 0;
   border-radius: var(--radius);
   transition: background-color 0.15s, box-shadow 0.15s;
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
+  background: var(--btn-bg, var(--color-accent));
+  color: var(--btn-text, var(--color-accent-contrast));
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  background: var(--color-accent-hover);
+  background: var(--btn-bg-hover, var(--color-accent-hover));
 }
 
 .button-quiet:hover:not(:disabled),
@@ -308,7 +309,7 @@ button:disabled {
 
 /* The pages of the section picked in the admin bar. */
 .admin-subnav {
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
   background: var(--color-surface);
 }
 
@@ -357,7 +358,7 @@ button:disabled {
   margin-block-end: 1.5rem;
   padding: 1rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -495,7 +496,7 @@ label {
   justify-content: space-between;
   gap: 0.5rem;
   padding-block: 0.5rem;
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
 
 .list__row:last-child {
@@ -543,7 +544,7 @@ label {
   justify-content: center;
   min-block-size: 2.75rem;
   padding: 0.375rem 0.75rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: calc(0.375rem * var(--corner-scale));
   background: var(--color-surface);
   color: var(--color-text);
@@ -753,7 +754,7 @@ label {
 .site-footer {
   padding: 0.5rem 1.25rem;
   background: var(--color-surface);
-  border-block-start: 1px solid var(--color-border);
+  border-block-start: var(--line-width, 1px) solid var(--color-border);
 }
 
 .site-footer__contact {
@@ -788,7 +789,7 @@ label {
   padding: 2rem 1.5rem;
   border-radius: calc(var(--radius) * 1.5);
   background: var(--gradient-hero);
-  color: var(--color-accent-contrast);
+  color: var(--banner-text, var(--color-accent-contrast));
   box-shadow: var(--shadow-md);
 }
 
@@ -882,7 +883,7 @@ label {
   max-inline-size: 32rem;
   padding: 1rem 1.25rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
 }
@@ -913,8 +914,8 @@ label {
   overflow: clip;
   border-inline-start: 5px solid var(--color-highlight);
   box-shadow: var(--shadow-sm);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--category-bg, var(--color-surface));
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -943,8 +944,10 @@ label {
   gap: 1rem 1.5rem;
   inline-size: 100%;
   padding: 1rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
+  background: var(--dish-bg, transparent);
+  color: var(--dish-text, inherit);
 }
 
 .dish--chosen {
@@ -968,6 +971,31 @@ label {
 
 .dish__description {
   white-space: pre-line;
+}
+
+.dietary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dietary-tags li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-soft);
+  font-size: 0.8125rem;
+}
+
+.dietary-tags__icon {
+  flex: none;
+  color: var(--color-accent);
 }
 
 .dish__price {
@@ -1009,7 +1037,7 @@ label {
   margin: 0;
   padding: 0.75rem 0.5rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   text-align: center;
   font-weight: 400;
@@ -1067,7 +1095,7 @@ label {
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -1116,7 +1144,7 @@ label {
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -1225,7 +1253,7 @@ label {
   box-shadow: var(--shadow-sm);
   padding: 1.5rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -1262,7 +1290,7 @@ label {
   block-size: 1.5rem;
   min-block-size: 0;
   padding: 0;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: 50%;
   background: var(--color-surface);
   color: var(--color-muted);
@@ -1288,7 +1316,7 @@ label {
   margin-block: 0.25rem;
   padding: 0.5rem 0.75rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   color: var(--color-text);
   font-size: 0.9375rem;
@@ -1299,7 +1327,7 @@ label {
 
 .form-block > details {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -1333,7 +1361,7 @@ label {
 }
 
 .form-block > details[open] > summary {
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
 
 .form-block__title {
@@ -1352,7 +1380,7 @@ label {
 
 /* The contact/address and payment blocks: each folds to a one-line summary. */
 .details-block {
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -1367,7 +1395,7 @@ label {
 }
 
 .details-block[open] > summary {
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
 
 .details-block > summary::-webkit-details-marker {
@@ -1536,7 +1564,7 @@ label {
   font-size: 1rem;
   color: var(--color-text);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-sm);
 }
@@ -1579,7 +1607,7 @@ label {
   margin-block-end: 1.25rem;
   padding: 1rem 1.25rem 1.25rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
 }
@@ -1619,7 +1647,7 @@ label {
   min-inline-size: 0;
   margin: 0;
   padding: 0.875rem 1rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-text);
@@ -1766,7 +1794,7 @@ label {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -1793,7 +1821,7 @@ label {
 .order-card {
   padding: 0.75rem 1rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: calc(0.5rem * var(--corner-scale));
 }
 
@@ -1826,7 +1854,7 @@ label {
 .table td {
   padding: 0.375rem 0.5rem;
   text-align: start;
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
 
 .warning {
@@ -1944,7 +1972,7 @@ label {
   block-size: 2.25rem;
   background: var(--color-surface);
   color: var(--color-accent);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
 }
 
 .scroll-fab:hover {
@@ -2084,7 +2112,7 @@ label {
   flex-direction: column;
   gap: 0.625rem;
   padding: 1.25rem 1.25rem 1rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: calc(var(--radius) * 1.5);
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
@@ -2345,7 +2373,7 @@ label {
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
 }
@@ -2411,7 +2439,7 @@ label {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.875rem 1rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
 }
@@ -2511,7 +2539,7 @@ label {
 .route-stop {
   padding: 0.75rem 1rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -2576,7 +2604,7 @@ label {
 .driver-card {
   padding: 0.75rem 1rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
 }
 
@@ -2667,7 +2695,7 @@ label {
   gap: 0.5rem;
   min-block-size: 3rem;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
   cursor: pointer;
@@ -2758,7 +2786,7 @@ label {
   flex-direction: column;
   gap: 0.125rem;
   padding: 0.75rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
 }
@@ -2797,7 +2825,7 @@ label {
 .bar-chart__plot {
   align-items: flex-end;
   block-size: 120px;
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
 
 .bar-chart__slot {
@@ -2879,7 +2907,7 @@ label {
   flex-direction: column;
   gap: 0.25rem;
   padding-block: 0.75rem;
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
 
 .audit-entry:last-child {
@@ -2907,7 +2935,7 @@ label {
 .feedback-list > li {
   gap: 0.375rem;
   padding-block: 0.75rem;
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
 
 .feedback-list > li:last-child {
@@ -2942,7 +2970,7 @@ label {
   align-items: center;
   gap: 0.25rem 0.5rem;
   padding: 0.75rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
   cursor: pointer;
@@ -2982,7 +3010,7 @@ label {
 }
 
 .style-option__preview--classic > span {
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: calc(0.375rem * var(--corner-scale));
   box-shadow: var(--shadow-sm);
 }
@@ -3000,7 +3028,7 @@ label {
 .style-option__preview--tiles > span:not(:first-child) {
   block-size: auto;
   aspect-ratio: 1;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: calc(0.5rem * var(--corner-scale));
 }
 
@@ -3012,7 +3040,7 @@ label {
   gap: 0.375rem;
   padding: 0.5rem;
   margin-block-end: 0.25rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: calc(0.75rem * var(--corner-scale));
   background: var(--color-bg);
 }
@@ -3036,6 +3064,95 @@ label {
   block-size: 1.25rem;
   border-radius: var(--radius-pill);
   background: var(--color-accent);
+}
+
+/* ---------- Colours (admin settings): palette picker, per-element colours, preview ---------- */
+
+.color-fields {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: var(--line-width, 1px) solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.color-fields > .hint {
+  margin: 0;
+}
+
+.color-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+.color-field > label {
+  flex: 1 1 10rem;
+}
+
+.color-field input[type='color'] {
+  inline-size: 3rem;
+  block-size: 2.25rem;
+  padding: 0.125rem;
+  cursor: pointer;
+}
+
+.color-preview-row {
+  display: grid;
+  gap: 0.25rem;
+  max-inline-size: 16rem;
+}
+
+/* A tiny drawing of the site in a palette: the vars come inline from colorVariables(), the fallbacks are the site's own. */
+.color-preview {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  margin-block-end: 0.25rem;
+  border: var(--line-width, 1px) solid var(--color-border);
+  border-radius: calc(0.5rem * var(--corner-scale));
+  background: var(--color-bg);
+}
+
+.color-preview__menu {
+  block-size: 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--bar-bg, var(--color-surface));
+  border: var(--line-width, 1px) solid var(--color-border);
+}
+
+.color-preview__banner {
+  block-size: 1.75rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
+  background: var(--gradient-hero);
+}
+
+.color-preview__dish {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.375rem;
+  border: var(--line-width, 1px) solid var(--color-border);
+  border-radius: calc(0.375rem * var(--corner-scale));
+  background: var(--dish-bg, var(--color-surface));
+}
+
+.color-preview__line {
+  flex: 1;
+  block-size: 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--dish-text, var(--color-text));
+  opacity: 0.7;
+}
+
+.color-preview__button {
+  inline-size: 1.75rem;
+  block-size: 0.875rem;
+  border-radius: var(--radius-pill);
+  background: var(--btn-bg, var(--color-accent));
 }
 
 /* ---------- Order layout: side total, category steps ---------- */
@@ -3111,7 +3228,7 @@ label {
   display: grid;
   gap: 0.5rem;
   padding: 0.5rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
@@ -3144,7 +3261,7 @@ label {
   min-block-size: 2.5rem;
   margin: 0;
   padding: 0.375rem 1rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text);
@@ -3167,7 +3284,7 @@ label {
   gap: 0.5rem;
   padding: 0.5rem;
   scroll-margin-block-start: 4rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
 }
@@ -3215,7 +3332,7 @@ label {
   gap: 0.375rem;
   margin: 0;
   padding: 0.375rem 0.875rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text);
@@ -3340,7 +3457,7 @@ label {
 }
 
 .addon-unit {
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   padding: 0.5rem 0.75rem;
 }
@@ -3372,10 +3489,10 @@ label {
   padding: 0 1rem;
   border: 0;
   border-radius: var(--radius-pill);
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
+  background: var(--btn-bg, var(--color-accent));
+  color: var(--btn-text, var(--color-accent-contrast));
   font-weight: 800;
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--btn-bg, var(--color-accent)) 35%, transparent);
   white-space: nowrap;
 }
 
@@ -3447,7 +3564,7 @@ label {
   display: grid;
   gap: 0.5rem;
   padding: 0.75rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-soft);
 }
@@ -3504,7 +3621,7 @@ label {
   display: grid;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-soft);
 }
@@ -3526,7 +3643,7 @@ label {
   display: grid;
   gap: 0.25rem;
   padding-block: 0.375rem;
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
 
 .order-summary__row:last-child {
@@ -3554,7 +3671,7 @@ label {
   min-block-size: 0;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--color-border);
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: 50%;
   background: var(--color-surface);
   color: var(--color-accent);
@@ -3613,4 +3730,197 @@ label {
 
 .order-view__extras p {
   margin: 0;
+}
+
+/* ---------- Printing orders (admin) ---------- */
+
+.print-sheet {
+  display: none;
+}
+
+@media print {
+  html.printing-orders #root {
+    display: none !important;
+  }
+
+  html.printing-orders .print-sheet {
+    display: block;
+    color: #000;
+    background: #fff;
+    font-size: 14pt;
+  }
+
+  .print-order {
+    break-after: page;
+    padding: 0;
+  }
+
+  .print-order:last-child {
+    break-after: auto;
+  }
+
+  .print-order h1 {
+    margin: 0;
+    font-size: 26pt;
+  }
+
+  .print-order h2 {
+    margin: 1rem 0 0.25rem;
+    font-size: 16pt;
+    border-bottom: 2px solid #000;
+  }
+
+  .print-order__name {
+    margin: 0 0 0.5rem;
+    font-size: 20pt;
+    font-weight: 700;
+  }
+
+  .print-order__cancelled {
+    font-weight: 700;
+    border: 2px solid #000;
+    padding: 0.25rem 0.5rem;
+    display: inline-block;
+  }
+
+  .print-order__facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1.5rem;
+    margin: 0;
+  }
+
+  .print-order__facts dt {
+    font-size: 11pt;
+    font-weight: 700;
+    text-decoration: underline;
+  }
+
+  .print-order__facts dd {
+    margin: 0;
+  }
+
+  .print-order__notes {
+    border: 1px solid #000;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .print-order__dishes {
+    inline-size: 100%;
+    border-collapse: collapse;
+  }
+
+  .print-order__dishes td {
+    padding: 0.4rem 0.4rem;
+    border-bottom: 1px solid #999;
+    vertical-align: top;
+  }
+
+  .print-order__dishes tr {
+    break-inside: avoid;
+  }
+
+  .print-order__qty {
+    white-space: nowrap;
+    font-weight: 700;
+  }
+
+  .print-order__extras {
+    margin: 0.2rem 0 0;
+    padding: 0 1rem 0 0;
+    list-style: square;
+    font-size: 13pt;
+  }
+
+  .print-order__total {
+    margin-top: 0.75rem;
+    font-size: 18pt;
+    text-align: end;
+  }
+}
+
+/* Delivery zones (admin): the map and the zone rows. Colours come from the site's theme. */
+.zones-map {
+  inline-size: 100%;
+  block-size: min(28rem, 70vh);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  z-index: 0;
+}
+
+.zones-map__zone {
+  stroke: var(--color-accent);
+  fill: var(--color-accent);
+  fill-opacity: 0.2;
+  stroke-width: 2;
+}
+
+.zones-map__zone--blocked {
+  stroke: var(--color-error);
+  fill: var(--color-error);
+  stroke-dasharray: 6 4;
+}
+
+.zones-map__zone--selected {
+  stroke-width: 4;
+  fill-opacity: 0.35;
+}
+
+.zones-map__corner {
+  inline-size: 16px;
+  block-size: 16px;
+  border: 3px solid var(--color-accent);
+  border-radius: 50%;
+  background: var(--color-surface);
+  cursor: grab;
+}
+
+.zone-row {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.zone-row--selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.field-title {
+  font-weight: 600;
+}
+
+.saved-note {
+  color: var(--color-success, var(--color-text));
+  font-weight: 600;
+  animation: toast-in 0.2s ease-out;
+}
+
+.saved-note:empty {
+  display: none;
+}
+
+.order-address-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.order-address-summary p {
+  margin: 0;
+}
+
+.order-address-summary button {
+  margin-inline-start: auto;
+}
+
+.order-address-stage {
+  margin-block-start: 1rem;
 }

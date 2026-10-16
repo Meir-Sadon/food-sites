@@ -5,8 +5,10 @@ import {
   DESCRIPTION_MAX_LENGTH,
   UNIT_NAME_MAX_LENGTH,
   categoriesApi,
+  DIETARY_TAGS,
   dishesApi,
   type Category,
+  type DietaryTag,
   type ChoiceMode,
   type Dish,
   type DishInput,
@@ -17,6 +19,7 @@ import { FieldError, FormBlock, Info, Loading, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { DishImagesSection } from './DishImagesSection'
 import { useToast } from '../../components/toast'
+import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { useFeature } from '../../site/useSite'
 import { AddOnsSection } from './AddOnsSection'
 import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
@@ -46,6 +49,7 @@ interface DishForm {
   unitName: string
   optionsTitle: string
   showOptionDifference: boolean
+  dietaryTags: DietaryTag[]
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
@@ -92,6 +96,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       unitName: '',
       optionsTitle: '',
       showOptionDifference: false,
+      dietaryTags: [],
       isAddOnOnly: false,
       isSoldOut: false,
       openByDefault: false,
@@ -114,6 +119,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     unitName: dish.unitName ?? '',
     optionsTitle: dish.optionsTitle ?? '',
     showOptionDifference: dish.showOptionDifference,
+    dietaryTags: dish.dietaryTags ?? [],
     isAddOnOnly: dish.isAddOnOnly,
     isSoldOut: dish.isSoldOut,
     openByDefault: dish.openByDefault,
@@ -208,6 +214,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
       ? form.options.map((o) => ({ id: o.id, label: o.label, amount: num(o.amount) ?? 0, price: num(o.price) ?? 0, isDefault: o.isDefault }))
       : [],
     parentDishIds: form.parentDishIds,
+    dietaryTags: form.dietaryTags,
     questions: questionsInput(form.questions),
   }
 }
@@ -219,6 +226,7 @@ export function DishFormPage() {
   const navigate = useNavigate()
   const errorMessage = useFormErrorMessage()
   const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const advanced = useFeature('advancedDishes')
   const [search] = useSearchParams()
   const mainParam = search.get('main')
@@ -296,7 +304,7 @@ export function DishFormPage() {
       const saved = await dishesApi.update(dishId, input)
       setDish(saved)
       setForm(toForm(saved, categories!))
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
@@ -691,6 +699,22 @@ export function DishFormPage() {
         </span>
         </FormBlock>
 
+        <FormBlock title={t('admin.dishes.blocks.dietary')} about={t('admin.dishes.blocks.dietaryAbout')} invalid={invalid('dietaryTags')}>
+          <fieldset className="row dietary-options" aria-label={t('admin.dishes.blocks.dietary')}>
+            {DIETARY_TAGS.map((tag) => (
+              <label key={tag} className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.dietaryTags.includes(tag)}
+                  onChange={(e) => set({ dietaryTags: e.target.checked ? [...form.dietaryTags, tag] : form.dietaryTags.filter((x) => x !== tag) })}
+                />
+                {t(`dietaryTags.${tag}`)}
+              </label>
+            ))}
+          </fieldset>
+          {fieldError('dietaryTags')}
+        </FormBlock>
+
         <FormBlock title={t('admin.dishes.blocks.parents')} about={t('admin.dishes.blocks.parentsAbout')} invalid={invalid('parentDishIds')}>
         <fieldset className="stack" aria-labelledby="dish-parents-title" aria-describedby="dish-parentDishIds-error">
           <legend className="with-info">
@@ -758,6 +782,7 @@ export function DishFormPage() {
           <button type="submit" disabled={saving}>
             {saving ? t('admin.saving') : t('admin.save')}
           </button>
+          <SavedNote show={saved} />
           {error && <Status message={error} error />}
         </div>
 

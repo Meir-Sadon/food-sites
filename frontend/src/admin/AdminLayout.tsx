@@ -4,6 +4,7 @@ import { adminLogout } from '../api/admin'
 import { useFeatures } from '../site/useSite'
 import { sections, sectionOf, type Tab } from './sections'
 import { useAdminSession } from './session'
+import { useAdminLook } from './useAdminLook'
 
 export function AdminLayout() {
   const { t } = useTranslation()
@@ -11,6 +12,7 @@ export function AdminLayout() {
   const { pathname } = useLocation()
   const hasFeature = useFeatures()
   const session = useAdminSession()
+  useAdminLook()
   const current = sectionOf(pathname)
   const visible = (tab: Tab) => !tab.feature || hasFeature(tab.feature)
 

@@ -40,8 +40,6 @@ Copy `sites/_template/` to `sites/<site-id>/` (lowercase letters, digits, dashes
 | `i18n/he.json` | `app.name` and `order.hero.tagline`; override `order.hero.kosher` (a hero badge) when the business makes no kashrut claim. Only keys that exist in `frontend/src/i18n/he.json`. |
 | `seed/<name>.json` | Categories and dishes (format: `backend/src/FoodSite.Api/Data/MenuSeed.cs`). A pack sold as one item (50 cigars for 120 ₪) is `sellBy: Units`, `unitPrice: 120`, with the pack size in the name, since the order page shows "₪120 ליחידה" (or set `unitName`, e.g. `"מנה"` → "₪50 למנה"). A daily limit per dish is `maxPerSupplyDate`; a daily limit on all portions together is the admin setting **מנות ליום אספקה** (`Settings.PortionsPerSupplyDate`), set with the business defaults below. A side that is sold on its own and also offered under main dishes is `isSideDish: true` with `addOnOf: ["<main dish name>", ...]`. A choice the client makes per unit (dairy or parve samna) is a dish question: `questions: [{"text": "סוג הסמנה", "kind": "SingleChoice", "choices": ["...", "..."], "isRequired": true}]` (`kind` is any `QuestionKind`; `showAsDropdown` too). Sizes or weights with their own price are `options: [{"label": "270 גרם", "price": 18, "isDefault": true, "amount": 0.27}, ...]` (a fixed-choice dish). A dish's own add-ons are `addOnGroups: [{"name", "maxUnits"}]` plus `addOns: [{"dish": "<name>", "price", "group", "isCheckbox", "maxQuantity"}]`; the add-on dishes themselves are seeded too, as `isAddOnOnly: true` in a category of their own (it stays out of the menu). |
 
-A choice that is a dish of its own shown inside the main dish's card (gluten-free, vegetarian) is a variant: `{"name": "<main> (ללא גלוטן)", "mainDish": "<main>", "useMainDishPrice": true}` listed after the main dish in the same category; include a plain one too ("רגיל"), since a main dish with variants cannot be ordered itself.
-
 Leave `images` out of the seed unless the pictures are already in Cloudinary (see step 3).
 
 ## 3. Pictures (Cloudinary)
@@ -60,7 +58,7 @@ All sites share one Cloudinary account; each site's pictures sit under `<site-id
 
 - `render.yaml`: a new service copied from an existing non-canary entry: `name` and `SITE` = the id, `autoDeployTrigger: "off"`, and **no** `Database__ApplySeeds` line (a new site wants its seed).
 - `.github/workflows/deploy.yml`: a matrix line `- site: <id>` / `hook: RENDER_DEPLOY_HOOK_<ID_UPPER>`.
-- `.github/keep-alive-sites.txt`: the site id on its own line, only if the owner wants it awake 09:00-21:00 and the free instance hours allow another awake site (see `docs/DEPLOY.md`, "Keeping sites awake"); otherwise say in the owner's checklist that the site sleeps when idle.
+- Keep-alive: nothing in the repo. If the owner wants the site awake 09:00-21:00 and the free instance hours allow another awake site, add its id to the `KEEP_ALIVE_SITES` GitHub variable (see `docs/DEPLOY.md`, "Keeping sites awake"); otherwise say in the owner's checklist that the site sleeps when idle.
 
 ## 5. Check it
 

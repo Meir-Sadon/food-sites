@@ -21,22 +21,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "קובה מטפוניה (רגיל)",
-          "mainDish": "קובה מטפוניה",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה מטפוניה (ללא גלוטן)",
-          "mainDish": "קובה מטפוניה",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה מטפוניה (צמחוני)",
-          "mainDish": "קובה מטפוניה",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "קובה חמוסטה",
@@ -56,22 +45,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "קובה חמוסטה (רגיל)",
-          "mainDish": "קובה חמוסטה",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה חמוסטה (ללא גלוטן)",
-          "mainDish": "קובה חמוסטה",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה חמוסטה (צמחוני)",
-          "mainDish": "קובה חמוסטה",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "קובה נבלוסיה",
@@ -91,22 +69,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "קובה נבלוסיה (רגיל)",
-          "mainDish": "קובה נבלוסיה",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה נבלוסיה (ללא גלוטן)",
-          "mainDish": "קובה נבלוסיה",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה נבלוסיה (צמחוני)",
-          "mainDish": "קובה נבלוסיה",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "קובה XL",
@@ -126,22 +93,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "קובה XL (רגיל)",
-          "mainDish": "קובה XL",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה XL (ללא גלוטן)",
-          "mainDish": "קובה XL",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה XL (צמחוני)",
-          "mainDish": "קובה XL",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "קובה חמו",
@@ -161,22 +117,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "קובה חמו (רגיל)",
-          "mainDish": "קובה חמו",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה חמו (ללא גלוטן)",
-          "mainDish": "קובה חמו",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קובה חמו (צמחוני)",
-          "mainDish": "קובה חמו",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         }
       ]
     },
@@ -201,22 +146,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "סיגרים (רגיל)",
-          "mainDish": "סיגרים",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "סיגרים (ללא גלוטן)",
-          "mainDish": "סיגרים",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "סיגרים (צמחוני)",
-          "mainDish": "סיגרים",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "אגרולים",
@@ -236,22 +170,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "אגרולים (רגיל)",
-          "mainDish": "אגרולים",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "אגרולים (ללא גלוטן)",
-          "mainDish": "אגרולים",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "אגרולים (צמחוני)",
-          "mainDish": "אגרולים",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "צ'יבוראקי",
@@ -271,22 +194,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "צ'יבוראקי (רגיל)",
-          "mainDish": "צ'יבוראקי",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "צ'יבוראקי (ללא גלוטן)",
-          "mainDish": "צ'יבוראקי",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "צ'יבוראקי (צמחוני)",
-          "mainDish": "צ'יבוראקי",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "סמבוסק",
@@ -306,22 +218,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "סמבוסק (רגיל)",
-          "mainDish": "סמבוסק",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "סמבוסק (ללא גלוטן)",
-          "mainDish": "סמבוסק",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "סמבוסק (צמחוני)",
-          "mainDish": "סמבוסק",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "בורקס קריספי",
@@ -341,22 +242,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "בורקס קריספי (רגיל)",
-          "mainDish": "בורקס קריספי",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "בורקס קריספי (ללא גלוטן)",
-          "mainDish": "בורקס קריספי",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "בורקס קריספי (צמחוני)",
-          "mainDish": "בורקס קריספי",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         }
       ]
     },
@@ -381,22 +271,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "מפרום (רגיל)",
-          "mainDish": "מפרום",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "מפרום (ללא גלוטן)",
-          "mainDish": "מפרום",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "מפרום (צמחוני)",
-          "mainDish": "מפרום",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "קציצות דג / בשר",
@@ -420,22 +299,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "קציצות דג / בשר (רגיל)",
-          "mainDish": "קציצות דג / בשר",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קציצות דג / בשר (ללא גלוטן)",
-          "mainDish": "קציצות דג / בשר",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קציצות דג / בשר (צמחוני)",
-          "mainDish": "קציצות דג / בשר",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "קבב",
@@ -455,22 +323,11 @@
           "optionsTitle": "בחרו גודל מארז",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
-        },
-        {
-          "name": "קבב (רגיל)",
-          "mainDish": "קבב",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קבב (ללא גלוטן)",
-          "mainDish": "קבב",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "קבב (צמחוני)",
-          "mainDish": "קבב",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "המבורגרים",
@@ -491,22 +348,11 @@
           "maxAmount": 50,
           "unitName": "יחידה",
           "minAmount": 1,
-          "amountStep": 1
-        },
-        {
-          "name": "המבורגרים (רגיל)",
-          "mainDish": "המבורגרים",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "המבורגרים (ללא גלוטן)",
-          "mainDish": "המבורגרים",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "המבורגרים (צמחוני)",
-          "mainDish": "המבורגרים",
-          "useMainDishPrice": true
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "מרגז",
@@ -515,22 +361,11 @@
           "unitPrice": 120,
           "minAmount": 0.5,
           "maxAmount": 10,
-          "amountStep": 0.5
-        },
-        {
-          "name": "מרגז (רגיל)",
-          "mainDish": "מרגז",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "מרגז (ללא גלוטן)",
-          "mainDish": "מרגז",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "מרגז (צמחוני)",
-          "mainDish": "מרגז",
-          "useMainDishPrice": true
+          "amountStep": 0.5,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "צ'וריסוס",
@@ -539,22 +374,11 @@
           "unitPrice": 120,
           "minAmount": 0.5,
           "maxAmount": 10,
-          "amountStep": 0.5
-        },
-        {
-          "name": "צ'וריסוס (רגיל)",
-          "mainDish": "צ'וריסוס",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "צ'וריסוס (ללא גלוטן)",
-          "mainDish": "צ'וריסוס",
-          "useMainDishPrice": true
-        },
-        {
-          "name": "צ'וריסוס (צמחוני)",
-          "mainDish": "צ'וריסוס",
-          "useMainDishPrice": true
+          "amountStep": 0.5,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         }
       ]
     },
@@ -569,7 +393,11 @@
           "unitName": "מארז 250 גרם",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "סלט מאשווייה",
@@ -579,7 +407,11 @@
           "unitName": "מארז 250 גרם",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "חומוס ביתי",
@@ -589,7 +421,11 @@
           "unitName": "מארז 250 גרם",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "סחוג ירוק",
@@ -599,7 +435,11 @@
           "unitName": "מארז 250 גרם",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         },
         {
           "name": "פלפל חריף בכבוש",
@@ -609,7 +449,11 @@
           "unitName": "מארז 250 גרם",
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "dietaryTags": [
+            "glutenFree",
+            "vegetarian"
+          ]
         }
       ]
     }

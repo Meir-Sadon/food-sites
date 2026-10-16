@@ -47,6 +47,17 @@ beforeEach(() => {
 })
 
 describe('Order page', () => {
+  it('shows the dietary tags of a dish as chips in its card, and nothing for a dish without', async () => {
+    const data = menu()
+    data.dishes = data.dishes.map((d, i) => (i === 0 ? { ...d, dietaryTags: ['parve', 'kosherForPassover'] } : d))
+    fakeApi({ ...publicApi, 'GET /api/menu': () => data })
+    renderAt('/')
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+    const card = screen.getByRole('article', { name: data.dishes[0].name })
+    expect(within(within(card).getByRole('list', { name: 'התאמה לתזונה' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['פרווה', 'כשר לפסח'])
+    expect(screen.getAllByRole('list', { name: 'התאמה לתזונה' })).toHaveLength(1)
+  })
+
   it('groups dishes by category, all open, and hides add-on-only dishes', async () => {
     await openOrderPage()
 
@@ -598,16 +609,30 @@ describe('Order page', () => {
     expect(total().getByText('סה"כ: ₪0')).toBeInTheDocument()
   })
 
-  it('shows the Bit / PayBox number after a transfer order', async () => {
-    const { user } = await openOrderPage({
-      'POST /api/orders': () => ({ ...confirmation, paymentMethod: 'Transfer', paymentPhone: '052-9999999' }),
+  it('shows the number, the amount and the owner link after a Bit order', async () => {
+    const { api, user } = await openOrderPage({
+      'POST /api/orders': () => ({
+        ...confirmation,
+        paymentMethod: 'Bit',
+        paymentPhone: '052-9999999',
+        paymentLink: 'https://www.bitpay.co.il/app/me/abc',
+      }),
     })
-    await user.click(screen.getByRole('radio', { name: /Bit/ }))
+    await user.click(screen.getByRole('radio', { name: 'Bit' }))
     await fillAndSubmit(user)
 
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ paymentMethod: 'Bit' })
     const dialog = await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
     expect(within(dialog).getByText('052-9999999')).toBeInTheDocument()
+    expect(within(dialog).getByText('82')).toBeInTheDocument()
+    expect(within(dialog).getByRole('link', { name: 'פתיחת Bit' })).toHaveAttribute('href', 'https://www.bitpay.co.il/app/me/abc')
     expect(within(dialog).queryByText('התשלום יבוצע במעמד מסירת המשלוח')).not.toBeInTheDocument()
+  })
+
+  it('offers only the payment services the admin switched on', async () => {
+    await openOrderPage({ 'GET /api/site': () => site({ payBoxEnabled: false }) })
+    expect(screen.getByRole('radio', { name: 'Bit' })).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'PayBox' })).not.toBeInTheDocument()
   })
 
   it('keeps the order and explains when the server refuses it', async () => {
@@ -843,5 +868,53 @@ describe('Dish search', () => {
     await user.click(screen.getByRole('button', { name: 'ניקוי החיפוש' }))
     expect(screen.getByRole('heading', { level: 2, name: 'עופות' })).toBeInTheDocument()
     expect(total().getByText(/70/)).toBeInTheDocument()
+  })
+
+  describe('with the address first setting', () => {
+    const addressFirst = { 'GET /api/site': () => site({ addressFirst: true }) }
+
+    it('asks for delivery or pickup and the details before it shows the dishes', async () => {
+      const api = fakeApi({ ...publicApi, ...addressFirst, 'POST /api/orders': () => confirmation } as Parameters<typeof fakeApi>[0])
+      renderAt('/')
+      const user = userEvent.setup()
+      await screen.findByRole('heading', { name: 'איך תרצו לקבל את ההזמנה?' })
+      expect(screen.queryByRole('heading', { level: 2, name: 'עופות' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('region', { name: 'סיכום הזמנה' })).not.toBeInTheDocument()
+
+      // Nothing filled: stays here and says what is missing.
+      await user.click(screen.getByRole('button', { name: 'המשך לבחירת מנות' }))
+      expect(screen.getByRole('heading', { name: 'איך תרצו לקבל את ההזמנה?' })).toBeInTheDocument()
+
+      await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+      await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+      await user.type(screen.getByLabelText('מספר בית'), '1')
+      await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+      await user.click(screen.getByRole('button', { name: 'המשך לבחירת מנות' }))
+
+      await screen.findByRole('heading', { level: 2, name: 'עופות' })
+      expect(screen.queryByLabelText('שם מלא')).not.toBeInTheDocument()
+      expect(screen.getByText(/דנה · 050-123-4567/)).toBeInTheDocument()
+
+      await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+      await confirmNoAdjustments(user)
+      await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+      await screen.findByRole('dialog')
+      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ name: 'דנה', street: 'הרצל', fulfillmentMethod: 'Delivery' })
+    })
+
+    it('goes back to the details with the change button', async () => {
+      fakeApi({ ...publicApi, ...addressFirst } as Parameters<typeof fakeApi>[0])
+      renderAt('/')
+      const user = userEvent.setup()
+      await user.click(await screen.findByRole('radio', { name: 'איסוף עצמי' }))
+      await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+      await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+      await user.click(screen.getByRole('button', { name: 'המשך לבחירת מנות' }))
+      await screen.findByRole('heading', { level: 2, name: 'עופות' })
+
+      await user.click(screen.getByRole('button', { name: 'שינוי' }))
+      expect(screen.getByRole('heading', { name: 'איך תרצו לקבל את ההזמנה?' })).toBeInTheDocument()
+      expect(screen.getByLabelText('שם מלא')).toHaveValue('דנה')
+    })
   })
 })

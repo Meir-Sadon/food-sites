@@ -1,3 +1,4 @@
+import { availablePayment, isTransfer, paymentKey, transferChoices } from '../order/payment'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -22,6 +23,7 @@ import { CartSheet } from '../order/CartSheet'
 import { OPEN_DISH_DIALOG } from '../order/DishCard'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
+import { useDeliveryQuote, type SeededQuote } from '../order/useDeliveryQuote'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
@@ -108,6 +110,8 @@ export function OrderPage() {
   // Whole menu on one page, with the order details behind a button until the client is done choosing.
   const deferred = flow === 'continue'
   const [detailsOpen, setDetailsOpen] = useState(false)
+  // The admin's "address first" setting: delivery or pickup and the contact details come before the dishes.
+  const [addressDone, setAddressDone] = useState(false)
   // Bumped on every press of a "to details and payment" button: the page then scrolls to the address and payment.
   const [detailsMoves, setDetailsMoves] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
@@ -121,7 +125,21 @@ export function OrderPage() {
   const addressRef = useRef<HTMLFieldSetElement>(null)
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
-  const total = orderTotal(state.selections, dishes)
+  const itemsTotal = orderTotal(state.selections, dishes)
+  // The advanced delivery setting: the server works out the fee from the address, so nothing is charged until it is typed.
+  const zonesOn = site?.deliveryPricing === 'zones'
+  const delivering = state.fulfillment === 'Delivery' && !!site?.deliveryEnabled
+  // The address "find my location" filled in, with the fee it brought; and a bump on every press of "calculate".
+  const [located, setLocated] = useState<SeededQuote | null>(null)
+  const [calculations, setCalculations] = useState(0)
+  const quote = useDeliveryQuote(zonesOn && delivering, state.city, state.street, state.houseNumber, located, calculations)
+  const quoted = quote.state === 'ready' ? quote.quote : null
+  // The regular setting: the fixed fee is added for a service city; elsewhere the business phones about the price.
+  const regularFee =
+    !zonesOn && delivering && site?.deliveryFeeAmount && isServiceCity(state.city, site.serviceCities) ? site.deliveryFeeAmount : 0
+  const deliveryFee = zonesOn ? (quoted?.status === 'ok' ? quoted.fee : 0) : regularFee
+  const noDelivery = zonesOn && quoted?.status === 'blocked'
+  const total = round2(itemsTotal + deliveryFee)
   const count = itemCount(state.selections)
   const drinksCategoryIds = useMemo(
     () => new Set((menu?.categories ?? []).filter((c) => c.name === DRINKS_CATEGORY_NAME).map((c) => c.id)),
@@ -212,6 +230,8 @@ export function OrderPage() {
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
+  const addressFirst = !!site?.addressFirst
+
   if (!menu || !site)
     return (
       <div className="order-page">
@@ -229,9 +249,11 @@ export function OrderPage() {
         ? 'Delivery'
         : state.fulfillment
   const minimum = fulfillment === 'Pickup' && !site.minimumOrderAppliesToPickup ? 0 : (site.minimumOrderAmount ?? 0)
-  const belowMinimum = count > 0 && total < minimum
+  // The minimum is on the dishes, the delivery fee does not count towards it.
+  const belowMinimum = count > 0 && itemsTotal < minimum
   const unadjusted = unadjustedDishes(state.selections, dishes)
-  const payment: Payment = state.payment === 'Transfer' && !site.paymentPhone ? 'OnDelivery' : state.payment
+  const transfers = transferChoices(site)
+  const payment: Payment = availablePayment(state.payment, site)
   const hours = supplyDate?.hours ?? []
   // An hour from a draft that the date no longer offers is dropped.
   const deliveryHour = hours.some((h) => h.from === state.deliveryHour) ? state.deliveryHour : null
@@ -444,6 +466,7 @@ export function OrderPage() {
     if (!normalizedPhone) {
       setErrors({ phone: ['phone'] })
       openBlocksWith({ phone: ['phone'] })
+      if (addressFirst) setAddressDone(false)
       setSubmitError(t('errors.checkFields'))
       return
     }
@@ -474,10 +497,136 @@ export function OrderPage() {
       const fieldErrors = fieldErrorsOf(err)
       setErrors(fieldErrors)
       openBlocksWith(fieldErrors)
+      if (addressFirst && Object.keys(fieldErrors).some((field) => CONTACT_FIELDS.includes(field) || field === 'fulfillmentmethod')) setAddressDone(false)
       setSubmitError(errorMessage(err))
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const atAddress = addressFirst && !addressDone
+  const fulfillmentBlock = (
+    <fieldset ref={addressRef} className="order-address">
+      <legend>{t('order.fulfillment')}</legend>
+      <div className="row">
+        {site.deliveryEnabled && (
+          <label className="checkbox">
+            <input
+              type="radio"
+              name="fulfillment"
+              checked={fulfillment === 'Delivery'}
+              onChange={() => change({ fulfillment: 'Delivery' })}
+            />
+            {t('order.delivery')}
+          </label>
+        )}
+        {site.pickupEnabled && (
+          <label className="checkbox">
+            <input
+              type="radio"
+              name="fulfillment"
+              checked={fulfillment === 'Pickup'}
+              onChange={() => change({ fulfillment: 'Pickup' })}
+            />
+            {t('order.pickup')}
+          </label>
+        )}
+      </div>
+      {fulfillment === 'Pickup' && site.contact.address && (
+        <div className="hint">
+          <span>
+            {t('map.pickupAddress')}: {site.contact.address}
+          </span>
+          <MapLinks address={site.contact.address} />
+        </div>
+      )}
+      {fulfillment === 'Delivery' && !zonesOn && (site.deliveryAreaText || site.deliveryFeeText) && (
+        <p className="hint">
+          {site.deliveryAreaText && (
+            <span>
+              {t('order.deliveryArea')}: {site.deliveryAreaText}.{' '}
+            </span>
+          )}
+          {site.deliveryFeeText && (
+            <span>
+              {t('order.deliveryFee')}: {site.deliveryFeeText}.{' '}
+            </span>
+          )}
+          {t('order.deliveryCall')}
+        </p>
+      )}
+      <FieldError errors={errors} field="fulfillmentMethod" id="order-fulfillment-error" />
+    </fieldset>
+  )
+  const contactBlock = (
+    <DetailsBlock
+      title={t(fulfillment === 'Delivery' ? 'order.blocks.contactAndAddress' : 'order.blocks.contact')}
+      summary={[
+        state.name.trim(),
+        state.phone.trim(),
+        fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment })),
+      ]
+        .filter(Boolean)
+        .join(' · ')}
+      open={blocksOpen.contact || atAddress}
+      onToggle={(open) => setBlocksOpen((current) => ({ ...current, contact: open }))}
+    >
+      <span className="field">
+        <label htmlFor="order-name">{t('order.name')}</label>
+        <input
+          id="order-name"
+          autoComplete="name"
+          value={state.name}
+          maxLength={100}
+          required
+          aria-describedby="order-name-error"
+          onChange={(e) => change({ name: e.target.value })}
+        />
+        <FieldError errors={errors} field="name" id="order-name-error" />
+      </span>
+
+      <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
+
+      {fulfillment === 'Delivery' && (
+        <AddressFields
+          value={state}
+          onChange={change}
+          errors={errors}
+          idPrefix="order"
+          context="order"
+          zones={
+            zonesOn
+              ? {
+                  onLocated: (found) => {
+                    change({ city: found.city, street: found.street, houseNumber: found.houseNumber })
+                    setLocated(found.quote && { city: found.city, street: found.street, houseNumber: found.houseNumber, quote: found.quote })
+                  },
+                  onCalculate: () => setCalculations((n) => n + 1),
+                }
+              : undefined
+          }
+        />
+      )}
+    </DetailsBlock>
+  )
+
+  function continueFromAddress() {
+    const missing: FieldErrors = {}
+    if (state.name.trim() === '') missing.name = ['required']
+    if (!normalizedPhone) missing.phone = ['phone']
+    if (fulfillment === 'Delivery') {
+      if (state.city.trim() === '') missing.city = ['required']
+      if (state.street.trim() === '') missing.street = ['required']
+      if (state.houseNumber.trim() === '') missing.housenumber = ['required']
+    }
+    setErrors(missing)
+    if (Object.keys(missing).length > 0) {
+      setSubmitError(t('errors.checkFields'))
+      return
+    }
+    setSubmitError(null)
+    setAddressDone(true)
+    window.scrollTo({ top: 0 })
   }
 
   return (
@@ -495,322 +644,317 @@ export function OrderPage() {
         </header>
       )}
       <div className="order-main">
-        {user && (!steps || currentStep === 0) && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
-
-        {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
-        {(searchable || categories.length > 0) && (
-          <div className="order-sticky">
-            {searchable && <DishSearch value={query} onChange={setQuery} />}
-            {steps && !searching && categories.length > 0 && (
-              <CategorySteps
-                ref={stepsRef}
-                categories={categories.map(({ category }) => ({
-                  id: category.id,
-                  name: category.name,
-                  picked: pickedInCategory(state.selections, dishes, category.id),
-                }))}
-                current={currentStep}
-                onChange={goToStep}
-              />
-            )}
-            {!steps && !searching && groups.length + categories.length > 1 && (
-              <CategoryJumpBar
-                categories={[
-                  ...groups.map(({ group }) => ({ sectionId: groupSectionId(group.id), name: group.name })),
-                  ...categories.map(({ category }) => ({ sectionId: categorySectionId(category.id), name: category.name })),
-                ]}
-              />
-            )}
-          </div>
-        )}
-        {searching && (
-          <section className="category dish-results" aria-labelledby="dish-results-title">
-            <h2 id="dish-results-title" className="dish-results__title">
-              {results.length === 0 ? t('order.search.noResults') : t('order.search.results', { count: results.length })}
-            </h2>
-            {results.length === 0 ? (
-              <p role="status" className="dish-results__empty">
-                {t('order.search.none')}
-              </p>
-            ) : (
-              <div className="category__dishes">{results.map(renderDish)}</div>
-            )}
-          </section>
-        )}
-        {!searching && (!steps || currentStep === 0) && groups.map(({ group, dishes: list }) => (
-          <details key={`group-${group.id}`} id={groupSectionId(group.id)} open className="category category--group">
-            <summary>
-              <h2>{group.name}</h2>
-            </summary>
-            <div className="category__dishes">{list.map(renderDish)}</div>
-          </details>
-        ))}
-        {!searching && shownCategories.map(({ category, dishes: list }) => (
-          <details key={category.id} id={categorySectionId(category.id)} open className="category">
-            <summary>
-              <h2>{category.name}</h2>
-            </summary>
-            <div className="category__dishes">
-              {list.map(renderDish)}
-            </div>
-          </details>
-        ))}
-        {steps && !searching && currentStep < detailsStep && <CategoryStepsFooter current={currentStep} last={detailsStep - 1} onChange={goToStep} />}
-
-        {deferred && !detailsOpen && categories.length > 0 && (
-          <div className="order-continue">
-            <button type="button" className="order-steps__forward" disabled={count === 0} onClick={goToDetails}>
-              {t('order.continueToDetails')}
-            </button>
-            {count === 0 && <p className="hint">{t('order.continueHint')}</p>}
-          </div>
-        )}
-
-        {showDetails && (
-          <form ref={formRef} className="order-form stack" onSubmit={handleSubmit} aria-labelledby="order-details-title" noValidate>
-            <h2 id="order-details-title">{t('order.details')}</h2>
-
-            <span className="field">
-              <label htmlFor="order-date">{t('order.supplyDate')}</label>
-              {supplyDate ? (
-                <select
-                  id="order-date"
-                  value={supplyDate.date}
-                  aria-describedby="order-date-hint order-date-error"
-                  onChange={(e) => changeDate(e.target.value)}
-                >
-                  {menu.supplyDates.map((d) => (
-                    <option key={d.date} value={d.date}>
-                      {formatSupplyDate(d.date, t)}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <p role="alert" className="form-error">
-                  {t('order.noSupplyDates')}
-                </p>
-              )}
-              {supplyDate && (
-                <span id="order-date-hint" className="hint">
-                  {t('order.cutoff', { when: formatCutoff(supplyDate.cutoff) })}
-                </span>
-              )}
-              <FieldError errors={errors} field="supplyDate" id="order-date-error" />
-            </span>
-
-            {supplyDate && hours.length > 0 && (
-              <span className="field">
-                <label htmlFor="order-hour">{t('order.deliveryHour')}</label>
-                <select
-                  id="order-hour"
-                  value={deliveryHour ?? ''}
-                  required
-                  aria-describedby="order-hour-note order-hour-error"
-                  onChange={(e) => changeHour(e.target.value || null)}
-                >
-                  <option value="">{t('order.chooseHour')}</option>
-                  {hours.map((slot) => (
-                    <option key={slot.from} value={slot.from}>
-                      {formatSlot(slot, t)}
-                    </option>
-                  ))}
-                </select>
-                {hourIsFull && (
-                  <span id="order-hour-note" role="status" className="notice notice--warning hour-tooltip">
-                    {t('order.hourFull')}
-                  </span>
-                )}
-                <FieldError errors={errors} field="deliveryHour" id="order-hour-error" />
-              </span>
-            )}
-
-            <fieldset ref={addressRef} className="order-address">
-              <legend>{t('order.fulfillment')}</legend>
-              <div className="row">
-                {site.deliveryEnabled && (
-                  <label className="checkbox">
-                    <input
-                      type="radio"
-                      name="fulfillment"
-                      checked={fulfillment === 'Delivery'}
-                      onChange={() => change({ fulfillment: 'Delivery' })}
-                    />
-                    {t('order.delivery')}
-                  </label>
-                )}
-                {site.pickupEnabled && (
-                  <label className="checkbox">
-                    <input
-                      type="radio"
-                      name="fulfillment"
-                      checked={fulfillment === 'Pickup'}
-                      onChange={() => change({ fulfillment: 'Pickup' })}
-                    />
-                    {t('order.pickup')}
-                  </label>
-                )}
-              </div>
-              {fulfillment === 'Pickup' && site.contact.address && (
-                <div className="hint">
-                  <span>
-                    {t('map.pickupAddress')}: {site.contact.address}
-                  </span>
-                  <MapLinks address={site.contact.address} />
-                </div>
-              )}
-              {fulfillment === 'Delivery' && (site.deliveryAreaText || site.deliveryFeeText) && (
-                <p className="hint">
-                  {site.deliveryAreaText && (
-                    <span>
-                      {t('order.deliveryArea')}: {site.deliveryAreaText}.{' '}
-                    </span>
-                  )}
-                  {site.deliveryFeeText && (
-                    <span>
-                      {t('order.deliveryFee')}: {site.deliveryFeeText}.{' '}
-                    </span>
-                  )}
-                  {t('order.deliveryCall')}
-                </p>
-              )}
-              <FieldError errors={errors} field="fulfillmentMethod" id="order-fulfillment-error" />
-            </fieldset>
-
-            <DetailsBlock
-              title={t(fulfillment === 'Delivery' ? 'order.blocks.contactAndAddress' : 'order.blocks.contact')}
-              summary={[
-                state.name.trim(),
-                state.phone.trim(),
-                fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment })),
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-              open={blocksOpen.contact}
-              onToggle={(open) => setBlocksOpen((current) => ({ ...current, contact: open }))}
-            >
-              <span className="field">
-                <label htmlFor="order-name">{t('order.name')}</label>
-                <input
-                  id="order-name"
-                  autoComplete="name"
-                  value={state.name}
-                  maxLength={100}
-                  required
-                  aria-describedby="order-name-error"
-                  onChange={(e) => change({ name: e.target.value })}
-                />
-                <FieldError errors={errors} field="name" id="order-name-error" />
-              </span>
-
-              <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
-
-              {fulfillment === 'Delivery' && (
-                <AddressFields value={state} onChange={change} errors={errors} idPrefix="order" context="order" />
-              )}
-            </DetailsBlock>
-
-            <DetailsBlock
-              title={t('order.payment')}
-              summary={t(payment === 'Transfer' ? 'order.payTransfer' : 'order.payOnDelivery')}
-              open={blocksOpen.payment}
-              onToggle={(open) => setBlocksOpen((current) => ({ ...current, payment: open }))}
-            >
-              <fieldset>
-                <legend className="visually-hidden">{t('order.payment')}</legend>
-                <div className="row">
-                  <label className="checkbox">
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={payment === 'OnDelivery'}
-                      onChange={() => change({ payment: 'OnDelivery' })}
-                    />
-                    {t('order.payOnDelivery')}
-                  </label>
-                  {site.paymentPhone && (
-                    <label className="checkbox">
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={payment === 'Transfer'}
-                        onChange={() => change({ payment: 'Transfer' })}
-                      />
-                      {t('order.payTransfer')}
-                    </label>
-                  )}
-                </div>
-                {payment === 'Transfer' && <p className="hint">{t('order.transferHint')}</p>}
-                <FieldError errors={errors} field="paymentMethod" id="order-payment-error" />
-              </fieldset>
-              {payment === 'OnDelivery' && <p className="pay-note">{t('order.payOnDeliveryNote')}</p>}
-            </DetailsBlock>
-
-            <span className="field">
-              <label htmlFor="order-notes">{t('order.notes')}</label>
-              <textarea id="order-notes" rows={2} maxLength={500} value={state.notes} onChange={(e) => change({ notes: e.target.value })} />
-            </span>
-
-            {site.contact.phone && (
-              <p className="muted">
-                {t('order.callToChange')} <span dir="ltr">{site.contact.phone}</span>
-              </p>
-            )}
-
+        {atAddress && (
+          <section className="order-form stack order-address-stage" aria-labelledby="order-address-title">
+            <h2 id="order-address-title">{t('order.addressFirst.title')}</h2>
+            <p className="hint">{t('order.addressFirst.hint')}</p>
+            {fulfillmentBlock}
+            {contactBlock}
             {submitError && (
               <p role="alert" className="form-error">
                 {submitError}
               </p>
             )}
-            <OrderSummary selections={state.selections} dishes={dishes} />
             <div className="row">
-              <button
-                ref={submitRef}
-                type="submit"
-                disabled={submitting || count === 0 || !supplyDate || belowMinimum}
-              >
-                {submitting ? t('order.submitting') : t('order.submit')}
-              </button>
-              <button type="button" className="button-quiet" onClick={reset}>
-                {t('order.reset')}
+              <button type="button" onClick={continueFromAddress}>
+                {t('order.addressFirst.continue')}
               </button>
             </div>
-            {count === 0 && <p className="hint">{t('order.chooseDishes')}</p>}
-            {unadjusted.length > 0 && (
-              <p role="status" className="hint">
-                {t('order.adjustRequired', {
-                  names: unadjusted.map((d) => d.name).join(', '),
-                })}
-              </p>
-            )}
-            {belowMinimum && (
-              <p role="status" className="hint">
-                {t('order.belowMinimum', {
-                  minimum: formatMoney(minimum),
-                  missing: formatMoney(round2(minimum - total)),
-                })}
-              </p>
-            )}
-          </form>
+          </section>
         )}
+        {!atAddress && (
+          <>
+            {user && (!steps || currentStep === 0) && <QuickFill menu={menu} hasOrder={count > 0} onApply={applyQuickFill} />}
 
-        {reviewsOn && showDetails && <ReviewsCarousel />}
+            {categories.length === 0 && <p>{t('order.emptyMenu')}</p>}
+            {(searchable || categories.length > 0) && (
+              <div className="order-sticky">
+                {searchable && <DishSearch value={query} onChange={setQuery} />}
+                {steps && !searching && categories.length > 0 && (
+                  <CategorySteps
+                    ref={stepsRef}
+                    categories={categories.map(({ category }) => ({
+                      id: category.id,
+                      name: category.name,
+                      picked: pickedInCategory(state.selections, dishes, category.id),
+                    }))}
+                    current={currentStep}
+                    onChange={goToStep}
+                  />
+                )}
+                {!steps && !searching && groups.length + categories.length > 1 && (
+                  <CategoryJumpBar
+                    categories={[
+                      ...groups.map(({ group }) => ({ sectionId: groupSectionId(group.id), name: group.name })),
+                      ...categories.map(({ category }) => ({ sectionId: categorySectionId(category.id), name: category.name })),
+                    ]}
+                  />
+                )}
+              </div>
+            )}
+            {searching && (
+              <section className="category dish-results" aria-labelledby="dish-results-title">
+                <h2 id="dish-results-title" className="dish-results__title">
+                  {results.length === 0 ? t('order.search.noResults') : t('order.search.results', { count: results.length })}
+                </h2>
+                {results.length === 0 ? (
+                  <p role="status" className="dish-results__empty">
+                    {t('order.search.none')}
+                  </p>
+                ) : (
+                  <div className="category__dishes">{results.map(renderDish)}</div>
+                )}
+              </section>
+            )}
+            {!searching && (!steps || currentStep === 0) && groups.map(({ group, dishes: list }) => (
+              <details key={`group-${group.id}`} id={groupSectionId(group.id)} open className="category category--group">
+                <summary>
+                  <h2>{group.name}</h2>
+                </summary>
+                <div className="category__dishes">{list.map(renderDish)}</div>
+              </details>
+            ))}
+            {!searching && shownCategories.map(({ category, dishes: list }) => (
+              <details key={category.id} id={categorySectionId(category.id)} open className="category">
+                <summary>
+                  <h2>{category.name}</h2>
+                </summary>
+                <div className="category__dishes">
+                  {list.map(renderDish)}
+                </div>
+              </details>
+            ))}
+            {steps && !searching && currentStep < detailsStep && <CategoryStepsFooter current={currentStep} last={detailsStep - 1} onChange={goToStep} />}
+
+            {deferred && !detailsOpen && categories.length > 0 && (
+              <div className="order-continue">
+                <button type="button" className="order-steps__forward" disabled={count === 0} onClick={goToDetails}>
+                  {t('order.continueToDetails')}
+                </button>
+                {count === 0 && <p className="hint">{t('order.continueHint')}</p>}
+              </div>
+            )}
+
+            {showDetails && (
+              <form ref={formRef} className="order-form stack" onSubmit={handleSubmit} aria-labelledby="order-details-title" noValidate>
+                <h2 id="order-details-title">{t('order.details')}</h2>
+
+                <span className="field">
+                  <label htmlFor="order-date">{t('order.supplyDate')}</label>
+                  {supplyDate ? (
+                    <select
+                      id="order-date"
+                      value={supplyDate.date}
+                      aria-describedby="order-date-hint order-date-error"
+                      onChange={(e) => changeDate(e.target.value)}
+                    >
+                      {menu.supplyDates.map((d) => (
+                        <option key={d.date} value={d.date}>
+                          {formatSupplyDate(d.date, t)}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p role="alert" className="form-error">
+                      {t('order.noSupplyDates')}
+                    </p>
+                  )}
+                  {supplyDate && (
+                    <span id="order-date-hint" className="hint">
+                      {t('order.cutoff', { when: formatCutoff(supplyDate.cutoff) })}
+                    </span>
+                  )}
+                  <FieldError errors={errors} field="supplyDate" id="order-date-error" />
+                </span>
+
+                {supplyDate && hours.length > 0 && (
+                  <span className="field">
+                    <label htmlFor="order-hour">{t('order.deliveryHour')}</label>
+                    <select
+                      id="order-hour"
+                      value={deliveryHour ?? ''}
+                      required
+                      aria-describedby="order-hour-note order-hour-error"
+                      onChange={(e) => changeHour(e.target.value || null)}
+                    >
+                      <option value="">{t('order.chooseHour')}</option>
+                      {hours.map((slot) => (
+                        <option key={slot.from} value={slot.from}>
+                          {formatSlot(slot, t)}
+                        </option>
+                      ))}
+                    </select>
+                    {hourIsFull && (
+                      <span id="order-hour-note" role="status" className="notice notice--warning hour-tooltip">
+                        {t('order.hourFull')}
+                      </span>
+                    )}
+                    <FieldError errors={errors} field="deliveryHour" id="order-hour-error" />
+                  </span>
+                )}
+
+                {addressFirst ? (
+                  <div className="order-address-summary">
+                    <p>
+                      <strong>{t(fulfillment === 'Delivery' ? 'order.delivery' : 'order.pickup')}</strong>
+                      {fulfillment === 'Pickup' && site.contact.address ? `: ${site.contact.address}` : ''}
+                    </p>
+                    <p>
+                      {[
+                        state.name.trim(),
+                        state.phone.trim(),
+                        fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment })),
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                    <button type="button" className="button-quiet" onClick={() => setAddressDone(false)}>
+                      {t('order.addressFirst.edit')}
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {fulfillmentBlock}
+                    {contactBlock}
+                  </>
+                )}
+
+                <DetailsBlock
+                  title={t('order.payment')}
+                  summary={t(payment === 'OnDelivery' ? 'order.payOnDelivery' : paymentKey(payment))}
+                  open={blocksOpen.payment}
+                  onToggle={(open) => setBlocksOpen((current) => ({ ...current, payment: open }))}
+                >
+                  <fieldset>
+                    <legend className="visually-hidden">{t('order.payment')}</legend>
+                    <div className="row">
+                      <label className="checkbox">
+                        <input
+                          type="radio"
+                          name="payment"
+                          checked={payment === 'OnDelivery'}
+                          onChange={() => change({ payment: 'OnDelivery' })}
+                        />
+                        {t('order.payOnDelivery')}
+                      </label>
+                      {transfers.map((method) => (
+                        <label key={method} className="checkbox">
+                          <input
+                            type="radio"
+                            name="payment"
+                            checked={payment === method}
+                            onChange={() => change({ payment: method })}
+                          />
+                          {t(paymentKey(method))}
+                        </label>
+                      ))}
+                    </div>
+                    {isTransfer(payment) && <p className="hint">{t('order.transferHint', { service: t(paymentKey(payment)) })}</p>}
+                    <FieldError errors={errors} field="paymentMethod" id="order-payment-error" />
+                  </fieldset>
+                  {payment === 'OnDelivery' && <p className="pay-note">{t('order.payOnDeliveryNote')}</p>}
+                </DetailsBlock>
+
+                <span className="field">
+                  <label htmlFor="order-notes">{t('order.notes')}</label>
+                  <textarea id="order-notes" rows={2} maxLength={500} value={state.notes} onChange={(e) => change({ notes: e.target.value })} />
+                </span>
+
+                {site.contact.phone && (
+                  <p className="muted">
+                    {t('order.callToChange')} <span dir="ltr">{site.contact.phone}</span>
+                  </p>
+                )}
+
+                {submitError && (
+                  <p role="alert" className="form-error">
+                    {submitError}
+                  </p>
+                )}
+                {fulfillment === 'Delivery' && zonesOn && quote.state !== 'idle' && (
+                  <p role={noDelivery ? 'alert' : 'status'} className={noDelivery ? 'form-error' : 'hint'}>
+                    {noDelivery
+                      ? t('order.zones.blocked')
+                      : quote.state === 'loading'
+                        ? t('order.zones.loading')
+                        : quoted?.status === 'unknown' || quote.state === 'failed'
+                          ? t('order.zones.unknown')
+                          : quoted?.approximate
+                            ? t('order.zones.approximate')
+                            : null}
+                  </p>
+                )}
+                {fulfillment === 'Delivery' && zonesOn && quote.state === 'idle' && count > 0 && (
+                  <p role="status" className="hint">
+                    {t('order.zones.needAddress')}
+                  </p>
+                )}
+                <OrderSummary
+                  selections={state.selections}
+                  dishes={dishes}
+                  delivery={
+                    fulfillment !== 'Delivery'
+                      ? undefined
+                      : zonesOn
+                        ? { fee: deliveryFee, zoneName: quoted?.zoneName ?? null, pending: !quoted }
+                        : regularFee > 0
+                          ? { fee: regularFee, zoneName: null, pending: false }
+                          : undefined
+                  }
+                />
+                <div className="row">
+                  <button
+                    ref={submitRef}
+                    type="submit"
+                    disabled={submitting || count === 0 || !supplyDate || belowMinimum || (fulfillment === 'Delivery' && noDelivery)}
+                  >
+                    {submitting ? t('order.submitting') : t('order.submit')}
+                  </button>
+                  <button type="button" className="button-quiet" onClick={reset}>
+                    {t('order.reset')}
+                  </button>
+                </div>
+                {count === 0 && <p className="hint">{t('order.chooseDishes')}</p>}
+                {unadjusted.length > 0 && (
+                  <p role="status" className="hint">
+                    {t('order.adjustRequired', {
+                      names: unadjusted.map((d) => d.name).join(', '),
+                    })}
+                  </p>
+                )}
+                {belowMinimum && (
+                  <p role="status" className="hint">
+                    {t('order.belowMinimum', {
+                      minimum: formatMoney(minimum),
+                      missing: formatMoney(round2(minimum - itemsTotal)),
+                    })}
+                  </p>
+                )}
+              </form>
+            )}
+
+            {reviewsOn && (deferred || showDetails) && <ReviewsCarousel />}
+          </>
+        )}
       </div>
 
-      <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
-        <span className="total-bar__counts">
-          {totals.main > 0 && <span>{t('order.itemCount', { count: totals.main })}</span>}
-          {totals.side > 0 && <span>{t('order.sideDishCount', { count: totals.side })}</span>}
-          {totals.drinks > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
-        </span>
-        <strong className="numeric" aria-live="polite">
-          {t('order.total')}: {formatMoney(total)}
-        </strong>
-        {(totalPosition === 'side' || (deferred && !detailsOpen)) && (
-          <button type="button" className="total-bar__details" onClick={goToDetails}>
-            {t('order.toDetails')}
-          </button>
-        )}
+      {!atAddress && (
+        <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
+          <span className="total-bar__counts">
+            {totals.main > 0 && <span>{t('order.itemCount', { count: totals.main })}</span>}
+            {totals.side > 0 && <span>{t('order.sideDishCount', { count: totals.side })}</span>}
+            {totals.drinks > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
+          </span>
+          <strong className="numeric" aria-live="polite">
+            {t('order.total')}: {formatMoney(total)}
+          </strong>
+          {(totalPosition === 'side' || (deferred && !detailsOpen)) && (
+            <button type="button" className="total-bar__details" onClick={goToDetails}>
+              {t('order.toDetails')}
+            </button>
+          )}
       </div>
+      )}
 
       {cartOpen && (
         <CartSheet
@@ -818,6 +962,7 @@ export function OrderPage() {
           dishes={dishes}
           date={supplyDate?.date}
           total={total}
+          deliveryFee={deliveryFee}
           onChange={setSelection}
           onEdit={revealDish}
           onContinue={() => {

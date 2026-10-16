@@ -36,7 +36,7 @@ The site opens on the Order page. A constant top bar holds five buttons: Order (
 - Logged-in users see "Last order" and "Favorites" buttons that fill the whole order in one click. Dishes or options that no longer exist are skipped, with a short notice.
 - A "Reset order" button returns everything to the defaults.
 - Payment choice: pay on delivery, or Bit/PayBox transfer. The sentence "התשלום יבוצע במעמד מסירת המשלוח" appears above the Submit button when pay on delivery is selected.
-- After submit, a success popup shows the order summary and the client gets the details by WhatsApp.
+- After submit, a success popup shows the order summary.
 - Leaving the page with an order in progress asks whether to save it. A saved draft is kept in the browser and restored on return.
 
 ### Login / Register

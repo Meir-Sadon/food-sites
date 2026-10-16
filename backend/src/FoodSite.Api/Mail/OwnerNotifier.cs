@@ -12,14 +12,18 @@ public class OwnerNotifier(IMailer mailer, IOptions<SiteOptions> site, ILogger<O
     {
         if (string.IsNullOrWhiteSpace(ownerEmail))
             return;
-        await SendAsync(ownerEmail, OwnerMessages.NewOrder(order, site.Value.Name, hourFull, adminUrl), $"order {order.Id}");
+        foreach (var to in OwnerRecipients.Split(ownerEmail))
+            await SendAsync(to, OwnerMessages.NewOrder(order, site.Value.Name, hourFull, adminUrl), $"order {order.Id}");
     }
 
-    public Task ChangesAsync(string? ownerEmail, IReadOnlyList<AuditEntry> entries, CancellationToken ct)
+    /// <summary>Only when the admin ticked "mail about changes"; it is off by default.</summary>
+    public async Task ChangesAsync(string? ownerEmail, bool enabled, IReadOnlyList<AuditEntry> entries, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(ownerEmail) || entries.Count == 0)
-            return Task.CompletedTask;
-        return SendAsync(ownerEmail, OwnerMessages.Changes(entries, site.Value.Name), "changes", ct);
+        if (!enabled || string.IsNullOrWhiteSpace(ownerEmail) || entries.Count == 0)
+            return;
+        var mail = OwnerMessages.Changes(entries, site.Value.Name);
+        foreach (var to in OwnerRecipients.Split(ownerEmail))
+            await SendAsync(to, mail, "changes", ct);
     }
 
     private async Task SendAsync(string to, OwnerMail mail, string what, CancellationToken ct = default)

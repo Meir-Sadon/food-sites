@@ -15,6 +15,8 @@ The workflow needs, in GitHub **Settings → Secrets and variables → Actions**
 - secret `RENDER_DEPLOY_HOOK_CANARY`: the canary's deploy hook (Render: service → **Settings → Deploy Hook**)
 - one secret per other site with its deploy hook, named in the workflow's matrix, e.g. `RENDER_DEPLOY_HOOK_GRAPE_LEAVES`
 
+**Choosing which sites deploy** needs no pull request: add the variable `DEPLOY_SITES` (same place as the others), the site ids separated by spaces, e.g. `kuskus-shel-ima kuskus-liel`. Empty or missing deploys every site; a word that is no site id (e.g. `none`) deploys nothing. The canary is the site named by the variable `CANARY_SITE` (default `kuskus-shel-ima`); when it is not listed it is skipped and the listed sites deploy without waiting for it. Secrets stay as they are, and a site left out just keeps running its old version (it still gets the new code the next time it is listed and a deploy runs). To deploy one site by hand: **Actions → Deploy → Run workflow** (deploys the listed sites at the branch's commit), or the **Manual Deploy** button in the Render dashboard.
+
 Every service has Render's **Auto-Deploy** set to Off. With "After CI checks pass", Render would also wait for the Deploy workflow's own check, which waits for Render, so nothing would deploy.
 
 Migrations run on each site's start, so a migration must work with the code before it: add columns as nullable or with defaults, and drop old ones only in a later release (expand, then contract).
@@ -24,17 +26,22 @@ Migrations run on each site's start, so a migration must work with the code befo
 The `new-food-site` skill (`.claude/skills/new-food-site/SKILL.md`) walks through all of it, from the business's ad and photos.
 
 1. Its folder under `sites/` (copy `sites/_template/`), with the main contact and other starting settings in `site.json` → `settings`.
-2. A service entry in `render.yaml` with `SITE` set to the folder, `autoDeployTrigger: "off"` and no `Database__ApplySeeds` (a new site wants its seed menu), a line in the matrix of `.github/workflows/deploy.yml`, and its id in `.github/keep-alive-sites.txt` if it should be kept awake (see below).
+2. A service entry in `render.yaml` with `SITE` set to the folder, `autoDeployTrigger: "off"` and no `Database__ApplySeeds` (a new site wants its seed menu), a line in the matrix of `.github/workflows/deploy.yml`, and, if it should be kept awake, its id added to the `KEEP_ALIVE_SITES` variable on GitHub (see below).
 3. A Neon project and the service's secrets (steps 1 to 4 below), and the deploy hook secret.
 
 Before adding a third site, check the free tiers: free Render services share a monthly allowance of instance hours, and Neon limits the number of free projects.
 
 ## Keeping sites awake
 
-A free Render service sleeps after 15 minutes without a request, and the next visitor waits about a minute for it to start. `.github/workflows/keep-alive.yml` asks `/api/health` (no database) every 25 minutes, **between 09:00 and 21:00 Israel time**, of the sites listed in `.github/keep-alive-sites.txt` (one site id per line; a site not listed there is never pinged). A ping every 25 minutes is longer than Render's 15-minute idle limit, so a listed site still sleeps between pings and a visitor who arrives in that gap waits about a minute. The job cuts the hours a listed site uses; it does not keep the site always awake. A site that doesn't answer fails the run, which GitHub emails about. The hours are `START_HOUR` and `END_HOUR` in the workflow; **Actions → Keep sites awake → Run workflow** pings the listed sites at any hour.
+A free Render service sleeps after 15 minutes without a request, and the next visitor waits about a minute for it to start. `.github/workflows/keep-alive.yml` asks `/api/health` (no database) of the sites you choose, **between 09:00 and 21:00 Israel time**. The choice is made in GitHub, so no pull request is needed: **Settings → Secrets and variables → Actions → Variables** holds two variables:
 
-- A listed site is awake about 15 minutes after each ping, roughly 7 to 8 hours a day, so about 230 of the workspace's **750 free instance hours a month**, shared by all free services. When they run out, Render suspends every free service until the next month. So list only what the hours cover (about three sites, less the hours the other sites use when visitors wake them), or move the sites that must answer at once to a paid plan (which never sleeps and needs no keep-alive).
-- GitHub runs scheduled workflows late at busy times, sometimes by more than 15 minutes, so a site can still fall asleep now and then.
+- `KEEP_ALIVE_SITES`: the site ids, separated by spaces, e.g. `kuskus-liel cigars-shiraz`. Empty means nothing is pinged.
+- `KEEP_ALIVE_INTERVAL_MINUTES`: minutes between pings, default `13`. Use `10` if a site must not sleep at all: GitHub's schedule runs every 5 minutes, so an interval of 13 gives pings 10 to 15 minutes apart, and a 15-minute gap lets Render sleep the site.
+
+A site that doesn't answer fails the run, which GitHub emails about. **Actions → Keep sites awake → Run workflow** pings the listed sites at once, at any hour.
+
+- A site awake all opening hours uses about 365 of the workspace's **750 free instance hours a month**, shared by all free services. When they run out, Render suspends every free service until the next month. So list only what the hours cover (one or two sites), or move the sites that must answer at once to a paid plan (which never sleeps and needs no keep-alive). Visitors who wake a site outside the hours use more.
+- GitHub runs scheduled workflows late at busy times, sometimes by several minutes, so a ping can be late and a site can still fall asleep now and then.
 - GitHub turns a schedule off after 60 days without a commit to the repository. Turn it back on under **Actions → Keep sites awake → Enable workflow**.
 
 ## Before you start
@@ -90,6 +97,7 @@ Pick a long passphrase for the master password (four or five random words). The 
    | `WhatsApp__Token`, `WhatsApp__PhoneNumberId` | From Meta's WhatsApp Cloud API, or leave both empty (messages are only logged) |
    | `Sms__Username`, `Sms__Token`, `Sms__Source` | From a TextMe account (textme.co.il): user name, API token, and the verified sender name the client sees (up to 11 English letters or digits). All three set turns on an SMS order confirmation to the client; empty: SMS is only logged. Optional `Sms__ConfirmationTemplate`: this site's text, with `{siteName} {name} {orderId} {date} {time} {method} {total}` |
 | `Mail__ResendApiKey` | A Resend API key (resend.com, free: about 100 mails a day), or leave it empty (no mail to the owner). Optional `Mail__From`: the sender address, `onboarding@resend.dev` by default, which Resend lets send only to your own Resend account address; to mail the business owner at another address, verify a domain in Resend and set e.g. `Mail__From=orders@your-domain.com` |
+| `Mail__BrevoApiKey` | Alternative to Resend that needs no domain: a Brevo API key (brevo.com, free: 300 mails a day), used instead of Resend when set. Set `Mail__From` to a sender address you verified in Brevo (Senders & IP). Free-mail senders such as gmail.com may be replaced by Brevo or filtered to spam, so a domain you own is still the better sender |
 
    Render generates the login-signing secret (`Jwt__Secret`) itself. The `SITE` value in `render.yaml` picks the folder under `sites/` the service is built from; Render passes it to the `Dockerfile` as a build argument.
 4. Click **Apply**. The first build takes about 5–10 minutes. When the service shows **Live**, open the address shown at the top of the service page.

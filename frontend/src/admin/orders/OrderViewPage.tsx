@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { paymentKey } from '../../order/payment'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
@@ -9,6 +10,7 @@ import { formatDate, formatNumber } from '../format'
 import { whatsAppShareUrl } from '../messages/compose'
 import { Loading } from '../ui'
 import { OrderCard } from './OrderCard'
+import { usePrintOrders } from './usePrintOrders'
 import { orderLines, prepReport } from './report'
 
 /**
@@ -20,6 +22,7 @@ export function OrderViewPage() {
   const { t } = useTranslation()
   const id = Number(useParams().id)
   const [order, setOrder] = useState<AdminOrder | null>(null)
+  const printer = usePrintOrders()
   const [state, setState] = useState<'loading' | 'failed' | 'missing'>('loading')
 
   useEffect(() => {
@@ -64,7 +67,7 @@ export function OrderViewPage() {
           {delivery && order.address ? `: ${order.address}` : ''}
         </p>
         <p>
-          {t(order.paymentMethod === 'Transfer' ? 'admin.orders.transfer' : 'admin.orders.onDelivery')}
+          {t(paymentKey(order.paymentMethod))}
           {order.isPaid && order.paidWith ? ` · ${t('admin.orders.paidVia', { method: t(`admin.orders.paidMethods.${order.paidWith}`) })}` : ''}
         </p>
         {order.notes && (
@@ -114,10 +117,28 @@ export function OrderViewPage() {
             </li>
           ))}
         </ul>
+        {!!order.deliveryFee && (
+          <p className="cart-sheet__total">
+            <span>
+              {t('order.deliveryFee')}
+              {order.deliveryZoneName ? ` (${order.deliveryZoneName})` : ''}
+            </span>{' '}
+            <strong className="numeric">{formatMoney(order.deliveryFee)}</strong>
+          </p>
+        )}
         <p className="cart-sheet__total">
           <span>{t('admin.orders.view.total')}</span> <strong className="numeric cart-sheet__sum">{formatMoney(order.total)}</strong>
         </p>
       </section>
+
+      <p className="no-print">
+        <button type="button" onClick={() => printer.print([order])}>
+          {t('admin.orders.printOrder')}
+          <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+        </button>{' '}
+        <span className="hint">{t('admin.orders.printHint')}</span>
+      </p>
+      {printer.sheet}
 
       <ShareReport key={`${order.id}-${order.status}-${order.isPaid}`} order={order} />
 

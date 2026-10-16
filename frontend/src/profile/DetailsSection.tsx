@@ -8,7 +8,7 @@ import { ProfileFields } from '../account/ProfileFields'
 import { formFromProfile, profileInput } from '../account/profileForm'
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
-import { useToast } from '../components/toast'
+import { SavedNote, useSavedFlash } from '../components/savedFlash'
 
 interface Props {
   user: Profile
@@ -23,7 +23,7 @@ export function DetailsSection({ user, onSaved }: Props) {
   const [phone, setPhone] = useState(user.phone)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
-  const toast = useToast()
+  const { saved, flash } = useSavedFlash()
   const [busy, setBusy] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
@@ -43,7 +43,7 @@ export function DetailsSection({ user, onSaved }: Props) {
       const saved = await accountApi.update(profileInput(normalized, form))
       onSaved(saved)
       setPhone(saved.phone)
-      toast(t('admin.saved'))
+      flash()
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(formError(err))
@@ -63,6 +63,7 @@ export function DetailsSection({ user, onSaved }: Props) {
           <button type="submit" disabled={busy}>
             {busy ? t('admin.saving') : t('admin.save')}
           </button>
+          <SavedNote show={saved} />
         </div>
       </form>
     </section>

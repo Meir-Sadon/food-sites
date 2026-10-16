@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { SupplyDay } from '../../api/catalog'
@@ -100,6 +100,130 @@ describe('Corners', () => {
   })
 })
 
+describe('Colours', () => {
+  it('saves the palette, a custom colour and the line thickness, and nothing the other sections own', async () => {
+    let saved = settings({ kashrutText: 'נשמר בינתיים' })
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('צבעי האתר')
+
+    expect(within(form).getByRole('radio', { name: /הצבעים של העסק/ })).toBeChecked()
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    expect(save).toBeDisabled()
+    await user.click(within(form).getByRole('radio', { name: /אוקיינוס/ }))
+    fireEvent.change(within(form).getByLabelText('כפתורים'), { target: { value: '#aa0000' } })
+    await user.selectOptions(within(form).getByLabelText('עובי פסים'), '3')
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    const body = api.sent('PUT', '/api/admin/settings')[0].body
+    expect(body).toMatchObject({ palette: 'ocean', customColors: { button: '#aa0000' }, lineWidth: 3, kashrutText: 'נשמר בינתיים' })
+    expect(body).not.toHaveProperty('style')
+    expect(body).not.toHaveProperty('corners')
+  })
+
+  it('says when a text colour is not readable on its background and that it was changed', async () => {
+    fakeApi({ ...base, 'GET /api/admin/settings': () => settings({ customColors: { menu: '#ffffff', menuText: '#eeeeee' } }) })
+    renderAt('/admin/appearance')
+    const form = await section('צבעי האתר')
+
+    expect(within(form).getByRole('status')).toHaveTextContent('טקסט תפריט ראשי')
+  })
+
+  it('does not touch the colours when another section saves', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => settings({ palette: 'berry', customColors: { button: '#aa0000' }, lineWidth: 2 }),
+      'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('עיגול פינות')
+    await user.click(within(form).getByRole('radio', { name: /^מרובע/ }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    const body = api.sent('PUT', '/api/admin/settings')[0].body
+    expect(body).not.toHaveProperty('palette')
+    expect(body).not.toHaveProperty('customColors')
+    expect(body).not.toHaveProperty('lineWidth')
+  })
+})
+
+describe('Colour copying', () => {
+  it('saves a colour copied from another element', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('צבעי האתר')
+
+    fireEvent.change(within(form).getByLabelText('כפתורים'), { target: { value: '#aa0000' } })
+    await user.selectOptions(within(form).getByLabelText('העתק צבע מ… עבור תפריט ראשי'), 'כפתורים')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ customColors: { button: '#aa0000', menu: '=button' } })
+  })
+})
+
+describe('Tiles groups', () => {
+  it('offers the minimal look only once tiles is picked, and saves it with the style', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    expect(within(form).queryByRole('radio', { name: /מינימלי/ })).not.toBeInTheDocument()
+    await user.click(within(form).getByRole('radio', { name: /אריחים/ }))
+    await user.click(within(form).getByRole('radio', { name: /מינימלי/ }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'tiles', tileGroups: 'minimal' })
+  })
+})
+
+describe('Finish', () => {
+  it('saves the font, shadows and spacing and nothing the other sections own', async () => {
+    let saved = settings({ kashrutText: 'נשמר בינתיים' })
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('גופן, צללים וריווח')
+
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    expect(save).toBeDisabled()
+    await user.click(within(form).getByRole('radio', { name: /אלגנטי/ }))
+    await user.click(within(form).getByRole('radio', { name: /עדינים/ }))
+    await user.click(within(form).getByRole('radio', { name: /צפוף/ }))
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    const body = api.sent('PUT', '/api/admin/settings')[0].body
+    expect(body).toMatchObject({ font: 'elegant', shadows: 'soft', spacing: 'compact', kashrutText: 'נשמר בינתיים' })
+    for (const key of ['style', 'corners', 'palette', 'customColors', 'lineWidth']) expect(body).not.toHaveProperty(key)
+  })
+})
+
 describe('General settings', () => {
   it('saves delivery, kashrut and payment details', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
@@ -117,14 +241,22 @@ describe('General settings', () => {
       pickupEnabled: false,
       deliveryAreaText: 'חיפה',
       deliveryFeeText: null,
+      deliveryFeeAmount: null,
+      deliveryPricing: 'simple',
       kashrutText: 'בהשגחת הרב',
       paymentPhone: '050-1234567',
+      bitEnabled: true,
+      payBoxEnabled: true,
+      bitLink: null,
+      payBoxLink: null,
       minimumOrderAmount: null,
       minimumOrderAppliesToPickup: true,
+      addressFirst: false,
       serviceCities: 'אשקלון',
       ordersPerHour: null,
       portionsPerSupplyDate: null,
       ownerEmail: '',
+      ownerChangeMails: false,
     })
   })
 
@@ -138,6 +270,21 @@ describe('General settings', () => {
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ownerEmail: 'owner@example.com' })
+  })
+
+  it('saves several owner addresses and the choice to be mailed about changes, off by default', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    const changes = within(form).getByRole('checkbox', { name: 'שליחת מייל גם על עדכון פריט באתר' })
+    expect(changes).not.toBeChecked()
+    await user.type(within(form).getByLabelText('כתובת מייל לעדכונים'), 'a@example.com, b@example.com')
+    await user.click(changes)
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ownerEmail: 'a@example.com, b@example.com', ownerChangeMails: true })
   })
 
   it('saves the service cities as typed', async () => {
@@ -268,6 +415,21 @@ describe('General settings', () => {
 
     await screen.findByText('נשמר.')
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ordersPerHour: 3 })
+  })
+
+  it('saves the address first setting and shows "saved" right beside the save button', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    await user.click(within(form).getByLabelText('כתובת ושיטת קבלה לפני בחירת המנות'))
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    await user.click(save)
+
+    const note = await within(form).findByText('נשמר.')
+    expect(note.parentElement).toBe(save.parentElement)
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ addressFirst: true })
   })
 
   it('saves how many portions can be ordered per supply date', async () => {

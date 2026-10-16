@@ -36,10 +36,11 @@ describe.each(['classic', 'tiles'] as const)('A group limit in the %s style', (s
     await user.click(within(card).getByRole('button', { name: /הוספה להזמנה: חומוס/ }))
     let scope: HTMLElement = card
     if (style === 'tiles') {
-      await user.click(within(card).getByRole('button', { name: 'התאמת המנה: חומוס' }))
+      await user.click(heading) // a tap on the card opens its adjustments
       scope = screen.getByRole('dialog')
     }
-    await user.click(within(scope).getByRole('button', { name: /הצג התאמת מנות/ }))
+    // The tiles dialog shows the adjustments open at once; the page card hides them behind a button.
+    if (style === 'classic') await user.click(within(scope).getByRole('button', { name: /הצג התאמת מנות/ }))
     const plus = (name: string) => within(scope).getByRole('button', { name: `הוספה: ${name}` })
     expect(within(scope).getByText(/עד 5 · נותרו 5/)).toBeInTheDocument()
     for (let i = 0; i < 3; i++) await user.click(plus('ביצה'))

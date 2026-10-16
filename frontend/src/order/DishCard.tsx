@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
 import { prefersReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
+import { DietaryTags } from './DietaryTags'
 import { useSiteStyle } from '../site/useSite'
 import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
@@ -80,6 +81,7 @@ function DishDetails({ dish, nameId, variant }: { dish: MenuDish; nameId: string
           {t('order.allergens')}: {dish.allergenInfo}
         </p>
       )}
+      <DietaryTags tags={dish.dietaryTags} />
     </>
   )
 }
@@ -144,6 +146,7 @@ function PlainDishGroupCard(props: GroupProps) {
             {t('order.allergens')}: {dish.allergenInfo}
           </p>
         )}
+        <DietaryTags tags={dish.dietaryTags} />
         <VariantList {...props} idPrefix={id} />
       </div>
     </article>
@@ -179,6 +182,9 @@ function VariantList({ dish, variants, dishes, selections, date, onChange, idPre
 // ---------- The "tiles" style: square tiles side by side, the choices in a dialog ----------
 
 /** Whether adding the dish must first ask the client something: set options, or add-ons/questions they have to settle. */
+/** True inside a tile's dialog, where a dish's adjustments are shown open at once instead of behind a toggle. */
+const InTileDialog = createContext(false)
+
 function needsDialog(dish: MenuDish, dishes: Map<number, MenuDish>) {
   if (dish.isYesNo) return false
   const options = dish.choiceMode === 'Fixed' && dish.options.length > 1
@@ -203,11 +209,9 @@ function tappedTileSurface(event: React.MouseEvent) {
   return !(event.target as HTMLElement).closest('button, a, input, select, textarea, label, .modal-backdrop')
 }
 
-function TileIcon({ name }: { name: 'plus' | 'sliders' | 'close' | 'check' }) {
+function TileIcon({ name }: { name: 'plus' | 'check' }) {
   const paths = {
     plus: 'M12 5v14M5 12h14',
-    sliders: 'M4 7h9M17 7h3M4 17h3M11 17h9M13 4v6M7 14v6',
-    close: 'M6 6l12 12M18 6L6 18',
     check: 'M5 12.5l4.5 4.5L19 7.5',
   }
   return (
@@ -258,10 +262,61 @@ function TileMedia({ images, slides, name, children }: { images?: string[]; slid
   )
 }
 
+/** A small "!" on the picture's corner; pressing it shows which allergens the dish has, without opening the dish. */
+function AllergenMark({ text }: { text?: string | null }) {
+  const { t } = useTranslation()
+  const [shown, setShown] = useState(false)
+  if (!text) return null
+  return (
+    <span className="tile__allergen" onClick={(event) => event.stopPropagation()}>
+      <button type="button" aria-label={t('order.allergensShow')} aria-expanded={shown} onClick={() => setShown(!shown)}>
+        !
+      </button>
+      {shown && (
+        <span className="tile__allergen-text" role="status">
+          {t('order.allergens')}: {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
+/** The picture in a tile's dialog: whole, small, and a press enlarges it to fill the dialog. */
+function DialogPicture({ images, name, onZoom }: { images: string[]; name: string; onZoom: () => void }) {
+  const { t } = useTranslation()
+  if (images.length === 0) return null
+  return (
+    <button type="button" className="tile-dialog__pic" aria-label={t('order.enlargeImage', { name })} onClick={onZoom}>
+      <ImageCarousel images={images} name={name} />
+      <span className="tile-dialog__zoom-hint" aria-hidden="true">
+        ⤢
+      </span>
+    </button>
+  )
+}
+
+/** The enlarged picture: it takes the whole dialog until it is pressed again or the back button is. */
+function ZoomedPicture({ images, name, onBack }: { images: string[]; name: string; onBack: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <button type="button" className="tile-dialog__zoomed" aria-label={t('order.shrinkImage')} onClick={onBack}>
+        <ImageCarousel images={images} name={name} />
+      </button>
+      <div className="modal__actions">
+        <button type="button" onClick={onBack}>
+          {t('order.shrinkImage')}
+        </button>
+      </div>
+    </>
+  )
+}
+
 function DishTile({ dish, dishes, selection, date, onChange }: Props) {
   const { t } = useTranslation()
   const id = useId()
   const [open, setOpen] = useState(false)
+  const [zoom, setZoom] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
   useOpenOnRequest(articleRef, () => flushSync(() => setOpen(true)))
   const remaining = remainingOn(dish, date)
@@ -295,66 +350,79 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
       style={tappable ? { cursor: 'pointer' } : undefined}
     >
       <TileMedia images={dish.images} name={dish.name}>
-        {unavailable ? null : selection ? (
-          <span className="tile__count numeric" aria-hidden="true">
-            {yesNo ? <TileIcon name="check" /> : number.format(selection.quantity)}
-          </span>
+        {dish.isSoldOut ? (
+          <p className="badge tile__badge" role="status">
+            {t('order.soldOut')}
+          </p>
+        ) : unavailable ? (
+          <p className="badge tile__badge" role="status">
+            {t('order.soldOutForDate')}
+          </p>
         ) : (
+          remaining !== null &&
+          remaining > 0 && (
+            <p className="badge tile__badge" role="status">
+              {t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}
+            </p>
+          )
+        )}
+        <AllergenMark text={dish.allergenInfo} />
+        {unavailable ? null : !selection ? (
           <button type="button" className="tile__add" aria-label={t('order.addDish', { name: dish.name })} onClick={add}>
             <TileIcon name="plus" />
           </button>
+        ) : yesNo ? (
+          <button type="button" className="tile__count" aria-label={t('order.removeDish', { name: dish.name })} onClick={() => onChange(undefined)}>
+            <TileIcon name="check" />
+          </button>
+        ) : (
+          // Taking the amount down to 0 removes the dish from the order.
+          <span className="tile__stepper" onClick={(event) => event.stopPropagation()}>
+            <AmountControl
+              name={dish.name}
+              value={selection.quantity}
+              {...range}
+              max={Math.max(range.max, range.min)}
+              unit={unitName}
+              allowZero
+              onChange={(quantity) => onChange(quantity <= 0 ? undefined : fitAddOns(dish, { ...selection, quantity }, dishes))}
+            />
+          </span>
         )}
       </TileMedia>
       <div className="tile__body">
         <h3 id={`${id}-name`}>{dish.name}</h3>
         <p className="dish__price">{priceText(dish, t)}</p>
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
-        {dish.isSoldOut ? (
-          <p className="badge" role="status">
-            {t('order.soldOut')}
-          </p>
-        ) : unavailable ? (
-          <p className="badge" role="status">
-            {t('order.soldOutForDate')}
-          </p>
-        ) : (
-          remaining !== null && remaining > 0 && (
-            <p className="badge" role="status">
-              {t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}
-            </p>
-          )
-        )}
-        {selection && !unavailable && (
-          <div className="tile__controls">
-            {!yesNo && (
-              <AmountControl
-                name={dish.name}
-                value={selection.quantity}
-                {...range}
-                max={Math.max(range.max, range.min)}
-                unit={unitName}
-                onChange={(quantity) => onChange(fitAddOns(dish, { ...selection, quantity }, dishes))}
-              />
-            )}
-            <button type="button" className="tile__icon" aria-label={t('order.customizeDish', { name: dish.name })} onClick={() => setOpen(true)}>
-              <TileIcon name="sliders" />
-            </button>
-            <button type="button" className="tile__icon" aria-label={t('order.removeDish', { name: dish.name })} onClick={() => onChange(undefined)}>
-              <TileIcon name="close" />
-            </button>
-          </div>
-        )}
       </div>
       {open && (
-        <Modal title={dish.name} onClose={() => setOpen(false)} wide>
-          <ImageCarousel images={dish.images} name={dish.name} />
-          {dish.description && <p className="dish__description">{dish.description}</p>}
-          <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
+        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide>
+          {zoom ? (
+            <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
+          ) : (
+            <>
+          <div className="tile-dialog__head">
+            <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
+            <div className="tile-dialog__info">
+              <p className="dish__price">{priceText(dish, t)}</p>
+              {dish.description && <p className="dish__description">{dish.description}</p>}
+              {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+              <DietaryTags tags={dish.dietaryTags} />
+              {remaining !== null && remaining > 0 && (
+                <p className="muted">{t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}</p>
+              )}
+            </div>
+          </div>
+          <InTileDialog.Provider value>
+            <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
+          </InTileDialog.Provider>
           <div className="modal__actions">
             <button type="button" onClick={() => setOpen(false)}>
               {t('order.doneCustomizing')}
             </button>
           </div>
+            </>
+          )}
         </Modal>
       )}
     </article>
@@ -372,6 +440,7 @@ function DishGroupTile(props: GroupProps) {
   const { t } = useTranslation()
   const id = useId()
   const [open, setOpen] = useState(false)
+  const [zoom, setZoom] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
   useOpenOnRequest(articleRef, () => flushSync(() => setOpen(true)))
   const count = variants.filter((v) => selections[v.id]).length
@@ -385,6 +454,8 @@ function DishGroupTile(props: GroupProps) {
       style={{ cursor: 'pointer' }}
     >
       <TileMedia slides={groupSlides(dish, variants)} name={dish.name}>
+        {count > 0 && <p className="badge tile__badge">{t('order.chosenCount', { count })}</p>}
+        <AllergenMark text={dish.allergenInfo} />
         <button type="button" className="tile__add" aria-label={t('order.chooseVariant', { name: dish.name })} onClick={() => setOpen(true)}>
           <TileIcon name="plus" />
         </button>
@@ -393,18 +464,31 @@ function DishGroupTile(props: GroupProps) {
         <h3 id={`${id}-name`}>{dish.name}</h3>
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
-        {count > 0 && <p className="badge">{t('order.chosenCount', { count })}</p>}
       </div>
       {open && (
-        <Modal title={dish.name} onClose={() => setOpen(false)} wide>
-          <ImageCarousel images={dish.images} name={dish.name} />
-          {dish.description && <p className="dish__description">{dish.description}</p>}
-          <VariantList {...props} idPrefix={id} />
+        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide>
+          {zoom ? (
+            <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
+          ) : (
+            <>
+          <div className="tile-dialog__head">
+            <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
+            <div className="tile-dialog__info">
+              {dish.description && <p className="dish__description">{dish.description}</p>}
+              {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+              <DietaryTags tags={dish.dietaryTags} />
+            </div>
+          </div>
+          <InTileDialog.Provider value>
+            <VariantList {...props} idPrefix={id} />
+          </InTileDialog.Provider>
           <div className="modal__actions">
             <button type="button" onClick={() => setOpen(false)}>
               {t('order.doneCustomizing')}
             </button>
           </div>
+            </>
+          )}
         </Modal>
       )}
     </article>
@@ -427,9 +511,10 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
   const optional = !!dish.adjustmentOptional
   // Each unit is shown open only when there is something to set besides a remark and the client must set it; otherwise
   // the units (or the dish's one remark) wait behind a show/hide button.
+  const inDialog = useContext(InTileDialog)
   const unitsAlwaysShown = customizable && !optional
   const [unitsShown, setUnitsShown] = useState<boolean | null>(null)
-  const showUnits = unitsAlwaysShown || (unitsShown ?? units.some((unit) => Object.keys(unit).length > 0))
+  const showUnits = unitsAlwaysShown || inDialog || (unitsShown ?? units.some((unit) => Object.keys(unit).length > 0))
   const toggleLabel = t(showUnits ? 'order.hideAdjustments' : 'order.showAdjustments')
 
   /** Changes one add-on of one ordered unit. */
@@ -518,7 +603,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
             </button>
           </div>
 
-          {!unitsAlwaysShown && (customizable || !yesNo) && (
+          {!unitsAlwaysShown && !inDialog && (customizable || !yesNo) && (
             <button
               type="button"
               className="button-quiet adjust-toggle"
@@ -545,7 +630,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                 const others = units.map((_, k) => k).filter((k) => k !== i)
                 const waiting = others.some((k) => !isAdjusted(selection, k, units[k]))
                 return (
-                  <details key={i} className="addon-unit">
+                  <details key={i} className="addon-unit" open={inDialog || undefined}>
                     <summary className="addon-unit__title">
                       {title}
                       {status && <span className={adjusted || optional ? 'muted' : 'addon-unit__missing'}> · {status}</span>}

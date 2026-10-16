@@ -7,6 +7,12 @@
 # Setup: repository variable CANARY_URL (e.g. https://kuskus-shel-ima.onrender.com), secret
 # RENDER_DEPLOY_HOOK_CANARY (the canary's deploy hook) and one secret per other site, named in
 # the matrix below. Without CANARY_URL the workflow does nothing.
+#
+# Which sites deploy is chosen in GitHub, with no pull request: repository variable DEPLOY_SITES,
+# site ids separated by spaces (e.g. "kuskus-shel-ima kuskus-liel"). Empty or missing: every site.
+# Any other word, e.g. "none": nothing deploys. CANARY_SITE (default kuskus-shel-ima) is the site
+# the canary job deploys; if it is not listed the canary is skipped and the listed sites deploy
+# without waiting for it. Secrets of sites that are not listed stay untouched.
 name: Deploy
 
 on:
@@ -27,7 +33,7 @@ permissions:
 jobs:
   canary:
     name: Deploy the canary
-    if: vars.CANARY_URL != '' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
+    if: vars.CANARY_URL != '' && (vars.DEPLOY_SITES == '' || contains(format(' {0} ', vars.DEPLOY_SITES), format(' {0} ', vars.CANARY_SITE || 'kuskus-shel-ima'))) && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -60,6 +66,8 @@ jobs:
   sites:
     name: Deploy ${{ matrix.site }}
     needs: canary
+    # Runs after a skipped canary too (not listed in DEPLOY_SITES), never after a failed one.
+    if: always() && vars.CANARY_URL != '' && needs.canary.result != 'failure' && needs.canary.result != 'cancelled' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -84,9 +92,11 @@ jobs:
             hook: RENDER_DEPLOY_HOOK_HOUSE_DELICACIES
     steps:
       - name: Trigger the deploy hook
+        # matrix is not available in a job-level if, so the DEPLOY_SITES choice is made here.
+        if: vars.DEPLOY_SITES == '' || contains(format(' {0} ', vars.DEPLOY_SITES), format(' {0} ', matrix.site))
         env:
           HOOK: ${{ secrets[matrix.hook] }}
-          SHA: ${{ needs.canary.outputs.sha }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           if [ -z "$HOOK" ]; then echo "::warning::Secret ${{ matrix.hook }} is not set; ${{ matrix.site }} was not deployed."; exit 0; fi
           curl -fsS -X POST "$HOOK&ref=$SHA" > /dev/null

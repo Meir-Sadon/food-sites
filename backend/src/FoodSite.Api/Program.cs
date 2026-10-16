@@ -51,8 +51,18 @@ if (site.Settings.OrderFlow is { } orderFlow && !OrderLayout.IsKnownFlow(orderFl
 if (site.Settings.Corners is { } corners && !Corners.IsKnown(corners))
     throw new InvalidOperationException(
         $"Site:Settings:Corners {corners} is not a corner shape. Known shapes: {string.Join(", ", Corners.All)}.");
+if (site.Settings.Palette is { } palette && !Palettes.IsKnown(palette))
+    throw new InvalidOperationException(
+        $"Site:Settings:Palette {palette} is not a palette. Known palettes: {string.Join(", ", Palettes.All)}.");
 builder.Services.Configure<SiteOptions>(config.GetSection(SiteOptions.Section));
 builder.Services.AddScoped<FeatureFlags>();
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<FoodSite.Api.Delivery.IAddressGeocoder, FoodSite.Api.Delivery.NominatimGeocoder>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(8);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("food-sites/1.0 (+https://github.com/Meir-Sadon/food-sites)");
+});
+builder.Services.AddScoped<FoodSite.Api.Delivery.DeliveryQuoter>();
 // Cookie names, the JWT issuer and the WhatsApp template names are built from the site id unless configured.
 builder.Services.PostConfigure<JwtOptions>(o => o.UseSiteDefaults(site));
 builder.Services.PostConfigure<FoodSite.Api.Auth.CookieOptions>(o => o.UseSiteDefaults(site));
@@ -73,9 +83,13 @@ builder.Services.AddSingleton<UserTokenService>();
 builder.Services.AddSingleton<SiteClock>();
 // Site usage (visits, started and sent orders): per-device events pruned after Usage:RawEventDays.
 builder.Services.Configure<UsageOptions>(config.GetSection(UsageOptions.Section));
-// Mail to the business owner goes out through Resend once Mail__ResendApiKey is set; without it nothing is sent.
+// Mail to the business owner goes out through Brevo once Mail__BrevoApiKey is set, else through Resend once
+// Mail__ResendApiKey is set; without either nothing is sent.
 builder.Services.Configure<FoodSite.Api.Mail.MailOptions>(config.GetSection(FoodSite.Api.Mail.MailOptions.Section));
-if (config.GetSection(FoodSite.Api.Mail.MailOptions.Section).Get<FoodSite.Api.Mail.MailOptions>()?.IsConfigured == true)
+var mailOptions = config.GetSection(FoodSite.Api.Mail.MailOptions.Section).Get<FoodSite.Api.Mail.MailOptions>();
+if (mailOptions?.UsesBrevo == true)
+    builder.Services.AddHttpClient<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.BrevoMailer>(c => c.Timeout = TimeSpan.FromSeconds(15));
+else if (mailOptions?.IsConfigured == true)
     builder.Services.AddHttpClient<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.ResendMailer>(c => c.Timeout = TimeSpan.FromSeconds(15));
 else
     builder.Services.AddSingleton<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.NoopMailer>();

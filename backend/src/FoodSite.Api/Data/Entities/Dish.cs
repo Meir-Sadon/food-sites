@@ -20,6 +20,9 @@ public class Dish
     public string? Description { get; set; }
     public string? AllergenInfo { get; set; }
 
+    /// <summary>Special-diet marks shown on the order page, ids from <c>Sites/DietaryTags</c>.</summary>
+    public List<string> DietaryTags { get; set; } = [];
+
     public SellBy SellBy { get; set; }
     public ChoiceMode ChoiceMode { get; set; }
 

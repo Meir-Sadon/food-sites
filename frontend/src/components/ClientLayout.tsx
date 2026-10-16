@@ -8,25 +8,38 @@ import { LeaveGuardProvider } from './LeaveGuardProvider'
 import { ScrollButtons } from './ScrollButtons'
 import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
-import { useCorners, useSite, useSiteStyle } from '../site/useSite'
+import { useApplyColors } from '../site/useApplyColors'
+import { useColors, useCorners, useFinish, useSite, useSiteStyle } from '../site/useSite'
 import { trackUsage } from '../usage/track'
 
 /**
- * Marks the page with the site's style and corners (`<html data-style data-corners>`), which `styles/*.css` and
- * `--corner-scale` in index.css select on; the admin keeps its own look.
+ * Marks the page with the site's style, corners and finish (`<html data-style data-corners data-font data-shadows data-spacing>`), which `styles/*.css` and
+ * `--corner-scale` in index.css select on; the admin keeps its own look. The palette and the admin's colours are set
+ * as CSS variables on the same element (`site/palettes.ts`) and removed when the client pages unmount.
  */
 function useStyleAttribute() {
   const style = useSiteStyle()
   const corners = useCorners()
+  const { palette, customColors, lineWidth } = useColors()
+  const { font, shadows, spacing, tileGroups } = useFinish()
   useEffect(() => {
     const root = document.documentElement
     root.dataset.style = style
     root.dataset.corners = corners
+    root.dataset.font = font
+    root.dataset.shadows = shadows
+    root.dataset.spacing = spacing
+    root.dataset.tileGroups = tileGroups
     return () => {
       delete root.dataset.style
       delete root.dataset.corners
+      delete root.dataset.font
+      delete root.dataset.shadows
+      delete root.dataset.spacing
+      delete root.dataset.tileGroups
     }
-  }, [style, corners])
+  }, [style, corners, font, shadows, spacing, tileGroups])
+  useApplyColors(palette, customColors, lineWidth)
 }
 
 function Shell() {
