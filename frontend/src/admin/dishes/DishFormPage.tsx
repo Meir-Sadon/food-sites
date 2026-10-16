@@ -50,6 +50,7 @@ interface DishForm {
   optionsTitle: string
   showOptionDifference: boolean
   dietaryTags: DietaryTag[]
+  dietaryTagsSingle: boolean
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
@@ -97,6 +98,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       optionsTitle: '',
       showOptionDifference: false,
       dietaryTags: [],
+      dietaryTagsSingle: false,
       isAddOnOnly: false,
       isSoldOut: false,
       openByDefault: false,
@@ -120,6 +122,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     optionsTitle: dish.optionsTitle ?? '',
     showOptionDifference: dish.showOptionDifference,
     dietaryTags: dish.dietaryTags ?? [],
+    dietaryTagsSingle: dish.dietaryTagsSingle ?? false,
     isAddOnOnly: dish.isAddOnOnly,
     isSoldOut: dish.isSoldOut,
     openByDefault: dish.openByDefault,
@@ -215,6 +218,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
       : [],
     parentDishIds: form.parentDishIds,
     dietaryTags: form.dietaryTags,
+    dietaryTagsSingle: form.dietaryTags.length > 1 && form.dietaryTagsSingle,
     questions: questionsInput(form.questions),
   }
 }
@@ -712,6 +716,15 @@ export function DishFormPage() {
               </label>
             ))}
           </fieldset>
+          {form.dietaryTags.length > 1 && (
+            <span className="with-info">
+              <label className="checkbox">
+                <input type="checkbox" checked={form.dietaryTagsSingle} onChange={(e) => set({ dietaryTagsSingle: e.target.checked })} />
+                {t('admin.dishes.dietarySingle')}
+              </label>
+              <Info text={t('admin.dishes.dietarySingleHint')} about={t('admin.dishes.dietarySingle')} />
+            </span>
+          )}
           {fieldError('dietaryTags')}
         </FormBlock>
 

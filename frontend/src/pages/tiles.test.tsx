@@ -77,23 +77,12 @@ describe('The tiles style', () => {
     expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
   })
 
-  it('shows the dietary tags in a block of their own in the dialog', async () => {
-    const data = tilesMenu()
-    data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, dietaryTags: ['vegan', 'glutenFree'] } : d))
-    const user = open(data)
-    const heading = await screen.findByRole('heading', { level: 3, name: 'פלאפל' })
-    await user.click(heading) // adds it
-    await user.click(heading) // opens its adjustments
-    const tags = within(screen.getByRole('dialog', { name: 'פלאפל' })).getByRole('list', { name: 'באילו אפשרויות המנה מגיעה' })
-    expect(within(tags).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['טבעונית', 'ללא גלוטן'])
-  })
-
   it('enlarges the picture in the dialog to fill it, and goes back to the details', async () => {
     const data = tilesMenu()
     data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, images: ['https://img/falafel.jpg'] } : d))
     const user = open(data)
     const heading = await screen.findByRole('heading', { level: 3, name: 'פלאפל' })
-    await user.click(heading) // adds it
+    await user.click(within(heading.closest('article')!).getByRole('button', { name: 'הוספה להזמנה: פלאפל' }))
     await user.click(heading) // opens its adjustments
     const dialog = screen.getByRole('dialog', { name: 'פלאפל' })
 
@@ -115,16 +104,18 @@ describe('The tiles style', () => {
     expect(within(tile).getByText('1 נבחרו')).toBeInTheDocument()
   })
 
-  it('adds a dish with no picture when its tile is tapped, not only the round button', async () => {
+  it('does not add a dish when its tile is tapped: the add button comes first, then a tap opens its choices', async () => {
     const user = open()
     const tile = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('article')!
     await user.click(screen.getByRole('heading', { level: 3, name: 'חומוס פשוט' }))
-    expect(within(tile).getByRole('group', { name: 'חומוס פשוט' })).toBeInTheDocument()
-  })
+    expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
 
-  it('opens the dialog when a dish that needs choices is tapped', async () => {
-    const user = open()
-    await user.click(await screen.findByRole('heading', { level: 3, name: 'עוף בתנור' }))
+    const chicken = (await screen.findByRole('heading', { level: 3, name: 'עוף בתנור' })).closest('article')!
+    await user.click(screen.getByRole('heading', { level: 3, name: 'עוף בתנור' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await user.click(within(chicken).getByRole('button', { name: 'הוספה להזמנה: עוף בתנור' }))
+    await user.click(within(screen.getByRole('dialog', { name: 'עוף בתנור' })).getByRole('button', { name: 'סיום' }))
+    await user.click(screen.getByRole('heading', { level: 3, name: 'עוף בתנור' }))
     expect(screen.getByRole('dialog', { name: 'עוף בתנור' })).toBeInTheDocument()
   })
 

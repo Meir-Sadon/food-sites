@@ -1,6 +1,4 @@
 import type { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
-
 const slash = <path d="M4 20 20 4" />
 
 /** One drawing per mark, on a 24 x 24 grid; "free of" marks have the thing crossed out. */
@@ -43,6 +41,12 @@ const ICONS: Record<string, ReactNode> = {
       {slash}
     </>
   ),
+  saltFree: (
+    <>
+      <path d="M9 3h6v4H9V3Zm-1 4h8l1 13H7L8 7Z" />
+      {slash}
+    </>
+  ),
   kosherForPassover: (
     <>
       <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -51,26 +55,11 @@ const ICONS: Record<string, ReactNode> = {
   ),
 }
 
-function TagIcon({ tag }: { tag: string }) {
+/** The small drawing of a dietary tag, for beside its check box. */
+export function DietaryIcon({ tag }: { tag: string }) {
   return (
-    <svg className="dietary-tags__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg className="dietary-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {ICONS[tag]}
     </svg>
-  )
-}
-
-/** The dish's special-diet marks, each with its own icon, in a block of their own; nothing when it has none. */
-export function DietaryTags({ tags }: { tags?: string[] }) {
-  const { t } = useTranslation()
-  if (!tags?.length) return null
-  return (
-    <ul className="dietary-tags" aria-label={t('order.dietaryTags')}>
-      {tags.map((tag) => (
-        <li key={tag}>
-          <TagIcon tag={tag} />
-          {t(`dietaryTags.${tag}`)}
-        </li>
-      ))}
-    </ul>
   )
 }

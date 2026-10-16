@@ -23,6 +23,9 @@ public class Dish
     /// <summary>Special-diet marks shown on the order page, ids from <c>Sites/DietaryTags</c>.</summary>
     public List<string> DietaryTags { get; set; } = [];
 
+    /// <summary>The client may pick only one of the dietary tags for a unit (radio buttons) instead of several together.</summary>
+    public bool DietaryTagsSingle { get; set; }
+
     public SellBy SellBy { get; set; }
     public ChoiceMode ChoiceMode { get; set; }
 

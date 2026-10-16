@@ -84,6 +84,7 @@ export const dish = (id: number, name: string, categoryId: number, patch: Partia
   optionsTitle: null,
   showOptionDifference: false,
   dietaryTags: [],
+  dietaryTagsSingle: false,
   ...patch,
 })
 

@@ -309,6 +309,22 @@ public class OrderBuilderTests
     }
 
     [Fact]
+    public void Dietary_tags_set_to_one_only_are_a_single_choice_and_salt_free_is_a_tag()
+    {
+        var dish = Fixed(1, "קציצות", (10, "קציצות", 30, true));
+        dish.DietaryTags = ["glutenFree", "saltFree"];
+        dish.DietaryTagsSingle = true;
+
+        var question = Assert.Single(DishRules.Questions(dish));
+        Assert.Equal(QuestionKind.SingleChoice, question.Kind);
+        Assert.Equal(["ללא גלוטן", "ללא מלח"], question.Choices);
+
+        var (items, errors) = Build(Menu(dish), new OrderLineInput(1, null, 1, [], Answers: [new AnswerInput(FoodSite.Api.Sites.DietaryTags.QuestionId, "ללא מלח")]));
+        Assert.False(errors.Any);
+        Assert.Equal("ללא מלח", items.Single().Answers.Single().Answer);
+    }
+
+    [Fact]
     public void A_variant_is_not_offered_under_itself_through_its_main_dish()
     {
         var main = Fixed(1, "סביאה", (10, "סביאה", 30, true));

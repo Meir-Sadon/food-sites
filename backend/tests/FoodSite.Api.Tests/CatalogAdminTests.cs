@@ -610,8 +610,9 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
     public async Task Dietary_tags_are_saved_cleaned_kept_when_left_out_and_reach_the_menu()
     {
         var category = await AddCategory("עוגות");
-        var dish = await CreateOk(Fixed("עוגה", category.Id) with { DietaryTags = ["vegan", "glutenFree", "vegan"] });
+        var dish = await CreateOk(Fixed("עוגה", category.Id) with { DietaryTags = ["vegan", "glutenFree", "vegan"], DietaryTagsSingle = true });
         Assert.Equal(["glutenFree", "vegan"], dish.DietaryTags);
+        Assert.True(dish.DietaryTagsSingle);
 
         var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
         Assert.Equal(["glutenFree", "vegan"], menu.Dishes.Single(d => d.Id == dish.Id).DietaryTags);

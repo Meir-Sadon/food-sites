@@ -102,8 +102,10 @@ export interface DishOption {
 
 /** The special-diet marks a dish can carry (FoodSite.Api `DietaryTags`); the texts are `dietaryTags.<id>` in he.json. */
 export const DIETARY_TAGS = [
-  'glutenFree', 'vegetarian', 'vegan', 'parve', 'lactoseFree', 'sugarFree', 'nutFree', 'eggFree', 'kosherForPassover',
+  'glutenFree', 'vegetarian', 'vegan', 'parve', 'lactoseFree', 'sugarFree', 'nutFree', 'eggFree', 'saltFree', 'kosherForPassover',
 ] as const
+/** The id of the question a dish with dietary tags asks (FoodSite.Api `DietaryTags.QuestionId`); its choices are the tags in order. */
+export const DIETARY_QUESTION_ID = -1
 export type DietaryTag = (typeof DIETARY_TAGS)[number]
 
 export interface DishImage {
@@ -141,6 +143,8 @@ export interface Dish {
   isHidden: boolean
   /** Special-diet marks (ids from DIETARY_TAGS) shown on the order page. */
   dietaryTags: DietaryTag[]
+  /** The client may pick only one of the tags (radio buttons) instead of several together. */
+  dietaryTagsSingle: boolean
   options: DishOption[]
   images: DishImage[]
   /** Dishes this dish is offered under as an add-on. */
@@ -231,6 +235,7 @@ export interface DishInput {
   showOptionDifference?: boolean
   /** The whole list of the dish's special-diet marks; left out, they stay as they are. */
   dietaryTags?: DietaryTag[]
+  dietaryTagsSingle?: boolean
 }
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024

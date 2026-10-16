@@ -9,7 +9,7 @@ public static class DietaryTags
 {
     public static readonly IReadOnlyList<string> All =
     [
-        "glutenFree", "vegetarian", "vegan", "parve", "lactoseFree", "sugarFree", "nutFree", "eggFree", "kosherForPassover",
+        "glutenFree", "vegetarian", "vegan", "parve", "lactoseFree", "sugarFree", "nutFree", "eggFree", "saltFree", "kosherForPassover",
     ];
 
     /// <summary>The Hebrew name of each tag, as the client picks it and as it is written on the order line.</summary>
@@ -23,6 +23,7 @@ public static class DietaryTags
         ["sugarFree"] = "ללא סוכר",
         ["nutFree"] = "ללא אגוזים",
         ["eggFree"] = "ללא ביצים",
+        ["saltFree"] = "ללא מלח",
         ["kosherForPassover"] = "כשר לפסח",
     };
 
