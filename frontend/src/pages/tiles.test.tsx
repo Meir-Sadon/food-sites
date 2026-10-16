@@ -84,7 +84,7 @@ describe('The tiles style', () => {
     const heading = await screen.findByRole('heading', { level: 3, name: 'פלאפל' })
     await user.click(heading) // adds it
     await user.click(heading) // opens its adjustments
-    const tags = within(screen.getByRole('dialog', { name: 'פלאפל' })).getByRole('list', { name: 'התאמה לתזונה' })
+    const tags = within(screen.getByRole('dialog', { name: 'פלאפל' })).getByRole('list', { name: 'באילו אפשרויות המנה מגיעה' })
     expect(within(tags).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['טבעונית', 'ללא גלוטן'])
   })
 

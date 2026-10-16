@@ -12,6 +12,25 @@ public static class DietaryTags
         "glutenFree", "vegetarian", "vegan", "parve", "lactoseFree", "sugarFree", "nutFree", "eggFree", "kosherForPassover",
     ];
 
+    /// <summary>The Hebrew name of each tag, as the client picks it and as it is written on the order line.</summary>
+    public static readonly IReadOnlyDictionary<string, string> Labels = new Dictionary<string, string>
+    {
+        ["glutenFree"] = "ללא גלוטן",
+        ["vegetarian"] = "צמחונית",
+        ["vegan"] = "טבעונית",
+        ["parve"] = "פרווה",
+        ["lactoseFree"] = "ללא לקטוז",
+        ["sugarFree"] = "ללא סוכר",
+        ["nutFree"] = "ללא אגוזים",
+        ["eggFree"] = "ללא ביצים",
+        ["kosherForPassover"] = "כשר לפסח",
+    };
+
+    /// <summary>The id of the question a dish with tags asks (never a stored question, so it cannot clash with one).</summary>
+    public const int QuestionId = -1;
+
+    public const string QuestionText = "אפשר להזמין את המנה גם בגרסה:";
+
     public static bool IsKnown(string? tag) => tag is not null && All.Contains(tag);
 
     /// <summary>The known tags of the list, each once, in the order of <see cref="All"/>.</summary>

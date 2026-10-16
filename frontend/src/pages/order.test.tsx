@@ -54,8 +54,8 @@ describe('Order page', () => {
     renderAt('/')
     await screen.findByRole('heading', { level: 2, name: 'עופות' })
     const card = screen.getByRole('article', { name: data.dishes[0].name })
-    expect(within(within(card).getByRole('list', { name: 'התאמה לתזונה' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['פרווה', 'כשר לפסח'])
-    expect(screen.getAllByRole('list', { name: 'התאמה לתזונה' })).toHaveLength(1)
+    expect(within(within(card).getByRole('list', { name: 'באילו אפשרויות המנה מגיעה' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['פרווה', 'כשר לפסח'])
+    expect(screen.getAllByRole('list', { name: 'באילו אפשרויות המנה מגיעה' })).toHaveLength(1)
   })
 
   it('groups dishes by category, all open, and hides add-on-only dishes', async () => {
@@ -479,6 +479,31 @@ describe('Order page', () => {
     expect(within(card).getAllByRole('textbox')).toHaveLength(1)
     expect(within(card).queryByRole('group', { name: /מנה 1/ })).not.toBeInTheDocument()
     expect(screen.queryByText(/יש להתאים כל מנה/)).not.toBeInTheDocument()
+  })
+
+  it('lets the client pick a special version of a dish marked with dietary tags, open without pressing anything', async () => {
+    const cake = menuDish(4, 'עוגה', 1, {
+      adjustmentOptional: true,
+      dietaryTags: ['vegan', 'glutenFree'],
+      questions: [{ id: -1, text: 'אפשר להזמין את המנה גם בגרסה:', kind: 'MultiChoice', choices: ['טבעונית', 'ללא גלוטן'], showAsDropdown: false, isRequired: false }],
+    })
+    const { api, user } = await openOrderPage({
+      'GET /api/menu': () => menu({ dishes: [...menu().dishes, cake] }),
+      'POST /api/orders': () => confirmation,
+    })
+    const card = dishCard('עוגה')
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: עוגה' }))
+    await user.click(within(card).getByLabelText('ללא גלוטן'))
+
+    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
+    await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({
+      items: [{ dishId: 4, quantity: 1, addOnUnits: [{ answers: [{ questionId: -1, choices: ['ללא גלוטן'] }] }] }],
+    })
   })
 
   it('asks the dish questions for each ordered unit and sends the answers', async () => {

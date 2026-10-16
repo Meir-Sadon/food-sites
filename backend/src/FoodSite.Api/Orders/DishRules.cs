@@ -28,12 +28,26 @@ public static class DishRules
     }
 
     /// <summary>
-    /// The questions asked when ordering a dish: a variant's main dish's questions, then its own. Questions (and
-    /// MainDish.Questions) must be loaded.
+    /// The questions asked when ordering a dish: a variant's main dish's questions, then its own, then, for a dish with
+    /// dietary tags, one optional multiple-choice question over those tags (<see cref="Sites.DietaryTags.QuestionId"/>)
+    /// so the client can pick a special version or leave the regular one. Questions (and MainDish.Questions) must be loaded.
     /// </summary>
-    public static IReadOnlyList<DishQuestion> Questions(Dish dish) =>
-        (dish.MainDish?.Questions ?? []).OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)
+    public static IReadOnlyList<DishQuestion> Questions(Dish dish)
+    {
+        var questions = (dish.MainDish?.Questions ?? []).OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)
             .Concat(dish.Questions.OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)).ToList();
+        var tags = dish.DietaryTags.Where(Sites.DietaryTags.Labels.ContainsKey).ToList();
+        if (tags.Count > 0)
+            questions.Add(new DishQuestion
+            {
+                Id = Sites.DietaryTags.QuestionId,
+                Text = Sites.DietaryTags.QuestionText,
+                Kind = QuestionKind.MultiChoice,
+                Choices = tags.Select(t => Sites.DietaryTags.Labels[t]).ToList(),
+                DisplayOrder = int.MaxValue,
+            });
+        return questions;
+    }
 
     /// <summary>The add-on is added or not, never in an amount: a check box under this parent, or a yes or no dish.</summary>
     public static bool IsCheckbox(DishAddOn link, Dish addOn) => link.IsCheckbox || addOn.IsYesNo;
