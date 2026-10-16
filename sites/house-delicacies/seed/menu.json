@@ -1,0 +1,617 @@
+{
+  "categories": [
+    {
+      "name": "קובות ומרקים",
+      "dishes": [
+        {
+          "name": "קובה מטפוניה",
+          "description": "קובה למרקי סלק, במיה ודלעת. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 16 יחידות",
+              "price": 80,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 28 יחידות",
+              "price": 110
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קובה מטפוניה (רגיל)",
+          "mainDish": "קובה מטפוניה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה מטפוניה (ללא גלוטן)",
+          "mainDish": "קובה מטפוניה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה מטפוניה (צמחוני)",
+          "mainDish": "קובה מטפוניה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה חמוסטה",
+          "description": "קובה למרק חמוץ צהוב, במילוי בשר מפורק (סיסקא). חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 15 יחידות",
+              "price": 80,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 24 יחידות",
+              "price": 110
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קובה חמוסטה (רגיל)",
+          "mainDish": "קובה חמוסטה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה חמוסטה (ללא גלוטן)",
+          "mainDish": "קובה חמוסטה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה חמוסטה (צמחוני)",
+          "mainDish": "קובה חמוסטה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה נבלוסיה",
+          "description": "קובה לטיגון. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 8 יחידות",
+              "price": 70,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 14 יחידות",
+              "price": 110
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קובה נבלוסיה (רגיל)",
+          "mainDish": "קובה נבלוסיה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה נבלוסיה (ללא גלוטן)",
+          "mainDish": "קובה נבלוסיה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה נבלוסיה (צמחוני)",
+          "mainDish": "קובה נבלוסיה",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה XL",
+          "description": "קובה גדולה במילוי עשיר. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 9 יחידות",
+              "price": 110,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 18 יחידות",
+              "price": 190
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קובה XL (רגיל)",
+          "mainDish": "קובה XL",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה XL (ללא גלוטן)",
+          "mainDish": "קובה XL",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה XL (צמחוני)",
+          "mainDish": "קובה XL",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה חמו",
+          "description": "קובה חמו. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 8 יחידות",
+              "price": 100,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 16 יחידות",
+              "price": 190
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קובה חמו (רגיל)",
+          "mainDish": "קובה חמו",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה חמו (ללא גלוטן)",
+          "mainDish": "קובה חמו",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קובה חמו (צמחוני)",
+          "mainDish": "קובה חמו",
+          "useMainDishPrice": true
+        }
+      ]
+    },
+    {
+      "name": "מאפים ומטוגנים",
+      "dishes": [
+        {
+          "name": "סיגרים",
+          "description": "במילוי בשר, כבד, דג או תפו\"א. ארוכים ובשרניים במיוחד. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 10 יחידות",
+              "price": 80,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 20 יחידות",
+              "price": 140
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סיגרים (רגיל)",
+          "mainDish": "סיגרים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "סיגרים (ללא גלוטן)",
+          "mainDish": "סיגרים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "סיגרים (צמחוני)",
+          "mainDish": "סיגרים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "אגרולים",
+          "description": "במילוי ירק בטעמים אסיתיים. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 12 יחידות",
+              "price": 80,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 24 יחידות",
+              "price": 140
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "אגרולים (רגיל)",
+          "mainDish": "אגרולים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "אגרולים (ללא גלוטן)",
+          "mainDish": "אגרולים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "אגרולים (צמחוני)",
+          "mainDish": "אגרולים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "צ'יבוראקי",
+          "description": "במילוי בשר או תפו\"א. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 6 יחידות",
+              "price": 120,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 12 יחידות",
+              "price": 220
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "צ'יבוראקי (רגיל)",
+          "mainDish": "צ'יבוראקי",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "צ'יבוראקי (ללא גלוטן)",
+          "mainDish": "צ'יבוראקי",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "צ'יבוראקי (צמחוני)",
+          "mainDish": "צ'יבוראקי",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "סמבוסק",
+          "description": "במילוי בשר, או חומוס ובצל. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 6 יחידות",
+              "price": 120,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 12 יחידות",
+              "price": 220
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סמבוסק (רגיל)",
+          "mainDish": "סמבוסק",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "סמבוסק (ללא גלוטן)",
+          "mainDish": "סמבוסק",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "סמבוסק (צמחוני)",
+          "mainDish": "סמבוסק",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "בורקס קריספי",
+          "description": "במילוי בשר או תפו\"א, מתכון יהודי. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 6 יחידות",
+              "price": 120,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 12 יחידות",
+              "price": 200
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "בורקס קריספי (רגיל)",
+          "mainDish": "בורקס קריספי",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "בורקס קריספי (ללא גלוטן)",
+          "mainDish": "בורקס קריספי",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "בורקס קריספי (צמחוני)",
+          "mainDish": "בורקס קריספי",
+          "useMainDishPrice": true
+        }
+      ]
+    },
+    {
+      "name": "בשרי ותבשילים",
+      "dishes": [
+        {
+          "name": "מפרום",
+          "description": "עם בשר בקר. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 12 יחידות",
+              "price": 110,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 24 יחידות",
+              "price": 200
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "מפרום (רגיל)",
+          "mainDish": "מפרום",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "מפרום (ללא גלוטן)",
+          "mainDish": "מפרום",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "מפרום (צמחוני)",
+          "mainDish": "מפרום",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קציצות דג / בשר",
+          "description": "לבישול ברוטב. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 12 יחידות",
+              "price": 100,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 24 יחידות",
+              "price": 180
+            },
+            {
+              "label": "מארז 36 יחידות",
+              "price": 260
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קציצות דג / בשר (רגיל)",
+          "mainDish": "קציצות דג / בשר",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קציצות דג / בשר (ללא גלוטן)",
+          "mainDish": "קציצות דג / בשר",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קציצות דג / בשר (צמחוני)",
+          "mainDish": "קציצות דג / בשר",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קבב",
+          "description": "קבב בשר. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "מארז 12 יחידות",
+              "price": 80,
+              "isDefault": true
+            },
+            {
+              "label": "מארז 24 יחידות",
+              "price": 140
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קבב (רגיל)",
+          "mainDish": "קבב",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קבב (ללא גלוטן)",
+          "mainDish": "קבב",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "קבב (צמחוני)",
+          "mainDish": "קבב",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "המבורגרים",
+          "description": "המבורגר בשר. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "options": [
+            {
+              "label": "150 גרם",
+              "price": 13,
+              "isDefault": true
+            },
+            {
+              "label": "200 גרם",
+              "price": 18
+            }
+          ],
+          "optionsTitle": "בחרו גודל מארז",
+          "maxAmount": 50,
+          "unitName": "יחידה",
+          "minAmount": 1,
+          "amountStep": 1
+        },
+        {
+          "name": "המבורגרים (רגיל)",
+          "mainDish": "המבורגרים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "המבורגרים (ללא גלוטן)",
+          "mainDish": "המבורגרים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "המבורגרים (צמחוני)",
+          "mainDish": "המבורגרים",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "מרגז",
+          "description": "בחריפות פיקנטית, נמכר לפי משקל. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Weight",
+          "unitPrice": 120,
+          "minAmount": 0.5,
+          "maxAmount": 10,
+          "amountStep": 0.5
+        },
+        {
+          "name": "מרגז (רגיל)",
+          "mainDish": "מרגז",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "מרגז (ללא גלוטן)",
+          "mainDish": "מרגז",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "מרגז (צמחוני)",
+          "mainDish": "מרגז",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "צ'וריסוס",
+          "description": "בטעמים ארגנטינאים, נמכר לפי משקל. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Weight",
+          "unitPrice": 120,
+          "minAmount": 0.5,
+          "maxAmount": 10,
+          "amountStep": 0.5
+        },
+        {
+          "name": "צ'וריסוס (רגיל)",
+          "mainDish": "צ'וריסוס",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "צ'וריסוס (ללא גלוטן)",
+          "mainDish": "צ'וריסוס",
+          "useMainDishPrice": true
+        },
+        {
+          "name": "צ'וריסוס (צמחוני)",
+          "mainDish": "צ'וריסוס",
+          "useMainDishPrice": true
+        }
+      ]
+    },
+    {
+      "name": "סלטים וממרחים",
+      "dishes": [
+        {
+          "name": "סלט מטבוחה",
+          "description": "בטעמים אותנטיים. מארז 250 גרם. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "unitPrice": 20,
+          "unitName": "מארז 250 גרם",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סלט מאשווייה",
+          "description": "מתכון ייחודי, טעמים עמוקים. מארז 250 גרם. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "unitPrice": 20,
+          "unitName": "מארז 250 גרם",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חומוס ביתי",
+          "description": "מתכון ייחודי, טעמים של פעם. מארז 250 גרם. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "unitPrice": 20,
+          "unitName": "מארז 250 גרם",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סחוג ירוק",
+          "description": "מתכון ייחודי, טעמים של פעם. מארז 250 גרם. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "unitPrice": 20,
+          "unitName": "מארז 250 גרם",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "פלפל חריף בכבוש",
+          "description": "מארז 250 גרם. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
+          "sellBy": "Units",
+          "unitPrice": 20,
+          "unitName": "מארז 250 גרם",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        }
+      ]
+    }
+  ]
+}

@@ -10,6 +10,7 @@ namespace FoodSite.Api.Data;
 /// Pictures are URLs, either absolute or served from the site root (the site's <c>public/</c> folder).
 /// <c>AddOnOf</c> names the dishes (from any category, this seed or the database) a dish is offered under as an add-on.
 /// <c>Options</c> make a fixed-choice dish (<c>OptionsTitle</c> is the heading over them, <c>ShowOptionDifference</c> shows the other options as "+₪X" over the default); <c>AddOns</c> (with <c>AddOnGroups</c>) are the dish's own add-ons, linked once it is added.
+/// <c>MainDish</c> makes a dish a variant shown in the card of that dish (listed earlier in the same category), with <c>UseMainDishPrice</c> taking its choices and prices from it.
 /// <c>Questions</c> are asked of the client for each ordered unit, like the ones the admin adds in the dish form.
 /// </summary>
 public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
@@ -35,7 +36,9 @@ public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
         IReadOnlyList<SeedAddOnGroup>? AddOnGroups = null,
         IReadOnlyList<SeedAddOn>? AddOns = null,
         string? OptionsTitle = null,
-        bool ShowOptionDifference = false);
+        bool ShowOptionDifference = false,
+        string? MainDish = null,
+        bool UseMainDishPrice = false);
 
     /// <summary>A fixed choice of the dish (a size or a weight); with any, the dish is a fixed-choice dish and its amount settings are unused.</summary>
     public record SeedOption(string Label, decimal Price, bool IsDefault = false, decimal Amount = 1);

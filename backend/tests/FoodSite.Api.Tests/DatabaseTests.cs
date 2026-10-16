@@ -101,6 +101,28 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
+    public async Task A_menu_seed_adds_variants_that_use_their_main_dish_price()
+    {
+        var seed = new MenuSeed([
+            new("מאפים", [
+                new("סיגרים", Options: [new("מארז 10", 80m, true), new("מארז 20", 140m)]),
+                new("סיגרים (צמחוני)", MainDish: "סיגרים", UseMainDishPrice: true),
+            ]),
+        ]);
+        await using var db = _factory.CreateDbContext();
+
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+        await DatabaseInitializer.ApplySeedAsync(db, seed, NullLogger.Instance);
+
+        db.ChangeTracker.Clear();
+        var main = await db.Dishes.SingleAsync(d => d.Name == "סיגרים");
+        var variant = await db.Dishes.SingleAsync(d => d.Name == "סיגרים (צמחוני)");
+        Assert.Equal(main.Id, variant.MainDishId);
+        Assert.True(variant.UseMainDishPrice);
+        Assert.Equal(main.CategoryId, variant.CategoryId);
+    }
+
+    [Fact]
     public async Task A_menu_seed_adds_dish_questions()
     {
         var seed = new MenuSeed([

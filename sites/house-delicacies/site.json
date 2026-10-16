@@ -19,7 +19,9 @@
     "contactPhone": "053-9660693",
     "contactAddress": "מודיעין",
     "kashrutText": "כשר, הבשר בשרות מהדרין",
-    "deliveryFeeText": "משלוח בהזמנה מ-50 ₪"
+    "deliveryFeeText": "משלוח 30 ₪, מינימום הזמנה למשלוח 50 ₪"
   },
-  "seed": []
+  "seed": [
+    "seed/menu.json"
+  ]
 }
