@@ -88,6 +88,8 @@ jobs:
             hook: RENDER_DEPLOY_HOOK_YEMENI_DISHES_SAPIR
           - site: hummus-el-masri
             hook: RENDER_DEPLOY_HOOK_HUMMUS_EL_MASRI
+          - site: house-delicacies
+            hook: RENDER_DEPLOY_HOOK_HOUSE_DELICACIES
     steps:
       - name: Trigger the deploy hook
         # matrix is not available in a job-level if, so the DEPLOY_SITES choice is made here.
