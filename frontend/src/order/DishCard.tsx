@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useId, useRef, useState, type Rea
 import { flushSync } from 'react-dom'
 import { prefersReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
+import { DietaryTags } from './DietaryTags'
 import { useSiteStyle } from '../site/useSite'
 import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
@@ -80,6 +81,7 @@ function DishDetails({ dish, nameId, variant }: { dish: MenuDish; nameId: string
           {t('order.allergens')}: {dish.allergenInfo}
         </p>
       )}
+      <DietaryTags tags={dish.dietaryTags} />
     </>
   )
 }
@@ -144,6 +146,7 @@ function PlainDishGroupCard(props: GroupProps) {
             {t('order.allergens')}: {dish.allergenInfo}
           </p>
         )}
+        <DietaryTags tags={dish.dietaryTags} />
         <VariantList {...props} idPrefix={id} />
       </div>
     </article>
@@ -404,6 +407,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
               <p className="dish__price">{priceText(dish, t)}</p>
               {dish.description && <p className="dish__description">{dish.description}</p>}
               {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+              <DietaryTags tags={dish.dietaryTags} />
               {remaining !== null && remaining > 0 && (
                 <p className="muted">{t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}</p>
               )}
@@ -472,6 +476,7 @@ function DishGroupTile(props: GroupProps) {
             <div className="tile-dialog__info">
               {dish.description && <p className="dish__description">{dish.description}</p>}
               {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+              <DietaryTags tags={dish.dietaryTags} />
             </div>
           </div>
           <InTileDialog.Provider value>

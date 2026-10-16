@@ -973,6 +973,31 @@ label {
   white-space: pre-line;
 }
 
+.dietary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dietary-tags li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-soft);
+  font-size: 0.8125rem;
+}
+
+.dietary-tags__icon {
+  flex: none;
+  color: var(--color-accent);
+}
+
 .dish__price {
   color: var(--color-accent);
   font-weight: 700;

@@ -77,6 +77,17 @@ describe('The tiles style', () => {
     expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
   })
 
+  it('shows the dietary tags in a block of their own in the dialog', async () => {
+    const data = tilesMenu()
+    data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, dietaryTags: ['vegan', 'glutenFree'] } : d))
+    const user = open(data)
+    const heading = await screen.findByRole('heading', { level: 3, name: 'פלאפל' })
+    await user.click(heading) // adds it
+    await user.click(heading) // opens its adjustments
+    const tags = within(screen.getByRole('dialog', { name: 'פלאפל' })).getByRole('list', { name: 'התאמה לתזונה' })
+    expect(within(tags).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['טבעונית', 'ללא גלוטן'])
+  })
+
   it('enlarges the picture in the dialog to fill it, and goes back to the details', async () => {
     const data = tilesMenu()
     data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, images: ['https://img/falafel.jpg'] } : d))

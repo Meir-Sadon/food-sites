@@ -164,6 +164,8 @@ export interface MenuDish {
   optionsTitle?: string | null
   /** Show each option as what it adds to the default option's price. */
   showOptionDifference?: boolean
+  /** Special-diet marks (ids from DIETARY_TAGS in api/catalog.ts). */
+  dietaryTags?: string[]
 }
 
 /** How a dish question is answered (FoodSite.Api `QuestionKind`). */

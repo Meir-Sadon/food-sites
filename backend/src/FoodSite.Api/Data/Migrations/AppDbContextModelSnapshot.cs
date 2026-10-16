@@ -199,6 +199,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
 
+                    b.PrimitiveCollection<List<string>>("DietaryTags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 

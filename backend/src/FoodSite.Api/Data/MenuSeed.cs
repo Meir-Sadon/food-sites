@@ -35,7 +35,8 @@ public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
         IReadOnlyList<SeedAddOnGroup>? AddOnGroups = null,
         IReadOnlyList<SeedAddOn>? AddOns = null,
         string? OptionsTitle = null,
-        bool ShowOptionDifference = false);
+        bool ShowOptionDifference = false,
+        IReadOnlyList<string>? DietaryTags = null);
 
     /// <summary>A fixed choice of the dish (a size or a weight); with any, the dish is a fixed-choice dish and its amount settings are unused.</summary>
     public record SeedOption(string Label, decimal Price, bool IsDefault = false, decimal Amount = 1);

@@ -5,8 +5,10 @@ import {
   DESCRIPTION_MAX_LENGTH,
   UNIT_NAME_MAX_LENGTH,
   categoriesApi,
+  DIETARY_TAGS,
   dishesApi,
   type Category,
+  type DietaryTag,
   type ChoiceMode,
   type Dish,
   type DishInput,
@@ -47,6 +49,7 @@ interface DishForm {
   unitName: string
   optionsTitle: string
   showOptionDifference: boolean
+  dietaryTags: DietaryTag[]
   isAddOnOnly: boolean
   isSoldOut: boolean
   openByDefault: boolean
@@ -93,6 +96,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       unitName: '',
       optionsTitle: '',
       showOptionDifference: false,
+      dietaryTags: [],
       isAddOnOnly: false,
       isSoldOut: false,
       openByDefault: false,
@@ -115,6 +119,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     unitName: dish.unitName ?? '',
     optionsTitle: dish.optionsTitle ?? '',
     showOptionDifference: dish.showOptionDifference,
+    dietaryTags: dish.dietaryTags ?? [],
     isAddOnOnly: dish.isAddOnOnly,
     isSoldOut: dish.isSoldOut,
     openByDefault: dish.openByDefault,
@@ -209,6 +214,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
       ? form.options.map((o) => ({ id: o.id, label: o.label, amount: num(o.amount) ?? 0, price: num(o.price) ?? 0, isDefault: o.isDefault }))
       : [],
     parentDishIds: form.parentDishIds,
+    dietaryTags: form.dietaryTags,
     questions: questionsInput(form.questions),
   }
 }
@@ -691,6 +697,22 @@ export function DishFormPage() {
           />
           {fieldError('maxPerSupplyDate')}
         </span>
+        </FormBlock>
+
+        <FormBlock title={t('admin.dishes.blocks.dietary')} about={t('admin.dishes.blocks.dietaryAbout')} invalid={invalid('dietaryTags')}>
+          <fieldset className="row dietary-options" aria-label={t('admin.dishes.blocks.dietary')}>
+            {DIETARY_TAGS.map((tag) => (
+              <label key={tag} className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.dietaryTags.includes(tag)}
+                  onChange={(e) => set({ dietaryTags: e.target.checked ? [...form.dietaryTags, tag] : form.dietaryTags.filter((x) => x !== tag) })}
+                />
+                {t(`dietaryTags.${tag}`)}
+              </label>
+            ))}
+          </fieldset>
+          {fieldError('dietaryTags')}
         </FormBlock>
 
         <FormBlock title={t('admin.dishes.blocks.parents')} about={t('admin.dishes.blocks.parentsAbout')} invalid={invalid('parentDishIds')}>

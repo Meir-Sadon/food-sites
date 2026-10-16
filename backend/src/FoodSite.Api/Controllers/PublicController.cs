@@ -76,7 +76,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<MenuQuestionDto>? Questions = null,
         bool AdjustmentOptional = false,
         string? OptionsTitle = null,
-        bool ShowOptionDifference = false);
+        bool ShowOptionDifference = false,
+        IReadOnlyList<string>? DietaryTags = null);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
     /// <summary>DefaultAnswer is the answer already picked for the client (a choice, or yes / no), if the admin set one.</summary>
@@ -192,7 +193,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 DishRules.Questions(d)
                     .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
                 (d.MainDish ?? d).AdjustmentOptional,
-                p.OptionsTitle, p.ShowOptionDifference);
+                p.OptionsTitle, p.ShowOptionDifference, d.DietaryTags);
         }).ToList();
 
         // Groups list only dishes ordered on their own that are on the menu, in menu order; an empty group is left out.
