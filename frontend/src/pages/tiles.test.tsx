@@ -77,6 +77,23 @@ describe('The tiles style', () => {
     expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
   })
 
+  it('enlarges the picture in the dialog to fill it, and goes back to the details', async () => {
+    const data = tilesMenu()
+    data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, images: ['https://img/falafel.jpg'] } : d))
+    const user = open(data)
+    const heading = await screen.findByRole('heading', { level: 3, name: 'פלאפל' })
+    await user.click(heading) // adds it
+    await user.click(heading) // opens its adjustments
+    const dialog = screen.getByRole('dialog', { name: 'פלאפל' })
+
+    await user.click(within(dialog).getByRole('button', { name: 'הגדלת התמונה: פלאפל' }))
+    expect(within(dialog).queryByRole('button', { name: 'סיום' })).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('img', { name: 'פלאפל' })).toBeInTheDocument()
+
+    await user.click(within(dialog).getAllByRole('button', { name: 'חזרה לפרטי המנה' })[0])
+    expect(within(dialog).getByRole('button', { name: 'סיום' })).toBeInTheDocument()
+  })
+
   it('opens the variants of a main dish in a dialog', async () => {
     const user = open(groupedMenu())
     const tile = (await screen.findByRole('heading', { level: 3, name: 'סיגרים עבודת יד' })).closest('article')!
