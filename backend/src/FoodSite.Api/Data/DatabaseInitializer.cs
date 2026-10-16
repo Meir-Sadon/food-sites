@@ -75,6 +75,7 @@ public static class DatabaseInitializer
                     IsAddOnOnly = dish.IsAddOnOnly,
                     OptionsTitle = dish.OptionsTitle,
                     ShowOptionDifference = dish.ShowOptionDifference,
+                    DietaryTags = Sites.DietaryTags.Clean(dish.DietaryTags),
                     Options = (dish.Options ?? []).Select(o => new Entities.DishOption
                     {
                         Label = o.Label,

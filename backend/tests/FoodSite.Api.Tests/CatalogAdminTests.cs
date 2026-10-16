@@ -607,6 +607,25 @@ public sealed class CatalogAdminTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Dietary_tags_are_saved_cleaned_kept_when_left_out_and_reach_the_menu()
+    {
+        var category = await AddCategory("עוגות");
+        var dish = await CreateOk(Fixed("עוגה", category.Id) with { DietaryTags = ["vegan", "glutenFree", "vegan"] });
+        Assert.Equal(["glutenFree", "vegan"], dish.DietaryTags);
+
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        Assert.Equal(["glutenFree", "vegan"], menu.Dishes.Single(d => d.Id == dish.Id).DietaryTags);
+
+        // Left out they stay; an empty list clears them.
+        (await Update(dish.Id, Fixed("עוגה", category.Id))).EnsureSuccessStatusCode();
+        Assert.Equal(["glutenFree", "vegan"], (await GetDish(dish.Id)).DietaryTags);
+        (await Update(dish.Id, Fixed("עוגה", category.Id) with { DietaryTags = [] })).EnsureSuccessStatusCode();
+        Assert.Empty((await GetDish(dish.Id)).DietaryTags!);
+
+        await (await Create(Fixed("x", category.Id) with { DietaryTags = ["paleo"] })).AssertInvalid("DietaryTags", "invalid");
+    }
+
+    [Fact]
     public async Task Optional_adjustment_is_saved_on_a_main_dish_and_followed_by_its_variants()
     {
         var category = await AddCategory("סיגרים");

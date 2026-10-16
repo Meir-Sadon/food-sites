@@ -47,6 +47,17 @@ beforeEach(() => {
 })
 
 describe('Order page', () => {
+  it('shows the dietary tags of a dish as chips in its card, and nothing for a dish without', async () => {
+    const data = menu()
+    data.dishes = data.dishes.map((d, i) => (i === 0 ? { ...d, dietaryTags: ['parve', 'kosherForPassover'] } : d))
+    fakeApi({ ...publicApi, 'GET /api/menu': () => data })
+    renderAt('/')
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+    const card = screen.getByRole('article', { name: data.dishes[0].name })
+    expect(within(within(card).getByRole('list', { name: 'התאמה לתזונה' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['פרווה', 'כשר לפסח'])
+    expect(screen.getAllByRole('list', { name: 'התאמה לתזונה' })).toHaveLength(1)
+  })
+
   it('groups dishes by category, all open, and hides add-on-only dishes', async () => {
     await openOrderPage()
 

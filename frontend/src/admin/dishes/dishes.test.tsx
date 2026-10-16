@@ -205,6 +205,7 @@ describe('Dish form', () => {
       unitName: null,
       optionsTitle: null,
       showOptionDifference: false,
+      dietaryTags: [],
       isAddOnOnly: true,
       isSoldOut: false,
       openByDefault: false,
@@ -397,6 +398,30 @@ describe('Dish form', () => {
 
     await waitFor(() => expect(body).toBeDefined())
     expect(body).toMatchObject({ optionsTitle: 'בחרו גודל', showOptionDifference: true })
+  })
+
+  it('saves the dietary tags ticked in their own block', async () => {
+    let body: DishInput | undefined
+    fakeApi({
+      ...base,
+      'POST /api/admin/dishes': (_, sent) => {
+        body = sent as DishInput
+        return { status: 201, body: { ...dish(9, 'x', 1), ...body, id: 9, options: [], images: [], addOnDishIds: [], addOnGroups: [], addOns: [], questions: [] } }
+      },
+    })
+    renderAt('/admin/dishes/new')
+    const user = userEvent.setup()
+    await user.type(await screen.findByLabelText('שם המנה'), 'עוגה')
+    await user.selectOptions(screen.getByLabelText('קטגוריה'), 'סלטים')
+    await user.type(within(screen.getByRole('group', { name: 'אפשרות 1' })).getByLabelText('תיאור האפשרות'), 'חתיכה')
+    await user.type(within(screen.getByRole('group', { name: 'אפשרות 1' })).getByLabelText('מחיר (₪)'), '10')
+    await user.click(screen.getByRole('button', { name: /באילו אפשרויות המנה מגיעה/ }))
+    await user.click(screen.getByLabelText('ללא גלוטן'))
+    await user.click(screen.getByLabelText('טבעונית'))
+    await user.click(screen.getByRole('button', { name: /שמירה|הוספת מנה|יצירת/ }))
+
+    await waitFor(() => expect(body).toBeDefined())
+    expect(body).toMatchObject({ dietaryTags: ['glutenFree', 'vegan'] })
   })
 
   it('keeps option ids when editing', async () => {
