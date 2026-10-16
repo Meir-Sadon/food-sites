@@ -25,6 +25,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153455/kubbeh-matfunia.jpg"
           ]
         },
         {
@@ -49,6 +52,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153455/kubbeh-hamusta.jpg"
           ]
         },
         {
@@ -64,29 +70,13 @@
             {
               "label": "מארז 14 יחידות",
               "price": 110
-            }
-          ],
-          "optionsTitle": "בחרו גודל מארז",
-          "minAmount": 1,
-          "maxAmount": 10,
-          "amountStep": 1,
-          "dietaryTags": [
-            "glutenFree",
-            "vegetarian"
-          ]
-        },
-        {
-          "name": "קובה XL",
-          "description": "קובה גדולה במילוי עשיר. חומרים טבעיים בלבד, ללא חומר משמר, ייצור בעבודת יד, מתכון מסורתי.",
-          "sellBy": "Units",
-          "options": [
-            {
-              "label": "מארז 9 יחידות",
-              "price": 110,
-              "isDefault": true
             },
             {
-              "label": "מארז 18 יחידות",
+              "label": "קובה XL - מארז 9 יחידות",
+              "price": 110
+            },
+            {
+              "label": "קובה XL - מארז 18 יחידות",
               "price": 190
             }
           ],
@@ -150,6 +140,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153455/cigars.jpg"
           ]
         },
         {
@@ -174,6 +167,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153455/egg-rolls.jpg"
           ]
         },
         {
@@ -198,6 +194,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153722/chiburaki.jpg"
           ]
         },
         {
@@ -222,6 +221,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153456/sambusak.jpg"
           ]
         },
         {
@@ -246,6 +248,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153515/borekas.jpg"
           ]
         }
       ]
@@ -275,6 +280,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153456/mafrum.jpg"
           ]
         },
         {
@@ -303,6 +311,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153456/patties.jpg"
           ]
         },
         {
@@ -365,6 +376,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153456/merguez.jpg"
           ]
         },
         {
@@ -378,6 +392,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153455/chorizo.jpg"
           ]
         }
       ]
@@ -397,6 +414,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153456/matbucha.jpg"
           ]
         },
         {
@@ -411,6 +431,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153456/mashwiya.jpg"
           ]
         },
         {
@@ -425,6 +448,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153455/hummus.jpg"
           ]
         },
         {
@@ -439,6 +465,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153456/schug.jpg"
           ]
         },
         {
@@ -453,6 +482,9 @@
           "dietaryTags": [
             "glutenFree",
             "vegetarian"
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792153775/pilpel_kavush.jpg"
           ]
         }
       ]
