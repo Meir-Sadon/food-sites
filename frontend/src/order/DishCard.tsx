@@ -510,11 +510,12 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
   const customizable = addOns.length > 0 || questions.length > 0
   const optional = !!dish.adjustmentOptional
   // Each unit is shown open only when there is something to set besides a remark and the client must set it; otherwise
-  // the units (or the dish's one remark) wait behind a show/hide button.
+  // the units (or the dish's one remark) wait behind a show/hide button, except for a dish with dietary tags, whose
+  // choice of a special version is shown open.
   const inDialog = useContext(InTileDialog)
   const unitsAlwaysShown = customizable && !optional
   const [unitsShown, setUnitsShown] = useState<boolean | null>(null)
-  const showUnits = unitsAlwaysShown || inDialog || (unitsShown ?? units.some((unit) => Object.keys(unit).length > 0))
+  const showUnits = unitsAlwaysShown || inDialog || (unitsShown ?? (!!dish.dietaryTags?.length || units.some((unit) => Object.keys(unit).length > 0)))
   const toggleLabel = t(showUnits ? 'order.hideAdjustments' : 'order.showAdjustments')
 
   /** Changes one add-on of one ordered unit. */
@@ -630,7 +631,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                 const others = units.map((_, k) => k).filter((k) => k !== i)
                 const waiting = others.some((k) => !isAdjusted(selection, k, units[k]))
                 return (
-                  <details key={i} className="addon-unit" open={inDialog || undefined}>
+                  <details key={i} className="addon-unit" open={inDialog || !!dish.dietaryTags?.length || undefined}>
                     <summary className="addon-unit__title">
                       {title}
                       {status && <span className={adjusted || optional ? 'muted' : 'addon-unit__missing'}> · {status}</span>}

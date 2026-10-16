@@ -284,6 +284,31 @@ public class OrderBuilderTests
     }
 
     [Fact]
+    public void A_dish_with_dietary_tags_offers_them_as_an_optional_version_the_client_may_pick()
+    {
+        var dish = Fixed(1, "קציצות", (10, "קציצות", 30, true));
+        dish.DietaryTags = ["vegan", "glutenFree"];
+        var menu = Menu(dish);
+
+        var question = Assert.Single(DishRules.Questions(dish));
+        Assert.Equal((FoodSite.Api.Sites.DietaryTags.QuestionId, QuestionKind.MultiChoice, false), (question.Id, question.Kind, question.IsRequired));
+        Assert.Equal(["טבעונית", "ללא גלוטן"], question.Choices);
+
+        // Regular is the default: no answer needed.
+        var (plain, none) = Build(menu, new OrderLineInput(1, null, 1, []));
+        Assert.False(none.Any);
+        Assert.Empty(plain.Single().Answers);
+
+        var picked = new AnswerInput(FoodSite.Api.Sites.DietaryTags.QuestionId, Choices: ["ללא גלוטן"]);
+        var (items, errors) = Build(menu, new OrderLineInput(1, null, 1, [], Answers: [picked]));
+        Assert.False(errors.Any);
+        Assert.Equal([(FoodSite.Api.Sites.DietaryTags.QuestionText, "ללא גלוטן")], items.Single().Answers.Select(a => (a.Question, a.Answer)));
+
+        var wrong = new AnswerInput(FoodSite.Api.Sites.DietaryTags.QuestionId, Choices: ["פרווה"]);
+        Assert.True(Has(Build(menu, new OrderLineInput(1, null, 1, [], Answers: [wrong])).Errors, "items[0].answers[0]", "answerInvalid"));
+    }
+
+    [Fact]
     public void A_variant_is_not_offered_under_itself_through_its_main_dish()
     {
         var main = Fixed(1, "סביאה", (10, "סביאה", 30, true));
