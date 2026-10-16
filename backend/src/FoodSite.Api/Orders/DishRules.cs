@@ -29,7 +29,7 @@ public static class DishRules
 
     /// <summary>
     /// The questions asked when ordering a dish: a variant's main dish's questions, then its own, then, for a dish with
-    /// dietary tags, one optional multiple-choice question over those tags (<see cref="Sites.DietaryTags.QuestionId"/>)
+    /// dietary tags, one optional question (several tags together, or one only with <see cref="Dish.DietaryTagsSingle"/>) over those tags (<see cref="Sites.DietaryTags.QuestionId"/>)
     /// so the client can pick a special version or leave the regular one. Questions (and MainDish.Questions) must be loaded.
     /// </summary>
     public static IReadOnlyList<DishQuestion> Questions(Dish dish)
@@ -42,7 +42,7 @@ public static class DishRules
             {
                 Id = Sites.DietaryTags.QuestionId,
                 Text = Sites.DietaryTags.QuestionText,
-                Kind = QuestionKind.MultiChoice,
+                Kind = dish.DietaryTagsSingle ? QuestionKind.SingleChoice : QuestionKind.MultiChoice,
                 Choices = tags.Select(t => Sites.DietaryTags.Labels[t]).ToList(),
                 DisplayOrder = int.MaxValue,
             });

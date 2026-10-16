@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useId, useRef, useState, type Rea
 import { flushSync } from 'react-dom'
 import { prefersReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
-import { DietaryTags } from './DietaryTags'
+import { DIETARY_QUESTION_ID } from '../api/catalog'
+import { DietaryIcon } from './DietaryTags'
 import { useSiteStyle } from '../site/useSite'
 import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
@@ -81,7 +82,6 @@ function DishDetails({ dish, nameId, variant }: { dish: MenuDish; nameId: string
           {t('order.allergens')}: {dish.allergenInfo}
         </p>
       )}
-      <DietaryTags tags={dish.dietaryTags} />
     </>
   )
 }
@@ -146,7 +146,6 @@ function PlainDishGroupCard(props: GroupProps) {
             {t('order.allergens')}: {dish.allergenInfo}
           </p>
         )}
-        <DietaryTags tags={dish.dietaryTags} />
         <VariantList {...props} idPrefix={id} />
       </div>
     </article>
@@ -331,13 +330,13 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
     if (needsDialog(dish, dishes)) setOpen(true)
   }
 
-  // The whole tile works like its round button, so a dish with no picture is as easy to tap as one with.
+  // Tapping a tile that is not in the order does nothing: the client presses its add button first. Once it is in the
+  // order and has choices to make, tapping it opens them.
   const customizable = needsDialog(dish, dishes) || addOnsOf(dish, dishes).length > 0 || (dish.questions ?? []).length > 0
-  const tappable = !unavailable && (!selection || (customizable && !yesNo))
+  const tappable = !unavailable && !!selection && customizable && !yesNo
   function tapped(event: React.MouseEvent) {
     if (!tappable || !tappedTileSurface(event)) return
-    if (selection) setOpen(true)
-    else add()
+    setOpen(true)
   }
 
   return (
@@ -407,7 +406,6 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
               <p className="dish__price">{priceText(dish, t)}</p>
               {dish.description && <p className="dish__description">{dish.description}</p>}
               {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
-              <DietaryTags tags={dish.dietaryTags} />
               {remaining !== null && remaining > 0 && (
                 <p className="muted">{t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}</p>
               )}
@@ -476,7 +474,6 @@ function DishGroupTile(props: GroupProps) {
             <div className="tile-dialog__info">
               {dish.description && <p className="dish__description">{dish.description}</p>}
               {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
-              <DietaryTags tags={dish.dietaryTags} />
             </div>
           </div>
           <InTileDialog.Provider value>
@@ -644,6 +641,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                       />
                       <QuestionFields
                         questions={questions}
+                        dietaryTags={dish.dietaryTags}
                         answers={unitAnswers(selection, i)}
                         onChange={(questionId, answer) => onChange(withAnswer(selection, i, questionId, answer))}
                       />
@@ -721,26 +719,40 @@ function NoteField({ label, value, onChange }: { label: string; value: string; o
 function QuestionFields({
   questions,
   answers,
+  dietaryTags,
   onChange,
 }: {
   questions: MenuQuestion[]
   answers: Answers
+  /** The dish's dietary tags, in the order of its dietary question's choices, for the icon beside each. */
+  dietaryTags?: string[]
   onChange: (questionId: number, answer: Answer) => void
 }) {
   if (questions.length === 0) return null
   return (
     <div className="dish-questions">
       {questions.map((q) => (
-        <QuestionField key={q.id} question={q} answer={answerOf(q, answers)} onChange={(answer) => onChange(q.id, answer)} />
+        <QuestionField key={q.id} question={q} answer={answerOf(q, answers)} dietaryTags={dietaryTags} onChange={(answer) => onChange(q.id, answer)} />
       ))}
     </div>
   )
 }
 
-function QuestionField({ question, answer, onChange }: { question: MenuQuestion; answer: Answer | undefined; onChange: (answer: Answer) => void }) {
+function QuestionField({
+  question,
+  answer,
+  dietaryTags,
+  onChange,
+}: {
+  question: MenuQuestion
+  answer: Answer | undefined
+  dietaryTags?: string[]
+  onChange: (answer: Answer) => void
+}) {
   const { t } = useTranslation()
   const id = useId()
   const text = typeof answer === 'string' ? answer : ''
+  const dietary = question.id === DIETARY_QUESTION_ID
   const label = (
     <>
       {question.text}
@@ -754,7 +766,7 @@ function QuestionField({ question, answer, onChange }: { question: MenuQuestion;
   )
 
   // Questions answered with a choice of several radio buttons or check boxes are a group under the question.
-  const choices = (kind: 'radio' | 'checkbox', values: { value: string; label: string }[]) => (
+  const choices = (kind: 'radio' | 'checkbox', values: { value: string; label: string; icon?: string }[]) => (
     <fieldset className="dish-question">
       <legend>{label}</legend>
       <div className="row">
@@ -775,6 +787,7 @@ function QuestionField({ question, answer, onChange }: { question: MenuQuestion;
                   )
                 }
               />
+              {c.icon && <DietaryIcon tag={c.icon} />}
               {c.label}
             </label>
           )
@@ -790,8 +803,14 @@ function QuestionField({ question, answer, onChange }: { question: MenuQuestion;
         { value: 'no', label: t('order.no') },
       ])
     case 'MultiChoice':
-      return choices('checkbox', question.choices.map((c) => ({ value: c, label: c })))
+      return choices('checkbox', question.choices.map((c, i) => ({ value: c, label: c, icon: dietary ? dietaryTags?.[i] : undefined })))
     case 'SingleChoice':
+      // The dietary question is one tag or none: the regular dish is its first radio button, answered with nothing.
+      if (dietary)
+        return choices('radio', [
+          { value: '', label: t('order.regularDish') },
+          ...question.choices.map((c, i) => ({ value: c, label: c, icon: dietaryTags?.[i] })),
+        ])
       if (!question.showAsDropdown) return choices('radio', question.choices.map((c) => ({ value: c, label: c })))
       return (
         <span className="field dish-question">

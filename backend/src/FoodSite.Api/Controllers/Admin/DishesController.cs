@@ -53,7 +53,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         bool AdjustmentOptional = false,
         string? OptionsTitle = null,
         bool ShowOptionDifference = false,
-        IReadOnlyList<string>? DietaryTags = null);
+        IReadOnlyList<string>? DietaryTags = null,
+        bool DietaryTagsSingle = false);
 
     public record QuestionDto(
         int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
@@ -94,7 +95,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     /// questions; a variant follows its main dish, so it is ignored there.
     /// OptionsTitle is the heading over the fixed options ("בחרו גודל"), ShowOptionDifference shows each option on the
     /// order page as what it adds to the default option's price; both only matter for fixed options.
-    /// DietaryTags, when sent, is the whole list of the dish's special-diet marks (ids in <c>DietaryTags.All</c>); left out, they stay.
+    /// DietaryTags, when sent, is the whole list of the dish's special-diet marks (ids in <c>DietaryTags.All</c>); left out, they stay. DietaryTagsSingle (sent with them) lets the client pick only one.
     /// CopyImagesFrom, on a new dish only, gives it the images of that dish (a copy of it); the picture files are shared.
     /// </summary>
     public record DishInput(
@@ -126,7 +127,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         bool AdjustmentOptional = true,
         string? OptionsTitle = null,
         bool ShowOptionDifference = false,
-        List<string>? DietaryTags = null);
+        List<string>? DietaryTags = null,
+        bool DietaryTagsSingle = false);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -566,7 +568,11 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         dish.AdjustmentOptional = main is null && input.AdjustmentOptional;
         dish.Description = Clean(input.Description);
         dish.AllergenInfo = Clean(input.AllergenInfo);
-        if (input.DietaryTags is not null) dish.DietaryTags = Sites.DietaryTags.Clean(input.DietaryTags);
+        if (input.DietaryTags is not null)
+        {
+            dish.DietaryTags = Sites.DietaryTags.Clean(input.DietaryTags);
+            dish.DietaryTagsSingle = input.DietaryTagsSingle;
+        }
         dish.SellBy = input.SellBy;
         dish.ChoiceMode = input.ChoiceMode;
         dish.IsAddOnOnly = input.IsAddOnOnly;
@@ -725,5 +731,6 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.AdjustmentOptional,
         d.OptionsTitle,
         d.ShowOptionDifference,
-        d.DietaryTags);
+        d.DietaryTags,
+        d.DietaryTagsSingle);
 }

@@ -203,6 +203,9 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text[]");
 
+                    b.Property<bool>("DietaryTagsSingle")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 

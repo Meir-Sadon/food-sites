@@ -47,17 +47,6 @@ beforeEach(() => {
 })
 
 describe('Order page', () => {
-  it('shows the dietary tags of a dish as chips in its card, and nothing for a dish without', async () => {
-    const data = menu()
-    data.dishes = data.dishes.map((d, i) => (i === 0 ? { ...d, dietaryTags: ['parve', 'kosherForPassover'] } : d))
-    fakeApi({ ...publicApi, 'GET /api/menu': () => data })
-    renderAt('/')
-    await screen.findByRole('heading', { level: 2, name: 'עופות' })
-    const card = screen.getByRole('article', { name: data.dishes[0].name })
-    expect(within(within(card).getByRole('list', { name: 'באילו אפשרויות המנה מגיעה' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['פרווה', 'כשר לפסח'])
-    expect(screen.getAllByRole('list', { name: 'באילו אפשרויות המנה מגיעה' })).toHaveLength(1)
-  })
-
   it('groups dishes by category, all open, and hides add-on-only dishes', async () => {
     await openOrderPage()
 
@@ -493,6 +482,8 @@ describe('Order page', () => {
     })
     const card = dishCard('עוגה')
     await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: עוגה' }))
+    // Each tag has its own icon beside its check box, and nothing else shows the tags.
+    expect(within(card).getByLabelText('ללא גלוטן').closest('label')!.querySelector('svg')).not.toBeNull()
     await user.click(within(card).getByLabelText('ללא גלוטן'))
 
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
@@ -503,6 +494,34 @@ describe('Order page', () => {
     await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
     expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({
       items: [{ dishId: 4, quantity: 1, addOnUnits: [{ answers: [{ questionId: -1, choices: ['ללא גלוטן'] }] }] }],
+    })
+  })
+
+  it('offers the dietary tags as one choice or none, with the regular dish first, when the dish is set to one only', async () => {
+    const cake = menuDish(4, 'עוגה', 1, {
+      adjustmentOptional: true,
+      dietaryTags: ['vegan', 'saltFree'],
+      questions: [{ id: -1, text: 'אפשר להזמין את המנה גם בגרסה:', kind: 'SingleChoice', choices: ['טבעונית', 'ללא מלח'], showAsDropdown: false, isRequired: false }],
+    })
+    const { api, user } = await openOrderPage({
+      'GET /api/menu': () => menu({ dishes: [...menu().dishes, cake] }),
+      'POST /api/orders': () => confirmation,
+    })
+    const card = dishCard('עוגה')
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: עוגה' }))
+    expect(within(card).getByLabelText('המנה הרגילה')).toBeChecked()
+    await user.click(within(card).getByLabelText('ללא מלח'))
+    await user.click(within(card).getByLabelText('טבעונית'))
+    expect(within(card).getByLabelText('ללא מלח')).not.toBeChecked()
+
+    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
+    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
+    await user.type(screen.getByLabelText('מספר בית'), '1')
+    await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({
+      items: [{ dishId: 4, addOnUnits: [{ answers: [{ questionId: -1, value: 'טבעונית' }] }] }],
     })
   })
 

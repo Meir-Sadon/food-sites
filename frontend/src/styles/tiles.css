@@ -27,6 +27,7 @@
 
 /* A tile has no frame: the picture is the card and the text sits under it. */
 [data-style='tiles'] .dish--tile {
+  -webkit-tap-highlight-color: transparent;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

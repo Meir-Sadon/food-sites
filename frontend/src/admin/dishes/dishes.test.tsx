@@ -206,6 +206,7 @@ describe('Dish form', () => {
       optionsTitle: null,
       showOptionDifference: false,
       dietaryTags: [],
+      dietaryTagsSingle: false,
       isAddOnOnly: true,
       isSoldOut: false,
       openByDefault: false,
@@ -418,10 +419,11 @@ describe('Dish form', () => {
     await user.click(screen.getByRole('button', { name: /באילו אפשרויות המנה מגיעה/ }))
     await user.click(screen.getByLabelText('ללא גלוטן'))
     await user.click(screen.getByLabelText('טבעונית'))
+    await user.click(screen.getByLabelText('אפשר לבחור רק אפשרות אחת'))
     await user.click(screen.getByRole('button', { name: /שמירה|הוספת מנה|יצירת/ }))
 
     await waitFor(() => expect(body).toBeDefined())
-    expect(body).toMatchObject({ dietaryTags: ['glutenFree', 'vegan'] })
+    expect(body).toMatchObject({ dietaryTags: ['glutenFree', 'vegan'], dietaryTagsSingle: true })
   })
 
   it('keeps option ids when editing', async () => {

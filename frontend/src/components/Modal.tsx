@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 /**
  * A dialog over the page. Focus moves into it, Escape closes it and focus returns to where it was.
@@ -47,7 +48,8 @@ export function Modal({
     }
   }
 
-  return (
+  // Rendered at the end of <body>, so pressing inside it never counts as pressing the card or tile it was opened from.
+  return createPortal(
     <div
       className="modal-backdrop"
       onMouseDown={(event) => {
@@ -70,6 +72,7 @@ export function Modal({
         <h2 id={titleId}>{title}</h2>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
