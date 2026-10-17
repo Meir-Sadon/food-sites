@@ -944,6 +944,21 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AccessibilityCoordinatorEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AccessibilityCoordinatorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AccessibilityCoordinatorPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AccessibilityNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("AccessibilityUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("AddressFirst")
                         .HasColumnType("boolean");
 

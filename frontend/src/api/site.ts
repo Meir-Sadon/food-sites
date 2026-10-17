@@ -359,3 +359,19 @@ export interface NotifyPhone {
   phone: string
   name: string | null
 }
+
+/** Who answers accessibility requests, and the limits the business knows of (the accessibility statement). */
+export interface AccessibilityInfo {
+  name: string | null
+  phone: string | null
+  email: string | null
+  notes: string | null
+  /** When the admin last saved these; the statement's update date. */
+  updatedAt: string | null
+}
+
+export const accessibilityApi = {
+  get: () => apiJson<AccessibilityInfo>('/api/accessibility'),
+  getAdmin: () => apiJson<AccessibilityInfo>('/api/admin/accessibility'),
+  save: (info: AccessibilityInfo) => apiJson<AccessibilityInfo>('/api/admin/accessibility', send('PUT', info)),
+}

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet } from 'react-router'
 import { AccountProvider } from '../account/AccountContext'
+import { AccessibilityMenu } from '../accessibility/AccessibilityMenu'
 import { CartNavProvider } from './CartNavProvider'
 import { Footer } from './Footer'
 import { WhatsAppButton } from './WhatsAppButton'
@@ -52,6 +53,7 @@ function Shell() {
         <Outlet />
       </main>
       <Footer />
+      <AccessibilityMenu />
       <div className="fabs">
         <ScrollButtons />
         <WhatsAppButton />
