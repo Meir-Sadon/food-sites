@@ -142,34 +142,56 @@ describe('Marketing tools on the client site', () => {
 })
 
 describe('Cookie consent and the privacy text', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
 
   it('asks first, and loads nothing until the visitor agrees', async () => {
     fakeApi(withTracking(all))
     renderAt('/')
     const user = userEvent.setup()
-    const banner = await screen.findByRole('region', { name: 'עוגיות ופרסום' })
-    expect(banner).toHaveTextContent('Meta (פייסבוק ואינסטגרם), Google Analytics, Google Tag Manager, Google Ads, TikTok')
+    const banner = await screen.findByRole('region', { name: 'עוגיות' })
+    // A general sentence: the tools are named in the privacy policy, not here.
+    expect(banner).not.toHaveTextContent('Meta')
+    expect(banner).toHaveTextContent('עוגיות הכרחיות')
     expect(scripts()).toEqual([])
 
-    await user.click(within(banner).getByRole('button', { name: 'אישור' }))
+    await user.click(within(banner).getByRole('button', { name: 'מסכים' }))
     await waitFor(() => expect(scripts()).toHaveLength(4))
-    expect(screen.queryByRole('region', { name: 'עוגיות ופרסום' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'עוגיות' })).not.toBeInTheDocument()
     expect(localStorage.getItem(CONSENT_KEY)).toBe('granted')
   })
 
-  it('keeps everything off after a "no" and does not ask again', async () => {
+  it('keeps everything off and does not ask again after "necessary only"', async () => {
     fakeApi(withTracking(all))
     renderAt('/')
     const user = userEvent.setup()
-    const banner = await screen.findByRole('region', { name: 'עוגיות ופרסום' })
-    await user.click(within(banner).getByRole('button', { name: 'לא עכשיו' }))
+    const banner = await screen.findByRole('region', { name: 'עוגיות' })
+    await user.click(within(banner).getByRole('button', { name: 'רק הכרחיות' }))
     expect(scripts()).toEqual([])
     expect(win().fbq).toBeUndefined()
-    expect(screen.queryByRole('region', { name: 'עוגיות ופרסום' })).not.toBeInTheDocument()
+    expect(localStorage.getItem(CONSENT_KEY)).toBe('denied')
+    expect(screen.queryByRole('region', { name: 'עוגיות' })).not.toBeInTheDocument()
     // The footer lets the visitor change their mind.
     await user.click(within(screen.getByRole('contentinfo')).getByRole('button', { name: 'הגדרות עוגיות' }))
-    expect(await screen.findByRole('region', { name: 'עוגיות ופרסום' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'עוגיות' })).toBeInTheDocument()
+  })
+
+  it('"not now" loads nothing, stores no answer and comes back on the next visit', async () => {
+    fakeApi(withTracking(all))
+    const first = renderAt('/')
+    const user = userEvent.setup()
+    await user.click(within(await screen.findByRole('region', { name: 'עוגיות' })).getByRole('button', { name: 'לא עכשיו' }))
+    expect(scripts()).toEqual([])
+    expect(localStorage.getItem(CONSENT_KEY)).toBeNull()
+    expect(screen.queryByRole('region', { name: 'עוגיות' })).not.toBeInTheDocument()
+
+    // A new visit is a new browser session.
+    first.unmount()
+    sessionStorage.clear()
+    renderAt('/')
+    expect(await screen.findByRole('region', { name: 'עוגיות' })).toBeInTheDocument()
   })
 
   it('shows no question when no tool is connected, and the policy says there is none', async () => {
@@ -177,7 +199,7 @@ describe('Cookie consent and the privacy text', () => {
     renderAt('/')
     const user = userEvent.setup()
     await screen.findByRole('heading', { level: 2, name: 'עופות' })
-    expect(screen.queryByRole('region', { name: 'עוגיות ופרסום' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'עוגיות' })).not.toBeInTheDocument()
     expect(within(screen.getByRole('contentinfo')).queryByRole('button', { name: 'הגדרות עוגיות' })).not.toBeInTheDocument()
     await user.click(within(screen.getByRole('contentinfo')).getByRole('button', { name: 'תנאי שימוש ומדיניות' }))
     expect(await screen.findByText(/אינו משתמש בשירותי מעקב או פרסום של צד שלישי/)).toBeInTheDocument()
