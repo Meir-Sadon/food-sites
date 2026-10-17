@@ -12,7 +12,7 @@ export function SocialLinks({ links }: { links: SocialLink[] | undefined }) {
         const name = link.kind === 'custom' ? (link.label ?? link.url) : t(`socialLinks.platforms.${link.kind}`)
         return (
           <li key={`${link.kind}-${link.url}`}>
-            <a className="social-link" href={link.url} target="_blank" rel="noopener noreferrer">
+            <a className={`social-link social-link--${link.kind}`} href={link.url} target="_blank" rel="noopener noreferrer">
               <SocialIcon kind={link.kind} />
               {name}
             </a>

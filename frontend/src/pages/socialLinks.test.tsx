@@ -25,6 +25,11 @@ describe('About page social links', () => {
     expect(links[0]).toHaveAttribute('href', 'https://facebook.com/shop')
     expect(links[0]).toHaveAttribute('target', '_blank')
     expect(links[0]).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(links.map((a) => a.className)).toEqual([
+      'social-link social-link--facebook',
+      'social-link social-link--tiktok',
+      'social-link social-link--custom',
+    ])
     expect(links[0].querySelector('svg')).not.toBeNull()
     expect(screen.queryByText('אינסטגרם')).toBeNull()
   })

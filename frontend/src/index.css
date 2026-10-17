@@ -1910,6 +1910,25 @@ label {
   filter: brightness(0.92);
 }
 
+/* A known platform's button wears that platform's colour, not the site's (the colours pass 4.5:1 with white text). */
+.social-link--facebook {
+  background: #1668d9;
+  border-color: #1668d9;
+  color: #fff;
+}
+
+.social-link--instagram {
+  background: linear-gradient(45deg, #7a3bb5, #c1307f 55%, #c83a25);
+  border-color: #c1307f;
+  color: #fff;
+}
+
+.social-link--tiktok {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
 .social-icon {
   inline-size: 1.25rem;
   block-size: 1.25rem;
