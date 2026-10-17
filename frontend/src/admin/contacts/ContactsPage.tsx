@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { AccessibilitySection } from './AccessibilitySection'
 import { MainContactSection } from './MainContactSection'
 import { NotifyPhonesSection } from './NotifyPhonesSection'
 
@@ -9,6 +10,7 @@ export function ContactsPage() {
       <h1>{t('admin.contacts.title')}</h1>
       <MainContactSection />
       <NotifyPhonesSection />
+      <AccessibilitySection />
     </>
   )
 }

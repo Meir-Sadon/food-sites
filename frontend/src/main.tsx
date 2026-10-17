@@ -7,6 +7,8 @@ import './index.css'
 import './styles/street.css'
 import './styles/tiles.css'
 import './styles/finish.css'
+// The accessibility menu and what its choices change; last, so they win over the looks above.
+import './styles/accessibility.css'
 // The site's palette, after the shared CSS so its variables win.
 import '@site/theme.css'
 import { App } from './App'
