@@ -361,6 +361,42 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task Tracking_ids_are_off_by_default_cleaned_shown_to_the_site_and_kept_when_left_out()
+    {
+        var site = _factory.CreateApiClient();
+        Assert.Equal("", (await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>()).Tracking.MetaPixelId);
+        Assert.Equal("", (await site.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).Tracking!.MetaPixelId);
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings/tracking",
+            new { metaPixelId = " 123456789012345 ", googleAnalyticsId = "g-abc123xyz9", googleTagManagerId = "gtm-abc123", tikTokPixelId = "" })).Read<SettingsDto>();
+        Assert.Equal(new Sites.Tracking.Ids("123456789012345", "G-ABC123XYZ9", "GTM-ABC123", ""), saved.Tracking);
+        Assert.Equal(saved.Tracking, (await site.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).Tracking);
+
+        // Saving the other settings leaves the ids alone, and an id left out of its own save is kept.
+        var kept = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.Equal(saved.Tracking, kept.Tracking);
+        var partial = await (await _admin.PutAsJsonAsync("/api/admin/settings/tracking", new { tikTokPixelId = "C1ABCDEF2GHIJKLMN3OP" })).Read<SettingsDto>();
+        Assert.Equal(saved.Tracking with { TikTokPixelId = "C1ABCDEF2GHIJKLMN3OP" }, partial.Tracking);
+
+        var cleared = await (await _admin.PutAsJsonAsync("/api/admin/settings/tracking",
+            new { metaPixelId = "", googleAnalyticsId = "", googleTagManagerId = "", tikTokPixelId = "" })).Read<SettingsDto>();
+        Assert.Equal(Sites.Tracking.Ids.None, cleared.Tracking);
+    }
+
+    [Theory]
+    [InlineData("metaPixelId", "https://facebook.com/mypage", "MetaPixelId")]
+    [InlineData("metaPixelId", "12345", "MetaPixelId")]
+    [InlineData("googleAnalyticsId", "UA-1234", "GoogleAnalyticsId")]
+    [InlineData("googleTagManagerId", "GTM-'+alert(1)+'", "GoogleTagManagerId")]
+    [InlineData("tikTokPixelId", "abc'; x", "TikTokPixelId")]
+    public async Task A_tracking_id_in_the_wrong_shape_is_rejected(string field, string value, string error)
+    {
+        var tracking = new Dictionary<string, string> { [field] = value };
+        var response = await _admin.PutAsJsonAsync("/api/admin/settings/tracking", tracking);
+        await response.AssertInvalid(error, "trackingId");
+    }
+
+    [Fact]
     public async Task A_zero_minimum_means_no_minimum_and_a_negative_one_is_rejected()
     {
         var none = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input(minimum: 0m))).Read<SettingsDto>();

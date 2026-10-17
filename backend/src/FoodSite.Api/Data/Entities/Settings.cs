@@ -131,4 +131,16 @@ public class Settings
 
     /// <summary>Whether the owner addresses also get the summary of admin changes to dishes and settings (off by default).</summary>
     public bool OwnerChangeMails { get; set; }
+
+    /// <summary>Meta (Facebook / Instagram) Pixel id; null means the pixel is not loaded. See <c>Sites/Tracking</c>.</summary>
+    public string? MetaPixelId { get; set; }
+
+    /// <summary>Google Analytics 4 measurement id (<c>G-…</c>); null means it is not loaded.</summary>
+    public string? GoogleAnalyticsId { get; set; }
+
+    /// <summary>Google Tag Manager container id (<c>GTM-…</c>); null means it is not loaded.</summary>
+    public string? GoogleTagManagerId { get; set; }
+
+    /// <summary>TikTok pixel code; null means it is not loaded.</summary>
+    public string? TikTokPixelId { get; set; }
 }

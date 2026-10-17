@@ -60,6 +60,18 @@ export type Spacing = (typeof SPACINGS)[number]
 export const TILE_GROUPS = ['framed', 'minimal'] as const
 export type TileGroups = (typeof TILE_GROUPS)[number]
 
+/** The ids of the marketing tools the owner connected; an empty string means that tool is off. */
+export interface TrackingIds {
+  /** Meta (Facebook / Instagram) Pixel id: digits from Events Manager. */
+  metaPixelId: string
+  /** Google Analytics 4 measurement id, `G-…`. */
+  googleAnalyticsId: string
+  /** Google Tag Manager container id, `GTM-…`. */
+  googleTagManagerId: string
+  /** TikTok pixel code. */
+  tikTokPixelId: string
+}
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -107,6 +119,8 @@ export interface Site {
   tileGroups: TileGroups
   /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
   deliveryPricing: DeliveryPricing
+  /** Which marketing tools to load. */
+  tracking?: TrackingIds
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */

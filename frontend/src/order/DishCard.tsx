@@ -5,6 +5,7 @@ import { Modal } from '../components/Modal'
 import { DIETARY_QUESTION_ID } from '../api/catalog'
 import { DietaryIcon } from './DietaryTags'
 import { useSiteStyle } from '../site/useSite'
+import { trackMarketing } from '../tracking/marketing'
 import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
@@ -203,6 +204,13 @@ function useOpenOnRequest(ref: RefObject<HTMLElement | null>, open: () => void) 
   }, [ref, open])
 }
 
+/** Tells the marketing tools the client looked at the dish each time its dialog opens. */
+function useReportView(open: boolean, dish: MenuDish) {
+  useEffect(() => {
+    if (open) trackMarketing({ name: 'ViewContent', dishId: dish.id, dishName: dish.name })
+  }, [open, dish.id, dish.name])
+}
+
 /** Whether a tap landed on the tile itself and not on one of its own buttons, fields or links, or inside a dialog it opened. */
 function tappedTileSurface(event: React.MouseEvent) {
   return !(event.target as HTMLElement).closest('button, a, input, select, textarea, label, .modal-backdrop')
@@ -318,6 +326,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
   const [zoom, setZoom] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
   useOpenOnRequest(articleRef, () => flushSync(() => setOpen(true)))
+  useReportView(open, dish)
   const remaining = remainingOn(dish, date)
   const range = limitedRange(dish, remaining)
   const yesNo = !!dish.isYesNo
@@ -441,6 +450,7 @@ function DishGroupTile(props: GroupProps) {
   const [zoom, setZoom] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
   useOpenOnRequest(articleRef, () => flushSync(() => setOpen(true)))
+  useReportView(open, dish)
   const count = variants.filter((v) => selections[v.id]).length
   return (
     <article

@@ -44,7 +44,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string TileGroups,
         string DeliveryPricing = "simple",
         decimal? DeliveryFeeAmount = null,
-        bool AddressFirst = false);
+        bool AddressFirst = false,
+        Tracking.Ids? Tracking = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -141,7 +142,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Finish.EffectiveTileGroups(s.TileGroups),
             DeliveryQuoter.Mode(s),
             s.DeliveryFeeAmount,
-            s.AddressFirst);
+            s.AddressFirst,
+            Sites.Tracking.Of(s));
     }
 
     [HttpGet("menu")]

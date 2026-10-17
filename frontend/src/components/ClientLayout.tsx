@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useLocation } from 'react-router'
 import { AccountProvider } from '../account/AccountContext'
 import { CartNavProvider } from './CartNavProvider'
 import { Footer } from './Footer'
@@ -10,6 +10,7 @@ import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
 import { useApplyColors } from '../site/useApplyColors'
 import { useColors, useCorners, useFinish, useSite, useSiteStyle } from '../site/useSite'
+import { initMarketing, trackMarketing } from '../tracking/marketing'
 import { trackUsage } from '../usage/track'
 
 /**
@@ -42,9 +43,21 @@ function useStyleAttribute() {
   useApplyColors(palette, customColors, lineWidth)
 }
 
+/** Loads the marketing tools the owner connected (only those with an id) and tells them about each page the client opens. */
+function useMarketing() {
+  const tracking = useSite()?.tracking
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (!tracking) return
+    initMarketing(tracking)
+    trackMarketing({ name: 'PageView', path: pathname })
+  }, [tracking, pathname])
+}
+
 function Shell() {
   const background = useSite()?.backgroundImageUrl
   useStyleAttribute()
+  useMarketing()
   return (
     <div className="client-shell" style={background ? { backgroundImage: `url("${background}")` } : undefined}>
       <TopBar />
