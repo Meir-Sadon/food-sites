@@ -4,6 +4,7 @@ import { categoriesApi, dishGroupsApi, dishesApi, type Category, type Dish, type
 import type { FieldErrors } from '../../api/client'
 import { ConfirmRemove, FieldError, Info, Loading, MoveButtons, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
+import { useDirty, useUnsavedChanges } from '../unsaved'
 
 /** The dishes a group can hold: ordered on their own, not removed. */
 const groupable = (dish: Dish) => !dish.isHidden && !dish.isAddOnOnly && dish.mainDishId === null
@@ -178,9 +179,17 @@ function GroupForm({
   const errorMessage = useErrorMessage()
   const [error, setError] = useState<string | null>(null)
   const inputId = `${idPrefix}-name`
+  const current = { name, dishIds: [...picked].sort((a, b) => a - b) }
+  const { dirty, markSaved } = useDirty(current)
+  useUnsavedChanges(dirty, save)
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!name.trim()) return false
     setErrors({})
     setError(null)
     try {
@@ -188,11 +197,13 @@ function GroupForm({
       if (resetOnSave) {
         setName('')
         setPicked(new Set())
-      }
+      } else markSaved(current)
+      return true
     } catch (err) {
       const fields = fieldErrorsOf(err)
       setErrors(fields)
       if (!fields.name) setError(errorMessage(err))
+      return false
     }
   }
 

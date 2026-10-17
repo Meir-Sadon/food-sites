@@ -5,6 +5,7 @@ import { ORDER_FLOWS, ORDER_TOTAL_POSITIONS, type OrderFlow, type OrderTotalPosi
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsaved'
 
 /**
  * Picks how the client's order page is laid out: where the total sits and whether the menu is one page or
@@ -23,9 +24,15 @@ export function OrderLayoutSection() {
   const flow = pickedFlow ?? settings?.orderFlow
   const unchanged = totalPosition === settings?.orderTotalPosition && flow === settings?.orderFlow
 
-  async function handleSubmit(event: FormEvent) {
+  useUnsavedChanges(!unchanged, save)
+
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!totalPosition || !flow) return
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!totalPosition || !flow) return false
     setSaving(true)
     setError(null)
     try {
@@ -41,8 +48,10 @@ export function OrderLayoutSection() {
       setPickedTotal(null)
       setPickedFlow(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
