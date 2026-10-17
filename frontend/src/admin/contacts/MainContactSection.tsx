@@ -4,6 +4,7 @@ import { contactsApi, type Contact } from '../../api/site'
 import type { FieldErrors } from '../../api/client'
 import { FieldError, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
+import { useDirty, useUnsavedChanges } from '../unsaved'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 type Field = keyof Contact
@@ -22,18 +23,29 @@ export function MainContactSection() {
     setError(null)
   }
 
-  async function handleSubmit(event: FormEvent) {
+  const { dirty, markSaved } = useDirty(contact)
+  useUnsavedChanges(dirty, save)
+
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!contact) return
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!contact) return false
     setSaving(true)
     setErrors({})
     try {
-      setData(await contactsApi.save(contact))
+      const result = await contactsApi.save(contact)
+      setData(result)
+      markSaved(result)
       setError(null)
       flash()
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }

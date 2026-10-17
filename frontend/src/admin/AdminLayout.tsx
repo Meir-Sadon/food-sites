@@ -5,13 +5,24 @@ import { useFeatures } from '../site/useSite'
 import { sections, sectionOf, type Tab } from './sections'
 import { useAdminSession } from './session'
 import { useAdminLook } from './useAdminLook'
+import { UnsavedChangesProvider } from './UnsavedChangesProvider'
+import { useAdminLeave } from './unsaved'
 
 export function AdminLayout() {
+  return (
+    <UnsavedChangesProvider>
+      <AdminFrame />
+    </UnsavedChangesProvider>
+  )
+}
+
+function AdminFrame() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const hasFeature = useFeatures()
   const session = useAdminSession()
+  const leave = useAdminLeave()
   useAdminLook()
   const current = sectionOf(pathname)
   const visible = (tab: Tab) => !tab.feature || hasFeature(tab.feature)
@@ -47,7 +58,7 @@ export function AdminLayout() {
             </li>
             <li className="admin-bar__who">{t(`admin.actors.${session.actor}`)}</li>
             <li>
-              <button type="button" className="button-quiet" onClick={handleLogout}>
+              <button type="button" className="button-quiet" onClick={() => leave(handleLogout)}>
                 {t('admin.logout')}
               </button>
             </li>

@@ -11,6 +11,7 @@ import {
 } from '../../api/reviews'
 import { useFeature } from '../../site/useSite'
 import { fieldErrorsOf, useErrorMessage, useFormErrorMessage, useLoad } from '../hooks'
+import { useDirty, useUnsavedChanges } from '../unsaved'
 import { ConfirmRemove, FieldError, Info, Loading, Section, Status } from '../ui'
 import { PLACEHOLDERS } from './compose'
 
@@ -112,18 +113,27 @@ function TemplateForm({
   const [errors, setErrors] = useState<FieldErrors>({})
   const [status, setStatus] = useState<{ message: string; error?: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
+  const { dirty, markSaved } = useDirty(input)
+  useUnsavedChanges(dirty, save)
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
     setErrors({})
     setStatus(null)
     setBusy(true)
     try {
       await onSave(input)
+      markSaved(input)
       setStatus({ message: t('admin.saved') })
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setStatus({ message: formError(err), error: true })
+      return false
     } finally {
       setBusy(false)
     }

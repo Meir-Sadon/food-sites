@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { supplyDaysApi, weekdays, type SupplyDay, type Weekday } from '../../api/catalog'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
+import { useDirty, useUnsavedChanges } from '../unsaved'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 export function SupplyDaysSection() {
@@ -18,16 +19,27 @@ export function SupplyDaysSection() {
     setError(null)
   }
 
-  async function handleSubmit(event: FormEvent) {
+  const { dirty, markSaved } = useDirty(days)
+  useUnsavedChanges(dirty, save)
+
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!days) return
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!days) return false
     setSaving(true)
     try {
-      setData(await supplyDaysApi.save(days))
+      const result = await supplyDaysApi.save(days)
+      setData(result)
+      markSaved(result)
       setError(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }

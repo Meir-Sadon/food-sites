@@ -5,6 +5,7 @@ import { CORNERS, type Corners } from '../../api/site'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsaved'
 
 /**
  * Picks how round the client site's pictures, buttons and cards are. Saved on its own, sending only the corners
@@ -20,9 +21,15 @@ export function CornersSection() {
   const [error, setError] = useState<string | null>(null)
   const corners = picked ?? settings?.corners
 
-  async function handleSubmit(event: FormEvent) {
+  useUnsavedChanges(picked !== null && picked !== settings?.corners, save)
+
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!corners) return
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!corners) return false
     setSaving(true)
     setError(null)
     try {
@@ -30,8 +37,10 @@ export function CornersSection() {
       setData(await settingsApi.save({ ...current, corners }))
       setPicked(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }

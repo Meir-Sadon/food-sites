@@ -132,4 +132,18 @@ describe('The tiles style', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(within(tile).getByRole('group', { name: 'עוף בתנור' })).toBeInTheDocument()
   })
+
+  it('opens the dialog from the picture without adding the dish, and closes it with the X', async () => {
+    const user = open()
+    const tile = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('article')!
+    await user.click(tile.querySelector('.tile__media')!)
+
+    const dialog = screen.getByRole('dialog', { name: 'חומוס פשוט' })
+    expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' })).toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('button', { name: 'סגירה' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(within(tile).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' })).toBeInTheDocument()
+  })
 })

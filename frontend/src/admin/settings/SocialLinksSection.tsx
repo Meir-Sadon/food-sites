@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { MAX_CUSTOM_LINKS, SOCIAL_PLATFORMS, socialLinksApi, type SocialLink, type SocialPlatform } from '../../api/social'
 import type { FieldErrors } from '../../api/client'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
+import { useUnsavedChanges } from '../unsaved'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
 import { ConfirmRemove, FieldError, Loading, Section, Status } from '../ui'
 
@@ -54,8 +55,8 @@ export function SocialLinksSection() {
     setError(null)
   }
 
-  async function save() {
-    if (!form) return
+  async function save(): Promise<boolean> {
+    if (!form) return true
     const { links, fields } = toRequest(form)
     setSaving(true)
     setErrors({})
@@ -65,6 +66,7 @@ export function SocialLinksSection() {
       setEdited(null)
       setError(null)
       flash()
+      return true
     } catch (err) {
       // The server names an entry by its place in the list sent; show its message beside the field it came from.
       const byField: Record<string, FieldErrors[string]> = {}
@@ -76,10 +78,15 @@ export function SocialLinksSection() {
       }
       setErrors(byField)
       setError(formError(err))
+      return false
     } finally {
       setSaving(false)
     }
   }
+
+  const dirty =
+    form !== null && edited !== null && JSON.stringify(toRequest(form).links) !== JSON.stringify(data?.map(({ kind, label, url }) => ({ kind, label, url })))
+  useUnsavedChanges(dirty, save)
 
   const fieldError = (field: string) => <FieldError errors={errors} field={field} id={`social-${field}-error`} />
 
@@ -161,7 +168,7 @@ export function SocialLinksSection() {
           )}
           <Status message={error} error />
           <div className="row">
-            <button type="button" onClick={save} disabled={saving || edited === null}>
+            <button type="button" onClick={() => void save()} disabled={saving || edited === null}>
               {saving ? t('admin.saving') : t('admin.save')}
             </button>
             <SavedNote show={saved} />

@@ -5,6 +5,7 @@ import type { FieldErrors } from '../../api/client'
 import type { DeliveryPricing } from '../../api/site'
 import { FieldError, Info, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
+import { useDirty, useUnsavedChanges } from '../unsaved'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'paymentPhone' | 'bitLink' | 'payBoxLink'
@@ -29,20 +30,31 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     setError(null)
   }
 
-  async function handleSubmit(event: FormEvent) {
+  const { dirty, markSaved } = useDirty(settings)
+  useUnsavedChanges(dirty, save)
+
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!settings) return
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!settings) return false
     setSaving(true)
     setErrors({})
     try {
       // The style, the order layout, the corners and the colours are saved by their own sections; leaving them out keeps them.
       const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, ...input } = settings
-      setData(await settingsApi.save(input))
+      const result = await settingsApi.save(input)
+      setData(result)
+      markSaved(result)
       setError(null)
       flash()
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
