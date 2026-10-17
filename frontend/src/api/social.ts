@@ -1,7 +1,7 @@
 import { apiJson, send } from './client'
 
 /** The platforms with an icon of their own (FoodSite.Api `SocialLinks.Platforms`), shown first and in this order. */
-export const SOCIAL_PLATFORMS = ['facebook', 'instagram', 'tiktok'] as const
+export const SOCIAL_PLATFORMS = ['facebook', 'instagram', 'tiktok', 'youtube'] as const
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number]
 export type SocialKind = SocialPlatform | 'custom'
 

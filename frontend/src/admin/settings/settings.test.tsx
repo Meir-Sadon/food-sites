@@ -638,8 +638,8 @@ describe('Social links', () => {
     expect(save).toBeDisabled()
     await user.type(within(form).getByLabelText('פייסבוק'), 'http://facebook.com/shop')
     await user.click(within(form).getByRole('button', { name: 'הוספת קישור' }))
-    await user.type(within(form).getByLabelText('שם הכפתור'), 'יוטיוב')
-    await user.type(within(form).getByLabelText('כתובת'), 'https://youtube.com/@shop')
+    await user.type(within(form).getByLabelText('שם הכפתור'), 'האתר שלנו')
+    await user.type(within(form).getByLabelText('כתובת'), 'https://example.com/shop')
     await user.click(save)
 
     expect(await within(form).findByText('הקישור צריך להתחיל ב־https://')).toBeInTheDocument()
@@ -653,7 +653,7 @@ describe('Social links', () => {
     expect(api.sent('PUT', '/api/admin/social-links').at(-1)?.body).toEqual({
       links: [
         { kind: 'facebook', label: null, url: 'https://facebook.com/shop' },
-        { kind: 'custom', label: 'יוטיוב', url: 'https://youtube.com/@shop' },
+        { kind: 'custom', label: 'האתר שלנו', url: 'https://example.com/shop' },
       ],
     })
   })

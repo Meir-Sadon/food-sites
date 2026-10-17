@@ -13,7 +13,8 @@ describe('About page social links', () => {
           socialLinks: [
             { kind: 'facebook', label: null, url: 'https://facebook.com/shop' },
             { kind: 'tiktok', label: null, url: 'https://tiktok.com/@shop' },
-            { kind: 'custom', label: 'יוטיוב', url: 'https://youtube.com/@shop' },
+            { kind: 'youtube', label: null, url: 'https://youtube.com/@shop' },
+            { kind: 'custom', label: 'האתר שלנו', url: 'https://example.com/shop' },
           ],
         }),
     })
@@ -21,13 +22,14 @@ describe('About page social links', () => {
 
     const list = await screen.findByRole('list', { name: 'קישורים לרשתות חברתיות' })
     const links = within(list).getAllByRole('link')
-    expect(links.map((a) => a.textContent)).toEqual(['פייסבוק', 'טיקטוק', 'יוטיוב'])
+    expect(links.map((a) => a.textContent)).toEqual(['פייסבוק', 'טיקטוק', 'יוטיוב', 'האתר שלנו'])
     expect(links[0]).toHaveAttribute('href', 'https://facebook.com/shop')
     expect(links[0]).toHaveAttribute('target', '_blank')
     expect(links[0]).toHaveAttribute('rel', 'noopener noreferrer')
     expect(links.map((a) => a.className)).toEqual([
       'social-link social-link--facebook',
       'social-link social-link--tiktok',
+      'social-link social-link--youtube',
       'social-link social-link--custom',
     ])
     expect(links[0].querySelector('svg')).not.toBeNull()

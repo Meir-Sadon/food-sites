@@ -11,7 +11,7 @@ public class SocialLink
 
     public int Id { get; set; }
 
-    /// <summary><c>facebook</c>, <c>instagram</c>, <c>tiktok</c> or <c>custom</c>.</summary>
+    /// <summary><c>facebook</c>, <c>instagram</c>, <c>tiktok</c>, <c>youtube</c> or <c>custom</c>.</summary>
     public required string Kind { get; set; }
 
     /// <summary>The button's text for a custom link; null for a known platform.</summary>

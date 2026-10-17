@@ -21,21 +21,23 @@
   },
   "socialLinks": {
     "title": "קישורים לרשתות חברתיות",
-    "hint": "הקישורים מופיעים בדף ״אודות״ ככפתורים עם סמל, וכל אחד נפתח בלשונית חדשה. קישור שנשאר ריק לא מוצג. אפשר להוסיף גם קישור לכל דף אחר, למשל יוטיוב או אתר העסק. הקישור צריך להתחיל ב־https://",
+    "hint": "הקישורים מופיעים בדף ״אודות״ ככפתורים עם סמל, וכל אחד נפתח בלשונית חדשה. קישור שנשאר ריק לא מוצג. אפשר להוסיף גם קישור לכל דף אחר, למשל אתר העסק. הקישור צריך להתחיל ב־https://",
     "platforms": {
       "facebook": "פייסבוק",
       "instagram": "אינסטגרם",
-      "tiktok": "טיקטוק"
+      "tiktok": "טיקטוק",
+      "youtube": "יוטיוב"
     },
     "placeholders": {
       "facebook": "https://www.facebook.com/…",
       "instagram": "https://www.instagram.com/…",
-      "tiktok": "https://www.tiktok.com/@…"
+      "tiktok": "https://www.tiktok.com/@…",
+      "youtube": "https://www.youtube.com/@…"
     },
     "other": "קישורים נוספים",
     "noOther": "אין קישורים נוספים.",
     "label": "שם הכפתור",
-    "labelPlaceholder": "למשל: יוטיוב",
+    "labelPlaceholder": "למשל: האתר שלנו",
     "url": "כתובת",
     "unnamed": "קישור ללא שם",
     "add": "הוספת קישור"

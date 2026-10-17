@@ -6,10 +6,11 @@ public static class SocialLinks
     public const string Facebook = "facebook";
     public const string Instagram = "instagram";
     public const string TikTok = "tiktok";
+    public const string YouTube = "youtube";
     public const string Custom = "custom";
 
     /// <summary>The platforms with an icon of their own, shown first and in this order; at most one link each.</summary>
-    public static readonly IReadOnlyList<string> Platforms = [Facebook, Instagram, TikTok];
+    public static readonly IReadOnlyList<string> Platforms = [Facebook, Instagram, TikTok, YouTube];
 
     public static readonly IReadOnlyList<string> Kinds = [.. Platforms, Custom];
 

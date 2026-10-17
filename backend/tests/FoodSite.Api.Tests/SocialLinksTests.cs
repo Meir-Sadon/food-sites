@@ -45,16 +45,17 @@ public sealed class SocialLinksTests(PostgresFixture postgres) : IAsyncLifetime
     public async Task Links_are_saved_in_a_fixed_order_and_shown_on_the_client_site()
     {
         (await Save(
-            new LinkInput("custom", " יוטיוב ", "youtube.com/@shop"),
+            new LinkInput("custom", " האתר שלנו ", "example.com/shop"),
+            new LinkInput("youtube", null, "https://www.youtube.com/@shop"),
             new LinkInput("tiktok", null, "https://www.tiktok.com/@shop"),
             new LinkInput("facebook", null, "https://facebook.com/shop"))).EnsureSuccessStatusCode();
 
         var saved = await _admin.GetAsync("/api/admin/social-links").Read<List<LinkDto>>();
-        Assert.Equal(["facebook", "tiktok", "custom"], saved.Select(l => l.Kind));
-        Assert.Equal(("יוטיוב", "https://youtube.com/@shop"), (saved[2].Label, saved[2].Url));
+        Assert.Equal(["facebook", "tiktok", "youtube", "custom"], saved.Select(l => l.Kind));
+        Assert.Equal(("האתר שלנו", "https://example.com/shop"), (saved[3].Label, saved[3].Url));
 
         var site = await _factory.CreateApiClient().GetAsync("/api/site").Read<PublicController.SiteDto>();
-        Assert.Equal(["facebook", "tiktok", "custom"], site.SocialLinks!.Select(l => l.Kind));
+        Assert.Equal(["facebook", "tiktok", "youtube", "custom"], site.SocialLinks!.Select(l => l.Kind));
 
         (await Save(new LinkInput("facebook", null, "https://facebook.com/shop"))).EnsureSuccessStatusCode();
         Assert.Single(await _admin.GetAsync("/api/admin/social-links").Read<List<LinkDto>>());

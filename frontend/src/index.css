@@ -1923,6 +1923,12 @@ label {
   color: #fff;
 }
 
+.social-link--youtube {
+  background: #cc0000;
+  border-color: #cc0000;
+  color: #fff;
+}
+
 .social-link--tiktok {
   background: #000;
   border-color: #000;
