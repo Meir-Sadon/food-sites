@@ -297,8 +297,8 @@ export interface OrderInput {
   items: OrderLineInput[]
   /** The start of the picked hour ("HH:mm:ss"); required when the date has hours. */
   deliveryHour: string | null
-  /** Only with the visitor's consent and when the server reports orders to Meta. */
-  marketing?: { consent: true; fbp?: string; fbc?: string; sourceUrl?: string }
+  /** Only when the server reports orders to Meta. */
+  marketing?: { fbp?: string; fbc?: string; sourceUrl?: string }
 }
 
 export interface Confirmation {

@@ -1,6 +1,5 @@
 import type { TrackingIds } from '../api/site'
 import { EXCLUDED_KEY } from '../usage/track'
-import { getConsent } from './consent'
 
 /**
  * The owner's marketing tools (Meta Pixel, Google Analytics 4, Google Tag Manager, TikTok pixel), connected by an id in
@@ -126,7 +125,7 @@ function loadTikTok(id: string) {
 let adsConversion = ''
 
 export function initMarketing(ids: TrackingIds | null | undefined) {
-  if (!ids || !marketingTracking.enabled || ownerDevice() || getConsent() !== 'granted') return
+  if (!ids || !marketingTracking.enabled || ownerDevice()) return
   if (typeof navigator !== 'undefined' && navigator.webdriver) return
   const start = (tool: Tool, id: string, load: (id: string) => void) => {
     if (!id || loaded.has(tool)) return
@@ -236,15 +235,15 @@ export function resetMarketingForTests() {
   document.head.querySelectorAll('script[src*="fbevents"], script[src*="googletagmanager"], script[src*="tiktok"]').forEach((el) => el.remove())
 }
 
-/** Whether any tool has an id: the site then asks the visitor for consent and its privacy text names the tools. */
+/** Whether any tool has an id: the privacy text then names the tools. */
 export function hasMarketingTools(ids: TrackingIds | null | undefined): boolean {
   return !!ids && !!(ids.metaPixelId || ids.googleAnalyticsId || ids.googleTagManagerId || ids.tikTokPixelId || ids.googleAdsId)
 }
 
 const cookie = (name: string) => document.cookie.split('; ').find((c) => c.startsWith(`${name}=`))?.slice(name.length + 1)
 
-/** What the server needs to report the order to Meta too: only with the visitor's consent. */
-export function marketingForOrder(ids: TrackingIds | null | undefined): { consent: true; fbp?: string; fbc?: string; sourceUrl?: string } | undefined {
-  if (!ids?.metaServerEvents || !ids.metaPixelId || !marketingTracking.enabled || ownerDevice() || getConsent() !== 'granted') return undefined
-  return { consent: true, fbp: cookie('_fbp'), fbc: cookie('_fbc'), sourceUrl: window.location.origin + window.location.pathname }
+/** What the server needs to report the order to Meta too (when a token is saved). */
+export function marketingForOrder(ids: TrackingIds | null | undefined): { fbp?: string; fbc?: string; sourceUrl?: string } | undefined {
+  if (!ids?.metaServerEvents || !ids.metaPixelId || !marketingTracking.enabled || ownerDevice()) return undefined
+  return { fbp: cookie('_fbp'), fbc: cookie('_fbc'), sourceUrl: window.location.origin + window.location.pathname }
 }

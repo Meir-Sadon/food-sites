@@ -6,8 +6,8 @@ using FoodSite.Api.Phones;
 
 namespace FoodSite.Api.Marketing;
 
-/// <summary>What the order page tells the server about the visitor's marketing choice and Meta's browser cookies.</summary>
-public record MarketingInput(bool Consent, string? Fbp = null, string? Fbc = null, string? SourceUrl = null);
+/// <summary>What the order page tells the server about Meta's browser cookies and the page address.</summary>
+public record MarketingInput(string? Fbp = null, string? Fbc = null, string? SourceUrl = null);
 
 /// <summary>One Purchase event for Meta's Conversions API.</summary>
 public record MetaPurchase(
@@ -56,7 +56,7 @@ public class MetaConversionsSender(HttpClient http) : IMetaConversionsSender
     }
 }
 
-/// <summary>Reports a sent order to Meta when the site has a pixel id and an access token and the visitor agreed.</summary>
+/// <summary>Reports a sent order to Meta when the site has a pixel id and an access token.</summary>
 public class MarketingNotifier(IMetaConversionsSender meta, ILogger<MarketingNotifier> logger)
 {
     /// <summary>The id the browser pixel uses for the same order, so Meta counts it once.</summary>
@@ -69,13 +69,13 @@ public class MarketingNotifier(IMetaConversionsSender meta, ILogger<MarketingNot
     /// <summary>A failed report never fails the order: it is already saved.</summary>
     public async Task PurchaseAsync(Settings settings, Order order, MarketingInput? input, string? clientIp, string? userAgent, CancellationToken ct = default)
     {
-        if (input is not { Consent: true } || string.IsNullOrEmpty(settings.MetaPixelId) || string.IsNullOrEmpty(settings.MetaAccessToken))
+        if (string.IsNullOrEmpty(settings.MetaPixelId) || string.IsNullOrEmpty(settings.MetaAccessToken))
             return;
         try
         {
             await meta.SendPurchaseAsync(new MetaPurchase(
                 settings.MetaPixelId, settings.MetaAccessToken, EventId(order.Id), order.CreatedAt, order.Total, "ILS",
-                HashPhone(order.Phone), Limit(input.Fbp), Limit(input.Fbc), Limit(input.SourceUrl), clientIp, Limit(userAgent)), ct);
+                HashPhone(order.Phone), Limit(input?.Fbp), Limit(input?.Fbc), Limit(input?.SourceUrl), clientIp, Limit(userAgent)), ct);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

@@ -3904,35 +3904,3 @@ label {
 .order-address-stage {
   margin-block-start: 1rem;
 }
-
-/* The cookie question: pinned to the bottom, above the floating buttons and the order total. */
-.consent-banner {
-  position: fixed;
-  inset-inline: 0.75rem;
-  bottom: 0.75rem;
-  z-index: 25;
-  display: grid;
-  gap: 0.75rem;
-  max-width: 40rem;
-  margin-inline: auto;
-  padding: 1rem;
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: 0 0.5rem 2rem rgb(0 0 0 / 0.25);
-}
-
-.consent-banner p {
-  margin: 0;
-}
-
-.consent-banner__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.consent-banner__actions button {
-  flex: 1 1 auto;
-}

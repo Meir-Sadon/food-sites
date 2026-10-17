@@ -59,10 +59,10 @@ public sealed class MarketingTests(PostgresFixture postgres) : IAsyncLifetime
     private Task Connect(object ids) => _admin.PutAsJsonAsync("/api/admin/settings/tracking", ids);
 
     [Fact]
-    public async Task The_server_reports_a_sent_order_to_Meta_once_with_the_pixel_id_a_token_and_consent()
+    public async Task The_server_reports_a_sent_order_to_Meta_once_with_the_pixel_id_and_a_token()
     {
         await Connect(new { metaPixelId = "123456789012345", metaAccessToken = Token });
-        var response = await PlaceOrder(new { consent = true, fbp = "fb.1.123.456", fbc = "fb.1.123.abc", sourceUrl = "https://example.com/" });
+        var response = await PlaceOrder(new { fbp = "fb.1.123.456", fbc = "fb.1.123.abc", sourceUrl = "https://example.com/" });
         response.EnsureSuccessStatusCode();
         var order = await response.Read<Controllers.OrdersController.ConfirmationDto>();
 
@@ -80,20 +80,18 @@ public sealed class MarketingTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Nothing_is_sent_without_consent_without_a_token_or_without_a_pixel_id()
+    public async Task Nothing_is_sent_without_a_token_or_without_a_pixel_id_and_the_browser_cookies_are_optional()
     {
         await Connect(new { metaPixelId = "123456789012345", metaAccessToken = Token });
-        (await PlaceOrder(new { consent = false, fbp = "fb.1.1.1" })).EnsureSuccessStatusCode();
         (await PlaceOrder(null)).EnsureSuccessStatusCode();
-        Assert.Empty(_factory.Meta.Sent);
+        var sent = Assert.Single(_factory.Meta.Sent);
+        Assert.Null(sent.Fbp);
 
         await Connect(new { metaAccessToken = "" });
-        (await PlaceOrder(new { consent = true })).EnsureSuccessStatusCode();
-        Assert.Empty(_factory.Meta.Sent);
-
+        (await PlaceOrder(new { fbp = "fb.1.1.1" })).EnsureSuccessStatusCode();
         await Connect(new { metaPixelId = "", metaAccessToken = Token });
-        (await PlaceOrder(new { consent = true })).EnsureSuccessStatusCode();
-        Assert.Empty(_factory.Meta.Sent);
+        (await PlaceOrder(null)).EnsureSuccessStatusCode();
+        Assert.Single(_factory.Meta.Sent);
     }
 
     [Fact]
@@ -101,7 +99,7 @@ public sealed class MarketingTests(PostgresFixture postgres) : IAsyncLifetime
     {
         await Connect(new { metaPixelId = "123456789012345", metaAccessToken = Token });
         _factory.Meta.Fail = true;
-        (await PlaceOrder(new { consent = true })).EnsureSuccessStatusCode();
+        (await PlaceOrder(null)).EnsureSuccessStatusCode();
     }
 
     [Fact]

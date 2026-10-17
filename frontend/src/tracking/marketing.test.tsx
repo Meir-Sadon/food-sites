@@ -7,7 +7,6 @@ import { publicApi, settings, site } from '../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 import { EXCLUDED_KEY } from '../usage/track'
-import { CONSENT_KEY } from './consent'
 import { marketingTracking, resetMarketingForTests } from './marketing'
 
 const none: TrackingIds = { metaPixelId: '', googleAnalyticsId: '', googleTagManagerId: '', tikTokPixelId: '', googleAdsId: '', googleAdsPurchaseLabel: '', metaServerEvents: false }
@@ -35,8 +34,6 @@ const scripts = () => Array.from(document.head.querySelectorAll('script[src]')).
 
 beforeEach(() => {
   localStorage.clear()
-  // These tests are about what loads after a "yes"; the question itself is tested below.
-  localStorage.setItem(CONSENT_KEY, 'granted')
   resetMarketingForTests()
   marketingTracking.enabled = true
 })
@@ -105,7 +102,7 @@ describe('Marketing tools on the client site', () => {
     // The Ads conversion for a sent order, with the label the owner entered.
     expect(googleCalls().at(-1)).toEqual(['event', 'conversion', { send_to: 'AW-123456789/AbC-dEf_123', value: 70, currency: 'ILS', transaction_id: '7' }])
     // The server also reports the order to Meta, with the same event id the pixel used.
-    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ marketing: { consent: true, sourceUrl: expect.stringContaining('http') } })
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ marketing: { sourceUrl: expect.stringContaining('http') } })
     expect(tikTokCalls()).toEqual([['page'], ['track', 'AddToCart'], ['track', 'InitiateCheckout'], ['track', 'CompletePayment']])
   })
 
@@ -141,84 +138,39 @@ describe('Marketing tools on the client site', () => {
   })
 })
 
-describe('Cookie consent and the privacy text', () => {
-  beforeEach(() => {
-    localStorage.clear()
-    sessionStorage.clear()
-  })
+describe('The privacy text', () => {
+  const openPolicy = async () => {
+    const user = userEvent.setup()
+    await user.click(await within(await screen.findByRole('contentinfo')).findByRole('button', { name: 'תנאי שימוש ומדיניות' }))
+    return screen.findByRole('dialog', { name: 'תנאי שימוש ומדיניות האתר' })
+  }
 
-  it('asks first, and loads nothing until the visitor agrees', async () => {
+  it('asks no cookie question and loads the connected tools at once', async () => {
     fakeApi(withTracking(all))
     renderAt('/')
-    const user = userEvent.setup()
-    const banner = await screen.findByRole('region', { name: 'עוגיות' })
-    // A general sentence: the tools are named in the privacy policy, not here.
-    expect(banner).not.toHaveTextContent('Meta')
-    expect(banner).toHaveTextContent('עוגיות הכרחיות')
-    expect(scripts()).toEqual([])
-
-    await user.click(within(banner).getByRole('button', { name: 'מסכים' }))
-    await waitFor(() => expect(scripts()).toHaveLength(4))
-    expect(screen.queryByRole('region', { name: 'עוגיות' })).not.toBeInTheDocument()
-    expect(localStorage.getItem(CONSENT_KEY)).toBe('granted')
-  })
-
-  it('keeps everything off and does not ask again after "necessary only"', async () => {
-    fakeApi(withTracking(all))
-    renderAt('/')
-    const user = userEvent.setup()
-    const banner = await screen.findByRole('region', { name: 'עוגיות' })
-    await user.click(within(banner).getByRole('button', { name: 'רק הכרחיות' }))
-    expect(scripts()).toEqual([])
-    expect(win().fbq).toBeUndefined()
-    expect(localStorage.getItem(CONSENT_KEY)).toBe('denied')
-    expect(screen.queryByRole('region', { name: 'עוגיות' })).not.toBeInTheDocument()
-    // The footer lets the visitor change their mind.
-    await user.click(within(screen.getByRole('contentinfo')).getByRole('button', { name: 'הגדרות עוגיות' }))
-    expect(await screen.findByRole('region', { name: 'עוגיות' })).toBeInTheDocument()
-  })
-
-  it('"not now" loads nothing, stores no answer and comes back on the next visit', async () => {
-    fakeApi(withTracking(all))
-    const first = renderAt('/')
-    const user = userEvent.setup()
-    await user.click(within(await screen.findByRole('region', { name: 'עוגיות' })).getByRole('button', { name: 'לא עכשיו' }))
-    expect(scripts()).toEqual([])
-    expect(localStorage.getItem(CONSENT_KEY)).toBeNull()
-    expect(screen.queryByRole('region', { name: 'עוגיות' })).not.toBeInTheDocument()
-
-    // A new visit is a new browser session.
-    first.unmount()
-    sessionStorage.clear()
-    renderAt('/')
-    expect(await screen.findByRole('region', { name: 'עוגיות' })).toBeInTheDocument()
-  })
-
-  it('shows no question when no tool is connected, and the policy says there is none', async () => {
-    fakeApi(withTracking(none))
-    renderAt('/')
-    const user = userEvent.setup()
     await screen.findByRole('heading', { level: 2, name: 'עופות' })
     expect(screen.queryByRole('region', { name: 'עוגיות' })).not.toBeInTheDocument()
     expect(within(screen.getByRole('contentinfo')).queryByRole('button', { name: 'הגדרות עוגיות' })).not.toBeInTheDocument()
-    await user.click(within(screen.getByRole('contentinfo')).getByRole('button', { name: 'תנאי שימוש ומדיניות' }))
-    expect(await screen.findByText(/אינו משתמש בשירותי מעקב או פרסום של צד שלישי/)).toBeInTheDocument()
+    await waitFor(() => expect(scripts()).toHaveLength(4))
   })
 
-  it('writes the connected tools into the policy by itself', async () => {
-    localStorage.setItem(CONSENT_KEY, 'denied')
+  it('says openly there is no third-party tracking when no tool is connected', async () => {
+    fakeApi(withTracking(none))
+    renderAt('/')
+    expect(await openPolicy()).toHaveTextContent('אינו משתמש בשירותי מעקב או פרסום של צד שלישי')
+  })
+
+  it('writes the connected tools into the policy by itself and says that using the site is agreeing', async () => {
     fakeApi(withTracking({ ...none, metaPixelId: all.metaPixelId, tikTokPixelId: all.tikTokPixelId, metaServerEvents: true }))
     renderAt('/')
-    const user = userEvent.setup()
-    await user.click(await within(await screen.findByRole('contentinfo')).findByRole('button', { name: 'תנאי שימוש ומדיניות' }))
-    const policy = await screen.findByRole('dialog', { name: 'תנאי שימוש ומדיניות האתר' })
+    const policy = await openPolicy()
     expect(policy).toHaveTextContent('בשירותי מדידה ופרסום של צד שלישי: Meta (פייסבוק ואינסטגרם), TikTok')
+    expect(policy).toHaveTextContent('השימוש באתר מהווה הסכמה')
     expect(policy).toHaveTextContent('מדווח עליה גם ל־Meta משרת האתר')
     expect(policy).not.toHaveTextContent('Google')
   })
 
-  it('sends no marketing details with an order the visitor did not agree to', async () => {
-    localStorage.setItem(CONSENT_KEY, 'denied')
+  it('sends the Meta details with the order when the server reports orders', async () => {
     const api = fakeApi(withTracking(all))
     renderAt('/')
     await screen.findByRole('heading', { level: 2, name: 'עופות' })
@@ -233,8 +185,7 @@ describe('Cookie consent and the privacy text', () => {
     await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
     await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
     await screen.findByRole('dialog')
-    expect(api.sent('POST', '/api/orders')[0].body).not.toHaveProperty('marketing')
-    expect(scripts()).toEqual([])
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ marketing: { sourceUrl: expect.stringContaining('http') } })
   })
 })
 

@@ -10,8 +10,6 @@ import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
 import { useApplyColors } from '../site/useApplyColors'
 import { useColors, useCorners, useFinish, useSite, useSiteStyle } from '../site/useSite'
-import { ConsentBanner } from './ConsentBanner'
-import { useConsent } from '../tracking/consent'
 import { initMarketing, trackMarketing } from '../tracking/marketing'
 import { trackUsage } from '../usage/track'
 
@@ -45,16 +43,15 @@ function useStyleAttribute() {
   useApplyColors(palette, customColors, lineWidth)
 }
 
-/** Loads the marketing tools the owner connected (only those with an id, and only once the visitor agreed) and tells them about each page the client opens. */
+/** Loads the marketing tools the owner connected (only those with an id) and tells them about each page the client opens. */
 function useMarketing() {
   const tracking = useSite()?.tracking
   const { pathname } = useLocation()
-  const consent = useConsent()
   useEffect(() => {
-    if (!tracking || consent !== 'granted') return
+    if (!tracking) return
     initMarketing(tracking)
     trackMarketing({ name: 'PageView', path: pathname })
-  }, [tracking, pathname, consent])
+  }, [tracking, pathname])
 }
 
 function Shell() {
@@ -68,7 +65,6 @@ function Shell() {
         <Outlet />
       </main>
       <Footer />
-      <ConsentBanner />
       <div className="fabs">
         <ScrollButtons />
         <WhatsAppButton />
