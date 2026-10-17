@@ -118,6 +118,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   spacing: 'standard',
   tileGroups: 'framed',
   deliveryPricing: 'simple',
+  socialLinks: [],
   ...patch,
 })
 

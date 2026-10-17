@@ -18,7 +18,7 @@ namespace FoodSite.Api.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1090,13 +1090,45 @@ namespace FoodSite.Api.Data.Migrations
                         new
                         {
                             Id = 1,
+                            AddressFirst = false,
                             BitEnabled = false,
                             DeliveryEnabled = true,
                             MinimumOrderAppliesToPickup = true,
+                            OwnerChangeMails = false,
                             PayBoxEnabled = false,
                             PickupEnabled = true,
                             SiteDefaultsApplied = false
                         });
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SocialLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SocialLinks");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.SupplyDay", b =>

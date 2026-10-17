@@ -15,6 +15,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
 {
     public record ContactDto(string? Name, string? Phone, string? Address, string? Email, string? OpeningHours);
 
+    public record SocialLinkDto(string Kind, string? Label, string Url);
+
     public record SiteDto(
         string? BackgroundImageUrl,
         bool DeliveryEnabled,
@@ -44,7 +46,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string TileGroups,
         string DeliveryPricing = "simple",
         decimal? DeliveryFeeAmount = null,
-        bool AddressFirst = false);
+        bool AddressFirst = false,
+        IReadOnlyList<SocialLinkDto>? SocialLinks = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -141,7 +144,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Finish.EffectiveTileGroups(s.TileGroups),
             DeliveryQuoter.Mode(s),
             s.DeliveryFeeAmount,
-            s.AddressFirst);
+            s.AddressFirst,
+            (await db.SocialLinks.AsNoTracking().OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id).ToListAsync())
+                .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList());
     }
 
     [HttpGet("menu")]

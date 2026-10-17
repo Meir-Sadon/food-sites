@@ -11,6 +11,7 @@ const base = {
   'GET /api/admin/settings': () => settings(),
   'GET /api/admin/supply-days': () => supplyDays(),
   'GET /api/admin/closed-dates': () => [{ id: 1, date: '2026-10-14', reason: 'סוכות' }],
+  'GET /api/admin/social-links': () => [],
 }
 
 /** A settings section once its data has loaded. */
@@ -613,5 +614,64 @@ describe('Console token', () => {
     await user.click(within(region).getByRole('button', { name: 'כן, ליצור מפתח חדש' }))
 
     expect(await within(region).findByLabelText('המפתח')).toHaveValue('fso_new')
+  })
+})
+
+describe('Social links', () => {
+  it('saves the filled links and refuses an address that is not https beside its field', async () => {
+    let links: unknown[] = []
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/social-links': () => links,
+      'PUT /api/admin/social-links': (_, body) => {
+        const sent = (body as { links: { kind: string; url: string }[] }).links
+        const bad = sent.findIndex((l) => !l.url.startsWith('https://'))
+        if (bad >= 0) return invalid({ [`links[${bad}].url`]: ['link'] })
+        return (links = sent)
+      },
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('קישורים לרשתות חברתיות')
+
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+    expect(save).toBeDisabled()
+    await user.type(within(form).getByLabelText('פייסבוק'), 'http://facebook.com/shop')
+    await user.click(within(form).getByRole('button', { name: 'הוספת קישור' }))
+    await user.type(within(form).getByLabelText('שם הכפתור'), 'יוטיוב')
+    await user.type(within(form).getByLabelText('כתובת'), 'https://youtube.com/@shop')
+    await user.click(save)
+
+    expect(await within(form).findByText('הקישור צריך להתחיל ב־https://')).toBeInTheDocument()
+    expect(within(form).getByLabelText('פייסבוק')).toHaveAttribute('aria-describedby', 'social-facebook-error')
+
+    await user.clear(within(form).getByLabelText('פייסבוק'))
+    await user.type(within(form).getByLabelText('פייסבוק'), 'https://facebook.com/shop')
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/social-links').at(-1)?.body).toEqual({
+      links: [
+        { kind: 'facebook', label: null, url: 'https://facebook.com/shop' },
+        { kind: 'custom', label: 'יוטיוב', url: 'https://youtube.com/@shop' },
+      ],
+    })
+  })
+
+  it('leaves out a field that was emptied', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/social-links': () => [{ kind: 'instagram', label: null, url: 'https://instagram.com/shop' }],
+      'PUT /api/admin/social-links': (_, body) => (body as { links: unknown[] }).links,
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('קישורים לרשתות חברתיות')
+
+    await user.clear(within(form).getByLabelText('אינסטגרם'))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect(api.sent('PUT', '/api/admin/social-links')[0].body).toEqual({ links: [] })
   })
 })
