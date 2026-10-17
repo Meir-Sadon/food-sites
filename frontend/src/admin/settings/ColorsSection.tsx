@@ -7,6 +7,7 @@ import { backgroundOf, colorVariables, contrastRatio, copySource, ensureReadable
 import { Loading, Section, Status } from '../ui'
 import { announceLook } from '../useAdminLook'
 import { useErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsaved'
 
 const LINE_WIDTHS = Array.from({ length: MAX_LINE_WIDTH }, (_, i) => i + 1)
 
@@ -58,9 +59,15 @@ export function ColorsSection() {
     setPickedColors(next)
   }
 
-  async function handleSubmit(event: FormEvent) {
+  useUnsavedChanges(changed, save)
+
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!settings) return
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!settings) return false
     setSaving(true)
     setError(null)
     try {
@@ -72,8 +79,10 @@ export function ColorsSection() {
       setPickedColors(null)
       setPickedWidth(undefined)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
