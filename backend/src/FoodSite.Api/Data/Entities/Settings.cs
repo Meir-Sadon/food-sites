@@ -143,4 +143,16 @@ public class Settings
 
     /// <summary>TikTok pixel code; null means it is not loaded.</summary>
     public string? TikTokPixelId { get; set; }
+
+    /// <summary>Google Ads conversion id (<c>AW-…</c>); null means no Ads tag.</summary>
+    public string? GoogleAdsId { get; set; }
+
+    /// <summary>The label of the Ads conversion counted when an order is sent.</summary>
+    public string? GoogleAdsPurchaseLabel { get; set; }
+
+    /// <summary>
+    /// Meta Conversions API access token: with the pixel id it lets the server report each order to Meta. A secret,
+    /// never returned by the API and recorded in the audit trail without its value.
+    /// </summary>
+    public string? MetaAccessToken { get; set; }
 }

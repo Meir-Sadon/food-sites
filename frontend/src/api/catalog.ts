@@ -67,7 +67,10 @@ export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'ord
   Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'>>
 
 /** Saved on its own (`settingsApi.saveTracking`); a missing id keeps that tool, an empty one turns it off. */
-export type TrackingInput = Partial<TrackingIds>
+export type TrackingInput = Partial<Omit<TrackingIds, 'metaServerEvents'>> & {
+  /** Write-only: the Meta Conversions API access token; an empty text removes it. */
+  metaAccessToken?: string
+}
 
 export interface SupplyDay {
   weekday: Weekday

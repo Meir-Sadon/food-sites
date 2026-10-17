@@ -70,6 +70,12 @@ export interface TrackingIds {
   googleTagManagerId: string
   /** TikTok pixel code. */
   tikTokPixelId: string
+  /** Google Ads conversion id, `AW-…`. */
+  googleAdsId: string
+  /** The Ads conversion counted when an order is sent. */
+  googleAdsPurchaseLabel: string
+  /** The server also reports each order to Meta (an access token is saved; it is never returned). */
+  metaServerEvents: boolean
 }
 
 export interface Site {
@@ -291,6 +297,8 @@ export interface OrderInput {
   items: OrderLineInput[]
   /** The start of the picked hour ("HH:mm:ss"); required when the date has hours. */
   deliveryHour: string | null
+  /** Only with the visitor's consent and when the server reports orders to Meta. */
+  marketing?: { consent: true; fbp?: string; fbc?: string; sourceUrl?: string }
 }
 
 export interface Confirmation {

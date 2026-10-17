@@ -58,7 +58,7 @@ import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
 import { siteLogo } from '../site/config'
-import { trackMarketing } from '../tracking/marketing'
+import { marketingForOrder, trackMarketing } from '../tracking/marketing'
 import { trackUsage } from '../usage/track'
 
 function formatCutoff(iso: string) {
@@ -499,6 +499,7 @@ export function OrderPage() {
         paymentMethod: payment,
         notes: state.notes.trim(),
         items: toLines(state.selections, dishes),
+        marketing: marketingForOrder(site?.tracking),
       })
       clearDraft()
       trackUsage('OrderSubmitted')

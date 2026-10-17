@@ -369,7 +369,7 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
 
         var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings/tracking",
             new { metaPixelId = " 123456789012345 ", googleAnalyticsId = "g-abc123xyz9", googleTagManagerId = "gtm-abc123", tikTokPixelId = "" })).Read<SettingsDto>();
-        Assert.Equal(new Sites.Tracking.Ids("123456789012345", "G-ABC123XYZ9", "GTM-ABC123", ""), saved.Tracking);
+        Assert.Equal(new Sites.Tracking.Ids("123456789012345", "G-ABC123XYZ9", "GTM-ABC123", "", "", "", false), saved.Tracking);
         Assert.Equal(saved.Tracking, (await site.GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>()).Tracking);
 
         // Saving the other settings leaves the ids alone, and an id left out of its own save is kept.
@@ -389,6 +389,9 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     [InlineData("googleAnalyticsId", "UA-1234", "GoogleAnalyticsId")]
     [InlineData("googleTagManagerId", "GTM-'+alert(1)+'", "GoogleTagManagerId")]
     [InlineData("tikTokPixelId", "abc'; x", "TikTokPixelId")]
+    [InlineData("googleAdsId", "AW-12", "GoogleAdsId")]
+    [InlineData("googleAdsPurchaseLabel", "a'); alert(1);//", "GoogleAdsPurchaseLabel")]
+    [InlineData("metaAccessToken", "short", "MetaAccessToken")]
     public async Task A_tracking_id_in_the_wrong_shape_is_rejected(string field, string value, string error)
     {
         var tracking = new Dictionary<string, string> { [field] = value };

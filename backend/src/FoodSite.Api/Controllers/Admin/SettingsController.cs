@@ -237,10 +237,22 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add("GoogleTagManagerId", "trackingId");
         if (tracking.TikTokPixelId is not null && !Sites.Tracking.IsTikTok(Sites.Tracking.Normalize(tracking.TikTokPixelId, true)))
             errors.Add("TikTokPixelId", "trackingId");
+        if (tracking.GoogleAdsId is not null && !Sites.Tracking.IsAds(Sites.Tracking.Normalize(tracking.GoogleAdsId, true)))
+            errors.Add("GoogleAdsId", "trackingId");
+        if (tracking.GoogleAdsPurchaseLabel is not null && !Sites.Tracking.IsAdsLabel(Sites.Tracking.Normalize(tracking.GoogleAdsPurchaseLabel, false)))
+            errors.Add("GoogleAdsPurchaseLabel", "trackingId");
+        if (tracking.MetaAccessToken is not null && !Sites.Tracking.IsMetaToken(Sites.Tracking.Normalize(tracking.MetaAccessToken, false)))
+            errors.Add("MetaAccessToken", "trackingId");
         if (errors.Any)
             return Invalid(errors);
 
         var settings = await db.Settings.SingleAsync();
+        if (tracking.GoogleAdsId is not null)
+            settings.GoogleAdsId = Clean(Sites.Tracking.Normalize(tracking.GoogleAdsId, true));
+        if (tracking.GoogleAdsPurchaseLabel is not null)
+            settings.GoogleAdsPurchaseLabel = Clean(Sites.Tracking.Normalize(tracking.GoogleAdsPurchaseLabel, false));
+        if (tracking.MetaAccessToken is not null)
+            settings.MetaAccessToken = Clean(Sites.Tracking.Normalize(tracking.MetaAccessToken, false));
         if (tracking.MetaPixelId is not null)
             settings.MetaPixelId = Clean(Sites.Tracking.Normalize(tracking.MetaPixelId, false));
         if (tracking.GoogleAnalyticsId is not null)

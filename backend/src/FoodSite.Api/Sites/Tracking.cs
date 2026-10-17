@@ -10,13 +10,18 @@ namespace FoodSite.Api.Sites;
 public static partial class Tracking
 {
     /// <summary>The ids as the client site and the admin see them; an empty string means the tool is off.</summary>
-    public record Ids(string MetaPixelId, string GoogleAnalyticsId, string GoogleTagManagerId, string TikTokPixelId)
+    /// <param name="MetaServerEvents">Whether a Conversions API access token is saved (the token itself is never returned).</param>
+    public record Ids(
+        string MetaPixelId, string GoogleAnalyticsId, string GoogleTagManagerId, string TikTokPixelId,
+        string GoogleAdsId, string GoogleAdsPurchaseLabel, bool MetaServerEvents)
     {
-        public static readonly Ids None = new("", "", "", "");
+        public static readonly Ids None = new("", "", "", "", "", "", false);
     }
 
     /// <summary>What the admin sends: a missing id keeps that tool as it is, an empty one turns it off.</summary>
-    public record IdsInput(string? MetaPixelId = null, string? GoogleAnalyticsId = null, string? GoogleTagManagerId = null, string? TikTokPixelId = null);
+    public record IdsInput(
+        string? MetaPixelId = null, string? GoogleAnalyticsId = null, string? GoogleTagManagerId = null, string? TikTokPixelId = null,
+        string? GoogleAdsId = null, string? GoogleAdsPurchaseLabel = null, string? MetaAccessToken = null);
 
     /// <summary>Meta Pixel: a number of 8 to 20 digits, from Meta Events Manager (not the Facebook page's link).</summary>
     [GeneratedRegex(@"^[0-9]{8,20}$")]
@@ -34,6 +39,18 @@ public static partial class Tracking
     [GeneratedRegex(@"^[A-Z0-9]{10,30}$")]
     private static partial Regex TikTokPattern();
 
+    /// <summary>Google Ads conversion id, such as <c>AW-123456789</c>.</summary>
+    [GeneratedRegex(@"^AW-[0-9]{6,15}$")]
+    private static partial Regex AdsPattern();
+
+    /// <summary>The label of a Google Ads conversion (the part after the slash in <c>AW-123456789/AbC-dEf123</c>).</summary>
+    [GeneratedRegex(@"^[A-Za-z0-9_-]{6,40}$")]
+    private static partial Regex AdsLabelPattern();
+
+    /// <summary>A Meta Conversions API access token from Events Manager: letters and digits only.</summary>
+    [GeneratedRegex(@"^[A-Za-z0-9]{20,500}$")]
+    private static partial Regex MetaTokenPattern();
+
     /// <summary>Trims an id the admin typed or pasted; Google and TikTok ids are upper case.</summary>
     public static string Normalize(string? value, bool upper) =>
         upper ? (value ?? "").Trim().ToUpperInvariant() : (value ?? "").Trim();
@@ -43,6 +60,11 @@ public static partial class Tracking
     public static bool IsTagManager(string value) => value.Length == 0 || TagManagerPattern().IsMatch(value);
     public static bool IsTikTok(string value) => value.Length == 0 || TikTokPattern().IsMatch(value);
 
+    public static bool IsAds(string value) => value.Length == 0 || AdsPattern().IsMatch(value);
+    public static bool IsAdsLabel(string value) => value.Length == 0 || AdsLabelPattern().IsMatch(value);
+    public static bool IsMetaToken(string value) => value.Length == 0 || MetaTokenPattern().IsMatch(value);
+
     public static Ids Of(Data.Entities.Settings s) =>
-        new(s.MetaPixelId ?? "", s.GoogleAnalyticsId ?? "", s.GoogleTagManagerId ?? "", s.TikTokPixelId ?? "");
+        new(s.MetaPixelId ?? "", s.GoogleAnalyticsId ?? "", s.GoogleTagManagerId ?? "", s.TikTokPixelId ?? "",
+            s.GoogleAdsId ?? "", s.GoogleAdsPurchaseLabel ?? "", !string.IsNullOrEmpty(s.MetaAccessToken));
 }

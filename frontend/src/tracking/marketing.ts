@@ -1,5 +1,6 @@
 import type { TrackingIds } from '../api/site'
 import { EXCLUDED_KEY } from '../usage/track'
+import { getConsent } from './consent'
 
 /**
  * The owner's marketing tools (Meta Pixel, Google Analytics 4, Google Tag Manager, TikTok pixel), connected by an id in
@@ -21,7 +22,7 @@ export type MarketingEvent =
 
 const CURRENCY = 'ILS'
 
-type Tool = 'meta' | 'analytics' | 'tagManager' | 'tikTok'
+type Tool = 'meta' | 'analytics' | 'tagManager' | 'tikTok' | 'ads'
 
 interface Loaded {
   /** The last path this tool was told about, so a re-render never repeats a page view. */
@@ -78,12 +79,25 @@ function loadMeta(id: string) {
   ;(w.fbq as (...a: unknown[]) => void)('init', id)
 }
 
-function loadAnalytics(id: string) {
-  win().gtag = gtag
+/** Google's one `gtag.js` serves Analytics and Ads: set it up once, then add each id with `config`. */
+function ensureGtag(firstId: string) {
+  const w = win()
+  if (w.gtag) return
+  w.gtag = gtag
   gtag('js', new Date())
+  addScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(firstId)}`)
+}
+
+function loadAnalytics(id: string) {
+  ensureGtag(id)
   // A single-page site sends its own page views as the client moves between pages.
   gtag('config', id, { send_page_view: false })
-  addScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`)
+}
+
+/** The Ads tag counts visits for remarketing by itself; the order is counted by `Purchase`. */
+function loadAds(id: string) {
+  ensureGtag(id)
+  gtag('config', id)
 }
 
 function loadTagManager(id: string) {
@@ -109,8 +123,10 @@ function loadTikTok(id: string) {
 }
 
 /** Adds the script of every tool that has an id and is not on the page yet. Safe to call again with the same ids. */
+let adsConversion = ''
+
 export function initMarketing(ids: TrackingIds | null | undefined) {
-  if (!ids || !marketingTracking.enabled || ownerDevice()) return
+  if (!ids || !marketingTracking.enabled || ownerDevice() || getConsent() !== 'granted') return
   if (typeof navigator !== 'undefined' && navigator.webdriver) return
   const start = (tool: Tool, id: string, load: (id: string) => void) => {
     if (!id || loaded.has(tool)) return
@@ -121,6 +137,8 @@ export function initMarketing(ids: TrackingIds | null | undefined) {
   start('analytics', ids.googleAnalyticsId, loadAnalytics)
   start('tagManager', ids.googleTagManagerId, loadTagManager)
   start('tikTok', ids.tikTokPixelId, loadTikTok)
+  start('ads', ids.googleAdsId, loadAds)
+  adsConversion = ids.googleAdsId && ids.googleAdsPurchaseLabel ? `${ids.googleAdsId}/${ids.googleAdsPurchaseLabel}` : ''
 }
 
 const fbq = (...args: unknown[]) => (win().fbq as ((...a: unknown[]) => void) | undefined)?.(...args)
@@ -194,6 +212,8 @@ export function trackMarketing(event: MarketingEvent) {
     if (loaded.has('meta')) sendMeta(event)
     if (loaded.has('tikTok')) sendTikTok(event)
     sendGoogle(event, [...loaded.keys()])
+    if (event.name === 'Purchase' && loaded.has('ads') && adsConversion)
+      gtagCall('event', 'conversion', { send_to: adsConversion, value: event.value, currency: CURRENCY, transaction_id: String(event.orderId) })
   } catch {
     // A tool that fails is simply not reported to.
   }
@@ -210,7 +230,21 @@ function sendGoogle(event: MarketingEvent, tools: Tool[]) {
 export function resetMarketingForTests() {
   loaded.clear()
   sentOnce.clear()
+  adsConversion = ''
   const w = win()
   for (const key of ['fbq', '_fbq', 'gtag', 'dataLayer', 'ttq', 'TiktokAnalyticsObject']) delete w[key]
   document.head.querySelectorAll('script[src*="fbevents"], script[src*="googletagmanager"], script[src*="tiktok"]').forEach((el) => el.remove())
+}
+
+/** Whether any tool has an id: the site then asks the visitor for consent and its privacy text names the tools. */
+export function hasMarketingTools(ids: TrackingIds | null | undefined): boolean {
+  return !!ids && !!(ids.metaPixelId || ids.googleAnalyticsId || ids.googleTagManagerId || ids.tikTokPixelId || ids.googleAdsId)
+}
+
+const cookie = (name: string) => document.cookie.split('; ').find((c) => c.startsWith(`${name}=`))?.slice(name.length + 1)
+
+/** What the server needs to report the order to Meta too: only with the visitor's consent. */
+export function marketingForOrder(ids: TrackingIds | null | undefined): { consent: true; fbp?: string; fbc?: string; sourceUrl?: string } | undefined {
+  if (!ids?.metaServerEvents || !ids.metaPixelId || !marketingTracking.enabled || ownerDevice() || getConsent() !== 'granted') return undefined
+  return { consent: true, fbp: cookie('_fbp'), fbc: cookie('_fbc'), sourceUrl: window.location.origin + window.location.pathname }
 }

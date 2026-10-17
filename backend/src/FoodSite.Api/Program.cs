@@ -94,6 +94,8 @@ else if (mailOptions?.IsConfigured == true)
 else
     builder.Services.AddSingleton<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.NoopMailer>();
 builder.Services.AddScoped<FoodSite.Api.Mail.OwnerNotifier>();
+builder.Services.AddHttpClient<FoodSite.Api.Marketing.IMetaConversionsSender, FoodSite.Api.Marketing.MetaConversionsSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
+builder.Services.AddScoped<FoodSite.Api.Marketing.MarketingNotifier>();
 builder.Services.AddSingleton<FoodSite.Api.Mail.ChangeDigest>();
 builder.Services.AddHostedService<FoodSite.Api.Mail.ChangeDigestService>();
 builder.Services.AddScoped<UsageRecorder>();

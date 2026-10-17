@@ -1004,6 +1004,12 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("GoogleAdsId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GoogleAdsPurchaseLabel")
+                        .HasColumnType("text");
+
                     b.Property<string>("GoogleAnalyticsId")
                         .HasColumnType("text");
 
@@ -1015,6 +1021,9 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<int?>("LineWidth")
                         .HasColumnType("integer");
+
+                    b.Property<string>("MetaAccessToken")
+                        .HasColumnType("text");
 
                     b.Property<string>("MetaPixelId")
                         .HasColumnType("text");

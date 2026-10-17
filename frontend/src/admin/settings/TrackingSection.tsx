@@ -11,8 +11,13 @@ const FIELDS = [
   { key: 'metaPixelId', example: '123456789012345' },
   { key: 'googleAnalyticsId', example: 'G-XXXXXXXXXX' },
   { key: 'googleTagManagerId', example: 'GTM-XXXXXXX' },
+  { key: 'googleAdsId', example: 'AW-123456789' },
+  { key: 'googleAdsPurchaseLabel', example: 'AbC-dEf_123' },
   { key: 'tikTokPixelId', example: 'C1ABCDEF2GHIJKLMN3OP' },
 ] as const satisfies readonly { key: keyof TrackingIds; example: string }[]
+
+/** Write-only: the saved token is never sent back, so the field starts empty and an empty field keeps it. */
+const TOKEN = 'metaAccessToken'
 
 /**
  * The marketing tools the owner connects by an id (Meta Pixel, Google Analytics, Tag Manager, TikTok). The client site
@@ -24,12 +29,12 @@ export function TrackingSection() {
   const plainError = useErrorMessage()
   const { saved, flash } = useSavedFlash()
   const { data: settings, setData, failed } = useLoad(settingsApi.get)
-  const [edited, setEdited] = useState<Partial<TrackingIds>>({})
+  const [edited, setEdited] = useState<TrackingInput>({})
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const value = (key: keyof TrackingIds) => edited[key] ?? settings?.tracking[key] ?? ''
+  const value = (key: (typeof FIELDS)[number]['key']) => edited[key] ?? settings?.tracking[key] ?? ''
   const dirty = Object.keys(edited).length > 0
 
   async function handleSubmit(event: FormEvent) {
@@ -38,8 +43,7 @@ export function TrackingSection() {
     setErrors({})
     setError(null)
     try {
-      const input: TrackingInput = edited
-      setData(await settingsApi.saveTracking(input))
+      setData(await settingsApi.saveTracking(edited))
       setEdited({})
       flash()
     } catch (err) {
@@ -82,6 +86,32 @@ export function TrackingSection() {
               </span>
             )
           })}
+          <span className="field">
+            <span className="with-info">
+              <label htmlFor={`settings-tracking-${TOKEN}`}>{t(`admin.settings.tracking.${TOKEN}`)}</label>
+              <Info text={t(`admin.settings.tracking.${TOKEN}Hint`)} about={t(`admin.settings.tracking.${TOKEN}`)} />
+            </span>
+            <input
+              id={`settings-tracking-${TOKEN}`}
+              type="password"
+              dir="ltr"
+              maxLength={500}
+              autoComplete="off"
+              placeholder={settings.tracking.metaServerEvents ? t('admin.settings.tracking.metaAccessTokenSaved') : 'EAAB…'}
+              value={edited.metaAccessToken ?? ''}
+              aria-describedby={`settings-tracking-${TOKEN}-error`}
+              onChange={(e) => {
+                setEdited((current) => ({ ...current, metaAccessToken: e.target.value }))
+                setError(null)
+              }}
+            />
+            <FieldError errors={errors} field={TOKEN} id={`settings-tracking-${TOKEN}-error`} />
+            {settings.tracking.metaServerEvents && edited.metaAccessToken === undefined && (
+              <button type="button" className="button-quiet" onClick={() => setEdited((current) => ({ ...current, metaAccessToken: '' }))}>
+                {t('admin.settings.tracking.metaAccessTokenRemove')}
+              </button>
+            )}
+          </span>
           <div className="row">
             <button type="submit" disabled={saving || !dirty}>
               {saving ? t('admin.saving') : t('admin.save')}
