@@ -1,5 +1,6 @@
 import { apiJson, send } from './client'
 import type { ChoiceMode, SellBy } from './catalog'
+import type { SocialLink } from './social'
 
 export interface Contact {
   name: string | null
@@ -107,6 +108,8 @@ export interface Site {
   tileGroups: TileGroups
   /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
   deliveryPricing: DeliveryPricing
+  /** The buttons on the About page: Facebook, Instagram, TikTok, then the custom links. Empty: none. */
+  socialLinks: SocialLink[]
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */

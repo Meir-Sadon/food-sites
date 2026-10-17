@@ -25,6 +25,7 @@ public class AppDbContext(
     public DbSet<AddOnGroup> AddOnGroups => Set<AddOnGroup>();
     public DbSet<DishGroup> DishGroups => Set<DishGroup>();
     public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
+    public DbSet<SocialLink> SocialLinks => Set<SocialLink>();
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<User> Users => Set<User>();
@@ -169,6 +170,13 @@ public class AppDbContext(
             e.Property(z => z.Name).HasMaxLength(DeliveryZone.NameMaxLength).IsRequired();
             e.Property(z => z.Fee).HasPrecision(10, 2);
             e.Property(z => z.PolygonJson).IsRequired();
+        });
+
+        model.Entity<SocialLink>(e =>
+        {
+            e.Property(l => l.Kind).HasMaxLength(20).IsRequired();
+            e.Property(l => l.Label).HasMaxLength(SocialLink.LabelMaxLength);
+            e.Property(l => l.Url).HasMaxLength(SocialLink.UrlMaxLength).IsRequired();
         });
 
         model.Entity<DishGroup>(e =>

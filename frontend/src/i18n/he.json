@@ -22,6 +22,29 @@
     "waze": "ניווט ב־Waze",
     "pickupAddress": "כתובת האיסוף"
   },
+  "socialLinks": {
+    "title": "קישורים לרשתות חברתיות",
+    "hint": "הקישורים מופיעים בדף ״אודות״ ככפתורים עם סמל, וכל אחד נפתח בלשונית חדשה. קישור שנשאר ריק לא מוצג. אפשר להוסיף גם קישור לכל דף אחר, למשל אתר העסק. הקישור צריך להתחיל ב־https://",
+    "platforms": {
+      "facebook": "פייסבוק",
+      "instagram": "אינסטגרם",
+      "tiktok": "טיקטוק",
+      "youtube": "יוטיוב"
+    },
+    "placeholders": {
+      "facebook": "https://www.facebook.com/…",
+      "instagram": "https://www.instagram.com/…",
+      "tiktok": "https://www.tiktok.com/@…",
+      "youtube": "https://www.youtube.com/@…"
+    },
+    "other": "קישורים נוספים",
+    "noOther": "אין קישורים נוספים.",
+    "label": "שם הכפתור",
+    "labelPlaceholder": "למשל: האתר שלנו",
+    "url": "כתובת",
+    "unnamed": "קישור ללא שם",
+    "add": "הוספת קישור"
+  },
   "pages": {
     "order": {
       "title": "הזמנה"
@@ -1155,7 +1178,8 @@
     "tooManyChoices": "אפשר עד 20 אפשרויות לשאלה.",
     "choiceInvalid": "כל אפשרות צריכה טקסט, עד 50 תווים.",
     "duplicateChoice": "אותה אפשרות מופיעה פעמיים.",
-    "tooManyQuestions": "אפשר עד 20 שאלות למנה."
+    "tooManyQuestions": "אפשר עד 20 שאלות למנה.",
+    "tooManyLinks": "אפשר עד 10 קישורים נוספים."
   },
   "address": {
     "title": "כתובת",
