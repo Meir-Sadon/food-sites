@@ -5,6 +5,7 @@ import type { FieldErrors } from '../../api/client'
 import type { DeliveryPricing } from '../../api/site'
 import { FieldError, Info, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'paymentPhone' | 'bitLink' | 'payBoxLink'
@@ -13,7 +14,7 @@ type TextField = 'deliveryAreaText' | 'deliveryFeeText' | 'kashrutText' | 'payme
 export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPricing) => void }) {
   const { t } = useTranslation()
   const errorMessage = useFormErrorMessage()
-  const { data: settings, setData, failed } = useLoad(settingsApi.get)
+  const { data: settings, setData, failed, unsaved } = useLoad(settingsApi.get)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const { saved, flash } = useSavedFlash()
@@ -29,9 +30,8 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     setError(null)
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!settings) return
+  async function save() {
+    if (!settings) return true
     setSaving(true)
     setErrors({})
     try {
@@ -40,12 +40,20 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
       setData(await settingsApi.save(input))
       setError(null)
       flash()
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
+  }
+  useUnsavedChanges(unsaved, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   const text = (field: TextField, label: string, multiline = true, kind: 'tel' | 'url' = 'tel') => {

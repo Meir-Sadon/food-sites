@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../unsavedChanges'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, dishGroupsApi, dishesApi, type Category, type Dish, type DishGroup } from '../../api/catalog'
@@ -179,8 +180,10 @@ function GroupForm({
   const [error, setError] = useState<string | null>(null)
   const inputId = `${idPrefix}-name`
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+  const changed = name !== initialName || picked.size !== initialDishIds.length || initialDishIds.some((id) => !picked.has(id))
+
+  async function save() {
+    if (!name.trim()) return true
     setErrors({})
     setError(null)
     try {
@@ -189,11 +192,19 @@ function GroupForm({
         setName('')
         setPicked(new Set())
       }
+      return true
     } catch (err) {
       const fields = fieldErrorsOf(err)
       setErrors(fields)
       if (!fields.name) setError(errorMessage(err))
+      return false
     }
+  }
+  useUnsavedChanges(changed, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   function toggle(id: number, on: boolean) {

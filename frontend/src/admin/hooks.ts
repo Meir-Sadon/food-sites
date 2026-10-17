@@ -1,11 +1,22 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError, type FieldErrors } from '../api/client'
 
-/** Loads data once on mount. `reload` fetches again; `setData` applies an API response directly. */
+/**
+ * Loads data once on mount. `reload` fetches again; `setData` applies an API response directly.
+ * `unsaved` is true while the data differs from what was last loaded or saved: a value passed to `setData` (an API
+ * response) is the new saved state, an updater function (an edit) is not. Use it only for a form's own data, not for
+ * a list that is changed through server-confirmed updaters.
+ */
 export function useLoad<T>(load: () => Promise<T>) {
-  const [data, setData] = useState<T | null>(null)
+  const [data, setDataState] = useState<T | null>(null)
+  const [saved, setSaved] = useState<T | null>(null)
   const [failed, setFailed] = useState(false)
+
+  const setData = useCallback((next: SetStateAction<T | null>) => {
+    setDataState(next)
+    if (typeof next !== 'function') setSaved(next)
+  }, [])
 
   const reload = useCallback(() => {
     load()
@@ -19,7 +30,8 @@ export function useLoad<T>(load: () => Promise<T>) {
   }, [])
 
   useEffect(reload, [reload])
-  return { data, setData, failed, reload }
+  const unsaved = data !== null && saved !== null && JSON.stringify(data) !== JSON.stringify(saved)
+  return { data, setData, failed, reload, unsaved }
 }
 
 /** Turns an error from the API into one Hebrew sentence. */

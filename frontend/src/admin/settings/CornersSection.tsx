@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { CORNERS, type Corners } from '../../api/site'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
@@ -20,9 +21,8 @@ export function CornersSection() {
   const [error, setError] = useState<string | null>(null)
   const corners = picked ?? settings?.corners
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!corners) return
+  async function save() {
+    if (!corners) return true
     setSaving(true)
     setError(null)
     try {
@@ -30,11 +30,19 @@ export function CornersSection() {
       setData(await settingsApi.save({ ...current, corners }))
       setPicked(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
+  }
+  useUnsavedChanges(!!settings && corners !== settings.corners, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   return (

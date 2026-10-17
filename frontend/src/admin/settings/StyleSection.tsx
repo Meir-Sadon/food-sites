@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { SITE_STYLES, TILE_GROUPS, type SiteStyle, type TileGroups } from '../../api/site'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
@@ -20,9 +21,8 @@ export function StyleSection() {
   const tileGroups = pickedGroups ?? settings?.tileGroups
   const changed = !!settings && (style !== settings.style || tileGroups !== settings.tileGroups)
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!style) return
+  async function save() {
+    if (!style) return true
     setSaving(true)
     setError(null)
     try {
@@ -32,11 +32,19 @@ export function StyleSection() {
       setPicked(null)
       setPickedGroups(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
+  }
+  useUnsavedChanges(changed, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   return (

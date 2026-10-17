@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../unsavedChanges'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../../api/client'
@@ -113,20 +114,33 @@ function TemplateForm({
   const [status, setStatus] = useState<{ message: string; error?: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+  const changed =
+    input.name !== initial.name ||
+    input.text !== initial.text ||
+    input.includeReviewLink !== initial.includeReviewLink ||
+    input.forStatus !== initial.forStatus
+
+  async function save() {
     setErrors({})
     setStatus(null)
     setBusy(true)
     try {
       await onSave(input)
       setStatus({ message: t('admin.saved') })
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setStatus({ message: formError(err), error: true })
+      return false
     } finally {
       setBusy(false)
     }
+  }
+  useUnsavedChanges(changed, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   return (

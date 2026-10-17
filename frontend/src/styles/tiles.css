@@ -49,6 +49,7 @@
   inline-size: 100%;
   min-inline-size: 0;
   overflow: hidden;
+  cursor: pointer;
   border-radius: calc(1rem * var(--corner-scale));
   background: var(--color-soft);
   box-shadow: var(--shadow-sm);

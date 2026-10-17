@@ -119,6 +119,25 @@ describe('The tiles style', () => {
     expect(screen.getByRole('dialog', { name: 'עוף בתנור' })).toBeInTheDocument()
   })
 
+  it('opens the dialog when a dish picture is tapped, without adding the dish, and the X closes it', async () => {
+    const data = tilesMenu()
+    data.dishes.push(menuDish(8, 'חמין', 1, { images: ['https://img/hamin.jpg'] }))
+    const user = open(data)
+    const tile = (await screen.findByRole('heading', { level: 3, name: 'חמין' })).closest('article')!
+    await user.click(within(tile).getByRole('img', { name: 'חמין' }))
+    const dialog = screen.getByRole('dialog', { name: 'חמין' })
+    expect(within(dialog).getByRole('button', { name: 'הוספה להזמנה: חמין' })).toBeInTheDocument()
+    expect(within(tile).queryByRole('group', { name: 'חמין' })).not.toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('button', { name: 'סגירה' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(within(tile).getByRole('button', { name: 'הוספה להזמנה: חמין' })).toBeInTheDocument()
+
+    await user.click(within(tile).getByRole('img', { name: 'חמין' }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'הוספה להזמנה: חמין' }))
+    expect(within(screen.getByRole('dialog')).getByRole('group', { name: 'חמין' })).toBeInTheDocument()
+  })
+
   it('closes a dialog on a tap behind it, like the done button, and keeps the choice', async () => {
     const user = open()
     const tile = (await screen.findByRole('heading', { level: 3, name: 'עוף בתנור' })).closest('article')!

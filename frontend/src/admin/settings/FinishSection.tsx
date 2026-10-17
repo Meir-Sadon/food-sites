@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { FONTS, SHADOWS, SPACINGS, type FontPair, type Shadows, type Spacing } from '../../api/site'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { announceLook } from '../useAdminLook'
@@ -24,9 +25,8 @@ export function FinishSection() {
   const shown = { font: font ?? settings?.font, shadows: shadows ?? settings?.shadows, spacing: spacing ?? settings?.spacing }
   const changed = !!settings && (shown.font !== settings.font || shown.shadows !== settings.shadows || shown.spacing !== settings.spacing)
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!shown.font || !shown.shadows || !shown.spacing) return
+  async function save() {
+    if (!shown.font || !shown.shadows || !shown.spacing) return true
     setSaving(true)
     setError(null)
     try {
@@ -38,11 +38,19 @@ export function FinishSection() {
       setShadows(null)
       setSpacing(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
+  }
+  useUnsavedChanges(changed, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   function group<T extends string>(name: 'font' | 'shadows' | 'spacing', options: readonly T[], value: T | undefined, pick: (option: T) => void) {

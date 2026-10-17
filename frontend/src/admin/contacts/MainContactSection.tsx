@@ -4,6 +4,7 @@ import { contactsApi, type Contact } from '../../api/site'
 import type { FieldErrors } from '../../api/client'
 import { FieldError, Loading, Section, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 type Field = keyof Contact
@@ -11,7 +12,7 @@ type Field = keyof Contact
 export function MainContactSection() {
   const { t } = useTranslation()
   const errorMessage = useFormErrorMessage()
-  const { data: contact, setData, failed } = useLoad(contactsApi.get)
+  const { data: contact, setData, failed, unsaved } = useLoad(contactsApi.get)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const { saved, flash } = useSavedFlash()
@@ -22,21 +23,28 @@ export function MainContactSection() {
     setError(null)
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!contact) return
+  async function save() {
+    if (!contact) return true
     setSaving(true)
     setErrors({})
     try {
       setData(await contactsApi.save(contact))
       setError(null)
       flash()
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
+  }
+  useUnsavedChanges(unsaved, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   const text = (field: Field, label: string, props: { required?: boolean; type?: string; dir?: string; maxLength: number }) => {

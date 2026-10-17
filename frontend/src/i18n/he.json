@@ -236,6 +236,14 @@
     },
     "save": "שמירה",
     "saving": "שומר…",
+    "unsaved": {
+      "title": "יש שינויים שלא נשמרו",
+      "text": "עשיתם שינויים שעוד לא נשמרו. לשמור אותם לפני שעוברים למסך אחר?",
+      "save": "כן, לשמור ולעבור",
+      "discard": "לא, לעבור בלי לשמור",
+      "stay": "להישאר כאן",
+      "failed": "לא הצלחנו לשמור את כל השינויים. בדקו את השדות בדף ונסו שוב."
+    },
     "blockHasErrors": "יש כאן שדות לתיקון",
     "info": "הסבר",
     "infoAbout": "הסבר: {{name}}",
@@ -1297,6 +1305,7 @@
     "chosenCount": "{{count}} נבחרו",
     "showSlide": "הצגת {{name}}",
     "doneCustomizing": "סיום",
+    "closeDialog": "סגירה",
     "showAdjustments": "הצג התאמת מנות",
     "hideAdjustments": "הסתר התאמת מנות",
     "toggleAdjustmentsFor": "{{action}}: {{name}}",

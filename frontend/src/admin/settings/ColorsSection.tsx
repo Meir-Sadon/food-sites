@@ -2,6 +2,7 @@ import { useState, type CSSProperties, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { COLOR_KEYS, MAX_LINE_WIDTH, PALETTES, type ColorKey, type ColorSet, type Palette } from '../../api/site'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { backgroundOf, colorVariables, contrastRatio, copySource, ensureReadable, mergeColors, MIN_CONTRAST, wouldCycle } from '../../site/palettes'
 import { Loading, Section, Status } from '../ui'
@@ -58,9 +59,8 @@ export function ColorsSection() {
     setPickedColors(next)
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!settings) return
+  async function save() {
+    if (!settings) return true
     setSaving(true)
     setError(null)
     try {
@@ -72,11 +72,19 @@ export function ColorsSection() {
       setPickedColors(null)
       setPickedWidth(undefined)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
+  }
+  useUnsavedChanges(changed, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   return (

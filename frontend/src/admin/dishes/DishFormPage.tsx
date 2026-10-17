@@ -23,6 +23,7 @@ import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { useFeature } from '../../site/useSite'
 import { AddOnsSection } from './AddOnsSection'
 import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { QuestionsSection } from './QuestionsSection'
 import { questionsForm, questionsInput, type QuestionForm } from './questionForm'
 
@@ -248,6 +249,8 @@ export function DishFormPage() {
   const [saving, setSaving] = useState(false)
   /** Orders still to be supplied that this save would change; set while the admin decides. */
   const [affected, setAffected] = useState<number | null>(null)
+  /** The form as loaded or last saved, to tell whether the admin has changed anything since. */
+  const [savedForm, setSavedForm] = useState('')
 
   useEffect(() => {
     Promise.all([categoriesApi.get(), dishesApi.getAll()])
@@ -261,10 +264,14 @@ export function DishFormPage() {
         const copied = copyParam ? (all.find((d) => d.id === Number(copyParam) && !d.isHidden) ?? null) : null
         if (copyParam && !copied) throw new Error('not found')
         setSource(copied)
-        setForm(copied ? copyForm(copied, c, t('admin.dishes.copyName', { name: copied.name })) : toForm(current, c, main))
+        const loaded = copied ? copyForm(copied, c, t('admin.dishes.copyName', { name: copied.name })) : toForm(current, c, main)
+        setForm(loaded)
+        setSavedForm(JSON.stringify(loaded))
       })
       .catch(() => setFailed(true))
   }, [dishId, mainParam, copyParam, t])
+
+  useUnsavedChanges(!!form && JSON.stringify(form) !== savedForm, saveFromGuard)
 
   if (!categories || !allDishes || !form) return <Loading failed={failed} />
 
@@ -276,22 +283,26 @@ export function DishFormPage() {
       ),
     })
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!form) return
+  /** Saves, unless the dish is in orders not yet supplied: then the admin is asked first and nothing is saved here. */
+  async function saveFromGuard() {
+    if (!form) return true
     if (dishId !== null) {
-      // Changing a dish that is in orders not yet supplied needs the admin's go-ahead.
       const count = await dishesApi.affectedOrders(dishId).then((r) => r.count, () => 0)
       if (count > 0) {
         setAffected(count)
-        return
+        return false
       }
     }
-    await save()
+    return save()
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    await saveFromGuard()
   }
 
   async function save() {
-    if (!form) return
+    if (!form) return true
     setAffected(null)
     setSaving(true)
     setErrors({})
@@ -303,15 +314,19 @@ export function DishFormPage() {
         const created = await dishesApi.create(source ? { ...input, copyImagesFrom: source.id } : input)
         toast(t('admin.dishes.createdSaved'))
         navigate(`/admin/dishes/${created.id}`, { replace: true })
-        return
+        return true
       }
-      const saved = await dishesApi.update(dishId, input)
-      setDish(saved)
-      setForm(toForm(saved, categories!))
+      const updated = await dishesApi.update(dishId, input)
+      setDish(updated)
+      const next = toForm(updated, categories!)
+      setForm(next)
+      setSavedForm(JSON.stringify(next))
       flash()
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }

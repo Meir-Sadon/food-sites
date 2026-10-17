@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { supplyDaysApi, weekdays, type SupplyDay, type Weekday } from '../../api/catalog'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 
 export function SupplyDaysSection() {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
-  const { data: days, setData, failed } = useLoad(supplyDaysApi.get)
+  const { data: days, setData, failed, unsaved } = useLoad(supplyDaysApi.get)
   const [error, setError] = useState<string | null>(null)
   const { saved, flash } = useSavedFlash()
   const [saving, setSaving] = useState(false)
@@ -18,19 +19,26 @@ export function SupplyDaysSection() {
     setError(null)
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!days) return
+  async function save() {
+    if (!days) return true
     setSaving(true)
     try {
       setData(await supplyDaysApi.save(days))
       setError(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
+  }
+  useUnsavedChanges(unsaved, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   return (

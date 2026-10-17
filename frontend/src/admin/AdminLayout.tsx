@@ -5,14 +5,26 @@ import { useFeatures } from '../site/useSite'
 import { sections, sectionOf, type Tab } from './sections'
 import { useAdminSession } from './session'
 import { useAdminLook } from './useAdminLook'
+import { UnsavedChangesProvider } from './UnsavedChangesProvider'
+import { useLeaveAdminPage } from './unsavedChanges'
 
+/** The admin's frame: the menus and the page. Leaving a page with unsaved changes asks first (see `unsavedChanges.ts`). */
 export function AdminLayout() {
+  return (
+    <UnsavedChangesProvider>
+      <AdminFrame />
+    </UnsavedChangesProvider>
+  )
+}
+
+function AdminFrame() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const hasFeature = useFeatures()
   const session = useAdminSession()
   useAdminLook()
+  const leaveAdmin = useLeaveAdminPage()
   const current = sectionOf(pathname)
   const visible = (tab: Tab) => !tab.feature || hasFeature(tab.feature)
 
@@ -47,7 +59,7 @@ export function AdminLayout() {
             </li>
             <li className="admin-bar__who">{t(`admin.actors.${session.actor}`)}</li>
             <li>
-              <button type="button" className="button-quiet" onClick={handleLogout}>
+              <button type="button" className="button-quiet" onClick={() => leaveAdmin(handleLogout)}>
                 {t('admin.logout')}
               </button>
             </li>

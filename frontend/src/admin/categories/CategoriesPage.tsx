@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../unsavedChanges'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, type Category } from '../../api/catalog'
@@ -111,15 +112,22 @@ function CategoryRow({
   const [errors, setErrors] = useState<FieldErrors>({})
   const inputId = `category-${category.id}-name`
 
-  async function handleSave(event: FormEvent) {
-    event.preventDefault()
+  async function save() {
     setErrors({})
     try {
       await onRename(name)
       setEditing(false)
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
+      return false
     }
+  }
+  useUnsavedChanges(editing && name !== category.name, save)
+
+  function handleSave(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   if (editing)

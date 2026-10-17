@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
 import { ORDER_FLOWS, ORDER_TOTAL_POSITIONS, type OrderFlow, type OrderTotalPosition } from '../../api/site'
+import { useUnsavedChanges } from '../unsavedChanges'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
@@ -23,9 +24,8 @@ export function OrderLayoutSection() {
   const flow = pickedFlow ?? settings?.orderFlow
   const unchanged = totalPosition === settings?.orderTotalPosition && flow === settings?.orderFlow
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!totalPosition || !flow) return
+  async function save() {
+    if (!totalPosition || !flow) return true
     setSaving(true)
     setError(null)
     try {
@@ -41,11 +41,19 @@ export function OrderLayoutSection() {
       setPickedTotal(null)
       setPickedFlow(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
+  }
+  useUnsavedChanges(!!settings && !unchanged, save)
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    void save()
   }
 
   return (

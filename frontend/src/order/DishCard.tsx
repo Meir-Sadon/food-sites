@@ -334,9 +334,11 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
   // order and has choices to make, tapping it opens them.
   const customizable = needsDialog(dish, dishes) || addOnsOf(dish, dishes).length > 0 || (dish.questions ?? []).length > 0
   const tappable = !unavailable && !!selection && customizable && !yesNo
+  // A tap on the picture always opens the dialog, in the order or not, so the client can set the amount and adjust the dish
+  // before adding it.
   function tapped(event: React.MouseEvent) {
-    if (!tappable || !tappedTileSurface(event)) return
-    setOpen(true)
+    if (!tappedTileSurface(event)) return
+    if ((event.target as HTMLElement).closest('.tile__media') || tappable) setOpen(true)
   }
 
   return (
@@ -395,7 +397,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
       </div>
       {open && (
-        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide>
+        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} closeLabel={t('order.closeDialog')} wide>
           {zoom ? (
             <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
           ) : (
@@ -464,7 +466,7 @@ function DishGroupTile(props: GroupProps) {
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
       </div>
       {open && (
-        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide>
+        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} closeLabel={t('order.closeDialog')} wide>
           {zoom ? (
             <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
           ) : (

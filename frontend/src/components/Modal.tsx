@@ -10,12 +10,15 @@ export function Modal({
   title,
   onClose,
   wide,
+  closeLabel,
   children,
 }: {
   title: string
   onClose: () => void
   /** A wider dialog, for when its buttons should sit on one line. */
   wide?: boolean
+  /** Adds an X button in the corner with this accessible name, for a dialog the client may want to leave without choosing. */
+  closeLabel?: string
   children: ReactNode
 }) {
   const titleId = useId()
@@ -69,7 +72,16 @@ export function Modal({
         className={wide ? 'modal modal--wide' : 'modal'}
         onKeyDown={handleKeyDown}
       >
-        <h2 id={titleId}>{title}</h2>
+        {closeLabel && (
+          <button type="button" className="modal__close" aria-label={closeLabel} onClick={onClose}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        )}
+        <h2 id={titleId} className={closeLabel ? 'modal__title--closable' : undefined}>
+          {title}
+        </h2>
         {children}
       </div>
     </div>,

@@ -1466,6 +1466,31 @@ label {
   max-inline-size: 36rem;
 }
 
+/* The X in a dialog's corner. It stays in view while a long dialog scrolls under it. */
+.modal__close {
+  position: sticky;
+  inset-block-start: 0;
+  align-self: flex-end;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  min-block-size: 0;
+  padding: 0;
+  margin-block-end: -2.5rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+}
+
+.modal__title--closable {
+  padding-inline-end: 3rem;
+}
+
 .modal h2,
 .modal p {
   margin: 0;
