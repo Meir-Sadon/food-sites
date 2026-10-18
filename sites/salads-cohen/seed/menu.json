@@ -1,0 +1,917 @@
+{
+  "categories": [
+    {
+      "name": "סטים משתלמים",
+      "dishes": [
+        {
+          "name": "סט 8 סלטים 250 גרם",
+          "description": "שמונה סלטים לבחירה, 250 גרם כל אחד. בחרו את הסלטים מהרשימה.",
+          "sellBy": "Units",
+          "unitName": "סט",
+          "unitPrice": 100,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו 8 סלטים",
+              "maxUnits": 8
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חציל מטוגן מרוקאי",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל קלוי במיונז",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פרוסת חציל מטוגן",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל בטחינה",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "כרובית ירק",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "בורגול",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "צימיצורי",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה ירוקה",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סחוג ירוק",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "כרוב לבן וחמוציות",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "כרוב סגול במיונז",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "קולסלאו",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "כרובית בטחינה",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "בטטה",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "בטטה מטוגנת",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלק מרוקאי",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "גזר מגורד",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "גזר מרוקאי",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פלפלים קלויים",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "מלפפון ושמיר",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ביצים מקורמל",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט תפו\"א",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            }
+          ]
+        },
+        {
+          "name": "סט 8 סלטים 500 גרם",
+          "description": "שמונה סלטים לבחירה, 500 גרם כל אחד. בחרו את הסלטים מהרשימה.",
+          "sellBy": "Units",
+          "unitName": "סט",
+          "unitPrice": 180,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "addOnGroups": [
+            {
+              "name": "בחרו 8 סלטים",
+              "maxUnits": 8
+            }
+          ],
+          "addOns": [
+            {
+              "dish": "חציל מטוגן מרוקאי",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל קלוי במיונז",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פרוסת חציל מטוגן",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "חציל בטחינה",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "כרובית ירק",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "בורגול",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "צימיצורי",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "טחינה ירוקה",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סחוג ירוק",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "כרוב לבן וחמוציות",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "כרוב סגול במיונז",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "קולסלאו",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "כרובית בטחינה",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "בטטה",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "בטטה מטוגנת",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלק מרוקאי",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "גזר מגורד",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "גזר מרוקאי",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "פלפלים קלויים",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "מלפפון ושמיר",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט ביצים מקורמל",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            },
+            {
+              "dish": "סלט תפו\"א",
+              "price": 0,
+              "group": "בחרו 8 סלטים",
+              "isCheckbox": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "חצילים",
+      "dishes": [
+        {
+          "name": "חציל מטוגן מרוקאי",
+          "description": "קוביות חציל מטוגנות ברוטב עגבניות מרוקאי.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "חציל קלוי במיונז",
+          "description": "חציל קלוי, מיונז, לימון, מלח ופלפל.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322411/%D7%A1%D7%9C%D7%98_%D7%97%D7%A6%D7%99%D7%9C%D7%99%D7%9D_%D7%91%D7%9E%D7%99%D7%95%D7%A0%D7%96.jpg"
+          ]
+        },
+        {
+          "name": "פרוסת חציל מטוגן",
+          "description": "פרוסות חציל מטוגן בפירורי לחם.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "חציל בטחינה",
+          "description": "חציל קלוי בטחינה, מלח, פלפל ולימון.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "עשבי תיבול ומיוחדים",
+      "dishes": [
+        {
+          "name": "כרובית ירק",
+          "description": "כרובית חיה מגורדת, עשבי תיבול וענבי חמוציות, ברוטב מתוק.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322415/%D7%A1%D7%9C%D7%98_%D7%9B%D7%A8%D7%95%D7%91%D7%99%D7%AA.jpg"
+          ]
+        },
+        {
+          "name": "בורגול",
+          "description": "בורגול, חמוציות, מלפפון וגמבות, עשבי תיבול ברוטב סילאן, מלח, פלפל ולימון.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322404/%D7%A1%D7%9C%D7%98_%D7%91%D7%95%D7%A8%D7%92%D7%95%D7%9C.jpg"
+          ]
+        },
+        {
+          "name": "צימיצורי",
+          "description": "עשבי תיבול, גמבות, בצל סגול, שום ושמן זית.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "טחינה ירוקה",
+          "description": "טחינה ועשבי תיבול.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "סחוג ירוק",
+          "description": "פלפל חריף, עשבי תיבול ושמן זית.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "כרובים",
+      "dishes": [
+        {
+          "name": "כרוב לבן וחמוציות",
+          "description": "כרוב לבן וחמוציות, מיץ לימון, מלח ופלפל.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "כרוב סגול במיונז",
+          "description": "כרוב סגול, מיונז, מלח, פלפל וקצת סוכר.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322404/%D7%9B%D7%A8%D7%95%D7%91_%D7%A1%D7%92%D7%95%D7%9C_%D7%91%D7%9E%D7%99%D7%95%D7%A0%D7%96.jpg"
+          ]
+        },
+        {
+          "name": "קולסלאו",
+          "description": "כרוב לבן וגזר, מיונז, מלח, פלפל, מעט חרדל וקצת סוכר.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322425/%D7%A7%D7%95%D7%9C%D7%A1%D7%9C%D7%90%D7%95.jpg"
+          ]
+        },
+        {
+          "name": "כרובית בטחינה",
+          "description": "כרובית אפויה בטחינה, מיץ לימון, מלח ופלפל.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322415/%D7%A1%D7%9C%D7%98_%D7%9B%D7%A8%D7%95%D7%91%D7%99%D7%AA_%D7%91%D7%98%D7%97%D7%99%D7%A0%D7%94.jpg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "שאר ירקות",
+      "dishes": [
+        {
+          "name": "בטטה",
+          "description": "קוביות בטטה אפויות בתנור.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "בטטה מטוגנת",
+          "description": "שערות בטטה מטוגנת ברוטב מתוק.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "סלק מרוקאי",
+          "description": "קוביות סלק, כוסברה, מיץ לימון, שמן זית, מלח ופלפל.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322418/%D7%A1%D7%9C%D7%A7_%D7%9E%D7%A8%D7%95%D7%A7%D7%90%D7%99.jpg"
+          ]
+        },
+        {
+          "name": "גזר מגורד",
+          "description": "גזר מגורד קלאסי עם עשבי תיבול.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "גזר מרוקאי",
+          "description": "גזר מבושל פרוס ברוטב מרוקאי ואריסה, עשבי תיבול.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322403/%D7%92%D7%96%D7%A8_%D7%9E%D7%A8%D7%95%D7%A7%D7%90%D7%99.jpg"
+          ]
+        },
+        {
+          "name": "פלפלים קלויים",
+          "description": "פלפלים קלויים, שום, שמן זית, מלח, פלפל ומיץ לימון.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322424/%D7%A4%D7%9C%D7%A4%D7%9C%D7%99%D7%9D_%D7%A7%D7%9C%D7%95%D7%99%D7%99%D7%9D.jpg"
+          ]
+        },
+        {
+          "name": "מלפפון ושמיר",
+          "description": "מלפפון ירוק, שמיר ובצל סגול.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ]
+        },
+        {
+          "name": "סלט ביצים מקורמל",
+          "description": "ביצים, מיונז ובצל מקורמל.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322404/%D7%A1%D7%9C%D7%98_%D7%91%D7%99%D7%A6%D7%99%D7%9D.jpg"
+          ]
+        },
+        {
+          "name": "סלט תפו\"א",
+          "description": "תפוחי אדמה וביצים במיונז, מלפפון חמוץ.",
+          "sellBy": "Units",
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "optionsTitle": "בחרו גודל",
+          "options": [
+            {
+              "label": "קטן 250 גרם",
+              "price": 15,
+              "isDefault": true,
+              "amount": 0.25
+            },
+            {
+              "label": "גדול 500 גרם",
+              "price": 20,
+              "amount": 0.5
+            }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322416/%D7%A1%D7%9C%D7%98_%D7%AA%D7%A4%D7%95%D7%97%D7%99_%D7%90%D7%93%D7%9E%D7%94_%D7%95%D7%91%D7%99%D7%A6%D7%99%D7%9D.jpg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "מיוחדים למרכז שולחן (500 גרם)",
+      "dishes": [
+        {
+          "name": "סלט גואקמולי",
+          "description": "אבוקדו, בצל סגול ומיץ לימון. 500 גרם.",
+          "sellBy": "Units",
+          "unitName": "500 גרם",
+          "unitPrice": 35,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "חציל שלם בטחינה שחורה",
+          "description": "חציל שלם על טחינה שחורה, גרגירי חומוס ועשבי תיבול. 500 גרם.",
+          "sellBy": "Units",
+          "unitName": "500 גרם",
+          "unitPrice": 30,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "כבד קצוץ וריבת בצל",
+          "description": "כבד קצוץ עם ריבת בצל מעל. 500 גרם.",
+          "sellBy": "Units",
+          "unitName": "500 גרם",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322403/%D7%9B%D7%91%D7%93_%D7%A7%D7%A6%D7%95%D7%A5_%D7%A2%D7%9D_%D7%A8%D7%99%D7%91%D7%AA_%D7%91%D7%A6%D7%9C.jpg"
+          ]
+        },
+        {
+          "name": "סלט פקאן וחמוציות",
+          "description": "חסה, רוקט ועלי בייבי, תפוח עץ ופקאן ברוטב דבש וסילאן. 500 גרם.",
+          "sellBy": "Units",
+          "unitName": "500 גרם",
+          "unitPrice": 35,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "סלט מיקס עגבניות",
+          "description": "עגבניות, עגבניות שרי ומיני, בצל סגול ברוטב בלסמי. 500 גרם.",
+          "sellBy": "Units",
+          "unitName": "500 גרם",
+          "unitPrice": 35,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1
+        },
+        {
+          "name": "קוסקוס ביתי עבודת יד",
+          "description": "קוסקוס ביתי בעבודת יד. 500 גרם.",
+          "sellBy": "Units",
+          "unitName": "500 גרם",
+          "unitPrice": 20,
+          "minAmount": 1,
+          "maxAmount": 10,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792322425/%D7%A7%D7%95%D7%A1%D7%A7%D7%95%D7%A1_%D7%91%D7%99%D7%AA%D7%99.jpg"
+          ]
+        }
+      ]
+    }
+  ]
+}
