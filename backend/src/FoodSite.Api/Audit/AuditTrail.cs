@@ -53,7 +53,7 @@ public static class AuditTrail
         ["DisplayOrder", "PublicId", "BackgroundImagePublicId", "Token", nameof(Settings.SiteDefaultsApplied)];
 
     /// <summary>Recorded as changed, never with their values.</summary>
-    private static readonly HashSet<string> SecretFields = [nameof(Settings.AdminPasswordHash), nameof(Settings.OpsTokenHash)];
+    private static readonly HashSet<string> SecretFields = [nameof(Settings.AdminPasswordHash), nameof(Settings.OpsTokenHash), nameof(Settings.MetaAccessToken)];
 
     /// <summary>Properties that name an entity, tried in order.</summary>
     private static readonly string[] LabelFields = ["Name", "Label", "DishName", "Phone", "Date", "Weekday"];

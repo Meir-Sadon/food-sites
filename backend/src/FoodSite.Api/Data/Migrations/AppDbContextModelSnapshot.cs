@@ -1019,11 +1019,29 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("GoogleAdsId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GoogleAdsPurchaseLabel")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GoogleAnalyticsId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GoogleTagManagerId")
+                        .HasColumnType("text");
+
                     b.Property<string>("KashrutText")
                         .HasColumnType("text");
 
                     b.Property<int?>("LineWidth")
                         .HasColumnType("integer");
+
+                    b.Property<string>("MetaAccessToken")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MetaPixelId")
+                        .HasColumnType("text");
 
                     b.Property<decimal?>("MinimumOrderAmount")
                         .HasPrecision(10, 2)
@@ -1092,6 +1110,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("Spacing")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TikTokPixelId")
+                        .HasColumnType("text");
 
                     b.Property<string>("TileGroups")
                         .HasMaxLength(20)

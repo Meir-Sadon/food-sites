@@ -58,6 +58,7 @@ import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
 import { siteLogo } from '../site/config'
+import { marketingForOrder, trackMarketing } from '../tracking/marketing'
 import { trackUsage } from '../usage/track'
 
 function formatCutoff(iso: string) {
@@ -311,13 +312,20 @@ export function OrderPage() {
     }, 0)
   }
 
+  /** The client with dishes in the order reaches the details: counted once per page load. */
+  function startedCheckout() {
+    if (count > 0) trackMarketing({ name: 'InitiateCheckout', value: total })
+  }
+
   function goToStep(next: number) {
+    if (next >= detailsStep) startedCheckout()
     setStep(Math.max(0, Math.min(next, detailsStep)))
     setStepMoves((n) => n + 1)
   }
 
   /** The "to details and payment" buttons (side total, basket): open the details if they are hidden, and scroll to the address. */
   function goToDetails() {
+    startedCheckout()
     if (steps) setStep(detailsStep)
     else if (deferred) setDetailsOpen(true)
     setDetailsMoves((n) => n + 1)
@@ -363,6 +371,8 @@ export function OrderPage() {
 
   const setSelection = (dishId: number, selection: Selection | undefined) => {
     if (selection) trackUsage('OrderStarted')
+    const dish = dishes.get(dishId)
+    if (selection && dish && !state.selections[dishId]) trackMarketing({ name: 'AddToCart', dishId, dishName: dish.name })
     setState((current) => {
       const selections = { ...current.selections }
       if (selection) selections[dishId] = selection
@@ -489,9 +499,11 @@ export function OrderPage() {
         paymentMethod: payment,
         notes: state.notes.trim(),
         items: toLines(state.selections, dishes),
+        marketing: marketingForOrder(site?.tracking),
       })
       clearDraft()
       trackUsage('OrderSubmitted')
+      trackMarketing({ name: 'Purchase', orderId: result.id, value: result.total })
       setConfirmation(result)
     } catch (err) {
       const fieldErrors = fieldErrorsOf(err)
@@ -736,7 +748,7 @@ export function OrderPage() {
             )}
 
             {showDetails && (
-              <form ref={formRef} className="order-form stack" onSubmit={handleSubmit} aria-labelledby="order-details-title" noValidate>
+              <form ref={formRef} className="order-form stack" onSubmit={handleSubmit} aria-labelledby="order-details-title" noValidate onFocus={startedCheckout}>
                 <h2 id="order-details-title">{t('order.details')}</h2>
 
                 <span className="field">

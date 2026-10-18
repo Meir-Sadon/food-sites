@@ -70,6 +70,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// <summary>Records every mail to the owner instead of sending it.</summary>
     public CapturingMailer Mail { get; } = new();
 
+    /// <summary>Records every order reported to Meta instead of sending it.</summary>
+    public CapturingMetaSender Meta { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         foreach (var (key, value) in _settings)
@@ -80,6 +83,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IWhatsAppSender>(WhatsApp);
             services.AddSingleton<ISmsSender>(Sms);
             services.AddSingleton<IMailer>(Mail);
+            services.AddSingleton<FoodSite.Api.Marketing.IMetaConversionsSender>(Meta);
             services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
             services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
         });

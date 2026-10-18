@@ -61,6 +61,24 @@ export type Spacing = (typeof SPACINGS)[number]
 export const TILE_GROUPS = ['framed', 'minimal'] as const
 export type TileGroups = (typeof TILE_GROUPS)[number]
 
+/** The ids of the marketing tools the owner connected; an empty string means that tool is off. */
+export interface TrackingIds {
+  /** Meta (Facebook / Instagram) Pixel id: digits from Events Manager. */
+  metaPixelId: string
+  /** Google Analytics 4 measurement id, `G-…`. */
+  googleAnalyticsId: string
+  /** Google Tag Manager container id, `GTM-…`. */
+  googleTagManagerId: string
+  /** TikTok pixel code. */
+  tikTokPixelId: string
+  /** Google Ads conversion id, `AW-…`. */
+  googleAdsId: string
+  /** The Ads conversion counted when an order is sent. */
+  googleAdsPurchaseLabel: string
+  /** The server also reports each order to Meta (an access token is saved; it is never returned). */
+  metaServerEvents: boolean
+}
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -110,6 +128,8 @@ export interface Site {
   deliveryPricing: DeliveryPricing
   /** The buttons on the About page: Facebook, Instagram, TikTok, then the custom links. Empty: none. */
   socialLinks: SocialLink[]
+  /** Which marketing tools to load. */
+  tracking?: TrackingIds
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
@@ -280,6 +300,8 @@ export interface OrderInput {
   items: OrderLineInput[]
   /** The start of the picked hour ("HH:mm:ss"); required when the date has hours. */
   deliveryHour: string | null
+  /** Only when the server reports orders to Meta. */
+  marketing?: { fbp?: string; fbc?: string; sourceUrl?: string }
 }
 
 export interface Confirmation {

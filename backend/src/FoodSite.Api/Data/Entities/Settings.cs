@@ -132,6 +132,30 @@ public class Settings
     /// <summary>Whether the owner addresses also get the summary of admin changes to dishes and settings (off by default).</summary>
     public bool OwnerChangeMails { get; set; }
 
+    /// <summary>Meta (Facebook / Instagram) Pixel id; null means the pixel is not loaded. See <c>Sites/Tracking</c>.</summary>
+    public string? MetaPixelId { get; set; }
+
+    /// <summary>Google Analytics 4 measurement id (<c>G-…</c>); null means it is not loaded.</summary>
+    public string? GoogleAnalyticsId { get; set; }
+
+    /// <summary>Google Tag Manager container id (<c>GTM-…</c>); null means it is not loaded.</summary>
+    public string? GoogleTagManagerId { get; set; }
+
+    /// <summary>TikTok pixel code; null means it is not loaded.</summary>
+    public string? TikTokPixelId { get; set; }
+
+    /// <summary>Google Ads conversion id (<c>AW-…</c>); null means no Ads tag.</summary>
+    public string? GoogleAdsId { get; set; }
+
+    /// <summary>The label of the Ads conversion counted when an order is sent.</summary>
+    public string? GoogleAdsPurchaseLabel { get; set; }
+
+    /// <summary>
+    /// Meta Conversions API access token: with the pixel id it lets the server report each order to Meta. A secret,
+    /// never returned by the API and recorded in the audit trail without its value.
+    /// </summary>
+    public string? MetaAccessToken { get; set; }
+
     // Accessibility statement (הצהרת נגישות): who answers accessibility requests, and the limits the business knows of.
     /// <summary>The accessibility coordinator's contact; each is null when the statement should fall back to the main contact.</summary>
     public string? AccessibilityCoordinatorName { get; set; }

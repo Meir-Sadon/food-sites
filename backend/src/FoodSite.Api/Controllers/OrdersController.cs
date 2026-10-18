@@ -4,6 +4,7 @@ using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Delivery;
 using FoodSite.Api.Mail;
 using FoodSite.Api.Messaging;
+using FoodSite.Api.Marketing;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Phones;
 using FoodSite.Api.Sites;
@@ -24,6 +25,7 @@ public class OrdersController(
     ISmsSender sms,
     IOptions<SmsOptions> smsOptions,
     OwnerNotifier ownerMail,
+    MarketingNotifier marketing,
     IOptions<SiteOptions> site,
     DeliveryQuoter deliveryQuoter,
     ILogger<OrdersController> logger) : PublicControllerBase
@@ -43,7 +45,8 @@ public class OrdersController(
         PaymentMethod PaymentMethod,
         string? Notes,
         List<OrderLineInput>? Items,
-        TimeOnly? DeliveryHour = null);
+        TimeOnly? DeliveryHour = null,
+        MarketingInput? Marketing = null);
 
     public record ConfirmationItemDto(
         string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null);
@@ -181,6 +184,7 @@ public class OrdersController(
         await db.SaveChangesAsync(ct);
 
         await NotifyAsync(order, settings.PaymentPhone, settings.OwnerEmail, serviceCities, hourFull, ct);
+        await marketing.PurchaseAsync(settings, order, input.Marketing, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString(), CancellationToken.None);
 
         return new ConfirmationDto(
             order.Id, order.SupplyDate, order.FulfillmentMethod, order.PaymentMethod, order.Total,

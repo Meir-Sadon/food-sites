@@ -47,7 +47,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string DeliveryPricing = "simple",
         decimal? DeliveryFeeAmount = null,
         bool AddressFirst = false,
-        IReadOnlyList<SocialLinkDto>? SocialLinks = null);
+        IReadOnlyList<SocialLinkDto>? SocialLinks = null,
+        Tracking.Ids? Tracking = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -146,7 +147,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             s.DeliveryFeeAmount,
             s.AddressFirst,
             (await db.SocialLinks.AsNoTracking().OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id).ToListAsync())
-                .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList());
+                .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList(),
+            Sites.Tracking.Of(s));
     }
 
     [HttpGet("menu")]

@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ColorSet, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -59,10 +59,18 @@ export interface Settings {
   tileGroups: TileGroups
   /** `simple` until the admin picks `zones`. */
   deliveryPricing: DeliveryPricing
+  /** The marketing tools' ids; saved by `settingsApi.saveTracking`, never by `save`. */
+  tracking: TrackingIds
 }
 /** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'> &
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking'> &
   Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'>>
+
+/** Saved on its own (`settingsApi.saveTracking`); a missing id keeps that tool, an empty one turns it off. */
+export type TrackingInput = Partial<Omit<TrackingIds, 'metaServerEvents'>> & {
+  /** Write-only: the Meta Conversions API access token; an empty text removes it. */
+  metaAccessToken?: string
+}
 
 export interface SupplyDay {
   weekday: Weekday
@@ -255,6 +263,7 @@ const admin = '/api/admin'
 export const settingsApi = {
   get: () => apiJson<Settings>(`${admin}/settings`),
   save: (input: SettingsInput) => apiJson<Settings>(`${admin}/settings`, send('PUT', input)),
+  saveTracking: (input: TrackingInput) => apiJson<Settings>(`${admin}/settings/tracking`, send('PUT', input)),
   uploadBackground: (file: File) => apiJson<Settings>(`${admin}/settings/background`, { ...upload(file), method: 'PUT' }),
   removeBackground: () => apiJson<Settings>(`${admin}/settings/background`, send('DELETE')),
 }

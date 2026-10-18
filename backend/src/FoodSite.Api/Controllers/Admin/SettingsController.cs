@@ -52,7 +52,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string TileGroups,
         string DeliveryPricing,
         decimal? DeliveryFeeAmount,
-        bool AddressFirst);
+        bool AddressFirst,
+        Tracking.Ids Tracking);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -220,6 +221,50 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         return await ToDtoAsync(settings);
     }
 
+    /// <summary>
+    /// The marketing ids have their own save, so saving another section never overwrites them with an older copy.
+    /// A missing id keeps that tool as it is; an empty one turns it off.
+    /// </summary>
+    [HttpPut("tracking")]
+    public async Task<ActionResult<SettingsDto>> UpdateTracking(Tracking.IdsInput tracking)
+    {
+        var errors = new Errors();
+        if (tracking.MetaPixelId is not null && !Sites.Tracking.IsMeta(Sites.Tracking.Normalize(tracking.MetaPixelId, false)))
+            errors.Add("MetaPixelId", "trackingId");
+        if (tracking.GoogleAnalyticsId is not null && !Sites.Tracking.IsAnalytics(Sites.Tracking.Normalize(tracking.GoogleAnalyticsId, true)))
+            errors.Add("GoogleAnalyticsId", "trackingId");
+        if (tracking.GoogleTagManagerId is not null && !Sites.Tracking.IsTagManager(Sites.Tracking.Normalize(tracking.GoogleTagManagerId, true)))
+            errors.Add("GoogleTagManagerId", "trackingId");
+        if (tracking.TikTokPixelId is not null && !Sites.Tracking.IsTikTok(Sites.Tracking.Normalize(tracking.TikTokPixelId, true)))
+            errors.Add("TikTokPixelId", "trackingId");
+        if (tracking.GoogleAdsId is not null && !Sites.Tracking.IsAds(Sites.Tracking.Normalize(tracking.GoogleAdsId, true)))
+            errors.Add("GoogleAdsId", "trackingId");
+        if (tracking.GoogleAdsPurchaseLabel is not null && !Sites.Tracking.IsAdsLabel(Sites.Tracking.Normalize(tracking.GoogleAdsPurchaseLabel, false)))
+            errors.Add("GoogleAdsPurchaseLabel", "trackingId");
+        if (tracking.MetaAccessToken is not null && !Sites.Tracking.IsMetaToken(Sites.Tracking.Normalize(tracking.MetaAccessToken, false)))
+            errors.Add("MetaAccessToken", "trackingId");
+        if (errors.Any)
+            return Invalid(errors);
+
+        var settings = await db.Settings.SingleAsync();
+        if (tracking.GoogleAdsId is not null)
+            settings.GoogleAdsId = Clean(Sites.Tracking.Normalize(tracking.GoogleAdsId, true));
+        if (tracking.GoogleAdsPurchaseLabel is not null)
+            settings.GoogleAdsPurchaseLabel = Clean(Sites.Tracking.Normalize(tracking.GoogleAdsPurchaseLabel, false));
+        if (tracking.MetaAccessToken is not null)
+            settings.MetaAccessToken = Clean(Sites.Tracking.Normalize(tracking.MetaAccessToken, false));
+        if (tracking.MetaPixelId is not null)
+            settings.MetaPixelId = Clean(Sites.Tracking.Normalize(tracking.MetaPixelId, false));
+        if (tracking.GoogleAnalyticsId is not null)
+            settings.GoogleAnalyticsId = Clean(Sites.Tracking.Normalize(tracking.GoogleAnalyticsId, true));
+        if (tracking.GoogleTagManagerId is not null)
+            settings.GoogleTagManagerId = Clean(Sites.Tracking.Normalize(tracking.GoogleTagManagerId, true));
+        if (tracking.TikTokPixelId is not null)
+            settings.TikTokPixelId = Clean(Sites.Tracking.Normalize(tracking.TikTokPixelId, true));
+        await db.SaveChangesAsync();
+        return await ToDtoAsync(settings);
+    }
+
     [HttpPut("background")]
     [RequestSizeLimit(ImageUploadRules.MaxRequestBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = ImageUploadRules.MaxRequestBytes)]
@@ -283,7 +328,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.EffectiveTileGroups(s.TileGroups),
         s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
         s.DeliveryFeeAmount,
-        s.AddressFirst);
+        s.AddressFirst,
+        Sites.Tracking.Of(s));
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

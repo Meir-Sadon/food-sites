@@ -35,6 +35,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   spacing: 'standard',
   tileGroups: 'framed',
   deliveryPricing: 'simple',
+  tracking: { metaPixelId: '', googleAnalyticsId: '', googleTagManagerId: '', tikTokPixelId: '', googleAdsId: '', googleAdsPurchaseLabel: '', metaServerEvents: false },
   ...patch,
 })
 
