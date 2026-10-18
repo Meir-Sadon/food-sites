@@ -1,7 +1,11 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__Render__create_web_service",
+      "mcp__Render__update_environment_variables"
+    ]
+  },
   "hooks": {
-"mcp__Render__update_environment_variables": true,
-"permissions": { "allow": ["mcp__Render__create_web_service"] },
     "SessionStart": [
       {
         "hooks": [
