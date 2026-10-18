@@ -1,0 +1,27 @@
+{
+  "id": "salads-cohen",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "",
+  "emoji": "🥗",
+  "whatsApp": {
+    "orderConfirmationTemplate": "salads_cohen_order_confirmation",
+    "newOrderTemplate": "salads_cohen_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true
+  },
+  "settings": {
+    "contactName": "בר",
+    "contactPhone": "050-8309100",
+    "contactAddress": "איסוף עצמי בימי שישי, אשקלון",
+    "contactOpeningHours": "הזמנות עד יום חמישי ב-22:00, איסוף בימי שישי 08:00–15:00",
+    "style": "classic"
+  },
+  "seed": [
+    "seed/menu.json"
+  ]
+}

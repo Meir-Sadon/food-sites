@@ -1,0 +1,20 @@
+/* The site's colour palette: the menu's deep herb green, gold and tomato red on cream. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #faf5e8;
+  --color-surface: #fffdf7;
+  --color-text: #1f2a17;
+  --color-muted: #5d6652;
+  --color-accent: #2f5a26;
+  --color-accent-hover: #234519;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #c9961a;
+  --color-border: #e6dcc0;
+  --color-error: #b42318;
+  --color-success: #2f6b2a;
+  --color-soft: #f1ead2;
+  --color-shadow: #1f2a17;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(201 150 26 / 0.18);
+  --color-badge-text: #7a5a08;
+  --gradient-hero: linear-gradient(135deg, var(--color-accent-hover) 0%, #3f7a32 58%, var(--color-gold) 140%);
+}
