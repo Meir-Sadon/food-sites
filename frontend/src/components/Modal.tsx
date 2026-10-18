@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 /**
  * A dialog over the page. Focus moves into it, Escape closes it and focus returns to where it was.
@@ -10,14 +11,18 @@ export function Modal({
   title,
   onClose,
   wide,
+  closeButton,
   children,
 }: {
   title: string
   onClose: () => void
   /** A wider dialog, for when its buttons should sit on one line. */
   wide?: boolean
+  /** An X in the corner that closes the dialog, for ones with a lot in them (a dish's choices). */
+  closeButton?: boolean
   children: ReactNode
 }) {
+  const { t } = useTranslation()
   const titleId = useId()
   const ref = useRef<HTMLDivElement>(null)
   const pressedBackdrop = useRef(false)
@@ -69,7 +74,16 @@ export function Modal({
         className={wide ? 'modal modal--wide' : 'modal'}
         onKeyDown={handleKeyDown}
       >
-        <h2 id={titleId}>{title}</h2>
+        {closeButton && (
+          <button type="button" className="modal__close" aria-label={t('dialog.close')} onClick={onClose}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        )}
+        <h2 id={titleId} className={closeButton ? 'modal__title--with-close' : undefined}>
+          {title}
+        </h2>
         {children}
       </div>
     </div>,

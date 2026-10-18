@@ -1,13 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { MapLinks } from '../components/MapLinks'
+import { SocialLinks } from '../components/SocialLinks'
 import { useSite } from '../site/useSite'
 
-/** About the kitchen: the contact details and, when the admin filled them in, the kashrut details. */
+/** About the kitchen: the contact details, the links to the business's pages elsewhere and, when the admin filled them in, the kashrut details. */
 export function AboutPage() {
   const { t } = useTranslation()
   const site = useSite()
   const kashrut = site?.kashrutText
   const contact = site?.contact
+  const socialLinks = site?.socialLinks
   const hasContact = contact && (contact.name || contact.phone || contact.address || contact.email || contact.openingHours)
 
   return (
@@ -35,13 +37,19 @@ export function AboutPage() {
           )}
         </address>
       )}
+      {!!socialLinks?.length && (
+        <section className="social-card about-card" aria-labelledby="about-social">
+          <h2 id="about-social">{t('socialLinks.title')}</h2>
+          <SocialLinks links={socialLinks} />
+        </section>
+      )}
       {kashrut && (
         <section className="kashrut about-card" aria-labelledby="about-kashrut">
           <h2 id="about-kashrut">{t('pages.about.kashrut')}</h2>
           <p>{kashrut}</p>
         </section>
       )}
-      {!hasContact && !kashrut && <p>{t('pages.comingSoon')}</p>}
+      {!hasContact && !kashrut && !socialLinks?.length && <p>{t('pages.comingSoon')}</p>}
     </section>
   )
 }

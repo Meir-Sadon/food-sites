@@ -155,4 +155,16 @@ public class Settings
     /// never returned by the API and recorded in the audit trail without its value.
     /// </summary>
     public string? MetaAccessToken { get; set; }
+
+    // Accessibility statement (הצהרת נגישות): who answers accessibility requests, and the limits the business knows of.
+    /// <summary>The accessibility coordinator's contact; each is null when the statement should fall back to the main contact.</summary>
+    public string? AccessibilityCoordinatorName { get; set; }
+    public string? AccessibilityCoordinatorPhone { get; set; }
+    public string? AccessibilityCoordinatorEmail { get; set; }
+
+    /// <summary>Known accessibility limits (for example a part of the site not yet accessible), shown in the statement.</summary>
+    public string? AccessibilityNotes { get; set; }
+
+    /// <summary>When the coordinator details or notes were last saved; shown as the statement's update date.</summary>
+    public DateTimeOffset? AccessibilityUpdatedAt { get; set; }
 }

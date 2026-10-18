@@ -6,6 +6,7 @@ import { paymentKey } from '../../order/payment'
 import type { Fulfillment, Payment } from '../../api/site'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
 import { FieldError, Info, Status } from '../ui'
+import { useDirty, useUnsavedChanges } from '../unsaved'
 
 /** Edits an order after the client called: contact details, date, payment and quantities. */
 export function OrderEditor({
@@ -34,6 +35,9 @@ export function OrderEditor({
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const current = { name, phone, address, supplyDate, deliveryHour, fulfillment, payment, notes, quantities }
+  const { dirty, markSaved } = useDirty(current)
+  useUnsavedChanges(dirty, save)
 
   const id = (field: string) => `order-${order.id}-${field}`
   const fieldError = (field: string) => <FieldError errors={errors} field={field} id={`${id(field)}-error`} />
@@ -48,8 +52,12 @@ export function OrderEditor({
     })
   }
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
     setSaving(true)
     setErrors({})
     setError(null)
@@ -65,10 +73,13 @@ export function OrderEditor({
         notes,
         items: Object.entries(quantities).map(([itemId, quantity]) => ({ id: Number(itemId), quantity: Number(quantity) })),
       })
+      markSaved(current)
       onSaved(saved)
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }

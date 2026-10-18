@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { reviewsApi, type Review } from '../api/reviews'
 import { Stars } from '../components/Stars'
-import { prefersReducedMotion, scrollBehavior } from '../components/motion'
+import { scrollBehavior, useReducedMotion } from '../components/motion'
 
 const INTERVAL_MS = 6000
 
@@ -77,13 +77,14 @@ export function ReviewsCarousel() {
   }
 
   const many = reviews.length > 1
+  const reducedMotion = useReducedMotion()
   useEffect(() => {
-    if (!many || paused || prefersReducedMotion()) return
+    if (!many || paused || reducedMotion) return
     const timer = setInterval(() => go((active + 1) % reviews.length), INTERVAL_MS)
     return () => clearInterval(timer)
     // go() reads the track; the timer restarts whenever the card or the pause changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [many, paused, active, reviews.length])
+  }, [many, paused, reducedMotion, active, reviews.length])
 
   if (reviews.length === 0) return null
 

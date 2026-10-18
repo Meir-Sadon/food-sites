@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
-import { prefersReducedMotion } from '../components/motion'
+import { useReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
 import { DIETARY_QUESTION_ID } from '../api/catalog'
 import { DietaryIcon } from './DietaryTags'
@@ -242,11 +242,12 @@ function TileMedia({ images, slides, name, children }: { images?: string[]; slid
   const list: TileSlide[] = slides ?? (images ?? []).slice(0, 1).map((src) => ({ src }))
   const [index, setIndex] = useState(0)
   const many = list.length > 1
+  const reducedMotion = useReducedMotion()
   useEffect(() => {
-    if (!many || prefersReducedMotion()) return
+    if (!many || reducedMotion) return
     const timer = setInterval(() => setIndex((i) => (i + 1) % list.length), SLIDE_MS)
     return () => clearInterval(timer)
-  }, [many, list.length])
+  }, [many, reducedMotion, list.length])
   const current = list.length > 0 ? index % list.length : 0
   const slide = list[current]
   return (
@@ -343,8 +344,12 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
   // order and has choices to make, tapping it opens them.
   const customizable = needsDialog(dish, dishes) || addOnsOf(dish, dishes).length > 0 || (dish.questions ?? []).length > 0
   const tappable = !unavailable && !!selection && customizable && !yesNo
+  // The picture always opens the dialog, so the client can look closer and pick an amount and adjustments before
+  // anything goes into the order (the dish is only added by the dialog's own add button).
   function tapped(event: React.MouseEvent) {
-    if (!tappable || !tappedTileSurface(event)) return
+    if (!tappedTileSurface(event)) return
+    const onPicture = !!(event.target as HTMLElement).closest('.tile__media')
+    if (!(tappable || (onPicture && !unavailable && !yesNo))) return
     setOpen(true)
   }
 
@@ -404,7 +409,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
       </div>
       {open && (
-        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide>
+        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
           {zoom ? (
             <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
           ) : (
@@ -474,7 +479,7 @@ function DishGroupTile(props: GroupProps) {
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
       </div>
       {open && (
-        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide>
+        <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
           {zoom ? (
             <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
           ) : (

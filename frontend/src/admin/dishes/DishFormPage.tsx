@@ -17,6 +17,7 @@ import {
 import type { FieldErrors } from '../../api/client'
 import { FieldError, FormBlock, Info, Loading, Status } from '../ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../hooks'
+import { useDirty, useUnsavedChanges } from '../unsaved'
 import { DishImagesSection } from './DishImagesSection'
 import { useToast } from '../../components/toast'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
@@ -266,6 +267,9 @@ export function DishFormPage() {
       .catch(() => setFailed(true))
   }, [dishId, mainParam, copyParam, t])
 
+  const { dirty, markSaved } = useDirty(form)
+  useUnsavedChanges(dirty, saveChecked)
+
   if (!categories || !allDishes || !form) return <Loading failed={failed} />
 
   const set = (patch: Partial<DishForm>) => setForm({ ...form, ...patch })
@@ -276,22 +280,26 @@ export function DishFormPage() {
       ),
     })
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!form) return
+    void saveChecked()
+  }
+
+  /** Saves unless the dish is in orders not yet supplied: that needs the admin's go-ahead first (false then). */
+  async function saveChecked(): Promise<boolean> {
+    if (!form) return false
     if (dishId !== null) {
-      // Changing a dish that is in orders not yet supplied needs the admin's go-ahead.
       const count = await dishesApi.affectedOrders(dishId).then((r) => r.count, () => 0)
       if (count > 0) {
         setAffected(count)
-        return
+        return false
       }
     }
-    await save()
+    return save()
   }
 
-  async function save() {
-    if (!form) return
+  async function save(): Promise<boolean> {
+    if (!form) return false
     setAffected(null)
     setSaving(true)
     setErrors({})
@@ -302,16 +310,21 @@ export function DishFormPage() {
       if (dishId === null) {
         const created = await dishesApi.create(source ? { ...input, copyImagesFrom: source.id } : input)
         toast(t('admin.dishes.createdSaved'))
+        markSaved(form)
         navigate(`/admin/dishes/${created.id}`, { replace: true })
-        return
+        return true
       }
-      const saved = await dishesApi.update(dishId, input)
-      setDish(saved)
-      setForm(toForm(saved, categories!))
+      const result = await dishesApi.update(dishId, input)
+      const next = toForm(result, categories!)
+      setDish(result)
+      setForm(next)
+      markSaved(next)
       flash()
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }

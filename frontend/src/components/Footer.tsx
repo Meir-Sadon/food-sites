@@ -12,6 +12,7 @@ export function Footer() {
     <footer className="site-footer">
       <div className="site-footer__links">
         <Link to="/about">{t('footer.about')}</Link>
+        <Link to="/accessibility">{t('footer.accessibility')}</Link>
         <button type="button" className="link-button" onClick={() => setTermsOpen(true)}>
           {t('footer.terms.button')}
         </button>

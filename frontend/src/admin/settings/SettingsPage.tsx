@@ -4,6 +4,7 @@ import { ClosedDatesSection } from './ClosedDatesSection'
 import { ConsoleTokenSection } from './ConsoleTokenSection'
 import { GeneralSection } from './GeneralSection'
 import { PasswordSection } from './PasswordSection'
+import { SocialLinksSection } from './SocialLinksSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
 import { TrackingSection } from './TrackingSection'
 import { DeliveryZonesSection } from '../delivery/DeliveryZonesSection'
@@ -22,6 +23,7 @@ export function SettingsPage() {
       <GeneralSection onPricing={setPricing} />
       {pricing === 'zones' && <DeliveryZonesSection />}
       <TrackingSection />
+      <SocialLinksSection />
       <PasswordSection />
       {actor === 'master' && <ConsoleTokenSection />}
     </>

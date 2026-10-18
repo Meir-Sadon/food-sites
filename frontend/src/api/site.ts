@@ -1,5 +1,6 @@
 import { apiJson, send } from './client'
 import type { ChoiceMode, SellBy } from './catalog'
+import type { SocialLink } from './social'
 
 export interface Contact {
   name: string | null
@@ -125,6 +126,8 @@ export interface Site {
   tileGroups: TileGroups
   /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
   deliveryPricing: DeliveryPricing
+  /** The buttons on the About page: Facebook, Instagram, TikTok, then the custom links. Empty: none. */
+  socialLinks: SocialLink[]
   /** Which marketing tools to load. */
   tracking?: TrackingIds
 }
@@ -380,4 +383,20 @@ export interface NotifyPhone {
   id: number
   phone: string
   name: string | null
+}
+
+/** Who answers accessibility requests, and the limits the business knows of (the accessibility statement). */
+export interface AccessibilityInfo {
+  name: string | null
+  phone: string | null
+  email: string | null
+  notes: string | null
+  /** When the admin last saved these; the statement's update date. */
+  updatedAt: string | null
+}
+
+export const accessibilityApi = {
+  get: () => apiJson<AccessibilityInfo>('/api/accessibility'),
+  getAdmin: () => apiJson<AccessibilityInfo>('/api/admin/accessibility'),
+  save: (info: AccessibilityInfo) => apiJson<AccessibilityInfo>('/api/admin/accessibility', send('PUT', info)),
 }

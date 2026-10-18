@@ -29,6 +29,7 @@ public static class OwnerMessages
         [nameof(NotifyPhone)] = "מספר להתראות",
         [nameof(MessageTemplate)] = "תבנית הודעה",
         [nameof(FeatureFlag)] = "יכולת באתר",
+        [nameof(SocialLink)] = "קישור לרשת חברתית",
     };
 
     /// <summary>What the owner is told about: the dishes and the site's settings, not orders, reviews or logins.</summary>

@@ -4,6 +4,7 @@ import { categoriesApi, type Category } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
 import { ConfirmRemove, FieldError, Loading, MoveButtons, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsaved'
 
 export function CategoriesPage() {
   const { t } = useTranslation()
@@ -110,15 +111,23 @@ function CategoryRow({
   const [name, setName] = useState(category.name)
   const [errors, setErrors] = useState<FieldErrors>({})
   const inputId = `category-${category.id}-name`
+  useUnsavedChanges(editing && name !== category.name, save)
 
-  async function handleSave(event: FormEvent) {
+  function handleSave(event: FormEvent) {
     event.preventDefault()
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!name.trim()) return false
     setErrors({})
     try {
       await onRename(name)
       setEditing(false)
+      return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
+      return false
     }
   }
 

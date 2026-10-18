@@ -5,6 +5,7 @@ import { SITE_STYLES, TILE_GROUPS, type SiteStyle, type TileGroups } from '../..
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsaved'
 
 /** Picks the client site's look. Saved on its own, so unsaved edits in the other sections are not sent with it. */
 export function StyleSection() {
@@ -20,9 +21,15 @@ export function StyleSection() {
   const tileGroups = pickedGroups ?? settings?.tileGroups
   const changed = !!settings && (style !== settings.style || tileGroups !== settings.tileGroups)
 
-  async function handleSubmit(event: FormEvent) {
+  useUnsavedChanges(changed, save)
+
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!style) return
+    void save()
+  }
+
+  async function save(): Promise<boolean> {
+    if (!style) return false
     setSaving(true)
     setError(null)
     try {
@@ -32,8 +39,10 @@ export function StyleSection() {
       setPicked(null)
       setPickedGroups(null)
       flash()
+      return true
     } catch (err) {
       setError(errorMessage(err))
+      return false
     } finally {
       setSaving(false)
     }
