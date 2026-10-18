@@ -76,12 +76,12 @@ One PR with the site folder and the deploy files, on a readable branch. Run `/ch
 ## 7. Database and service
 
 - **Neon**: create a project named after the id, region `aws-eu-central-1`, in the same organization as the other sites (`list_projects` shows it). The API needs the Npgsql form of the connection string (`Host=...;Database=neondb;Username=...;Password=...;SSL Mode=Require`). Never post the password in the thread or the repo; pass it straight to Render.
-- **Render** (after the PR is merged, since the service builds from `main`): create it with the Render `create_web_service` tool in the workspace the other sites live in (`list_services` shows them): runtime `docker`, region `frankfurt`, plan `free`, branch `main`, `autoDeploy: no`, and the env vars from `render.yaml`: `SITE`, `ConnectionStrings__Default` (the Neon string in Npgsql form, using the host without `-pooler`), `Jwt__Secret` (a random 48+ character string, e.g. `openssl rand -base64 48`), `Database__MigrateOnStartup=true`, `ForwardedHeaders__Enabled=true`, `AuthCookie__SameSite=Lax`, `PORT=8080`, plus the defaults from step 3 and the admin passwords below (`Cloudinary__Url`, `Admin__PasswordHash`, `Admin__MasterUsername`, `Admin__MasterPasswordHash`), so the first deploy already has them. Creating the service starts the first deploy. The tool can't set the health check path, so the owner sets `/api/health` under the service's **Settings → Health Checks**. Don't also sync the Blueprint, or Render creates a second service.
+- **Render** (after the PR is merged, since the service builds from `main`): create it with the Render `create_web_service` tool in the workspace the other sites live in (`list_services` shows them): runtime `docker`, region `frankfurt`, plan `free`, branch `main`, `autoDeploy: no`, and the env vars from `render.yaml`: `SITE`, `ConnectionStrings__Default` (the Neon string in Npgsql form, using the host without `-pooler`), `Jwt__Secret` (a random 48+ character string, e.g. `openssl rand -base64 48`), `Database__MigrateOnStartup=true`, `ForwardedHeaders__Enabled=true`, `AuthCookie__SameSite=Lax`, `PORT=8080`, plus the defaults from step 3 and the admin passwords below (`Cloudinary__Url`, `Admin__PasswordHash`, `Admin__MasterUsername`, `Admin__MasterPasswordHash`), so the first deploy already has them. Creating the service starts the first deploy. **Claude sets every variable itself, in that one call (or with `update_environment_variables` right after); the owner never has to open Render for variables.** Get the Npgsql string from Neon's `get_connection_string` and drop `-pooler` from the host. The tools can't set the health check path or read the deploy hook, which is why those two stay with the owner in step 8 (the site runs without the health check path: Render finds port 8080 by itself). If `create_web_service` or `update_environment_variables` is refused by the session's permissions, say so once and ask the owner for the rule (see "Tool permissions" below); don't work around it. Don't also sync the Blueprint, or Render creates a second service.
 - **Check the deploy** with `get_deploy` (status `live`) and `list_logs` (type `app`): look for "Site settings defaults applied", "Seeded N dishes" and "Now listening". "No admin password is set" is expected until the owner adds the hash. A `libgssapi_krb5.so.2` error at start is harmless.
 - First start migrates the database, applies `settings` and the seed.
 
 - **Business defaults**: once the first deploy is live, apply these in one `run_sql_transaction` on the site's Neon project (they're admin settings, so the owner can change them later):
-  - Supply days: every day but Saturday, orders closing at 15:00 the day before.
+  - Supply days: every day but Saturday, orders closing at 15:00 the day before. For a business that supplies on fixed days with hours (e.g. Friday 08:00-15:00, orders closing Thursday 22:00), enable only those weekdays (0 = Sunday ... 6 = Saturday), set `CutoffDay` to the weekday before, `CutoffTime`, and `DeliveryFrom` / `DeliveryTo` for the supply hours.
   - Bit/PayBox phone: the main contact's phone.
   - New-order WhatsApp alerts: the main contact's phone first (in its normalized form, digits only, e.g. `0545776707`).
   ```sql
@@ -96,13 +96,26 @@ One PR with the site folder and the deploy files, on a readable branch. Run `/ch
   Read the rows back to check them.
 - **Admin password**: set the owner's to the default `admin` (user name `admin`): run `dotnet run --project backend/src/FoodSite.Api -- hash-password 'admin'` and add the output as the service's `Admin__PasswordHash` with `update_environment_variables`. The owner changes it after signing in, under **הגדרות כלליות** (the password section). The master admin is set on every new service too: `Admin__MasterUsername` = `FS_admin` and `Admin__MasterPasswordHash` = a hash of `admin` (the same `hash-password 'admin'` output works for both variables; the owner chose these defaults). Set both with the service's other environment variables when it is created.
 
+### Tool permissions
+
+The Render tools only run unattended when the repo's `.claude/settings.json` allows them, at the **top level** of the file (not inside `hooks`):
+
+```json
+{
+  "permissions": { "allow": ["mcp__Render__create_web_service", "mcp__Render__update_environment_variables"] },
+  "hooks": { ... }
+}
+```
+
+A session can't edit its own permissions, so if the rule is missing the owner adds it.
+
 ## 8. Tell the owner how to activate the site
 
 End with one reply that gives the site's address and a numbered checklist of exactly what the owner has to do, with where to click. Mark what's required and what's optional, and say which steps Claude does once they answer. Fill in the real names (site id, secret name, address):
 
 1. **Change the admin password** (required): the site is public and the password is `admin`, so anyone who guesses it can see the orders and the clients' phone numbers. Sign in to the admin with user name `admin` and password `admin`, and change it under **הגדרות כלליות**.
 2. **Cloudinary key** (optional: the shared default key from step 3 is already set, so pictures work): to give the site its own key, Cloudinary → **Settings → API Keys → Generate New API Key**, named `<site-id>`. Then Render → the `<site-id>` service → **Environment** → add `Cloudinary__Url` = `cloudinary://<key>:<secret>@<cloud_name>` → **Save**.
-3. **Health check** (required): Render → the service → **Settings → Health Check Path** → `/api/health`.
+3. **Health check** (optional, the site works without it): Render → the service → **Settings → Health Check Path** → `/api/health`.
 4. **Deploy hook** (required for later updates): Render → the service → **Settings → Deploy Hook** → copy. GitHub → the repo → **Settings → Secrets and variables → Actions → New repository secret**, named `RENDER_DEPLOY_HOOK_<ID_UPPER>`, with the hook as the value.
 5. **Sign in to the admin** at `https://<site-id>.onrender.com/admin` and:
    - **Supply days** (check): **הגדרות כלליות → ימי אספקה**. They're set to Sunday to Friday, with orders closing at 15:00 the day before; change them to the business's real days.
