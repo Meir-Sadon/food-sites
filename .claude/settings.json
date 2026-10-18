@@ -2,6 +2,7 @@
   "hooks": {
     "SessionStart": [
       {
+        "permissions": { "allow": ["mcp__Render__create_web_service"] },
         "hooks": [
           {
             "type": "command",
