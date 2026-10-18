@@ -397,6 +397,9 @@
               "price": 20,
               "amount": 0.5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792324902/hatzil-bitchina.jpg"
           ]
         }
       ]
@@ -647,6 +650,9 @@
               "price": 20,
               "amount": 0.5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792324810/batata.jpg"
           ]
         },
         {
@@ -669,6 +675,9 @@
               "price": 20,
               "amount": 0.5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792324810/batata-metugenet.jpg"
           ]
         },
         {
@@ -716,6 +725,9 @@
               "price": 20,
               "amount": 0.5
             }
+          ],
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792324811/gezer-megurad.jpg"
           ]
         },
         {
@@ -853,7 +865,10 @@
           "unitPrice": 35,
           "minAmount": 1,
           "maxAmount": 10,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1792324901/guacamole.jpg"
+          ]
         },
         {
           "name": "חציל שלם בטחינה שחורה",
