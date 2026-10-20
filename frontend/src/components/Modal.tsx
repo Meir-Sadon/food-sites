@@ -12,6 +12,8 @@ export function Modal({
   onClose,
   wide,
   closeButton,
+  className,
+  top,
   children,
 }: {
   title: string
@@ -20,6 +22,10 @@ export function Modal({
   wide?: boolean
   /** An X in the corner that closes the dialog, for ones with a lot in them (a dish's choices). */
   closeButton?: boolean
+  /** Extra classes on the dialog, for one that has a look of its own (the entry pop-up). */
+  className?: string
+  /** Shown above the title, edge to edge (a picture). */
+  top?: ReactNode
   children: ReactNode
 }) {
   const { t } = useTranslation()
@@ -56,7 +62,7 @@ export function Modal({
   // Rendered at the end of <body>, so pressing inside it never counts as pressing the card or tile it was opened from.
   return createPortal(
     <div
-      className="modal-backdrop"
+      className={className ? `modal-backdrop ${className}__backdrop` : 'modal-backdrop'}
       onMouseDown={(event) => {
         pressedBackdrop.current = event.target === event.currentTarget
       }}
@@ -71,7 +77,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={wide ? 'modal modal--wide' : 'modal'}
+        className={[wide ? 'modal modal--wide' : 'modal', className].filter(Boolean).join(' ')}
         onKeyDown={handleKeyDown}
       >
         {closeButton && (
@@ -81,6 +87,7 @@ export function Modal({
             </svg>
           </button>
         )}
+        {top}
         <h2 id={titleId} className={closeButton ? 'modal__title--with-close' : undefined}>
           {title}
         </h2>

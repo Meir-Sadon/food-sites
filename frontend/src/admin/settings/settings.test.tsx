@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { SupplyDay } from '../../api/catalog'
-import { settings, supplyDays } from '../../test/catalogData'
+import { popup, settings, supplyDays } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid, masterSession } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
 
@@ -12,6 +12,7 @@ const base = {
   'GET /api/admin/supply-days': () => supplyDays(),
   'GET /api/admin/closed-dates': () => [{ id: 1, date: '2026-10-14', reason: 'סוכות' }],
   'GET /api/admin/social-links': () => [],
+  'GET /api/admin/popup': () => ({ body: popup() }),
 }
 
 /** A settings section once its data has loaded. */
@@ -673,5 +674,80 @@ describe('Social links', () => {
 
     await screen.findByText('נשמר.')
     expect(api.sent('PUT', '/api/admin/social-links')[0].body).toEqual({ links: [] })
+  })
+})
+
+describe('Entry pop-up', () => {
+  const open = (extra: Parameters<typeof fakeApi>[0] = {}) => {
+    let saved = popup()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/popup': () => ({ body: saved }),
+      'PUT /api/admin/popup': (_, input) => ({ body: (saved = { ...saved, ...(input as object) }) }),
+      ...extra,
+    })
+    renderAt('/admin/appearance')
+    return api
+  }
+
+  it('saves the size, title, text and button', async () => {
+    const api = open()
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ בכניסה לאתר')
+
+    expect(within(form).getByRole('button', { name: 'שמירה' })).toBeDisabled()
+    expect(within(form).getByRole('radio', { name: /בינוני/ })).toBeChecked()
+    await user.click(within(form).getByRole('checkbox', { name: 'להציג את הפופ-אפ באתר' }))
+    await user.click(within(form).getByRole('radio', { name: /גדול/ }))
+    await user.click(within(form).getByRole('radio', { name: /פעם אחת בביקור/ }))
+    await user.type(within(form).getByLabelText('כותרת'), 'מבצע חג')
+    await user.type(within(form).getByLabelText('תוכן'), '10% הנחה')
+    await user.type(within(form).getByLabelText('תוכן הכפתור'), 'להזמנה')
+    await user.type(within(form).getByLabelText('קישור'), 'https://example.com/sale')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/popup')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/popup')[0].body).toEqual({
+      enabled: true,
+      size: 'large',
+      frequency: 'session',
+      title: 'מבצע חג',
+      body: '10% הנחה',
+      buttonText: 'להזמנה',
+      buttonUrl: 'https://example.com/sale',
+    })
+    expect(await within(form).findByText('נשמר.')).toBeInTheDocument()
+  })
+
+  it('shows what the server refused beside the field', async () => {
+    open({ 'PUT /api/admin/popup': () => invalid({ title: ['required'] }) })
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ בכניסה לאתר')
+    await user.click(within(form).getByRole('checkbox', { name: 'להציג את הפופ-אפ באתר' }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await within(form).findByText('שדה חובה.')).toBeInTheDocument()
+  })
+
+  it('uploads a picture without touching what is typed', async () => {
+    const api = open({ 'PUT /api/admin/popup/image': () => ({ body: popup({ imageUrl: 'https://img.test/popup.jpg' }) }) })
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ בכניסה לאתר')
+    await user.type(within(form).getByLabelText('כותרת'), 'מבצע')
+
+    const file = new File(['x'], 'p.jpg', { type: 'image/jpeg' })
+    await user.upload(within(form).getByLabelText('בחירת תמונה'), file)
+
+    expect(await within(form).findByRole('img')).toHaveAttribute('src', 'https://img.test/popup.jpg')
+    expect((api.sent('PUT', '/api/admin/popup/image')[0].body as FormData).get('file')).toBe(file)
+    expect(within(form).getByLabelText('כותרת')).toHaveValue('מבצע')
+  })
+
+  it('previews the pop-up with what is typed so far', async () => {
+    open()
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ בכניסה לאתר')
+    await user.type(within(form).getByLabelText('כותרת'), 'מבצע חג')
+    await user.click(within(form).getByRole('button', { name: 'תצוגה מקדימה' }))
+    expect(await screen.findByRole('dialog', { name: 'מבצע חג' })).toBeInTheDocument()
   })
 })

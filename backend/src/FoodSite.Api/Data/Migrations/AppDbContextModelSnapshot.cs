@@ -1090,6 +1090,33 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("PickupEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("PopupBody")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupButtonText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupButtonUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PopupEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PopupFrequency")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupImagePublicId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupSize")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupTitle")
+                        .HasColumnType("text");
+
                     b.Property<int?>("PortionsPerSupplyDate")
                         .HasColumnType("integer");
 
@@ -1133,6 +1160,7 @@ namespace FoodSite.Api.Data.Migrations
                             OwnerChangeMails = false,
                             PayBoxEnabled = false,
                             PickupEnabled = true,
+                            PopupEnabled = false,
                             SiteDefaultsApplied = false
                         });
                 });

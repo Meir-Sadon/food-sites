@@ -167,4 +167,20 @@ public class Settings
 
     /// <summary>When the coordinator details or notes were last saved; shown as the statement's update date.</summary>
     public DateTimeOffset? AccessibilityUpdatedAt { get; set; }
+
+    // Entry pop-up: a window shown when a client opens the site (see <c>Popup/EntryPopup</c>).
+    public bool PopupEnabled { get; set; }
+
+    /// <summary>small, medium or large; null means medium.</summary>
+    public string? PopupSize { get; set; }
+
+    /// <summary>always (every page load) or session (once per browser tab); null means always.</summary>
+    public string? PopupFrequency { get; set; }
+
+    public string? PopupTitle { get; set; }
+    public string? PopupBody { get; set; }
+    public string? PopupImageUrl { get; set; }
+    public string? PopupImagePublicId { get; set; }
+    public string? PopupButtonText { get; set; }
+    public string? PopupButtonUrl { get; set; }
 }
