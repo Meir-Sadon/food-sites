@@ -1,5 +1,6 @@
 import { apiJson, send } from './client'
 import type { ChoiceMode, SellBy } from './catalog'
+import type { Popup } from './popup'
 import type { SocialLink } from './social'
 
 export interface Contact {
@@ -134,6 +135,8 @@ export interface Site {
   socialLinks: SocialLink[]
   /** Which marketing tools to load. */
   tracking?: TrackingIds
+  /** The window shown when the site opens; missing while it is off. */
+  popup?: Popup | null
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
