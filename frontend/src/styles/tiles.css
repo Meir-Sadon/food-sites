@@ -265,8 +265,7 @@
   cursor: zoom-in;
 }
 
-.tile-dialog__pic:hover:not(:disabled),
-.tile-dialog__zoomed:hover:not(:disabled) {
+.tile-dialog__pic:hover:not(:disabled) {
   background: none;
 }
 
@@ -296,27 +295,6 @@
   color: #fff;
   font-size: 1rem;
   line-height: 1;
-}
-
-/* Enlarged: the picture fills the dialog, whole. */
-.tile-dialog__zoomed {
-  align-self: center;
-  display: block;
-  min-block-size: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: zoom-out;
-}
-
-[data-style='tiles'] .modal .tile-dialog__zoomed .carousel img {
-  inline-size: 100%;
-  block-size: auto;
-  max-block-size: calc(90vh - 9rem);
-  aspect-ratio: auto;
-  object-fit: contain;
-  border-radius: calc(0.75rem * var(--corner-scale));
 }
 
 .tile-dialog__info {
