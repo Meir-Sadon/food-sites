@@ -1,5 +1,6 @@
 import { apiJson, send } from './client'
 import type { ChoiceMode, SellBy } from './catalog'
+import type { Popup } from './popup'
 import type { SocialLink } from './social'
 
 export interface Contact {
@@ -87,6 +88,10 @@ export interface Site {
   deliveryFeeText: string | null
   /** The regular setting's fixed delivery fee in ₪ (added to deliveries to a service city); null when there is none. */
   deliveryFeeAmount: number | null
+  /** The advanced setting's base fee: what a large order's delivery is discounted by; null means no discount there. */
+  deliveryBaseFee: number | null
+  /** From this dishes total (₪) the delivery fee is discounted; null means never. */
+  deliveryDiscountMinOrder: number | null
   kashrutText: string | null
   paymentPhone: string | null
   /** Whether the client may choose to pay with Bit / PayBox (needs the payment phone). */
@@ -132,6 +137,8 @@ export interface Site {
   tracking?: TrackingIds
   /** Which item badges ("new", "almost out") are on, and when they apply. */
   badges?: ItemBadges
+  /** The window shown when the site opens; missing while it is off. */
+  popup?: Popup | null
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
@@ -352,6 +359,8 @@ export interface Confirmation {
   hourFull?: boolean
   /** The delivery fee in ₪ (already inside `total`). */
   deliveryFee?: number
+  /** What the large-order discount took off the delivery fee (0 for none; the fee is then already reduced). */
+  deliveryDiscount?: number
 }
 
 /** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */

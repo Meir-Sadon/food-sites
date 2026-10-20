@@ -5,9 +5,10 @@ import { ColorsSection } from './ColorsSection'
 import { CornersSection } from './CornersSection'
 import { FinishSection } from './FinishSection'
 import { OrderLayoutSection } from './OrderLayoutSection'
+import { PopupSection } from './PopupSection'
 import { StyleSection } from './StyleSection'
 
-/** How the client site looks: its style, corners, colours, fonts, shadows and spacing, the order page's layout, the item badges and the main background picture. */
+/** How the client site looks: its style, corners, colours, fonts, shadows and spacing, the order page's layout, the item badges, the main background picture and the entry pop-up. */
 export function AppearancePage() {
   const { t } = useTranslation()
   return (
@@ -20,6 +21,7 @@ export function AppearancePage() {
       <OrderLayoutSection />
       <BadgesSection />
       <BackgroundSection />
+      <PopupSection />
     </>
   )
 }

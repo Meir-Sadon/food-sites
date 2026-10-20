@@ -21,6 +21,15 @@ public class Settings
     /// </summary>
     public decimal? DeliveryFeeAmount { get; set; }
 
+    /// <summary>
+    /// The advanced (zones) setting's base fee: what a delivery is discounted by once the dishes reach
+    /// <see cref="DeliveryDiscountMinOrder"/>, so a far zone still pays what is above it. Null means no discount there.
+    /// </summary>
+    public decimal? DeliveryBaseFee { get; set; }
+
+    /// <summary>The dishes total from which the delivery fee is discounted; null means never.</summary>
+    public decimal? DeliveryDiscountMinOrder { get; set; }
+
     public string? KashrutText { get; set; }
 
     /// <summary>The smallest order total (₪) a client may place; null means no minimum.</summary>
@@ -182,4 +191,20 @@ public class Settings
 
     /// <summary>A limited dish is "almost out" when what is left is at most this percent or number of units.</summary>
     public int? BadgeLowStockAmount { get; set; }
+
+    // Entry pop-up: a window shown when a client opens the site (see <c>Popup/EntryPopup</c>).
+    public bool PopupEnabled { get; set; }
+
+    /// <summary>small, medium or large; null means medium.</summary>
+    public string? PopupSize { get; set; }
+
+    /// <summary>always (every page load) or session (once per browser tab); null means always.</summary>
+    public string? PopupFrequency { get; set; }
+
+    public string? PopupTitle { get; set; }
+    public string? PopupBody { get; set; }
+    public string? PopupImageUrl { get; set; }
+    public string? PopupImagePublicId { get; set; }
+    public string? PopupButtonText { get; set; }
+    public string? PopupButtonUrl { get; set; }
 }

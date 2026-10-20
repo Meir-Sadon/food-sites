@@ -69,6 +69,8 @@ export interface AdminOrder {
   delivery?: DeliveryReport | null
   /** The delivery fee worked out from the zones (already inside `total`); 0 for none. */
   deliveryFee?: number
+  /** What the large-order discount took off the delivery fee; the fee is already reduced. */
+  deliveryDiscount?: number
   deliveryZoneName?: string | null
 }
 

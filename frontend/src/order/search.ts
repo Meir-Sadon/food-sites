@@ -23,25 +23,7 @@ export function normalizeSearchText(text: string) {
     .trim()
 }
 
-function editDistance(a: string, b: string) {
-  let previous = Array.from({ length: b.length + 1 }, (_, i) => i)
-  for (let i = 1; i <= a.length; i++) {
-    const row = [i]
-    for (let j = 1; j <= b.length; j++) {
-      row[j] = Math.min(previous[j] + 1, row[j - 1] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
-    }
-    previous = row
-  }
-  return previous[b.length]
-}
-
-function isSubsequence(token: string, text: string) {
-  let at = 0
-  for (const ch of text) if (ch === token[at] && ++at === token.length) return true
-  return false
-}
-
-/** How well one word of the query fits a text (both normalized): 0 for no match, up to 100 for the exact text. */
+/** How well one word of the query fits a text (both normalized): 0 unless the word appears in it, up to 100 for the exact text. */
 function scoreToken(token: string, text: string, weight: number) {
   if (!text) return 0
   if (text === token) return 100 * weight
@@ -50,19 +32,6 @@ function scoreToken(token: string, text: string, weight: number) {
   if (words.some((w) => w === token)) return 85 * weight
   if (words.some((w) => w.startsWith(token))) return 80 * weight
   if (text.includes(token)) return 65 * weight
-  // A typo or a missing letter: close to the start of a word of the same length (or one more or less).
-  const allowed = token.length >= 5 ? 2 : token.length >= 3 ? 1 : 0
-  if (allowed > 0) {
-    let best = Infinity
-    for (const w of words) {
-      for (const length of [token.length - 1, token.length, token.length + 1]) {
-        if (length < 2 || length > w.length) continue
-        best = Math.min(best, editDistance(token, w.slice(0, length)))
-      }
-    }
-    if (best <= allowed) return (55 - best * 10) * weight
-  }
-  if (token.length >= 3 && isSubsequence(token, text.replace(/ /g, ''))) return 20 * weight
   return 0
 }
 
@@ -98,4 +67,49 @@ export function searchDishes(menu: Menu, query: string, standalone: MenuDish[]) 
     .filter((hit) => hit.score > 0)
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .map((hit) => hit.dish)
+}
+
+/** One character of a text as normalizeSearchText sees it: '' when it is dropped, a space for a separator. */
+function normalizeChar(ch: string) {
+  return normalizeSearchText(`a${ch}a`).slice(1, -1)
+}
+
+/**
+ * The stretches of `text` (start, end offsets) that the words of the query matched, so they can be marked. Matching is
+ * the same as the search's (niqqud, final letters and case ignored); only exact appearances count.
+ */
+export function highlightRanges(text: string, query: string): [number, number][] {
+  const tokens = normalizeSearchText(query).split(' ').filter(Boolean)
+  if (!text || tokens.length === 0) return []
+  let normalized = ''
+  const owner: number[] = []
+  const chars = Array.from(text)
+  const offsets: number[] = []
+  let offset = 0
+  for (const ch of chars) {
+    offsets.push(offset)
+    offset += ch.length
+    for (const n of normalizeChar(ch)) {
+      if (n === ' ' && (normalized === '' || normalized.endsWith(' '))) continue
+      normalized += n
+      owner.push(offsets.length - 1)
+    }
+  }
+  const marked: [number, number][] = []
+  for (const token of tokens) {
+    for (let at = normalized.indexOf(token); at !== -1; at = normalized.indexOf(token, at + 1)) {
+      let last = owner[at + token.length - 1]
+      // Marks that belong to the last letter (niqqud) stay inside the highlight.
+      while (last + 1 < chars.length && normalizeChar(chars[last + 1]) === '' && /[֑-ׇ]/.test(chars[last + 1])) last++
+      marked.push([offsets[owner[at]], offsets[last] + chars[last].length])
+    }
+  }
+  marked.sort((a, b) => a[0] - b[0])
+  const merged: [number, number][] = []
+  for (const range of marked) {
+    const prev = merged[merged.length - 1]
+    if (prev && range[0] <= prev[1]) prev[1] = Math.max(prev[1], range[1])
+    else merged.push([...range])
+  }
+  return merged
 }

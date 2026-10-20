@@ -2,6 +2,7 @@ using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Delivery;
 using FoodSite.Api.Orders;
+using FoodSite.Api.Popup;
 using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -46,10 +47,13 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string TileGroups,
         string DeliveryPricing = "simple",
         decimal? DeliveryFeeAmount = null,
+        decimal? DeliveryBaseFee = null,
+        decimal? DeliveryDiscountMinOrder = null,
         bool AddressFirst = false,
         IReadOnlyList<SocialLinkDto>? SocialLinks = null,
         Tracking.Ids? Tracking = null,
-        ItemBadges.Effective? Badges = null);
+        ItemBadges.Effective? Badges = null,
+        EntryPopup.Dto? Popup = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -149,11 +153,14 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Finish.EffectiveTileGroups(s.TileGroups),
             DeliveryQuoter.Mode(s),
             s.DeliveryFeeAmount,
+            s.DeliveryBaseFee,
+            s.DeliveryDiscountMinOrder,
             s.AddressFirst,
             (await db.SocialLinks.AsNoTracking().OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id).ToListAsync())
                 .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList(),
             Sites.Tracking.Of(s),
-            ItemBadges.Of(s));
+            ItemBadges.Of(s),
+            EntryPopup.ForClient(s));
     }
 
     [HttpGet("menu")]

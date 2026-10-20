@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router'
 import { AccountProvider } from '../account/AccountContext'
 import { AccessibilityMenu } from '../accessibility/AccessibilityMenu'
 import { CartNavProvider } from './CartNavProvider'
+import { EntryPopup } from './EntryPopup'
 import { Footer } from './Footer'
 import { WhatsAppButton } from './WhatsAppButton'
 import { LeaveGuardProvider } from './LeaveGuardProvider'
@@ -67,6 +68,7 @@ function Shell() {
       </main>
       <Footer />
       <AccessibilityMenu />
+      <EntryPopup />
       <div className="fabs">
         <ScrollButtons />
         <WhatsAppButton />

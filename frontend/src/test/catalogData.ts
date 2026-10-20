@@ -1,4 +1,5 @@
 import type { Category, Dish, Settings, SupplyDay } from '../api/catalog'
+import type { Popup } from '../api/popup'
 import type { Menu, MenuDish, Site } from '../api/site'
 import { weekdays } from '../api/catalog'
 
@@ -9,6 +10,8 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   deliveryAreaText: 'חיפה',
   deliveryFeeText: null,
   deliveryFeeAmount: null,
+  deliveryBaseFee: null,
+  deliveryDiscountMinOrder: null,
   kashrutText: null,
   paymentPhone: '050-1234567',
   bitEnabled: true,
@@ -98,6 +101,8 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   deliveryAreaText: 'חיפה והקריות',
   deliveryFeeText: null,
   deliveryFeeAmount: null,
+  deliveryBaseFee: null,
+  deliveryDiscountMinOrder: null,
   kashrutText: 'בהשגחת הרבנות',
   paymentPhone: '052-9999999',
   bitEnabled: true,
@@ -203,4 +208,17 @@ export const groupedMenu = (): Menu => ({
     menuDish(7, 'עוף', 1, { isAddOnOnly: true, options: [{ id: 70, label: 'יחידה', amount: 1, price: 12, isDefault: true }] }),
   ],
   supplyDates: [{ date: '2026-10-16', cutoff: '2026-10-14T20:00:00' }],
+})
+
+/** The entry pop-up as the admin sees it: off, with nothing filled in. */
+export const popup = (overrides: Partial<Popup> = {}): Popup => ({
+  enabled: false,
+  size: 'medium',
+  frequency: 'always',
+  title: null,
+  body: null,
+  imageUrl: null,
+  buttonText: null,
+  buttonUrl: null,
+  ...overrides,
 })

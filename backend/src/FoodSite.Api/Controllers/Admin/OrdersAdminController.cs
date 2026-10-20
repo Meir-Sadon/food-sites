@@ -48,7 +48,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         bool PaidByDriver = false,
         DeliveryReportDto? Delivery = null,
         decimal DeliveryFee = 0m,
-        string? DeliveryZoneName = null);
+        string? DeliveryZoneName = null,
+        decimal DeliveryDiscount = 0m);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -282,6 +283,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         if (order.FulfillmentMethod != FulfillmentMethod.Delivery)
         {
             order.DeliveryFee = 0m;
+            order.DeliveryDiscount = 0m;
             order.DeliveryZoneName = null;
         }
         order.Total = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal) + order.DeliveryFee;
@@ -329,7 +331,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.PaidByDriver,
         DeliveryReport(o),
         o.DeliveryFee,
-        o.DeliveryZoneName);
+        o.DeliveryZoneName,
+        o.DeliveryDiscount);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null
