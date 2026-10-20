@@ -35,6 +35,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   spacing: 'standard',
   tileGroups: 'framed',
   deliveryPricing: 'simple',
+  badges: { newEnabled: false, newAmount: 1, newUnit: 'week', lowStockEnabled: false, lowStockMode: 'percent', lowStockAmount: 20 },
   tracking: { metaPixelId: '', googleAnalyticsId: '', googleTagManagerId: '', tikTokPixelId: '', googleAdsId: '', googleAdsPurchaseLabel: '', metaServerEvents: false },
   ...patch,
 })
@@ -69,6 +70,7 @@ export const dish = (id: number, name: string, categoryId: number, patch: Partia
   isSoldOut: false,
   openByDefault: false,
   isSideDish: false,
+  onSale: false,
   maxPerSupplyDate: null,
   isHidden: false,
   options: [{ id: id * 10, label: 'מנה', amount: 1, price: 40, isDefault: true }],

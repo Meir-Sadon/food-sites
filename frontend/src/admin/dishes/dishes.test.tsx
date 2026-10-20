@@ -211,6 +211,7 @@ describe('Dish form', () => {
       isSoldOut: false,
       openByDefault: false,
       isSideDish: false,
+      onSale: false,
       maxPerSupplyDate: null,
       options: [
         { id: null, label: 'קטן', amount: 1, price: 5, isDefault: false },
@@ -239,6 +240,19 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).openByDefault).toBe(true)
+  })
+
+  it('saves a dish marked as on sale', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    await user.click(screen.getByLabelText(/במבצע/))
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).onSale).toBe(true)
   })
 
   it('saves a dish whose adjustment is optional', async () => {

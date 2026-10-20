@@ -531,6 +531,34 @@ label {
   font-size: 0.8125rem;
 }
 
+/* "On sale", "new" and "almost out" marks beside a dish's name. */
+.item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0 0 0.375rem;
+  padding: 0;
+  list-style: none;
+}
+
+.item-badge {
+  padding: 0.125rem 0.625rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.item-badge--new {
+  background: var(--color-success);
+}
+
+.item-badge--almostOut {
+  background: var(--color-error);
+}
+
 .numeric {
   font-variant-numeric: tabular-nums;
 }

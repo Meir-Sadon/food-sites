@@ -48,7 +48,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         decimal? DeliveryFeeAmount = null,
         bool AddressFirst = false,
         IReadOnlyList<SocialLinkDto>? SocialLinks = null,
-        Tracking.Ids? Tracking = null);
+        Tracking.Ids? Tracking = null,
+        ItemBadges.Effective? Badges = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -81,7 +82,10 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         bool AdjustmentOptional = false,
         string? OptionsTitle = null,
         bool ShowOptionDifference = false,
-        IReadOnlyList<string>? DietaryTags = null);
+        IReadOnlyList<string>? DietaryTags = null,
+        bool OnSale = false,
+        bool IsNew = false,
+        decimal? Limit = null);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
     /// <summary>DefaultAnswer is the answer already picked for the client (a choice, or yes / no), if the admin set one.</summary>
@@ -148,7 +152,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             s.AddressFirst,
             (await db.SocialLinks.AsNoTracking().OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id).ToListAsync())
                 .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList(),
-            Sites.Tracking.Of(s));
+            Sites.Tracking.Of(s),
+            ItemBadges.Of(s));
     }
 
     [HttpGet("menu")]
@@ -179,6 +184,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
 
         var supplyDates = await OpenDatesAsync();
         var remaining = await RemainingAsync(shown, supplyDates.Select(d => d.Date).ToList());
+        var settings = await db.Settings.AsNoTracking().SingleAsync();
+        var badges = ItemBadges.Of(settings);
+        var now = clock.NowLocal();
 
         var menuDishes = shown.Select(d =>
         {
@@ -200,7 +208,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 DishRules.Questions(d)
                     .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
                 (d.MainDish ?? d).AdjustmentOptional,
-                p.OptionsTitle, p.ShowOptionDifference, d.DietaryTags);
+                p.OptionsTitle, p.ShowOptionDifference, d.DietaryTags,
+                d.OnSale, ItemBadges.IsNew(badges, d.CreatedAt, now), LimitOf(d, settings.PortionsPerSupplyDate));
         }).ToList();
 
         // Groups list only dishes ordered on their own that are on the menu, in menu order; an empty group is left out.
@@ -212,6 +221,18 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             .Where(g => g.DishIds.Count > 0).ToList();
 
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList(), groups);
+    }
+
+    /// <summary>
+    /// The most of a dish that can be ordered for one date, the base of its "almost out" percentage: its own limit, or the
+    /// site's portion limit when that is smaller. Null when nothing limits it.
+    /// </summary>
+    private static decimal? LimitOf(Dish dish, int? portions)
+    {
+        decimal? limit = dish.MaxPerSupplyDate;
+        if (portions is not null && DailyPortions.Counts(dish))
+            limit = limit is null ? portions : Math.Min(limit.Value, portions.Value);
+        return limit;
     }
 
     /// <summary>Asked when the client picks an hour, so a full one gets a note; the menu never says which hours are full.</summary>

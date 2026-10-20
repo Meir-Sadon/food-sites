@@ -130,6 +130,8 @@ export interface Site {
   socialLinks: SocialLink[]
   /** Which marketing tools to load. */
   tracking?: TrackingIds
+  /** Which item badges ("new", "almost out") are on, and when they apply. */
+  badges?: ItemBadges
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
@@ -189,6 +191,26 @@ export interface MenuDish {
   showOptionDifference?: boolean
   /** Special-diet marks (ids from DIETARY_TAGS in api/catalog.ts). */
   dietaryTags?: string[]
+  /** The admin marked the dish as on sale. */
+  onSale?: boolean
+  /** Created within the period the admin set for the "new" badge (always false while that badge is off). */
+  isNew?: boolean
+  /** The most that can be ordered per date (its own limit or the site's portion limit), the base of the "almost out" percentage. */
+  limit?: number | null
+}
+
+/** The "new" and "almost out" badges (FoodSite.Api `ItemBadges`): the admin's settings. */
+export type BadgeNewUnit = 'day' | 'week' | 'month'
+export type LowStockMode = 'percent' | 'units'
+export const BADGE_NEW_UNITS: readonly BadgeNewUnit[] = ['day', 'week', 'month']
+export const LOW_STOCK_MODES: readonly LowStockMode[] = ['percent', 'units']
+export interface ItemBadges {
+  newEnabled: boolean
+  newAmount: number
+  newUnit: BadgeNewUnit
+  lowStockEnabled: boolean
+  lowStockMode: LowStockMode
+  lowStockAmount: number
 }
 
 /** How a dish question is answered (FoodSite.Api `QuestionKind`). */

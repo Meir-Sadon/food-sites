@@ -167,4 +167,19 @@ public class Settings
 
     /// <summary>When the coordinator details or notes were last saved; shown as the statement's update date.</summary>
     public DateTimeOffset? AccessibilityUpdatedAt { get; set; }
+
+    // Item badges (Sites/ItemBadges): "new" and "almost out" marks on dishes; both off until the admin turns them on.
+    public bool BadgeNewEnabled { get; set; }
+
+    /// <summary>A dish is new for this many days, weeks or months (<see cref="BadgeNewUnit"/>) after it was created; null means the default.</summary>
+    public int? BadgeNewAmount { get; set; }
+    public string? BadgeNewUnit { get; set; }
+
+    public bool BadgeLowStockEnabled { get; set; }
+
+    /// <summary><c>percent</c> of the dish's limit or a number of <c>units</c>; null means the default.</summary>
+    public string? BadgeLowStockMode { get; set; }
+
+    /// <summary>A limited dish is "almost out" when what is left is at most this percent or number of units.</summary>
+    public int? BadgeLowStockAmount { get; set; }
 }

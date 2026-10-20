@@ -34,7 +34,7 @@ export function StyleSection() {
     setError(null)
     try {
       // The other settings as saved now, so this never sends stale values back.
-      const { backgroundImageUrl: _, orderTotalPosition: __, orderFlow: ___, corners: ____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tracking: _tr, ...current } = await settingsApi.get()
+      const { backgroundImageUrl: _, orderTotalPosition: __, orderFlow: ___, corners: ____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tracking: _tr, badges: _bd, ...current } = await settingsApi.get()
       setData(await settingsApi.save({ ...current, style, tileGroups }))
       setPicked(null)
       setPickedGroups(null)

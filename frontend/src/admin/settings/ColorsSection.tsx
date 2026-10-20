@@ -71,7 +71,7 @@ export function ColorsSection() {
     setSaving(true)
     setError(null)
     try {
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, tracking: _tr, ...current } = await settingsApi.get()
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, tracking: _tr, badges: _bd, ...current } = await settingsApi.get()
       const result = await settingsApi.save({ ...current, palette, customColors: custom, lineWidth: lineWidth ?? 0 })
       setData(result)
       announceLook(result)
