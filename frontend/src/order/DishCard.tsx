@@ -11,6 +11,7 @@ import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/s
 import { AmountControl } from './AmountControl'
 import { formatMoney, optionPriceText, priceText, unitLabel } from './format'
 import { ImageCarousel } from './ImageCarousel'
+import { ImageViewer } from './ImageViewer'
 import {
   addOnLineTotal,
   addOnRange,
@@ -289,7 +290,7 @@ function AllergenMark({ text }: { text?: string | null }) {
   )
 }
 
-/** The picture in a tile's dialog: whole, small, and a press enlarges it to fill the dialog. */
+/** The picture in a tile's dialog: whole, small, and a press opens it full screen. */
 function DialogPicture({ images, name, onZoom }: { images: string[]; name: string; onZoom: () => void }) {
   const { t } = useTranslation()
   if (images.length === 0) return null
@@ -300,23 +301,6 @@ function DialogPicture({ images, name, onZoom }: { images: string[]; name: strin
         ⤢
       </span>
     </button>
-  )
-}
-
-/** The enlarged picture: it takes the whole dialog until it is pressed again or the back button is. */
-function ZoomedPicture({ images, name, onBack }: { images: string[]; name: string; onBack: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <>
-      <button type="button" className="tile-dialog__zoomed" aria-label={t('order.shrinkImage')} onClick={onBack}>
-        <ImageCarousel images={images} name={name} />
-      </button>
-      <div className="modal__actions">
-        <button type="button" onClick={onBack}>
-          {t('order.shrinkImage')}
-        </button>
-      </div>
-    </>
   )
 }
 
@@ -410,10 +394,6 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
-          {zoom ? (
-            <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
-          ) : (
-            <>
           <div className="tile-dialog__head">
             <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
             <div className="tile-dialog__info">
@@ -433,8 +413,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
               {t('order.doneCustomizing')}
             </button>
           </div>
-            </>
-          )}
+          {zoom && <ImageViewer images={dish.images} name={dish.name} onClose={() => setZoom(false)} />}
         </Modal>
       )}
     </article>
@@ -480,10 +459,6 @@ function DishGroupTile(props: GroupProps) {
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
-          {zoom ? (
-            <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
-          ) : (
-            <>
           <div className="tile-dialog__head">
             <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
             <div className="tile-dialog__info">
@@ -499,8 +474,7 @@ function DishGroupTile(props: GroupProps) {
               {t('order.doneCustomizing')}
             </button>
           </div>
-            </>
-          )}
+          {zoom && <ImageViewer images={dish.images} name={dish.name} onClose={() => setZoom(false)} />}
         </Modal>
       )}
     </article>

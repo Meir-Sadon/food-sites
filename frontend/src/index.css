@@ -4153,3 +4153,70 @@ label {
     transform: translateY(0.75rem);
   }
 }
+
+/* A dish picture full screen, above any dialog. */
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 0.92);
+  cursor: zoom-out;
+}
+
+.image-viewer__img {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  object-fit: contain;
+}
+
+.image-viewer__close,
+.image-viewer__nav {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  min-block-size: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  cursor: pointer;
+}
+
+.image-viewer__close:hover:not(:disabled),
+.image-viewer__nav:hover:not(:disabled) {
+  background: rgb(0 0 0 / 0.8);
+}
+
+.image-viewer__close:focus-visible,
+.image-viewer__nav:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.image-viewer__close {
+  inset-block-start: 0.75rem;
+  inset-inline-end: 0.75rem;
+}
+
+.image-viewer__nav {
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.image-viewer__nav--prev {
+  inset-inline-start: 0.75rem;
+}
+
+.image-viewer__nav--next {
+  inset-inline-end: 0.75rem;
+}

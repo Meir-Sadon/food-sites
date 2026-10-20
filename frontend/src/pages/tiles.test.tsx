@@ -77,9 +77,9 @@ describe('The tiles style', () => {
     expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
   })
 
-  it('enlarges the picture in the dialog to fill it, and goes back to the details', async () => {
+  it('opens the dialog picture full screen, and closes it with the X, a tap or Escape while the dialog stays open', async () => {
     const data = tilesMenu()
-    data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, images: ['https://img/falafel.jpg'] } : d))
+    data.dishes = data.dishes.map((d) => (d.name === 'פלאפל' ? { ...d, images: ['https://img/falafel.jpg', 'https://img/falafel2.jpg'] } : d))
     const user = open(data)
     const heading = await screen.findByRole('heading', { level: 3, name: 'פלאפל' })
     await user.click(within(heading.closest('article')!).getByRole('button', { name: 'הוספה להזמנה: פלאפל' }))
@@ -87,11 +87,23 @@ describe('The tiles style', () => {
     const dialog = screen.getByRole('dialog', { name: 'פלאפל' })
 
     await user.click(within(dialog).getByRole('button', { name: 'הגדלת התמונה: פלאפל' }))
-    expect(within(dialog).queryByRole('button', { name: 'סיום' })).not.toBeInTheDocument()
-    expect(within(dialog).getByRole('img', { name: 'פלאפל' })).toBeInTheDocument()
+    const viewer = screen.getAllByRole('dialog', { name: 'פלאפל' }).find((d) => d.classList.contains('image-viewer'))!
+    expect(within(viewer).getByRole('img', { name: 'פלאפל, תמונה 1 מתוך 2' })).toBeInTheDocument()
+    await user.click(within(viewer).getByRole('button', { name: 'התמונה הבאה' }))
+    expect(within(viewer).getByRole('img', { name: 'פלאפל, תמונה 2 מתוך 2' })).toBeInTheDocument()
 
-    await user.click(within(dialog).getAllByRole('button', { name: 'חזרה לפרטי המנה' })[0])
+    await user.click(within(viewer).getByRole('button', { name: 'סגירת התמונה' }))
+    expect(document.querySelector('.image-viewer')).toBeNull()
     expect(within(dialog).getByRole('button', { name: 'סיום' })).toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('button', { name: 'הגדלת התמונה: פלאפל' }))
+    await user.click(document.querySelector('.image-viewer')!)
+    expect(document.querySelector('.image-viewer')).toBeNull()
+
+    await user.click(within(dialog).getByRole('button', { name: 'הגדלת התמונה: פלאפל' }))
+    await user.keyboard('{Escape}')
+    expect(document.querySelector('.image-viewer')).toBeNull()
+    expect(screen.getByRole('dialog', { name: 'פלאפל' })).toBeInTheDocument()
   })
 
   it('opens the variants of a main dish in a dialog', async () => {
