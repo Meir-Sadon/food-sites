@@ -17,6 +17,7 @@ import { bringIntoView } from '../components/scrollToInvalid'
 import { useFeature, useOrderLayout, useSite, useSiteFailed } from '../site/useSite'
 import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DishSearch } from '../order/DishSearch'
+import { SearchQueryContext } from '../order/searchQuery'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
 import { CartSheet } from '../order/CartSheet'
@@ -714,7 +715,9 @@ export function OrderPage() {
                     {t('order.search.none')}
                   </p>
                 ) : (
-                  <div className="category__dishes">{results.map(renderDish)}</div>
+                  <SearchQueryContext.Provider value={query}>
+                    <div className="category__dishes">{results.map(renderDish)}</div>
+                  </SearchQueryContext.Provider>
                 )}
               </section>
             )}
