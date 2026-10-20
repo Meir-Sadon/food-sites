@@ -1599,6 +1599,14 @@ label {
   cursor: pointer;
 }
 
+/* The searched words in a result: always yellow with dark text, so they read on any palette. */
+.dish-results mark {
+  background: #ffe94d;
+  color: #1a1a1a;
+  border-radius: calc(2px * var(--corner-scale, 1));
+  padding: 0 0.1em;
+}
+
 .dish-results__title {
   margin: 0;
   padding: 1rem 1.25rem;
