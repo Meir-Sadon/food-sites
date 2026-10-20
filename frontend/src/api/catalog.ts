@@ -13,6 +13,10 @@ export interface Settings {
   deliveryFeeText: string | null
   /** The regular setting's fixed delivery fee in ₪ (added for a service city); null means none. */
   deliveryFeeAmount: number | null
+  /** The advanced setting's base fee: what a large order's delivery is discounted by. Null means no discount there. */
+  deliveryBaseFee: number | null
+  /** From this dishes total (₪) the delivery fee is discounted; null means never. */
+  deliveryDiscountMinOrder: number | null
   kashrutText: string | null
   paymentPhone: string | null
   bitEnabled: boolean

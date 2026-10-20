@@ -14,6 +14,23 @@ public static class DeliveryPricing
     public static bool IsKnown(string? value) => value is not null && All.Contains(value);
 }
 
+/// <summary>
+/// The large-order delivery discount: once the dishes reach <see cref="Settings.DeliveryDiscountMinOrder"/> the fee drops by the
+/// base fee, never below zero. A near zone whose fee is the base fee is therefore free and a far one pays the rest.
+/// </summary>
+public static class DeliveryDiscount
+{
+    /// <summary>What comes off <paramref name="fee"/> for an order whose dishes cost <paramref name="dishesTotal"/>.</summary>
+    public static decimal Amount(Settings settings, decimal dishesTotal, decimal fee)
+    {
+        if (fee <= 0m || settings.DeliveryDiscountMinOrder is not { } minimum || dishesTotal < minimum)
+            return 0m;
+        // The regular setting has one fixed fee, which is the base fee.
+        var baseFee = DeliveryQuoter.Mode(settings) == DeliveryPricing.Zones ? settings.DeliveryBaseFee : settings.DeliveryBaseFee ?? fee;
+        return baseFee is > 0m ? Math.Min(fee, baseFee.Value) : 0m;
+    }
+}
+
 /// <summary>The one place that decides a delivery fee, for the order page's preview and for the order itself.</summary>
 public class DeliveryQuoter(AppDbContext db, IAddressGeocoder geocoder)
 {

@@ -699,6 +699,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DeliveryDiscount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<decimal>("DeliveryFee")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
@@ -1001,6 +1005,14 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<string>("DeliveryAreaText")
                         .HasColumnType("text");
+
+                    b.Property<decimal?>("DeliveryBaseFee")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("DeliveryDiscountMinOrder")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<bool>("DeliveryEnabled")
                         .HasColumnType("boolean");

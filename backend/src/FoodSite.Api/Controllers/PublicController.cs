@@ -47,6 +47,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string TileGroups,
         string DeliveryPricing = "simple",
         decimal? DeliveryFeeAmount = null,
+        decimal? DeliveryBaseFee = null,
+        decimal? DeliveryDiscountMinOrder = null,
         bool AddressFirst = false,
         IReadOnlyList<SocialLinkDto>? SocialLinks = null,
         Tracking.Ids? Tracking = null,
@@ -147,6 +149,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Finish.EffectiveTileGroups(s.TileGroups),
             DeliveryQuoter.Mode(s),
             s.DeliveryFeeAmount,
+            s.DeliveryBaseFee,
+            s.DeliveryDiscountMinOrder,
             s.AddressFirst,
             (await db.SocialLinks.AsNoTracking().OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id).ToListAsync())
                 .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList(),

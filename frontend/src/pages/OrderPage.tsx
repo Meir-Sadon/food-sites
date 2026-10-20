@@ -24,6 +24,7 @@ import { CartSheet } from '../order/CartSheet'
 import { OPEN_DISH_DIALOG } from '../order/DishCard'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
+import { deliveryDiscount } from '../order/deliveryDiscount'
 import { useDeliveryQuote, type SeededQuote } from '../order/useDeliveryQuote'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
@@ -139,7 +140,10 @@ export function OrderPage() {
   // The regular setting: the fixed fee is added for a service city; elsewhere the business phones about the price.
   const regularFee =
     !zonesOn && delivering && site?.deliveryFeeAmount && isServiceCity(state.city, site.serviceCities) ? site.deliveryFeeAmount : 0
-  const deliveryFee = zonesOn ? (quoted?.status === 'ok' ? quoted.fee : 0) : regularFee
+  const fullFee = zonesOn ? (quoted?.status === 'ok' ? quoted.fee : 0) : regularFee
+  // A large order takes the base fee off the delivery, so near addresses are free and far ones pay the rest.
+  const feeDiscount = deliveryDiscount(site, itemsTotal, fullFee)
+  const deliveryFee = round2(fullFee - feeDiscount)
   const noDelivery = zonesOn && quoted?.status === 'blocked'
   const total = round2(itemsTotal + deliveryFee)
   const count = itemCount(state.selections)
@@ -568,6 +572,17 @@ export function OrderPage() {
           {t('order.deliveryCall')}
         </p>
       )}
+      {fulfillment === 'Delivery' && !!site.deliveryEnabled && !!site.deliveryDiscountMinOrder && (
+        <p className="hint delivery-discount-hint">
+          {t('order.freeDeliveryAbove', { amount: formatMoney(site.deliveryDiscountMinOrder) })}
+          {zonesOn && (
+            <>
+              <sup aria-hidden="true">*</sup>
+              <small className="delivery-discount-hint__note">{t('order.freeDeliveryAboveNote')}</small>
+            </>
+          )}
+        </p>
+      )}
       <FieldError errors={errors} field="fulfillmentMethod" id="order-fulfillment-error" />
     </fieldset>
   )
@@ -911,9 +926,9 @@ export function OrderPage() {
                     fulfillment !== 'Delivery'
                       ? undefined
                       : zonesOn
-                        ? { fee: deliveryFee, zoneName: quoted?.zoneName ?? null, pending: !quoted }
+                        ? { fee: deliveryFee, discount: feeDiscount, zoneName: quoted?.zoneName ?? null, pending: !quoted }
                         : regularFee > 0
-                          ? { fee: regularFee, zoneName: null, pending: false }
+                          ? { fee: deliveryFee, discount: feeDiscount, zoneName: null, pending: false }
                           : undefined
                   }
                 />
@@ -978,6 +993,7 @@ export function OrderPage() {
           date={supplyDate?.date}
           total={total}
           deliveryFee={deliveryFee}
+          deliveryDiscount={feeDiscount}
           onChange={setSelection}
           onEdit={revealDish}
           onContinue={() => {

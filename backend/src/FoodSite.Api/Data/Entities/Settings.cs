@@ -21,6 +21,15 @@ public class Settings
     /// </summary>
     public decimal? DeliveryFeeAmount { get; set; }
 
+    /// <summary>
+    /// The advanced (zones) setting's base fee: what a delivery is discounted by once the dishes reach
+    /// <see cref="DeliveryDiscountMinOrder"/>, so a far zone still pays what is above it. Null means no discount there.
+    /// </summary>
+    public decimal? DeliveryBaseFee { get; set; }
+
+    /// <summary>The dishes total from which the delivery fee is discounted; null means never.</summary>
+    public decimal? DeliveryDiscountMinOrder { get; set; }
+
     public string? KashrutText { get; set; }
 
     /// <summary>The smallest order total (₪) a client may place; null means no minimum.</summary>

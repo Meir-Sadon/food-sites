@@ -3,6 +3,7 @@ import { TransferPay } from './TransferPay'
 import { useTranslation } from 'react-i18next'
 import type { Confirmation } from '../api/site'
 import { Modal } from '../components/Modal'
+import { DeliveryFeeNote } from './DeliveryFeeNote'
 import { formatMoney, formatSupplyDate, formatTime } from './format'
 
 const number = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 3 })
@@ -49,9 +50,11 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           </ul>
         </div>
       )}
-      {!!confirmation.deliveryFee && (
+      {(!!confirmation.deliveryFee || !!confirmation.deliveryDiscount) && (
         <p className="summary__total">
-          {t('order.deliveryFee')}: <strong className="numeric">{formatMoney(confirmation.deliveryFee)}</strong>
+          {t('order.deliveryFee')}:{' '}
+          <strong className="numeric">{confirmation.deliveryFee ? formatMoney(confirmation.deliveryFee) : t('order.deliveryDiscount.freePrice')}</strong>
+          <DeliveryFeeNote discount={confirmation.deliveryDiscount} free={!confirmation.deliveryFee} />
         </p>
       )}
       <p className="summary__total">

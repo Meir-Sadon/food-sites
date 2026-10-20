@@ -133,8 +133,8 @@ public static class OwnerMessages
                     + (string.IsNullOrEmpty(addOn.OptionLabel) ? "" : $" ({addOn.OptionLabel})")
                     + (addOn.LineTotal > 0 ? $" – ₪{Money(addOn.LineTotal)}" : ""));
         }
-        if (order.DeliveryFee > 0)
-            dishes.Add($"דמי משלוח{(string.IsNullOrEmpty(order.DeliveryZoneName) ? "" : $" ({order.DeliveryZoneName})")} – ₪{Money(order.DeliveryFee)}");
+        if (order.DeliveryFee > 0 || order.DeliveryDiscount > 0)
+            dishes.Add($"דמי משלוח{(string.IsNullOrEmpty(order.DeliveryZoneName) ? "" : $" ({order.DeliveryZoneName})")} – {OrderMessages.FeeText(order)}");
         sections.Add(new("המנות שהוזמנו", dishes));
 
         if (!string.IsNullOrWhiteSpace(order.Notes))

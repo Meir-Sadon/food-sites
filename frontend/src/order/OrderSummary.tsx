@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MenuDish } from '../api/site'
+import { DeliveryFeeNote } from './DeliveryFeeNote'
 import { amountText, formatMoney } from './format'
 import { lineTotal, summaryLines, type Selection, type SummaryLine } from './model'
 
@@ -36,7 +37,7 @@ export function OrderSummary({
   selections: Record<number, Selection>
   dishes: Map<number, MenuDish>
   /** The advanced delivery setting: the fee worked out from the address, or still waiting for it (`pending`). */
-  delivery?: { fee: number; zoneName: string | null; pending: boolean }
+  delivery?: { fee: number; discount?: number; zoneName: string | null; pending: boolean }
 }) {
   const { t } = useTranslation()
   const [shown, setShown] = useState<Record<number, boolean>>({})
@@ -79,8 +80,9 @@ export function OrderSummary({
               <span className="order-summary__name">
                 {t('order.deliveryFee')}
                 {delivery.zoneName ? ` (${delivery.zoneName})` : ''}
+                <DeliveryFeeNote discount={delivery.discount} free={delivery.fee <= 0} />
               </span>
-              <span className="order-summary__price numeric">{delivery.pending ? '—' : formatMoney(delivery.fee)}</span>
+              <span className="order-summary__price numeric">{delivery.pending ? '—' : delivery.fee <= 0 && delivery.discount ? t('order.deliveryDiscount.freePrice') : formatMoney(delivery.fee)}</span>
             </div>
           </li>
         )}

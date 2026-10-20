@@ -60,6 +60,31 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     }
   }
 
+  const money = (field: 'deliveryBaseFee' | 'deliveryDiscountMinOrder') => {
+    const id = `settings-${field}`
+    return (
+      <span className="field">
+        <span className="with-info">
+          <label htmlFor={id}>{t(`admin.settings.${field}`)}</label>
+          <Info text={t(`admin.settings.${field}Hint`)} about={t(`admin.settings.${field}`)} />
+        </span>
+        <input
+          id={id}
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="any"
+          dir="ltr"
+          className="input-narrow"
+          value={settings?.[field] ?? ''}
+          aria-describedby={`${id}-error`}
+          onChange={(e) => change({ [field]: e.target.value === '' ? null : Number(e.target.value) })}
+        />
+        <FieldError errors={errors} field={field} id={`${id}-error`} />
+      </span>
+    )
+  }
+
   const text = (field: TextField, label: string, multiline = true, kind: 'tel' | 'url' = 'tel') => {
     const id = `settings-${field}`
     const props = {
@@ -164,6 +189,12 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
                 <FieldError errors={errors} field="deliveryFeeAmount" id="settings-deliveryFeeAmount-error" />
               </span>
               {text('deliveryFeeText', t('admin.settings.deliveryFee'))}
+            </>
+          )}
+          {settings.deliveryEnabled && (
+            <>
+              {settings.deliveryPricing === 'zones' && money('deliveryBaseFee')}
+              {money('deliveryDiscountMinOrder')}
             </>
           )}
           {text('kashrutText', t('admin.settings.kashrut'))}
