@@ -44,7 +44,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     setErrors({})
     try {
       // The style, the order layout, the corners and the colours are saved by their own sections; leaving them out keeps them.
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, tracking: _tr, ...input } = settings
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, tracking: _tr, badges: _bd, ...input } = settings
       const result = await settingsApi.save(input)
       setData(result)
       markSaved(result)
@@ -58,6 +58,31 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     } finally {
       setSaving(false)
     }
+  }
+
+  const money = (field: 'deliveryBaseFee' | 'deliveryDiscountMinOrder') => {
+    const id = `settings-${field}`
+    return (
+      <span className="field">
+        <span className="with-info">
+          <label htmlFor={id}>{t(`admin.settings.${field}`)}</label>
+          <Info text={t(`admin.settings.${field}Hint`)} about={t(`admin.settings.${field}`)} />
+        </span>
+        <input
+          id={id}
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="any"
+          dir="ltr"
+          className="input-narrow"
+          value={settings?.[field] ?? ''}
+          aria-describedby={`${id}-error`}
+          onChange={(e) => change({ [field]: e.target.value === '' ? null : Number(e.target.value) })}
+        />
+        <FieldError errors={errors} field={field} id={`${id}-error`} />
+      </span>
+    )
   }
 
   const text = (field: TextField, label: string, multiline = true, kind: 'tel' | 'url' = 'tel') => {
@@ -164,6 +189,12 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
                 <FieldError errors={errors} field="deliveryFeeAmount" id="settings-deliveryFeeAmount-error" />
               </span>
               {text('deliveryFeeText', t('admin.settings.deliveryFee'))}
+            </>
+          )}
+          {settings.deliveryEnabled && (
+            <>
+              {settings.deliveryPricing === 'zones' && money('deliveryBaseFee')}
+              {money('deliveryDiscountMinOrder')}
             </>
           )}
           {text('kashrutText', t('admin.settings.kashrut'))}

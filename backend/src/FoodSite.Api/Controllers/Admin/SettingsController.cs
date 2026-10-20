@@ -52,8 +52,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string TileGroups,
         string DeliveryPricing,
         decimal? DeliveryFeeAmount,
+        decimal? DeliveryBaseFee,
+        decimal? DeliveryDiscountMinOrder,
         bool AddressFirst,
-        Tracking.Ids Tracking);
+        Tracking.Ids Tracking,
+        ItemBadges.Effective Badges);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -86,7 +89,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? PayBoxLink = null,
         string? DeliveryPricing = null,
         bool? AddressFirst = null,
-        decimal? DeliveryFeeAmount = null);
+        decimal? DeliveryFeeAmount = null,
+        decimal? DeliveryBaseFee = null,
+        decimal? DeliveryDiscountMinOrder = null);
 
     public const int LinkMaxLength = 500;
 
@@ -153,6 +158,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.DeliveryPricing), "invalid");
         if (input.DeliveryFeeAmount is < 0m or > Delivery.DeliveryZones.MaxFee)
             errors.Add(nameof(input.DeliveryFeeAmount), "invalid");
+        if (input.DeliveryBaseFee is < 0m or > Delivery.DeliveryZones.MaxFee)
+            errors.Add(nameof(input.DeliveryBaseFee), "invalid");
+        if (input.DeliveryDiscountMinOrder is < 0m or > Delivery.DeliveryZones.MaxFee * 100)
+            errors.Add(nameof(input.DeliveryDiscountMinOrder), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -163,6 +172,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         settings.DeliveryFeeText = Clean(input.DeliveryFeeText);
         // Zero (or empty) means no fixed fee.
         settings.DeliveryFeeAmount = input.DeliveryFeeAmount is > 0m ? decimal.Round(input.DeliveryFeeAmount.Value, 2) : null;
+        // Zero (or empty) means no discount.
+        settings.DeliveryBaseFee = input.DeliveryBaseFee is > 0m ? decimal.Round(input.DeliveryBaseFee.Value, 2) : null;
+        settings.DeliveryDiscountMinOrder = input.DeliveryDiscountMinOrder is > 0m ? decimal.Round(input.DeliveryDiscountMinOrder.Value, 2) : null;
         settings.KashrutText = Clean(input.KashrutText);
         settings.PaymentPhone = Clean(input.PaymentPhone);
         settings.BitEnabled = bitOn;
@@ -265,6 +277,37 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         return await ToDtoAsync(settings);
     }
 
+    /// <summary>
+    /// The item badges have their own save, so another section never overwrites them with an older copy. A missing
+    /// field keeps its value.
+    /// </summary>
+    [HttpPut("badges")]
+    public async Task<ActionResult<SettingsDto>> UpdateBadges(ItemBadges.Input input)
+    {
+        var settings = await db.Settings.SingleAsync();
+        var current = ItemBadges.Of(settings);
+        var errors = new Errors();
+        if (input.NewUnit is not null && !ItemBadges.Units.Contains(input.NewUnit))
+            errors.Add(nameof(input.NewUnit), "invalid");
+        if (input.NewAmount is < 1 or > ItemBadges.MaxNewAmount)
+            errors.Add(nameof(input.NewAmount), "invalid");
+        if (input.LowStockMode is not null && !ItemBadges.Modes.Contains(input.LowStockMode))
+            errors.Add(nameof(input.LowStockMode), "invalid");
+        else if (!ItemBadges.LowStockAmountValid(input.LowStockMode ?? current.LowStockMode, input.LowStockAmount ?? current.LowStockAmount))
+            errors.Add(nameof(input.LowStockAmount), "invalid");
+        if (errors.Any)
+            return Invalid(errors);
+
+        settings.BadgeNewEnabled = input.NewEnabled ?? settings.BadgeNewEnabled;
+        settings.BadgeNewAmount = input.NewAmount ?? current.NewAmount;
+        settings.BadgeNewUnit = input.NewUnit ?? current.NewUnit;
+        settings.BadgeLowStockEnabled = input.LowStockEnabled ?? settings.BadgeLowStockEnabled;
+        settings.BadgeLowStockMode = input.LowStockMode ?? current.LowStockMode;
+        settings.BadgeLowStockAmount = input.LowStockAmount ?? current.LowStockAmount;
+        await db.SaveChangesAsync();
+        return await ToDtoAsync(settings);
+    }
+
     [HttpPut("background")]
     [RequestSizeLimit(ImageUploadRules.MaxRequestBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = ImageUploadRules.MaxRequestBytes)]
@@ -328,8 +371,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.EffectiveTileGroups(s.TileGroups),
         s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
         s.DeliveryFeeAmount,
+        s.DeliveryBaseFee,
+        s.DeliveryDiscountMinOrder,
         s.AddressFirst,
-        Sites.Tracking.Of(s));
+        Sites.Tracking.Of(s),
+        ItemBadges.Of(s));
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

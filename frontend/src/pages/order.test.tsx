@@ -817,6 +817,31 @@ describe('Order page', () => {
     expect(within(card).getByText('אזל ליום האספקה שנבחר')).toBeInTheDocument()
   })
 
+  it('marks dishes that are on sale, new, or almost out', async () => {
+    const dates = menu().supplyDates.map((d) => d.date)
+    const marked = menuDish(1, 'עוף בתנור', 1, { onSale: true, isNew: true, limit: 10, remaining: { [dates[0]]: 2 } })
+    const plain = menuDish(2, 'אורז', 2, { limit: 10, remaining: { [dates[0]]: 2 } })
+    const badges = { newEnabled: true, newAmount: 1, newUnit: 'week' as const, lowStockEnabled: true, lowStockMode: 'percent' as const, lowStockAmount: 20 }
+    await openOrderPage({
+      'GET /api/site': () => site({ badges }),
+      'GET /api/menu': () => menu({ dishes: [marked, plain] }),
+    })
+
+    expect(within(within(dishCard('עוף בתנור')).getByRole('list', { name: /סימונים/ })).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      'מבצע', 'חדש', 'כמעט אזל',
+    ])
+    expect(within(dishCard('אורז')).getByText('כמעט אזל')).toBeInTheDocument()
+    expect(within(dishCard('אורז')).queryByText('מבצע')).not.toBeInTheDocument()
+  })
+
+  it('shows no almost-out mark while that badge is off or plenty is left', async () => {
+    const dates = menu().supplyDates.map((d) => d.date)
+    const dish = (remaining: number) => menuDish(1, 'עוף בתנור', 1, { limit: 10, remaining: { [dates[0]]: remaining } })
+    const on = { newEnabled: false, newAmount: 1, newUnit: 'week' as const, lowStockEnabled: true, lowStockMode: 'units' as const, lowStockAmount: 3 }
+    await openOrderPage({ 'GET /api/site': () => site({ badges: on }), 'GET /api/menu': () => menu({ dishes: [dish(5), menuDish(2, 'אורז', 2)] }) })
+    expect(within(dishCard('עוף בתנור')).queryByText('כמעט אזל')).not.toBeInTheDocument()
+  })
+
   it('lets each category be collapsed', async () => {
     const { user } = await openOrderPage()
     const summary = screen.getByRole('heading', { level: 2, name: 'עופות' }).closest('summary')!

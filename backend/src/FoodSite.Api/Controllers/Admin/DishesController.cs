@@ -54,7 +54,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         string? OptionsTitle = null,
         bool ShowOptionDifference = false,
         IReadOnlyList<string>? DietaryTags = null,
-        bool DietaryTagsSingle = false);
+        bool DietaryTagsSingle = false,
+        bool OnSale = false);
 
     public record QuestionDto(
         int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
@@ -128,7 +129,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         string? OptionsTitle = null,
         bool ShowOptionDifference = false,
         List<string>? DietaryTags = null,
-        bool DietaryTagsSingle = false);
+        bool DietaryTagsSingle = false,
+        bool? OnSale = null);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -577,6 +579,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         dish.ChoiceMode = input.ChoiceMode;
         dish.IsAddOnOnly = input.IsAddOnOnly;
         dish.IsSoldOut = input.IsSoldOut;
+        // Missing (an older client) keeps the mark.
+        if (input.OnSale is { } onSale)
+            dish.OnSale = onSale;
         dish.MaxPerSupplyDate = input.MaxPerSupplyDate;
         dish.OpenByDefault = input.OpenByDefault;
         dish.IsSideDish = input.IsSideDish;
@@ -732,5 +737,6 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.OptionsTitle,
         d.ShowOptionDifference,
         d.DietaryTags,
-        d.DietaryTagsSingle);
+        d.DietaryTagsSingle,
+        d.OnSale);
 }

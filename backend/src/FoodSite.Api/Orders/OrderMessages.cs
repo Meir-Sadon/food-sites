@@ -64,11 +64,19 @@ public static class OrderMessages
         }
         if (!string.IsNullOrWhiteSpace(order.Notes))
             lines.Add($"הערות: {order.Notes}");
-        if (order.DeliveryFee > 0)
-            lines.Add($"דמי משלוח: ₪{Money(order.DeliveryFee)}");
+        if (order.DeliveryFee > 0 || order.DeliveryDiscount > 0)
+            lines.Add($"דמי משלוח: {FeeText(order)}");
         lines.Add($"סה״כ: ₪{Money(order.Total)}");
         return string.Join('\n', lines);
     }
+
+    /// <summary>The delivery fee, with why it is not the regular one when a discount applied.</summary>
+    public static string FeeText(Order order) =>
+        order.DeliveryDiscount <= 0m
+            ? $"₪{Money(order.DeliveryFee)}"
+            : order.DeliveryFee <= 0m
+                ? "חינם (הנחת משלוח בהזמנה גדולה)"
+                : $"₪{Money(order.DeliveryFee)} (כולל הנחת משלוח של ₪{Money(order.DeliveryDiscount)} בהזמנה גדולה)";
 
     private static string Line(OrderItem item, string prefix) =>
         $"{prefix}{Number(item.Quantity)} × {item.DishName}"

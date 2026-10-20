@@ -13,6 +13,7 @@ import { formatMoney, optionPriceText, priceText, unitLabel } from './format'
 import { Highlighted } from './Highlight'
 import { ImageCarousel } from './ImageCarousel'
 import { ImageViewer } from './ImageViewer'
+import { ItemBadges } from './ItemBadges'
 import {
   addOnLineTotal,
   addOnRange,
@@ -72,11 +73,12 @@ function RemainingNote({ dish, remaining }: { dish: MenuDish; remaining: number 
 }
 
 /** The name, description, price and allergens of a dish (or of a variant, one heading level down). */
-function DishDetails({ dish, nameId, variant }: { dish: MenuDish; nameId: string; variant?: boolean }) {
+function DishDetails({ dish, nameId, variant, date }: { dish: MenuDish; nameId: string; variant?: boolean; date?: string }) {
   const { t } = useTranslation()
   const Heading = variant ? 'h4' : 'h3'
   return (
     <>
+      <ItemBadges dish={dish} date={date} />
       <Heading id={nameId}><Highlighted text={dish.name} /></Heading>
       {dish.description && <p className="dish__description"><Highlighted text={dish.description} /></p>}
       <p className="dish__price">{priceText(dish, t)}</p>
@@ -99,7 +101,7 @@ function PlainDishCard({ dish, dishes, selection, date, onChange }: Props) {
     <article className={`dish${selection ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
       <ImageCarousel images={dish.images} name={dish.name} />
       <div className="dish__body">
-        <DishDetails dish={dish} nameId={`${id}-name`} />
+        <DishDetails dish={dish} nameId={`${id}-name`} date={date} />
         <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
       </div>
     </article>
@@ -142,6 +144,7 @@ function PlainDishGroupCard(props: GroupProps) {
     <article className={`dish dish--group${chosen ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
       <ImageCarousel images={dish.images} name={dish.name} />
       <div className="dish__body">
+        <ItemBadges dish={dish} />
         <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
         {dish.description && <p className="dish__description"><Highlighted text={dish.description} /></p>}
         {dish.allergenInfo && (
@@ -167,7 +170,7 @@ function VariantList({ dish, variants, dishes, selections, date, onChange, idPre
         >
           {/* A variant with pictures of its own shows them; without, the card's pictures (the main dish's) stay. */}
           <ImageCarousel images={variant.images} name={variant.name} />
-          <DishDetails dish={variant} nameId={`${idPrefix}-${variant.id}`} variant />
+          <DishDetails dish={variant} nameId={`${idPrefix}-${variant.id}`} variant date={date} />
           <DishChoice
             dish={variant}
             dishes={dishes}
@@ -389,6 +392,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         )}
       </TileMedia>
       <div className="tile__body">
+        <ItemBadges dish={dish} date={date} />
         <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
         <p className="dish__price">{priceText(dish, t)}</p>
         {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
@@ -454,6 +458,7 @@ function DishGroupTile(props: GroupProps) {
         </button>
       </TileMedia>
       <div className="tile__body">
+        <ItemBadges dish={dish} variants={variants} date={props.date} />
         <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
         {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>

@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ColorSet, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -13,6 +13,10 @@ export interface Settings {
   deliveryFeeText: string | null
   /** The regular setting's fixed delivery fee in ₪ (added for a service city); null means none. */
   deliveryFeeAmount: number | null
+  /** The advanced setting's base fee: what a large order's delivery is discounted by. Null means no discount there. */
+  deliveryBaseFee: number | null
+  /** From this dishes total (₪) the delivery fee is discounted; null means never. */
+  deliveryDiscountMinOrder: number | null
   kashrutText: string | null
   paymentPhone: string | null
   bitEnabled: boolean
@@ -61,9 +65,11 @@ export interface Settings {
   deliveryPricing: DeliveryPricing
   /** The marketing tools' ids; saved by `settingsApi.saveTracking`, never by `save`. */
   tracking: TrackingIds
+  /** The "new" and "almost out" badges; saved by `settingsApi.saveBadges`, never by `save`. */
+  badges: ItemBadges
 }
 /** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking'> &
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking' | 'badges'> &
   Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'>>
 
 /** Saved on its own (`settingsApi.saveTracking`); a missing id keeps that tool, an empty one turns it off. */
@@ -71,6 +77,9 @@ export type TrackingInput = Partial<Omit<TrackingIds, 'metaServerEvents'>> & {
   /** Write-only: the Meta Conversions API access token; an empty text removes it. */
   metaAccessToken?: string
 }
+
+/** Saved on its own (`settingsApi.saveBadges`); a missing field keeps its value. */
+export type BadgesInput = Partial<ItemBadges>
 
 export interface SupplyDay {
   weekday: Weekday
@@ -146,6 +155,8 @@ export interface Dish {
   isSoldOut: boolean
   openByDefault: boolean
   isSideDish: boolean
+  /** Marked on the order page as on sale. */
+  onSale: boolean
   /** Most that can be ordered per supply date (units, or kilos), or null for no limit. */
   maxPerSupplyDate: number | null
   isHidden: boolean
@@ -216,6 +227,8 @@ export interface DishInput {
   isSoldOut: boolean
   openByDefault: boolean
   isSideDish: boolean
+  /** Marked as on sale; left out, the mark stays as it is. */
+  onSale?: boolean
   maxPerSupplyDate: number | null
   options: { id: number | null; label: string; amount: number; price: number; isDefault: boolean }[]
   parentDishIds: number[]
@@ -263,6 +276,7 @@ const admin = '/api/admin'
 export const settingsApi = {
   get: () => apiJson<Settings>(`${admin}/settings`),
   save: (input: SettingsInput) => apiJson<Settings>(`${admin}/settings`, send('PUT', input)),
+  saveBadges: (input: BadgesInput) => apiJson<Settings>(`${admin}/settings/badges`, send('PUT', input)),
   saveTracking: (input: TrackingInput) => apiJson<Settings>(`${admin}/settings/tracking`, send('PUT', input)),
   uploadBackground: (file: File) => apiJson<Settings>(`${admin}/settings/background`, { ...upload(file), method: 'PUT' }),
   removeBackground: () => apiJson<Settings>(`${admin}/settings/background`, send('DELETE')),

@@ -58,6 +58,12 @@ public class Dish
     /// </summary>
     public decimal? MaxPerSupplyDate { get; set; }
 
+    /// <summary>The order page marks the dish as on sale.</summary>
+    public bool OnSale { get; set; }
+
+    /// <summary>When the dish was added; the "new" badge counts from it. Dishes that existed before the badge carry an old date.</summary>
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
     public bool IsAddOnOnly { get; set; }
     public bool IsSoldOut { get; set; }
 
