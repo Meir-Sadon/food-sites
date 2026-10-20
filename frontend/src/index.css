@@ -4003,3 +4003,17 @@ label {
 .order-address-stage {
   margin-block-start: 1rem;
 }
+
+/* Why a delivery fee is not the regular one (large-order discount), and the small asterisk note under "free delivery above…". */
+.delivery-note {
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.delivery-discount-hint__note {
+  display: block;
+  opacity: 0.75;
+  font-size: 0.75rem;
+}

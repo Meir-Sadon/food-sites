@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Modal } from '../components/Modal'
 import type { MenuDish } from '../api/site'
 import { AmountControl } from './AmountControl'
+import { DeliveryFeeNote } from './DeliveryFeeNote'
 import { formatMoney, priceText } from './format'
 import { SummaryDetails } from './OrderSummary'
 import { fitAddOns, limitedRange, lineTotal, remainingOn, summaryLines, type Selection } from './model'
@@ -14,6 +15,8 @@ interface Props {
   total: number
   /** The delivery fee already inside `total`, shown as its own line; 0 for none. */
   deliveryFee?: number
+  /** What the large-order discount took off the fee, shown beside it. */
+  deliveryDiscount?: number
   onChange: (dishId: number, selection: Selection | undefined) => void
   /** Closes the sheet and brings the client to the dish's own card to change its adjustments. */
   onEdit: (dishId: number) => void
@@ -30,7 +33,7 @@ const pictureOf = (dish: MenuDish, dishes: Map<number, MenuDish>) =>
  * Everything chosen so far, with each dish's picture: the amount of each can be changed, a dish taken out, or its
  * adjustments edited at its card. The total follows every change.
  */
-export function CartSheet({ selections, dishes, date, total, deliveryFee = 0, onChange, onEdit, onContinue, onClose }: Props) {
+export function CartSheet({ selections, dishes, date, total, deliveryFee = 0, deliveryDiscount = 0, onChange, onEdit, onContinue, onClose }: Props) {
   const { t } = useTranslation()
   const [shown, setShown] = useState<Record<number, boolean>>({})
   const lines = summaryLines(selections, dishes)
@@ -86,9 +89,13 @@ export function CartSheet({ selections, dishes, date, total, deliveryFee = 0, on
           })}
         </ul>
       )}
-      {deliveryFee > 0 && (
+      {(deliveryFee > 0 || deliveryDiscount > 0) && (
         <p className="cart-sheet__total">
-          <span>{t('order.deliveryFee')}</span> <strong className="numeric">{formatMoney(deliveryFee)}</strong>
+          <span>
+            {t('order.deliveryFee')}
+            <DeliveryFeeNote discount={deliveryDiscount} free={deliveryFee <= 0} />
+          </span>{' '}
+          <strong className="numeric">{deliveryFee > 0 ? formatMoney(deliveryFee) : t('order.deliveryDiscount.freePrice')}</strong>
         </p>
       )}
       <p className="cart-sheet__total">

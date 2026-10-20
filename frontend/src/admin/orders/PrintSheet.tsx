@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { paymentKey } from '../../order/payment'
 import type { AdminOrder } from '../../api/operations'
+import { DeliveryFeeNote } from '../../order/DeliveryFeeNote'
 import { formatMoney, formatTime } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { orderLines } from './report'
@@ -94,10 +95,12 @@ function PrintedOrder({ order }: { order: AdminOrder }) {
           ))}
         </tbody>
       </table>
-      {!!order.deliveryFee && (
+      {(!!order.deliveryFee || !!order.deliveryDiscount) && (
         <p className="print-order__fee">
           {t('order.deliveryFee')}
-          {order.deliveryZoneName ? ` (${order.deliveryZoneName})` : ''}: <strong className="numeric">{formatMoney(order.deliveryFee)}</strong>
+          {order.deliveryZoneName ? ` (${order.deliveryZoneName})` : ''}:{' '}
+          <strong className="numeric">{order.deliveryFee ? formatMoney(order.deliveryFee) : t('order.deliveryDiscount.freePrice')}</strong>
+          <DeliveryFeeNote discount={order.deliveryDiscount} free={!order.deliveryFee} />
         </p>
       )}
       <p className="print-order__total">

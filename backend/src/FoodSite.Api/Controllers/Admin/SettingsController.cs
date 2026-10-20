@@ -52,6 +52,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string TileGroups,
         string DeliveryPricing,
         decimal? DeliveryFeeAmount,
+        decimal? DeliveryBaseFee,
+        decimal? DeliveryDiscountMinOrder,
         bool AddressFirst,
         Tracking.Ids Tracking);
 
@@ -86,7 +88,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? PayBoxLink = null,
         string? DeliveryPricing = null,
         bool? AddressFirst = null,
-        decimal? DeliveryFeeAmount = null);
+        decimal? DeliveryFeeAmount = null,
+        decimal? DeliveryBaseFee = null,
+        decimal? DeliveryDiscountMinOrder = null);
 
     public const int LinkMaxLength = 500;
 
@@ -153,6 +157,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.DeliveryPricing), "invalid");
         if (input.DeliveryFeeAmount is < 0m or > Delivery.DeliveryZones.MaxFee)
             errors.Add(nameof(input.DeliveryFeeAmount), "invalid");
+        if (input.DeliveryBaseFee is < 0m or > Delivery.DeliveryZones.MaxFee)
+            errors.Add(nameof(input.DeliveryBaseFee), "invalid");
+        if (input.DeliveryDiscountMinOrder is < 0m or > Delivery.DeliveryZones.MaxFee * 100)
+            errors.Add(nameof(input.DeliveryDiscountMinOrder), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -163,6 +171,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         settings.DeliveryFeeText = Clean(input.DeliveryFeeText);
         // Zero (or empty) means no fixed fee.
         settings.DeliveryFeeAmount = input.DeliveryFeeAmount is > 0m ? decimal.Round(input.DeliveryFeeAmount.Value, 2) : null;
+        // Zero (or empty) means no discount.
+        settings.DeliveryBaseFee = input.DeliveryBaseFee is > 0m ? decimal.Round(input.DeliveryBaseFee.Value, 2) : null;
+        settings.DeliveryDiscountMinOrder = input.DeliveryDiscountMinOrder is > 0m ? decimal.Round(input.DeliveryDiscountMinOrder.Value, 2) : null;
         settings.KashrutText = Clean(input.KashrutText);
         settings.PaymentPhone = Clean(input.PaymentPhone);
         settings.BitEnabled = bitOn;
@@ -328,6 +339,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.EffectiveTileGroups(s.TileGroups),
         s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
         s.DeliveryFeeAmount,
+        s.DeliveryBaseFee,
+        s.DeliveryDiscountMinOrder,
         s.AddressFirst,
         Sites.Tracking.Of(s));
 

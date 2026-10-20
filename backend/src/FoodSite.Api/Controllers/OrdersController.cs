@@ -63,7 +63,8 @@ public class OrdersController(
         IReadOnlyList<ConfirmationItemDto> Items,
         TimeOnly? DeliveryHour = null,
         bool HourFull = false,
-        decimal DeliveryFee = 0m);
+        decimal DeliveryFee = 0m,
+        decimal DeliveryDiscount = 0m);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
@@ -155,6 +156,9 @@ public class OrdersController(
 
         // With zones there is no list of cities: a client who waits for approval waits because the map could not place the address.
         var serviceCities = DeliveryQuoter.Mode(settings) == DeliveryPricing.Zones ? (IReadOnlyList<string>)[] : ServiceArea.Parse(settings.ServiceCities);
+        var dishesTotal = OrderBuilder.Total(items);
+        var fee = quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m;
+        var discount = DeliveryDiscount.Amount(settings, dishesTotal, fee);
         var order = new Order
         {
             UserId = userId,
@@ -173,9 +177,10 @@ public class OrdersController(
             // An address the map could not place waits for the admin, like a city outside the service area.
             NeedsReview = input.FulfillmentMethod == FulfillmentMethod.Delivery
                 && (quote is null or { Status: DeliveryQuote.Outside or DeliveryQuote.Unknown } or { Approximate: true }),
-            DeliveryFee = quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m,
+            DeliveryFee = fee - discount,
+            DeliveryDiscount = discount,
             DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
-            Total = OrderBuilder.Total(items) + (quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m),
+            Total = dishesTotal + fee - discount,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         foreach (var item in items)
@@ -196,7 +201,8 @@ public class OrdersController(
                 .ToList(),
             order.DeliveryHour,
             hourFull,
-            order.DeliveryFee);
+            order.DeliveryFee,
+            order.DeliveryDiscount);
     }
 
     /// <summary>A manual payment needs the business's number and that service switched on.</summary>
