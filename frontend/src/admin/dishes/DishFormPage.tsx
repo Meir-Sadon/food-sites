@@ -56,6 +56,7 @@ interface DishForm {
   isSoldOut: boolean
   openByDefault: boolean
   isSideDish: boolean
+  onSale: boolean
   maxPerSupplyDate: string
   options: OptionForm[]
   parentDishIds: number[]
@@ -104,6 +105,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       isSoldOut: false,
       openByDefault: false,
       isSideDish: false,
+      onSale: false,
       maxPerSupplyDate: '',
       options: [emptyOption(true)],
       parentDishIds: [],
@@ -128,6 +130,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     isSoldOut: dish.isSoldOut,
     openByDefault: dish.openByDefault,
     isSideDish: dish.isSideDish,
+    onSale: dish.onSale ?? false,
     maxPerSupplyDate: str(dish.maxPerSupplyDate),
     options: dish.options.length
       ? dish.options.map((o) => ({ key: nextKey++, id: o.id, label: o.label, amount: String(o.amount), price: String(o.price), isDefault: o.isDefault }))
@@ -213,6 +216,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
     isSoldOut: form.isSoldOut,
     openByDefault: form.openByDefault,
     isSideDish: form.isSideDish,
+    onSale: form.onSale,
     maxPerSupplyDate: num(form.maxPerSupplyDate),
     options: fixed
       ? form.options.map((o) => ({ id: o.id, label: o.label, amount: num(o.amount) ?? 0, price: num(o.price) ?? 0, isDefault: o.isDefault }))
@@ -687,6 +691,10 @@ export function DishFormPage() {
         <label className="checkbox">
           <input type="checkbox" checked={form.isSoldOut} onChange={(e) => set({ isSoldOut: e.target.checked })} />
           {t('admin.dishes.soldOutLabel')}
+        </label>
+        <label className="checkbox">
+          <input type="checkbox" checked={form.onSale} onChange={(e) => set({ onSale: e.target.checked })} />
+          {t('admin.dishes.onSaleLabel')}
         </label>
         <label className="checkbox">
           <input type="checkbox" checked={form.isSideDish} onChange={(e) => set({ isSideDish: e.target.checked })} />

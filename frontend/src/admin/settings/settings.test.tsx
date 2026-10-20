@@ -75,6 +75,35 @@ describe('Order layout', () => {
   })
 })
 
+describe('Item badges', () => {
+  it('saves the badges on their own and keeps the other settings out of the request', async () => {
+    const api = fakeApi({
+      ...base,
+      'PUT /api/admin/settings/badges': (_, body) => settings({ badges: { ...settings().badges, ...(body as object) } }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סימוני מנות')
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+
+    expect(save).toBeDisabled()
+    expect(within(form).queryByLabelText('כמה זמן מנה נחשבת חדשה')).not.toBeInTheDocument()
+    await user.click(within(form).getByRole('checkbox', { name: /סימון ״חדש״/ }))
+    fireEvent.change(within(form).getByLabelText('כמה זמן מנה נחשבת חדשה'), { target: { value: '3' } })
+    await user.selectOptions(within(form).getByLabelText('יחידת זמן'), 'month')
+    await user.click(within(form).getByRole('checkbox', { name: /סימון ״כמעט אזל״/ }))
+    await user.selectOptions(within(form).getByLabelText('לפי מה למדוד'), 'units')
+    fireEvent.change(within(form).getByLabelText('להציג כשנשארו עד (יחידות)'), { target: { value: '4' } })
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings/badges')[0].body).toEqual({
+      newEnabled: true, newAmount: 3, newUnit: 'month', lowStockEnabled: true, lowStockMode: 'units', lowStockAmount: 4,
+    })
+    expect(api.sent('PUT', '/api/admin/settings')).toHaveLength(0)
+  })
+})
+
 describe('Corners', () => {
   it('saves the picked corners and nothing the other sections own', async () => {
     let saved = settings({ kashrutText: 'נשמר בינתיים' })

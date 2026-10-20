@@ -1,6 +1,6 @@
 import { emptyAddress, type AddressParts } from '../account/addressParts'
 import type { Favorite, HistoryOrder } from '../api/account'
-import type { AnswerInput, Fulfillment, Menu, MenuAddOn, MenuDish, MenuQuestion, OrderLineInput, Payment } from '../api/site'
+import type { AnswerInput, Fulfillment, ItemBadges, Menu, MenuAddOn, MenuDish, MenuQuestion, OrderLineInput, Payment } from '../api/site'
 
 export const MAX_UNITS = 99
 
@@ -73,6 +73,18 @@ export function amountRange(dish: MenuDish) {
 export function remainingOn(dish: MenuDish, date: string | undefined): number | null {
   if (!dish.remaining || !date) return null
   return dish.remaining[date] ?? null
+}
+
+/**
+ * Whether the dish is almost out on a supply date: it has a limit, something is still left, and what is left is at most
+ * the admin's percent of the limit or number of units. Never for a dish that is sold out or has no limit.
+ */
+export function isAlmostOut(dish: MenuDish, date: string | undefined, badges: ItemBadges | undefined): boolean {
+  if (!badges?.lowStockEnabled || dish.isSoldOut) return false
+  const remaining = remainingOn(dish, date)
+  if (remaining === null || remaining <= 0) return false
+  if (badges.lowStockMode === 'units') return remaining <= badges.lowStockAmount
+  return !!dish.limit && (remaining / dish.limit) * 100 <= badges.lowStockAmount
 }
 
 /** The amount range cut down to what is left; max < min means none can be ordered. */
