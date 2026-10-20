@@ -905,6 +905,8 @@ describe('Dish search', () => {
     await user.type(search, 'ו')
     expect(screen.queryByRole('heading', { level: 2, name: 'עופות' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'נמצאה מנה אחת' })).toBeInTheDocument()
+    // The searched word is marked in the result.
+    expect(within(dishCard('עוף בתנור')).getByText('עו', { selector: 'mark' })).toBeInTheDocument()
     // The result is a normal dish card: it can be added to the order.
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
     await user.type(search, 'xyz')

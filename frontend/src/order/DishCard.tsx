@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
 import { formatMoney, optionPriceText, priceText, unitLabel } from './format'
+import { Highlighted } from './Highlight'
 import { ImageCarousel } from './ImageCarousel'
 import {
   addOnLineTotal,
@@ -75,8 +76,8 @@ function DishDetails({ dish, nameId, variant }: { dish: MenuDish; nameId: string
   const Heading = variant ? 'h4' : 'h3'
   return (
     <>
-      <Heading id={nameId}>{dish.name}</Heading>
-      {dish.description && <p className="dish__description">{dish.description}</p>}
+      <Heading id={nameId}><Highlighted text={dish.name} /></Heading>
+      {dish.description && <p className="dish__description"><Highlighted text={dish.description} /></p>}
       <p className="dish__price">{priceText(dish, t)}</p>
       {dish.allergenInfo && (
         <p className="muted">
@@ -140,8 +141,8 @@ function PlainDishGroupCard(props: GroupProps) {
     <article className={`dish dish--group${chosen ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
       <ImageCarousel images={dish.images} name={dish.name} />
       <div className="dish__body">
-        <h3 id={`${id}-name`}>{dish.name}</h3>
-        {dish.description && <p className="dish__description">{dish.description}</p>}
+        <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+        {dish.description && <p className="dish__description"><Highlighted text={dish.description} /></p>}
         {dish.allergenInfo && (
           <p className="muted">
             {t('order.allergens')}: {dish.allergenInfo}
@@ -404,9 +405,9 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         )}
       </TileMedia>
       <div className="tile__body">
-        <h3 id={`${id}-name`}>{dish.name}</h3>
+        <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
         <p className="dish__price">{priceText(dish, t)}</p>
-        {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
+        {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
@@ -474,8 +475,8 @@ function DishGroupTile(props: GroupProps) {
         </button>
       </TileMedia>
       <div className="tile__body">
-        <h3 id={`${id}-name`}>{dish.name}</h3>
-        {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
+        <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+        {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
       </div>
       {open && (
