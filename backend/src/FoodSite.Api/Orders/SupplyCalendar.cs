@@ -13,22 +13,26 @@ public static class SupplyCalendar
 
     public record OpenDate(DateOnly Date, DateTime Cutoff, IReadOnlyList<HourSlot> Hours);
 
-    /// <summary>The day's supply hours cut into one-hour slots; none when the day has no (valid) hours.</summary>
+    /// <summary>The day's working hours, range by range, cut into one-hour slots; none when the day has no (valid) hours.</summary>
     public static IReadOnlyList<HourSlot> HourSlots(SupplyDay day)
     {
-        if (day.DeliveryFrom is not { } from || day.DeliveryTo is not { } to || to <= from)
-            return [];
         var slots = new List<HourSlot>();
-        for (var start = from; start < to; start = start.AddHours(1))
+        foreach (var range in day.Hours.Where(h => h.IsValid).OrderBy(h => h.From))
         {
-            var end = to - start <= TimeSpan.FromHours(1) ? to : start.AddHours(1);
-            slots.Add(new HourSlot(start, end));
-            // TimeOnly wraps at midnight; a day's hours never do.
-            if (end == to)
-                break;
+            var end = range.End;
+            // TimeSpan, not TimeOnly, so that a range ending at midnight (24:00) does not wrap.
+            for (var start = range.From.ToTimeSpan(); start < end; start += TimeSpan.FromHours(1))
+            {
+                var slotEnd = end - start <= TimeSpan.FromHours(1) ? end : start + TimeSpan.FromHours(1);
+                slots.Add(new HourSlot(TimeOnly.FromTimeSpan(start), slotEnd >= TimeSpan.FromDays(1) ? TimeOnly.MinValue : TimeOnly.FromTimeSpan(slotEnd)));
+            }
         }
         return slots;
     }
+
+    /// <summary>When <paramref name="slot"/> ends on <paramref name="date"/>; the last slot of a day that ends at midnight ends on the next date.</summary>
+    public static DateTime EndOf(DateOnly date, HourSlot slot) =>
+        slot.To <= slot.From ? date.AddDays(1).ToDateTime(slot.To) : date.ToDateTime(slot.To);
 
     /// <summary>The last moment ordering for <paramref name="date"/> is possible (local time).</summary>
     public static DateTime CutoffFor(DateOnly date, SupplyDay day)
@@ -56,7 +60,7 @@ public static class SupplyCalendar
             // Hours already over are left out (the order page and the server both use this list), and a day
             // whose hours have all passed is not offered at all.
             var allSlots = HourSlots(day);
-            var slots = allSlots.Where(s => date.ToDateTime(s.To) > nowLocal).ToList();
+            var slots = allSlots.Where(s => EndOf(date, s) > nowLocal).ToList();
             if (allSlots.Count > 0 && slots.Count == 0)
                 continue;
             open.Add(new OpenDate(date, cutoff, slots));

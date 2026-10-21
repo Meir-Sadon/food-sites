@@ -410,7 +410,7 @@ describe('General settings', () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/supply-days': (_, body) => body })
     renderAt('/admin/settings')
     const user = userEvent.setup()
-    const days = await section('ימי אספקה')
+    const days = await section('ימי ושעות עבודה')
 
     const boxes = within(days).getAllByRole('checkbox')
     expect(boxes.map((b) => b.parentElement?.textContent)).toEqual(['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'])
@@ -425,20 +425,25 @@ describe('General settings', () => {
     expect(sent.find((d) => d.weekday === 'Tuesday')?.enabled).toBe(true)
   })
 
-  it('saves supply hours for a day', async () => {
+  it('saves split working hours for a day', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/supply-days': (_, body) => body })
     renderAt('/admin/settings')
     const user = userEvent.setup()
-    const days = await section('ימי אספקה')
+    const days = await section('ימי ושעות עבודה')
 
-    await user.type(within(days).getByLabelText('שעת התחלה לשישי'), '08:00')
-    await user.type(within(days).getByLabelText('שעת סיום לשישי'), '14:00')
+    await user.click(within(days).getByRole('button', { name: 'הוספת טווח שעות לשישי' }))
+    await user.click(within(days).getByRole('button', { name: 'הוספת טווח שעות לשישי' }))
+    fireEvent.change(within(days).getByLabelText('שעת התחלה לשישי, טווח 1'), { target: { value: '00:00' } })
+    fireEvent.change(within(days).getByLabelText('שעת סיום לשישי, טווח 1'), { target: { value: '01:00' } })
     await user.click(within(days).getByRole('button', { name: 'שמירה' }))
 
     await screen.findByText('נשמר.')
     const sent = api.sent('PUT', '/api/admin/supply-days')[0].body as SupplyDay[]
-    expect(sent.find((d) => d.weekday === 'Friday')).toMatchObject({ deliveryFrom: '08:00:00', deliveryTo: '14:00:00' })
-    expect(sent.find((d) => d.weekday === 'Sunday')).toMatchObject({ deliveryFrom: null, deliveryTo: null })
+    expect(sent.find((d) => d.weekday === 'Friday')?.hours).toEqual([
+      { from: '00:00:00', to: '01:00:00' },
+      { from: '11:00:00', to: '00:00:00' },
+    ])
+    expect(sent.find((d) => d.weekday === 'Sunday')?.hours).toEqual([])
   })
 
   it('saves how many orders can be supplied in an hour', async () => {

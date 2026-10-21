@@ -102,7 +102,7 @@ public class OrdersController(
         else if (input.PaymentMethod.IsTransfer() && !TransferAvailable(settings, input.PaymentMethod))
             errors.Add(nameof(input.PaymentMethod), "paymentUnavailable");
 
-        var days = await db.SupplyDays.AsNoTracking().ToListAsync(ct);
+        var days = await db.SupplyDays.AsNoTracking().Include(d => d.Hours).ToListAsync(ct);
         var closed = await db.ClosedDates.AsNoTracking().Select(c => c.Date).ToListAsync(ct);
         var openDate = SupplyCalendar.Find(input.SupplyDate, clock.NowLocal(), days, closed);
         if (openDate is null)

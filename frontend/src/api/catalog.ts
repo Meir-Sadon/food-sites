@@ -87,9 +87,13 @@ export interface SupplyDay {
   cutoffDay: Weekday
   /** "HH:mm:ss" */
   cutoffTime: string
-  /** The day's supply hours, "HH:mm:ss"; both null when the client picks no hour. */
-  deliveryFrom: string | null
-  deliveryTo: string | null
+  /** The day's working hours, "HH:mm:ss", one entry per range; empty when the client picks no hour. An end of 00:00 means midnight. */
+  hours: SupplyHours[]
+}
+
+export interface SupplyHours {
+  from: string
+  to: string
 }
 
 export interface ClosedDate {

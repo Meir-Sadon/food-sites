@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { supplyDaysApi, weekdays, type SupplyDay, type Weekday } from '../../api/catalog'
+import { supplyDaysApi, weekdays, type SupplyDay, type SupplyHours, type Weekday } from '../../api/catalog'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
 import { useDirty, useUnsavedChanges } from '../unsaved'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
+
+const MAX_RANGES = 6
 
 export function SupplyDaysSection() {
   const { t } = useTranslation()
@@ -17,6 +19,10 @@ export function SupplyDaysSection() {
   function change(weekday: Weekday, patch: Partial<SupplyDay>) {
     setData((current) => current && current.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d)))
     setError(null)
+  }
+
+  function changeRange(day: SupplyDay, index: number, patch: Partial<SupplyHours>) {
+    change(day.weekday, { hours: day.hours.map((r, i) => (i === index ? { ...r, ...patch } : r)) })
   }
 
   const { dirty, markSaved } = useDirty(days)
@@ -88,22 +94,46 @@ export function SupplyDaysSection() {
                     </span>
                   )}
                   {day.enabled && (
-                    <span className="row">
+                    <div className="supply-hours">
                       <span>{t('admin.settings.hours')}</span>
-                      <input
-                        type="time"
-                        aria-label={t('admin.settings.hoursFrom', { day: name })}
-                        value={day.deliveryFrom?.slice(0, 5) ?? ''}
-                        onChange={(e) => change(day.weekday, { deliveryFrom: e.target.value ? `${e.target.value}:00` : null })}
-                      />
-                      <span>{t('admin.settings.hoursTo')}</span>
-                      <input
-                        type="time"
-                        aria-label={t('admin.settings.hoursToFor', { day: name })}
-                        value={day.deliveryTo?.slice(0, 5) ?? ''}
-                        onChange={(e) => change(day.weekday, { deliveryTo: e.target.value ? `${e.target.value}:00` : null })}
-                      />
-                    </span>
+                      {day.hours.map((range, i) => (
+                        <span key={i} className="row">
+                          <input
+                            type="time"
+                            aria-label={t('admin.settings.hoursFrom', { day: name, n: i + 1 })}
+                            value={range.from.slice(0, 5)}
+                            required
+                            onChange={(e) => changeRange(day, i, { from: `${e.target.value}:00` })}
+                          />
+                          <span>{t('admin.settings.hoursTo')}</span>
+                          <input
+                            type="time"
+                            aria-label={t('admin.settings.hoursToFor', { day: name, n: i + 1 })}
+                            value={range.to.slice(0, 5)}
+                            required
+                            onChange={(e) => changeRange(day, i, { to: `${e.target.value}:00` })}
+                          />
+                          <button
+                            type="button"
+                            className="secondary"
+                            aria-label={t('admin.settings.removeRange', { day: name, n: i + 1 })}
+                            onClick={() => change(day.weekday, { hours: day.hours.filter((_, j) => j !== i) })}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                      {day.hours.length < MAX_RANGES && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          aria-label={t('admin.settings.addRangeFor', { day: name })}
+                          onClick={() => change(day.weekday, { hours: [...day.hours, { from: '11:00:00', to: '00:00:00' }] })}
+                        >
+                          {t('admin.settings.addRange')}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </li>
               )
