@@ -605,7 +605,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     private async Task SetHours(TimeOnly from, TimeOnly to, int? ordersPerHour)
     {
         var days = Enum.GetValues<DayOfWeek>().Select(d =>
-            new SupplyDayDto(d, true, (DayOfWeek)(((int)d + 6) % 7), new TimeOnly(0, 0), from, to));
+            new SupplyDayDto(d, true, (DayOfWeek)(((int)d + 6) % 7), new TimeOnly(0, 0), [new(from, to)]));
         (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).EnsureSuccessStatusCode();
         var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
         (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHour = ordersPerHour })).EnsureSuccessStatusCode();

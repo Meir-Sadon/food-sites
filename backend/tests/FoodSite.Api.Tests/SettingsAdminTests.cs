@@ -514,19 +514,31 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task Supply_days_save_hours_that_are_both_set_and_in_order()
+    public async Task Supply_days_save_working_hours_as_separate_ranges()
     {
         var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();
-        days[5] = days[5] with { Enabled = true, DeliveryFrom = new TimeOnly(8, 0), DeliveryTo = new TimeOnly(18, 0) };
+        // A split day: the early hour after midnight, and 11:00 until midnight (00:00 ends the day).
+        days[5] = days[5] with
+        {
+            Enabled = true,
+            Hours = [new(new TimeOnly(11, 0), new TimeOnly(0, 0)), new(new TimeOnly(0, 0), new TimeOnly(1, 0))],
+        };
         var saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
-        Assert.Equal((new TimeOnly(8, 0), new TimeOnly(18, 0)), (saved[5].DeliveryFrom, saved[5].DeliveryTo));
+        Assert.Equal(
+            [(new TimeOnly(0, 0), new TimeOnly(1, 0)), (new TimeOnly(11, 0), new TimeOnly(0, 0))],
+            saved[5].Hours!.Select(h => (h.From, h.To)));
 
-        var halfSet = days.ToList();
-        halfSet[5] = days[5] with { DeliveryTo = null };
-        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", halfSet, TestFiles.Json)).AssertInvalid("days[5].deliveryTo", "deliveryHoursInvalid");
         var backwards = days.ToList();
-        backwards[5] = days[5] with { DeliveryFrom = new TimeOnly(18, 0), DeliveryTo = new TimeOnly(8, 0) };
-        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", backwards, TestFiles.Json)).AssertInvalid("days[5].deliveryTo", "deliveryHoursInvalid");
+        backwards[5] = days[5] with { Hours = [new(new TimeOnly(18, 0), new TimeOnly(8, 0))] };
+        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", backwards, TestFiles.Json)).AssertInvalid("days[5].hours", "deliveryHoursInvalid");
+        var overlapping = days.ToList();
+        overlapping[5] = days[5] with { Hours = [new(new TimeOnly(9, 0), new TimeOnly(13, 0)), new(new TimeOnly(12, 0), new TimeOnly(15, 0))] };
+        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", overlapping, TestFiles.Json)).AssertInvalid("days[5].hours", "deliveryHoursOverlap");
+
+        // Saving none clears the day's hours.
+        days[5] = days[5] with { Hours = [] };
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
+        Assert.Empty(saved[5].Hours!);
     }
 
     [Fact]

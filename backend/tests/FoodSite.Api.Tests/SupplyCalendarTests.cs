@@ -70,19 +70,40 @@ public class SupplyCalendarTests
         Assert.Equal(new DateOnly(2026, 10, 6), open[0].Date);
     }
 
+    private static void Hours(SupplyDay day, params (TimeOnly From, TimeOnly To)[] ranges) =>
+        day.Hours = ranges.Select(r => new SupplyDayHours { From = r.From, To = r.To }).ToList();
+
     [Fact]
     public void Hours_are_cut_into_one_hour_slots_with_a_shorter_last_one()
     {
         var day = FridayRule();
-        day.DeliveryFrom = new TimeOnly(8, 0);
-        day.DeliveryTo = new TimeOnly(10, 30);
+        Hours(day, (new(8, 0), new(10, 30)));
         Assert.Equal(
             [new(new(8, 0), new(9, 0)), new(new(9, 0), new(10, 0)), new SupplyCalendar.HourSlot(new(10, 0), new(10, 30))],
             SupplyCalendar.HourSlots(day));
 
-        day.DeliveryTo = new TimeOnly(23, 59);
-        day.DeliveryFrom = new TimeOnly(23, 0);
+        Hours(day, (new(23, 0), new(23, 59)));
         Assert.Equal([new SupplyCalendar.HourSlot(new(23, 0), new(23, 59))], SupplyCalendar.HourSlots(day));
+    }
+
+    [Fact]
+    public void Split_hours_give_slots_for_each_range_and_midnight_ends_the_day()
+    {
+        var day = FridayRule();
+        // 00:00 to 01:00 and 11:00 to 00:00, as one day's hours.
+        Hours(day, (new(11, 0), new(0, 0)), (new(0, 0), new(1, 0)));
+        var slots = SupplyCalendar.HourSlots(day);
+        Assert.Equal(new SupplyCalendar.HourSlot(new(0, 0), new(1, 0)), slots[0]);
+        Assert.Equal(new TimeOnly(11, 0), slots[1].From);
+        Assert.Equal(14, slots.Count);
+        Assert.Equal(new SupplyCalendar.HourSlot(new(23, 0), new(0, 0)), slots[^1]);
+
+        // The last slot ends at midnight, the next date, so it is still open late in the evening.
+        day.CutoffDay = DayOfWeek.Friday;
+        day.CutoffTime = new TimeOnly(23, 59);
+        var open = SupplyCalendar.Find(Friday, new DateTime(2026, 10, 9, 22, 30, 0), [day], []);
+        Assert.Equal(new TimeOnly(22, 0), open!.Hours[^2].From);
+        Assert.Equal(new TimeOnly(23, 0), open.Hours[^1].From);
     }
 
     [Fact]
@@ -90,9 +111,7 @@ public class SupplyCalendarTests
     {
         var day = FridayRule();
         Assert.Empty(SupplyCalendar.HourSlots(day));
-        day.DeliveryFrom = new TimeOnly(10, 0);
-        Assert.Empty(SupplyCalendar.HourSlots(day));
-        day.DeliveryTo = new TimeOnly(9, 0);
+        Hours(day, (new(10, 0), new(9, 0)));
         Assert.Empty(SupplyCalendar.HourSlots(day));
     }
 
@@ -102,8 +121,7 @@ public class SupplyCalendarTests
         var day = FridayRule();
         day.CutoffDay = DayOfWeek.Friday;
         day.CutoffTime = new TimeOnly(23, 0);
-        day.DeliveryFrom = new TimeOnly(12, 0);
-        day.DeliveryTo = new TimeOnly(15, 0);
+        Hours(day, (new(12, 0), new(15, 0)));
 
         var midday = SupplyCalendar.Find(Friday, new DateTime(2026, 10, 9, 13, 30, 0), [day], []);
         Assert.Equal([new TimeOnly(13, 0), new TimeOnly(14, 0)], midday!.Hours.Select(h => h.From));
@@ -117,8 +135,7 @@ public class SupplyCalendarTests
     public void Open_dates_carry_their_day_s_hours()
     {
         var day = FridayRule();
-        day.DeliveryFrom = new TimeOnly(12, 0);
-        day.DeliveryTo = new TimeOnly(14, 0);
+        Hours(day, (new(12, 0), new(14, 0)));
         var open = SupplyCalendar.Find(Friday, new DateTime(2026, 10, 5, 9, 0, 0), [day], []);
         Assert.Equal([new TimeOnly(12, 0), new TimeOnly(13, 0)], open!.Hours.Select(h => h.From));
     }

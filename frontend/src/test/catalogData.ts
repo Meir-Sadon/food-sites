@@ -49,8 +49,7 @@ export const supplyDays = (): SupplyDay[] =>
     enabled: weekday === 'Friday',
     cutoffDay: weekdays[(i + 6) % 7],
     cutoffTime: '20:00:00',
-    deliveryFrom: null,
-    deliveryTo: null,
+    hours: [],
   }))
 
 export const category = (id: number, name: string, dishCount = 0): Category => ({ id, name, displayOrder: id, dishCount })

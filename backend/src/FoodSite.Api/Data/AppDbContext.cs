@@ -16,6 +16,7 @@ public class AppDbContext(
 {
     public DbSet<Settings> Settings => Set<Settings>();
     public DbSet<SupplyDay> SupplyDays => Set<SupplyDay>();
+    public DbSet<SupplyDayHours> SupplyDayHours => Set<SupplyDayHours>();
     public DbSet<ClosedDate> ClosedDates => Set<ClosedDate>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Dish> Dishes => Set<Dish>();
@@ -131,6 +132,8 @@ public class AppDbContext(
         model.Entity<SupplyDay>(e =>
         {
             e.HasIndex(s => s.Weekday).IsUnique();
+            e.HasMany(s => s.Hours).WithOne(h => h.SupplyDay).HasForeignKey(h => h.SupplyDayId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<ClosedDate>(e =>

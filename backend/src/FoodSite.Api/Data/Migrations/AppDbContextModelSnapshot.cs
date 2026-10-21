@@ -996,11 +996,17 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("AdminPasswordHash")
                         .HasColumnType("text");
 
-                    b.Property<bool>("BadgeLowStockEnabled")
-                        .HasColumnType("boolean");
+                    b.Property<string>("BackgroundImagePublicId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BackgroundImageUrl")
+                        .HasColumnType("text");
 
                     b.Property<int?>("BadgeLowStockAmount")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("BadgeLowStockEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("BadgeLowStockMode")
                         .HasColumnType("text");
@@ -1012,12 +1018,6 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("BadgeNewUnit")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BackgroundImagePublicId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BackgroundImageUrl")
                         .HasColumnType("text");
 
                     b.Property<bool>("BitEnabled")
@@ -1292,6 +1292,30 @@ namespace FoodSite.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("SupplyDays");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SupplyDayHours", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<TimeOnly>("From")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("SupplyDayId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("To")
+                        .HasColumnType("time without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplyDayId");
+
+                    b.ToTable("SupplyDayHours");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.UsageDay", b =>
@@ -1702,6 +1726,17 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SupplyDayHours", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.SupplyDay", "SupplyDay")
+                        .WithMany("Hours")
+                        .HasForeignKey("SupplyDayId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SupplyDay");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.AddOnGroup", b =>
                 {
                     b.Navigation("AddOns");
@@ -1752,6 +1787,11 @@ namespace FoodSite.Api.Data.Migrations
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Review", b =>
                 {
                     b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SupplyDay", b =>
+                {
+                    b.Navigation("Hours");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.User", b =>
