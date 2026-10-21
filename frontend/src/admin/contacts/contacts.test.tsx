@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import type { Contact, NotifyPhone } from '../../api/site'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
+import { openSection } from '../../test/sections'
 
 const contact = (patch: Partial<Contact> = {}): Contact => ({
   name: 'אמא',
@@ -21,7 +22,7 @@ const base = {
 }
 
 async function section(name: string) {
-  const region = await screen.findByRole('region', { name })
+  const region = await openSection(name)
   await waitFor(() => expect(within(region).queryByText('טוען…')).not.toBeInTheDocument())
   return region
 }

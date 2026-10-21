@@ -5,23 +5,36 @@ import { ColorsSection } from './ColorsSection'
 import { CornersSection } from './CornersSection'
 import { FinishSection } from './FinishSection'
 import { OrderLayoutSection } from './OrderLayoutSection'
-import { PopupSection } from './PopupSection'
+import { SectionGroup, SectionSlot } from '../sectionGroup'
 import { StyleSection } from './StyleSection'
 
-/** How the client site looks: its style, corners, colours, fonts, shadows and spacing, the order page's layout, the item badges, the main background picture and the entry pop-up. */
+/** How the client site looks: its style, corners, colours, fonts, shadows and spacing, the order page's layout, the item badges, and the main background picture. */
 export function AppearancePage() {
   const { t } = useTranslation()
   return (
-    <>
+    <SectionGroup>
       <h1>{t('admin.appearance.title')}</h1>
-      <StyleSection />
-      <CornersSection />
-      <ColorsSection />
-      <FinishSection />
-      <OrderLayoutSection />
-      <BadgesSection />
-      <BackgroundSection />
-      <PopupSection />
-    </>
+      <SectionSlot>
+        <StyleSection />
+      </SectionSlot>
+      <SectionSlot>
+        <CornersSection />
+      </SectionSlot>
+      <SectionSlot>
+        <ColorsSection />
+      </SectionSlot>
+      <SectionSlot>
+        <FinishSection />
+      </SectionSlot>
+      <SectionSlot>
+        <OrderLayoutSection />
+      </SectionSlot>
+      <SectionSlot>
+        <BadgesSection />
+      </SectionSlot>
+      <SectionSlot>
+        <BackgroundSection />
+      </SectionSlot>
+    </SectionGroup>
   )
 }

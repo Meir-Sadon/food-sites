@@ -23,7 +23,7 @@ const toInput = (p: Popup): PopupInput => ({
  * The window shown to a client when the site opens: size, picture, title, text and an optional button. The text and
  * choices are saved with the button; the picture is stored as soon as it is chosen, like the background.
  */
-export function PopupSection() {
+export function PopupSection({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const { t } = useTranslation()
   const formError = useFormErrorMessage()
   const plainError = useErrorMessage()
@@ -94,7 +94,7 @@ export function PopupSection() {
   const fieldError = (field: string) => <FieldError errors={errors} field={field} id={`popup-${field}-error`} />
 
   return (
-    <Section title={t('admin.popup.title')} hint={t('admin.popup.hint')}>
+    <Section title={t('admin.popup.title')} hint={t('admin.popup.hint')} defaultOpen={defaultOpen}>
       {!form || !data ? (
         <Loading failed={failed} />
       ) : (
