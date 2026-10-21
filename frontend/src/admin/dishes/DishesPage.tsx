@@ -201,7 +201,7 @@ export function DishesPage() {
           <summary>{t('admin.dishes.removed', { count: removed.length })}</summary>
           <ul className="list">
             {removed.map((dish) => (
-              <li key={dish.id} className="list__row">
+              <li key={dish.id} className="list__row list__row--removed">
                 <span className="muted">{dish.name}</span>
                 <button
                   type="button"
