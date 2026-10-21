@@ -351,6 +351,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
       style={tappable ? { cursor: 'pointer' } : undefined}
     >
       <TileMedia images={dish.images} name={dish.name}>
+        <ItemBadges dish={dish} date={date} className="tile__marks" />
         {dish.isSoldOut ? (
           <p className="badge tile__badge" role="status">
             {t('order.soldOut')}
@@ -392,7 +393,6 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         )}
       </TileMedia>
       <div className="tile__body">
-        <ItemBadges dish={dish} date={date} />
         <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
         <p className="dish__price">{priceText(dish, t)}</p>
         {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
@@ -451,6 +451,7 @@ function DishGroupTile(props: GroupProps) {
       style={{ cursor: 'pointer' }}
     >
       <TileMedia slides={groupSlides(dish, variants)} name={dish.name}>
+        <ItemBadges dish={dish} variants={variants} date={props.date} className="tile__marks" />
         {count > 0 && <p className="badge tile__badge">{t('order.chosenCount', { count })}</p>}
         <AllergenMark text={dish.allergenInfo} />
         <button type="button" className="tile__add" aria-label={t('order.chooseVariant', { name: dish.name })} onClick={() => setOpen(true)}>
@@ -458,7 +459,6 @@ function DishGroupTile(props: GroupProps) {
         </button>
       </TileMedia>
       <div className="tile__body">
-        <ItemBadges dish={dish} variants={variants} date={props.date} />
         <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
         {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
