@@ -8,7 +8,7 @@ import { isAlmostOut } from './model'
  * enough) and almost out (the admin turned that badge on and what is left on the chosen date is low). A main dish card
  * also shows what its variants carry, since the variants have no card of their own in the tiles style.
  */
-export function ItemBadges({ dish, variants = [], date }: { dish: MenuDish; variants?: MenuDish[]; date?: string }) {
+export function ItemBadges({ dish, variants = [], date, className = '' }: { dish: MenuDish; variants?: MenuDish[]; date?: string; className?: string }) {
   const { t } = useTranslation()
   const badges = useSite()?.badges
   const all = [dish, ...variants]
@@ -19,7 +19,7 @@ export function ItemBadges({ dish, variants = [], date }: { dish: MenuDish; vari
   ].filter((mark): mark is 'onSale' | 'new' | 'almostOut' => !!mark)
   if (marks.length === 0) return null
   return (
-    <ul className="item-badges" aria-label={t('order.badges.label', { name: dish.name })}>
+    <ul className={`item-badges${className ? ` ${className}` : ''}`} aria-label={t('order.badges.label', { name: dish.name })}>
       {marks.map((mark) => (
         <li key={mark} className={`item-badge item-badge--${mark}`}>
           {t(`order.badges.${mark}`)}
