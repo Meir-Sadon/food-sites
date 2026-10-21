@@ -158,7 +158,7 @@ function copyForm(source: Dish, categories: Category[], name: string): DishForm 
 }
 
 function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice' | 'isYesNo' | 'adjustmentOptional' | 'groups' | 'addOns'> {
-  const groups = dish.addOnGroups.map((g) => ({ key: formKey(), id: g.id, name: g.name, maxUnits: str(g.maxUnits) }))
+  const groups = dish.addOnGroups.map((g) => ({ key: formKey(), id: g.id, name: g.name, maxUnits: str(g.maxUnits), overLimitPrice: str(g.overLimitPrice) }))
   return {
     mainDishId: dish.mainDishId === null ? '' : String(dish.mainDishId),
     useMainDishPrice: dish.useMainDishPrice,
@@ -172,6 +172,11 @@ function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice
       price: str(a.price),
       maxQuantity: str(a.maxQuantity),
       isCheckbox: a.isCheckbox,
+      slot: a.slot,
+      label: a.label ?? '',
+      showImage: a.showImage,
+      isDefault: a.isDefault,
+      overLimitPrice: str(a.overLimitPrice),
     })),
   }
 }
@@ -181,7 +186,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
   const fixed = form.choiceMode === 'Fixed'
   const own = advanced
     ? {
-        addOnGroups: form.groups.map((g) => ({ id: g.id, name: g.name, maxUnits: num(g.maxUnits) })),
+        addOnGroups: form.groups.map((g) => ({ id: g.id, name: g.name, maxUnits: num(g.maxUnits), overLimitPrice: num(g.maxUnits) === null ? null : num(g.overLimitPrice) })),
         addOns: form.isAddOnOnly
           ? []
           : form.addOns.map((a) => ({
@@ -190,6 +195,11 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
               price: num(a.price),
               maxQuantity: a.isCheckbox ? null : num(a.maxQuantity),
               isCheckbox: a.isCheckbox,
+              slot: a.slot,
+              label: form.addOns.filter((o) => o.dishId === a.dishId).length > 1 ? a.label.trim() : null,
+              showImage: a.showImage,
+              isDefault: a.isDefault,
+              overLimitPrice: a.isCheckbox || num(a.maxQuantity) === null ? null : num(a.overLimitPrice),
             })),
       }
     : {}

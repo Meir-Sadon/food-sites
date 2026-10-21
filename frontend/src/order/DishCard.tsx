@@ -15,7 +15,8 @@ import { ImageCarousel } from './ImageCarousel'
 import { ImageViewer } from './ImageViewer'
 import { ItemBadges } from './ItemBadges'
 import {
-  addOnLineTotal,
+  addOnLabelled,
+  addOnLink,
   addOnRange,
   addOnsOf,
   addOnUnitPrice,
@@ -24,11 +25,14 @@ import {
   fitAddOns,
   fixedOption,
   groupUnits,
+  firmGroupLimit,
   groupUsed,
+  keyDishId,
+  startSelection,
+  unitAddOnTotals,
   isCheckbox,
   limitedRange,
   lineTotal,
-  newSelection,
   remainingOn,
   type AddOnOffer,
   type AddOnSelection,
@@ -324,7 +328,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
 
   function add() {
     // An open-by-default dish picks its own first choice in the dialog.
-    if (!(dish.openByDefault && !yesNo)) onChange(newSelection(dish))
+    if (!(dish.openByDefault && !yesNo)) onChange(startSelection(dish, dishes))
     if (needsDialog(dish, dishes)) setOpen(true)
   }
 
@@ -511,11 +515,11 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
   const toggleLabel = t(showUnits ? 'order.hideAdjustments' : 'order.showAdjustments')
 
   /** Changes one add-on of one ordered unit. */
-  function setAddOn(unit: number, addOn: MenuDish, next: AddOnSelection | undefined) {
+  function setAddOn(unit: number, key: number, next: AddOnSelection | undefined) {
     if (!selection) return
     const addOnSelections = { ...unitsOf(dish, selection)[unit] }
-    if (next && next.quantity > 0) addOnSelections[addOn.id] = next
-    else delete addOnSelections[addOn.id]
+    if (next && next.quantity > 0) addOnSelections[key] = next
+    else delete addOnSelections[key]
     onChange(withUnit(selection, unit, addOnSelections))
   }
 
@@ -539,7 +543,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
               dish={dish}
               name={`${id}-option`}
               checkedId={null}
-              onPick={(optionId) => onChange({ ...newSelection(dish), optionId })}
+              onPick={(optionId) => onChange(startSelection(dish, dishes, { optionId }))}
             />
           </div>
         ) : (
@@ -552,13 +556,13 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                 max={Math.max(range.max, range.min)}
                 allowZero
                 unit={unitLabel(dish, t)}
-                onChange={(quantity) => quantity > 0 && onChange({ ...newSelection(dish), quantity })}
+                onChange={(quantity) => quantity > 0 && onChange(startSelection(dish, dishes, { quantity }))}
               />
             </div>
           </div>
         )
       ) : !selection ? (
-        <button type="button" aria-label={t('order.addDish', { name: dish.name })} onClick={() => onChange(newSelection(dish))}>
+        <button type="button" aria-label={t('order.addDish', { name: dish.name })} onClick={() => onChange(startSelection(dish, dishes))}>
           {t('order.add')}
         </button>
       ) : (
@@ -612,7 +616,10 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
               {units.map((unit, i) => {
                 const adjusted = isAdjusted(selection, i, unit)
                 const names = Object.keys(unit)
-                  .map((addOnId) => dishes.get(Number(addOnId))?.name)
+                  .map((addOnId) => {
+                    const addOnDish = dishes.get(keyDishId(Number(addOnId)))
+                    return addOnDish && addOnLabelled(addOnLink(dish, Number(addOnId)), addOnDish)
+                  })
                   .filter(Boolean)
                   .join(', ')
                 const status =
@@ -642,7 +649,7 @@ function DishChoice({ dish, dishes, selection, date, onChange }: Props) {
                       />
                       {addOns.length > 0 && (
                         <>
-                          <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={unit} onChange={(a, next) => setAddOn(i, a, next)} />
+                          <AddOnGroups parent={dish} offers={addOns} dishes={dishes} date={date} selections={unit} onChange={(key, next) => setAddOn(i, key, next)} />
                           <div className="row">
                             {Object.keys(unit).length === 0 && (
                               <button
@@ -890,9 +897,10 @@ function AddOnGroups({
   dishes: Map<number, MenuDish>
   date: string | undefined
   selections: Record<number, AddOnSelection>
-  onChange: (addOn: MenuDish, selection: AddOnSelection | undefined) => void
+  onChange: (key: number, selection: AddOnSelection | undefined) => void
 }) {
   const { t } = useTranslation()
+  const totals = unitAddOnTotals(parent, selections, dishes)
   const groups: { group: MenuAddOnGroup | null; offers: AddOnOffer[] }[] = (parent.addOnGroups ?? [])
     .map((group) => ({ group: group as MenuAddOnGroup | null, offers: offers.filter((o) => o.link.groupId === group.id) }))
     .concat([{ group: null, offers: offers.filter((o) => !parent.addOnGroups?.some((g) => g.id === o.link.groupId)) }])
@@ -902,8 +910,8 @@ function AddOnGroups({
     <>
       {groups.map(({ group, offers: inGroup }) => {
         // Room left in the group for an add-on: its limit less what the other add-ons in it already take.
-        const room = (addOnId: number) =>
-          group?.maxUnits == null ? Infinity : group.maxUnits - groupUsed(parent, selections, group.id, dishes, addOnId)
+        const limit = firmGroupLimit(group)
+        const room = (key: number) => (limit === null || !group ? Infinity : limit - groupUsed(parent, selections, group.id, dishes, key))
         return (
           <fieldset key={group?.id ?? 'other'} className="addons">
             <legend>
@@ -911,20 +919,22 @@ function AddOnGroups({
               {group?.maxUnits != null && (
                 <span className="muted">
                   {' '}
-                  · {t('order.groupLimit', { max: group.maxUnits })} · {t('order.groupLeft', { count: Math.max(0, room(-1)) })}
+                  {group.overLimitPrice != null
+                    ? ` · ${t('order.groupOverLimit', { max: group.maxUnits, price: formatMoney(group.overLimitPrice) })}`
+                    : ` · ${t('order.groupLimit', { max: group.maxUnits })} · ${t('order.groupLeft', { count: Math.max(0, room(-1)) })}`}
                 </span>
               )}
             </legend>
-            {inGroup.map(({ dish: addOn, link }) => (
+            {inGroup.map(({ dish: addOn, link, key }) => (
               <AddOnRow
-                key={addOn.id}
+                key={key}
                 addOn={addOn}
                 link={link}
-                parent={parent}
                 date={date}
-                room={room(addOn.id)}
-                selection={selections[addOn.id]}
-                onChange={(next) => onChange(addOn, next)}
+                room={room(key)}
+                selection={selections[key]}
+                total={totals[key]}
+                onChange={(next) => onChange(key, next)}
               />
             ))}
           </fieldset>
@@ -937,28 +947,38 @@ function AddOnGroups({
 function AddOnRow({
   addOn,
   link,
-  parent,
   date,
   room,
   selection,
+  total,
   onChange,
 }: {
   addOn: MenuDish
   link: MenuAddOn
-  parent: MenuDish
   date: string | undefined
   /** How many group units this add-on can still take. */
   room: number
   selection: AddOnSelection | undefined
+  /** What the add-on costs in this unit, with any over-limit price. */
+  total: number | undefined
   onChange: (selection: AddOnSelection | undefined) => void
 }) {
   const { t } = useTranslation()
+  const name = addOnLabelled(link, addOn)
   const remaining = remainingOn(addOn, date)
   const range = addOnRange(link, addOn, remaining)
   const none = range.max < range.min
   const fixed = fixedOption(link, addOn)
   const optionId = (!fixed && selection?.optionId) || (addOn.choiceMode === 'Fixed' ? (defaultOption(addOn)?.id ?? null) : null)
   const price = link.price === null ? priceText(addOn, t) : priceOf(link, addOn, optionId, t)
+
+  const picture = link.showImage && addOn.images[0] ? <img className="addon__image" src={addOn.images[0]} alt="" loading="lazy" /> : null
+  const overNote =
+    link.overLimitPrice != null && link.maxQuantity != null ? (
+      <span className="muted addon__over">
+        {t('order.addOnOverLimit', { max: link.maxQuantity, price: formatMoney(link.overLimitPrice) })}
+      </span>
+    ) : null
 
   if (isCheckbox(link, addOn)) {
     const checked = !!selection
@@ -972,7 +992,8 @@ function AddOnRow({
             disabled={(none || full) && !checked}
             onChange={(e) => onChange(e.target.checked ? checkedAddOn(addOn) : undefined)}
           />
-          {addOn.name} · {price}
+          {picture}
+          {name} · {price}
         </label>
         {none && <span className="badge">{t('order.soldOutForDate')}</span>}
       </div>
@@ -988,7 +1009,9 @@ function AddOnRow({
   return (
     <div className="addon">
       <span className="addon__name">
-        {addOn.name} · {price}
+        {picture}
+        {name} · {price}
+        {overNote}
       </span>
       {none ? (
         <span className="badge">{t('order.soldOutForDate')}</span>
@@ -996,7 +1019,7 @@ function AddOnRow({
         <>
           {addOn.choiceMode === 'Fixed' && addOn.options.length > 1 && !fixed && (
             <select
-              aria-label={t('order.optionFor', { name: addOn.name })}
+              aria-label={t('order.optionFor', { name })}
               value={optionId ?? ''}
               onChange={(e) => onChange({ optionId: Number(e.target.value), quantity: selection?.quantity ?? range.min })}
             >
@@ -1008,7 +1031,7 @@ function AddOnRow({
             </select>
           )}
           <AmountControl
-            name={addOn.name}
+            name={name}
             value={value}
             {...range}
             max={max}
@@ -1016,9 +1039,9 @@ function AddOnRow({
             unit={unitLabel(addOn, t)}
             onChange={(quantity) => onChange({ optionId, quantity })}
           />
-          {link.price !== null && (
+          {(link.price !== null || link.overLimitPrice != null) && (
             // Always present, so the amount control keeps its place when the first unit brings the price in.
-            <span className="numeric muted addon__sum">{selection ? formatMoney(addOnLineTotal(parent, addOn, selection)) : null}</span>
+            <span className="numeric muted addon__sum">{selection && total !== undefined ? formatMoney(total) : null}</span>
           )}
           <RemainingNote dish={addOn} remaining={remaining} />
         </>

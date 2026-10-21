@@ -18,6 +18,9 @@ public class AddOnGroup
     /// <summary>Null means no limit.</summary>
     public int? MaxUnits { get; set; }
 
+    /// <summary>Price per unit for the units above <see cref="MaxUnits"/> (per ordered unit of the parent); null means the limit is firm.</summary>
+    public decimal? OverLimitPrice { get; set; }
+
     public int DisplayOrder { get; set; }
 
     public List<DishAddOn> AddOns { get; set; } = [];

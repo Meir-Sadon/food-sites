@@ -4,7 +4,8 @@ using FoodSite.Api.Data.Entities;
 
 namespace FoodSite.Api.Orders;
 
-public record AddOnInput(int DishId, int? OptionId, decimal Quantity);
+/// <param name="Slot">Which offer of the add-on under the dish, when the dish offers the same add-on more than once.</param>
+public record AddOnInput(int DishId, int? OptionId, decimal Quantity, int Slot = 0);
 
 /// <summary>
 /// An answer to one of the dish's questions: Value for text, a number, a date (yyyy-MM-dd), yes or no ("yes"/"no")
@@ -193,7 +194,7 @@ public static class OrderBuilder
     }
 
     private static string Signature(IEnumerable<OrderItem> children) =>
-        string.Join("|", children.OrderBy(c => c.DishId).Select(c => $"{c.DishId}:{c.OptionLabel}:{c.Quantity}"));
+        string.Join("|", children.OrderBy(c => c.DishId).Select(c => $"{c.DishId}:{c.DishName}:{c.OptionLabel}:{c.UnitPrice}:{c.Quantity}"));
 
     /// <summary>The same line for another amount (units that share their add-ons are one line of that many).</summary>
     private static OrderItem Scaled(OrderItem source, decimal quantity) => new()
@@ -212,22 +213,24 @@ public static class OrderBuilder
 
     /// <summary>
     /// The add-on lines for one set of add-ons, checked against the parent's links. <paramref name="factor"/> is how many
-    /// units of the parent the limits cover.
+    /// units of the parent the limits cover. Units above an add-on's or group's limit are refused, unless the admin set
+    /// a price for them: they then become lines of their own at that price.
     /// </summary>
     private static List<OrderItem> AddOnsOf(
         IReadOnlyList<DishAddOn> links, IReadOnlyList<AddOnInput> addOns, string path, decimal factor,
         IReadOnlyDictionary<int, Dish> dishes, Errors errors)
     {
         var children = new List<OrderItem>();
-        var seen = new HashSet<int>();
-        var groupUnits = new Dictionary<int, decimal>();
+        var seen = new HashSet<(int, int)>();
+        var groupUsed = new Dictionary<int, decimal>();
+        var groupFull = new HashSet<int>();
         for (var j = 0; j < addOns.Count; j++)
         {
             var addOn = addOns[j];
             var addOnPath = $"{path}.addOns[{j}]";
             var addOnDish = dishes.GetValueOrDefault(addOn.DishId);
-            var link = links.FirstOrDefault(a => a.AddOnDishId == addOn.DishId);
-            if (addOnDish is null || addOnDish.IsHidden || addOnDish.IsSoldOut || link is null || !seen.Add(addOn.DishId))
+            var link = links.FirstOrDefault(a => a.AddOnDishId == addOn.DishId && a.Slot == addOn.Slot);
+            if (addOnDish is null || addOnDish.IsHidden || addOnDish.IsSoldOut || link is null || !seen.Add((addOn.DishId, addOn.Slot)))
             {
                 errors.Add(addOnPath, "addOnUnavailable");
                 continue;
@@ -237,24 +240,73 @@ public static class OrderBuilder
                 DishRules.IsCheckbox(link, addOnDish), link.Price);
             if (child is null)
                 continue;
+            child.DishName = DishRules.AddOnName(link, addOnDish);
+
+            // Above the add-on's own limit.
+            var over = 0m;
             if (link.MaxQuantity is { } max && child.Quantity > max * factor)
             {
-                errors.Add($"{addOnPath}.quantity", "addOnLimit");
+                if (link.OverLimitPrice is null)
+                {
+                    errors.Add($"{addOnPath}.quantity", "addOnLimit");
+                    continue;
+                }
+                over = child.Quantity - max * factor;
+            }
+            var within = child.Quantity - over;
+
+            // Above the group's limit, counted over the add-ons picked so far.
+            var groupOver = 0m;
+            if (link.GroupId is { } groupId && link.Group is { MaxUnits: { } limit } group)
+            {
+                var units = DishRules.GroupUnits(link, addOnDish, within);
+                var room = limit * factor - groupUsed.GetValueOrDefault(groupId);
+                if (units > room)
+                {
+                    var perUnit = DishRules.GroupUnits(link, addOnDish, 2) > 1;
+                    if (group.OverLimitPrice is null || (!perUnit && !DishRules.IsCheckbox(link, addOnDish)))
+                    {
+                        if (groupFull.Add(groupId))
+                            errors.Add($"{path}.addOns", "addOnGroupLimit");
+                        continue;
+                    }
+                    groupOver = perUnit ? units - Math.Max(0, room) : within;
+                    units = perUnit ? units - groupOver : 0;
+                }
+                groupUsed[groupId] = groupUsed.GetValueOrDefault(groupId) + units;
+            }
+            else if (link.GroupId is { } otherGroup)
+                groupUsed[otherGroup] = groupUsed.GetValueOrDefault(otherGroup) + DishRules.GroupUnits(link, addOnDish, within);
+
+            if (over == 0 && groupOver == 0)
+            {
+                children.Add(child);
                 continue;
             }
-            if (link.GroupId is { } groupId)
-                groupUnits[groupId] = groupUnits.GetValueOrDefault(groupId) + DishRules.GroupUnits(link, addOnDish, child.Quantity);
-            children.Add(child);
-        }
-
-        foreach (var (groupId, units) in groupUnits)
-        {
-            var group = links.First(a => a.GroupId == groupId).Group;
-            if (group?.MaxUnits is { } limit && units > limit * factor)
-                errors.Add($"{path}.addOns", "addOnGroupLimit");
+            if (within - groupOver > 0)
+                children.Add(Part(child, within - groupOver, child.UnitPrice, ""));
+            if (groupOver > 0)
+                children.Add(Part(child, groupOver, link.Group!.OverLimitPrice!.Value, OverLimitSuffix));
+            if (over > 0)
+                children.Add(Part(child, over, link.OverLimitPrice!.Value, OverLimitSuffix));
         }
         return children;
     }
+
+    /// <summary>Marks the units that cost the admin's extra price for going over a limit.</summary>
+    public const string OverLimitSuffix = " (מעבר למכסה)";
+
+    /// <summary>A part of an add-on line at another amount and price (the units above a limit).</summary>
+    private static OrderItem Part(OrderItem source, decimal quantity, decimal unitPrice, string nameSuffix) => new()
+    {
+        Dish = source.Dish,
+        DishId = source.DishId,
+        DishName = source.DishName + nameSuffix,
+        OptionLabel = source.OptionLabel,
+        Quantity = quantity,
+        UnitPrice = unitPrice,
+        LineTotal = decimal.Round(unitPrice * quantity, 2),
+    };
 
     public static decimal Total(IEnumerable<OrderItem> items) => items.Sum(i => i.LineTotal);
 

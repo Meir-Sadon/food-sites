@@ -101,10 +101,12 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     /// How an add-on is offered under this dish (the same order as AddOnDishIds). Price, when set, is its price per unit
     /// here, in its default option only; MaxQuantity caps it under one ordered line; a check box is added or not.
     /// </summary>
-    public record MenuAddOnDto(int DishId, int? GroupId, decimal? Price, decimal? MaxQuantity, bool IsCheckbox);
+    public record MenuAddOnDto(
+        int DishId, int? GroupId, decimal? Price, decimal? MaxQuantity, bool IsCheckbox,
+        int Slot = 0, string? Label = null, bool ShowImage = false, bool IsDefault = false, decimal? OverLimitPrice = null);
 
     /// <summary>A heading over some of the dish's add-ons, and the most units the client can pick from them together.</summary>
-    public record MenuAddOnGroupDto(int Id, string Name, int? MaxUnits);
+    public record MenuAddOnGroupDto(int Id, string Name, int? MaxUnits, decimal? OverLimitPrice = null);
 
     public record MenuCategoryDto(int Id, string Name);
 
@@ -199,19 +201,20 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         {
             var p = DishRules.Pricing(d);
             var links = DishRules.AddOnLinks(d).Where(a => shownIds.Contains(a.AddOnDishId))
-                .OrderBy(a => a.Group?.DisplayOrder ?? int.MaxValue).ThenBy(a => a.DisplayOrder).ThenBy(a => dishPosition[a.AddOnDishId])
+                .OrderBy(a => a.Group?.DisplayOrder ?? int.MaxValue).ThenBy(a => a.DisplayOrder).ThenBy(a => dishPosition[a.AddOnDishId]).ThenBy(a => a.Slot)
                 .ToList();
             return new MenuDishDto(
                 d.Id, d.Name, d.CategoryId, d.Description, d.AllergenInfo, p.SellBy, p.ChoiceMode,
                 p.MinAmount, p.MaxAmount, p.AmountStep, p.UnitPrice, d.IsAddOnOnly, d.IsSoldOut || d.MainDish is { IsSoldOut: true },
                 p.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
                 d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
-                links.Select(a => a.AddOnDishId).ToList(),
+                links.Select(a => a.AddOnDishId).Distinct().ToList(),
                 remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, p.UnitName,
                 d.MainDishId, d.IsYesNo,
-                links.Select(a => new MenuAddOnDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
+                links.Select(a => new MenuAddOnDto(
+                    a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox, a.Slot, a.Label, a.ShowImage, a.IsDefault, a.OverLimitPrice)).ToList(),
                 links.Where(a => a.Group is not null).Select(a => a.Group!).DistinctBy(g => g.Id)
-                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
+                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits, g.OverLimitPrice)).ToList(),
                 DishRules.Questions(d)
                     .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
                 (d.MainDish ?? d).AdjustmentOptional,

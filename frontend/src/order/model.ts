@@ -4,6 +4,15 @@ import type { AnswerInput, Fulfillment, ItemBadges, Menu, MenuAddOn, MenuDish, M
 
 export const MAX_UNITS = 99
 
+/**
+ * Add-ons of a unit are kept by a key: the add-on dish's id, plus a million for each further time the dish offers the
+ * same add-on again (its slot), so an add-on offered once has its dish id as key.
+ */
+const SLOT_STRIDE = 1_000_000
+export const addOnKey = (dishId: number, slot = 0) => slot * SLOT_STRIDE + dishId
+export const keyDishId = (key: number) => key % SLOT_STRIDE
+export const keySlot = (key: number) => Math.floor(key / SLOT_STRIDE)
+
 export interface AddOnSelection {
   optionId: number | null
   quantity: number
@@ -13,7 +22,7 @@ export interface AddOnSelection {
 export interface Selection {
   optionId: number | null
   quantity: number
-  /** The first ordered unit's add-ons: only those with a quantity above zero, by dish id. */
+  /** The first ordered unit's add-ons: only those with a quantity above zero, by add-on key (see addOnKey). */
   addOns: Record<number, AddOnSelection>
   /** The add-ons of the 2nd, 3rd... ordered unit; a unit missing here has none. */
   extraUnits?: Record<number, AddOnSelection>[]
@@ -23,6 +32,8 @@ export interface Selection {
   answers?: Answers[]
   /** Which units the client confirmed without add-ons ("no changes"), the first unit's first. */
   confirmed?: boolean[]
+  /** How many units already got the admin's default add-ons (new units get them, a unit that dropped them keeps it so). */
+  defaultsApplied?: number
 }
 
 export const NOTE_MAX_LENGTH = 100
@@ -108,11 +119,11 @@ export function clampToDate(
   for (const [id, selection] of Object.entries(selections)) {
     const addOns: Record<number, AddOnSelection> = {}
     for (const [addOnId, addOn] of Object.entries(selection.addOns))
-      addOns[Number(addOnId)] = { ...addOn, quantity: clamp(dishes.get(Number(addOnId)), addOn.quantity) }
+      addOns[Number(addOnId)] = { ...addOn, quantity: clamp(dishes.get(keyDishId(Number(addOnId))), addOn.quantity) }
     const clampUnit = (unit: Record<number, AddOnSelection>) => {
       const next: Record<number, AddOnSelection> = {}
       for (const [addOnId, addOn] of Object.entries(unit))
-        next[Number(addOnId)] = { ...addOn, quantity: clamp(dishes.get(Number(addOnId)), addOn.quantity) }
+        next[Number(addOnId)] = { ...addOn, quantity: clamp(dishes.get(keyDishId(Number(addOnId))), addOn.quantity) }
       return next
     }
     result[Number(id)] = {
@@ -133,6 +144,20 @@ export function newSelection(dish: MenuDish): Selection {
   }
 }
 
+/** The add-ons the admin marked as picked by default under a dish, ready for a new unit. */
+export function defaultAddOns(parent: MenuDish, dishes: Map<number, MenuDish>): Record<number, AddOnSelection> {
+  const picked: Record<number, AddOnSelection> = {}
+  for (const link of parent.addOns ?? []) {
+    const addOn = dishes.get(link.dishId)
+    if (link.isDefault && addOn && !addOn.isSoldOut) picked[addOnKey(link.dishId, link.slot ?? 0)] = checkedAddOn(addOn)
+  }
+  return picked
+}
+
+/** A new selection of the dish, its units already holding the admin's default add-ons. */
+export const startSelection = (dish: MenuDish, dishes: Map<number, MenuDish>, patch: Partial<Selection> = {}): Selection =>
+  fitAddOns(dish, { ...newSelection(dish), ...patch }, dishes)
+
 export function unitPrice(dish: MenuDish, optionId: number | null): number {
   if (dish.choiceMode === 'Free') return dish.unitPrice ?? 0
   const option = dish.options.find((o) => o.id === optionId) ?? defaultOption(dish)
@@ -143,11 +168,26 @@ export const lineTotal = (dish: MenuDish, optionId: number | null, quantity: num
   round2(unitPrice(dish, optionId) * quantity)
 
 /** How an add-on is offered under a dish; one the dish does not set up is offered at its own prices. */
-export function addOnLink(parent: MenuDish, addOnId: number): MenuAddOn {
+export function addOnLink(parent: MenuDish, key: number): MenuAddOn {
+  const dishId = keyDishId(key)
+  const slot = keySlot(key)
   return (
-    parent.addOns?.find((a) => a.dishId === addOnId) ?? { dishId: addOnId, groupId: null, price: null, maxQuantity: null, isCheckbox: false }
+    parent.addOns?.find((a) => a.dishId === dishId && (a.slot ?? 0) === slot) ?? {
+      dishId,
+      groupId: null,
+      price: null,
+      maxQuantity: null,
+      isCheckbox: false,
+      slot,
+    }
   )
 }
+
+/** An add-on's name as the client sees it: with its label when the dish offers the same add-on more than once. */
+export const addOnLabelled = (link: MenuAddOn, addOn: MenuDish) => (link.label ? `${addOn.name} (${link.label})` : addOn.name)
+
+/** The units above an add-on's limit are priced, not refused, when the admin set a price for them. */
+const maxQuantityOf = (link: MenuAddOn) => (link.overLimitPrice != null ? null : link.maxQuantity)
 
 /** Added or not, never in an amount: a check box under this dish, or a yes or no dish. */
 export const isCheckbox = (link: MenuAddOn, addOn: MenuDish) => link.isCheckbox || !!addOn.isYesNo
@@ -164,13 +204,47 @@ export function checkedAddOn(addOn: MenuDish): AddOnSelection {
 export const addOnUnitPrice = (link: MenuAddOn, addOn: MenuDish, optionId: number | null) =>
   link.price ?? unitPrice(addOn, optionId)
 
-export const addOnLineTotal = (parent: MenuDish, addOn: MenuDish, selection: AddOnSelection) =>
-  round2(addOnUnitPrice(addOnLink(parent, addOn.id), addOn, selection.optionId) * selection.quantity)
+/**
+ * What each add-on of one unit costs, by key. Units above an add-on's limit cost its over-limit price, and units above a
+ * group's limit the group's, like the server prices them (add-ons are taken in key order).
+ */
+export function unitAddOnTotals(parent: MenuDish, unit: Record<number, AddOnSelection>, dishes: Map<number, MenuDish>) {
+  const totals: Record<number, number> = {}
+  const used: Record<number, number> = {}
+  for (const [id, selection] of Object.entries(unit)) {
+    const key = Number(id)
+    const addOn = dishes.get(keyDishId(key))
+    if (!addOn) continue
+    const link = addOnLink(parent, key)
+    const price = addOnUnitPrice(link, addOn, selection.optionId)
+    const over = link.maxQuantity != null && link.overLimitPrice != null ? Math.max(0, selection.quantity - link.maxQuantity) : 0
+    const within = selection.quantity - over
+    let groupOver = 0
+    let groupPrice = 0
+    const group = link.groupId === null ? undefined : parent.addOnGroups?.find((g) => g.id === link.groupId)
+    if (group && link.groupId !== null) {
+      let units = groupUnits(link, addOn, within)
+      if (group.maxUnits != null && group.overLimitPrice != null) {
+        const room = group.maxUnits - (used[link.groupId] ?? 0)
+        if (units > room) {
+          const perUnit = groupUnits(link, addOn, 2) > 1
+          groupOver = perUnit ? units - Math.max(0, room) : within
+          groupPrice = group.overLimitPrice
+          units = perUnit ? units - groupOver : 0
+        }
+      }
+      used[link.groupId] = (used[link.groupId] ?? 0) + units
+    }
+    totals[key] = round2(price * (within - groupOver) + groupPrice * groupOver + (link.overLimitPrice ?? 0) * over)
+  }
+  return totals
+}
 
 /** The add-on's amount range under the dish: what is left on the date, and the dish's own cap on it. */
 export function addOnRange(link: MenuAddOn, addOn: MenuDish, remaining: number | null) {
   const range = limitedRange(addOn, remaining)
-  return link.maxQuantity === null ? range : { ...range, max: Math.min(range.max, link.maxQuantity) }
+  const cap = maxQuantityOf(link)
+  return cap === null ? range : { ...range, max: Math.min(range.max, cap) }
 }
 
 /** How many ordered units get add-ons of their own: each unit of a dish sold by units, else the whole line is one. */
@@ -295,13 +369,17 @@ export function withUnit(selection: Selection, unit: number, addOns: Record<numb
 export const groupUnits = (link: MenuAddOn, addOn: MenuDish, quantity: number) =>
   isCheckbox(link, addOn) || addOn.sellBy === 'Weight' ? 1 : quantity
 
+/** The group's limit as a firm cap: none when the admin priced the units above it instead. */
+export const firmGroupLimit = (group: { maxUnits: number | null; overLimitPrice?: number | null } | null | undefined) =>
+  group?.overLimitPrice != null ? null : (group?.maxUnits ?? null)
+
 /** The units picked from one of the dish's add-on groups, leaving one add-on out (the one being changed). */
 export function groupUsed(
   parent: MenuDish, addOns: Record<number, AddOnSelection>, groupId: number, dishes: Map<number, MenuDish>, except?: number,
 ) {
   let used = 0
   for (const [id, selection] of Object.entries(addOns)) {
-    const addOn = dishes.get(Number(id))
+    const addOn = dishes.get(keyDishId(Number(id)))
     const link = addOnLink(parent, Number(id))
     if (addOn && link.groupId === groupId && Number(id) !== except) used += groupUnits(link, addOn, selection.quantity)
   }
@@ -312,12 +390,14 @@ export function groupUsed(
 function fitUnit(parent: MenuDish, unit: Record<number, AddOnSelection>, dishes: Map<number, MenuDish>) {
   const addOns: Record<number, AddOnSelection> = {}
   for (const [id, addOn] of Object.entries(unit)) {
-    const dish = dishes.get(Number(id))
+    const dish = dishes.get(keyDishId(Number(id)))
     const link = addOnLink(parent, Number(id))
     if (!dish) continue
-    const quantity = link.maxQuantity === null ? addOn.quantity : Math.min(addOn.quantity, link.maxQuantity)
+    const cap = maxQuantityOf(link)
+    const quantity = cap === null ? addOn.quantity : Math.min(addOn.quantity, cap)
     const group = link.groupId === null ? undefined : parent.addOnGroups?.find((g) => g.id === link.groupId)
-    if (group?.maxUnits != null && groupUsed(parent, addOns, group.id, dishes) + groupUnits(link, dish, quantity) > group.maxUnits) continue
+    const groupLimit = firmGroupLimit(group)
+    if (group && groupLimit !== null && groupUsed(parent, addOns, group.id, dishes) + groupUnits(link, dish, quantity) > groupLimit) continue
     addOns[Number(id)] = { ...addOn, quantity }
   }
   return addOns
@@ -325,7 +405,12 @@ function fitUnit(parent: MenuDish, unit: Record<number, AddOnSelection>, dishes:
 
 /** After the parent's amount changes, keeps add-ons only for the units that remain and within the per-unit limits. */
 export function fitAddOns(parent: MenuDish, selection: Selection, dishes: Map<number, MenuDish>): Selection {
-  const units = unitsOf(parent, selection).map((unit) => fitUnit(parent, unit, dishes))
+  // Units that have just come into the order start with the admin's default add-ons.
+  const already = Math.min(selection.defaultsApplied ?? 0, unitCount(parent, selection.quantity))
+  const defaults = defaultAddOns(parent, dishes)
+  const units = unitsOf(parent, selection).map((unit, i) =>
+    fitUnit(parent, i < already || unitConfirmed(selection, i) ? unit : { ...defaults, ...unit }, dishes),
+  )
   const extraUnits = units.slice(1)
   const { extraUnits: _dropped, notes: _notes, answers: _answers, confirmed: _confirmed, ...rest } = selection
   void _dropped
@@ -334,6 +419,7 @@ export function fitAddOns(parent: MenuDish, selection: Selection, dishes: Map<nu
   const confirmed = units.map((_, i) => unitConfirmed(selection, i))
   return {
     ...rest,
+    defaultsApplied: units.length,
     addOns: units[0],
     ...(extraUnits.some((u) => Object.keys(u).length > 0) && { extraUnits }),
     ...(notes.some((n) => n !== '') && { notes }),
@@ -348,11 +434,7 @@ export function orderTotal(selections: Record<number, Selection>, dishes: Map<nu
     const dish = dishes.get(Number(id))
     if (!dish) continue
     total += lineTotal(dish, selection.optionId, selection.quantity)
-    for (const unit of unitsOf(dish, selection))
-      for (const [addOnId, addOn] of Object.entries(unit)) {
-        const addOnDish = dishes.get(Number(addOnId))
-        if (addOnDish) total += addOnLineTotal(dish, addOnDish, addOn)
-      }
+    for (const unit of unitsOf(dish, selection)) total += Object.values(unitAddOnTotals(dish, unit, dishes)).reduce((a, b) => a + b, 0)
   }
   return round2(total)
 }
@@ -392,7 +474,12 @@ export const itemCount = (selections: Record<number, Selection>) => Object.keys(
  */
 export function toLines(selections: Record<number, Selection>, dishes: Map<number, MenuDish>): OrderLineInput[] {
   const toInputs = (unit: Record<number, AddOnSelection>) =>
-    Object.entries(unit).map(([addOnId, addOn]) => ({ dishId: Number(addOnId), optionId: addOn.optionId, quantity: addOn.quantity }))
+    Object.entries(unit).map(([addOnId, addOn]) => ({
+      dishId: keyDishId(Number(addOnId)),
+      optionId: addOn.optionId,
+      quantity: addOn.quantity,
+      ...(keySlot(Number(addOnId)) > 0 && { slot: keySlot(Number(addOnId)) }),
+    }))
   return Object.entries(selections).map(([id, selection]) => {
     const dish = dishes.get(Number(id))
     const line = { dishId: Number(id), optionId: selection.optionId, quantity: selection.quantity }
@@ -438,7 +525,8 @@ export function summaryLines(selections: Record<number, Selection>, dishes: Map<
     const units = perUnit ? unitsOf(dish, selection) : [selection.addOns]
     const details = units.flatMap((unit, i) => {
       const add = Object.entries(unit).map(([addOnId, a]) => {
-        const name = dishes.get(Number(addOnId))?.name ?? ''
+        const addOnDish = dishes.get(keyDishId(Number(addOnId)))
+        const name = addOnDish ? addOnLabelled(addOnLink(dish, Number(addOnId)), addOnDish) : ''
         return a.quantity > 1 ? `${name} ×${a.quantity}` : name
       })
       const answers = (dish.questions ?? []).flatMap((q) => {
@@ -482,14 +570,18 @@ export function variantsOf(main: MenuDish, menu: Menu) {
 export interface AddOnOffer {
   dish: MenuDish
   link: MenuAddOn
+  /** The key the offer's selection is kept under (see addOnKey). */
+  key: number
 }
 
 /** The add-ons offered under a dish, with how each is offered there. Sold-out add-ons are not offered. */
 export function addOnsOf(dish: MenuDish, dishes: Map<number, MenuDish>): AddOnOffer[] {
-  return dish.addOnDishIds
-    .map((id) => dishes.get(id))
-    .filter((d): d is MenuDish => !!d && !d.isSoldOut)
-    .map((addOn) => ({ dish: addOn, link: addOnLink(dish, addOn.id) }))
+  // One offer per link, so an add-on offered twice shows twice (each with its label).
+  const links = dish.addOns?.length ? dish.addOns : dish.addOnDishIds.map((dishId) => addOnLink(dish, dishId))
+  return links
+    .map((link) => ({ addOn: dishes.get(link.dishId), link }))
+    .filter((o): o is { addOn: MenuDish; link: MenuAddOn } => !!o.addOn && !o.addOn.isSoldOut && dish.addOnDishIds.includes(o.link.dishId))
+    .map(({ addOn, link }) => ({ dish: addOn, link, key: addOnKey(addOn.id, link.slot ?? 0) }))
 }
 
 export interface Restored {
@@ -509,7 +601,8 @@ export function restoreSelections(saved: Record<number, Selection>, menu: Menu):
   function fit(dish: MenuDish, optionId: number | null, quantity: number, link?: MenuAddOn) {
     if (dish.isYesNo || (link && isCheckbox(link, dish))) return checkedAddOn(dish)
     const { min, max: ownMax, step } = amountRange(dish)
-    const max = link?.maxQuantity != null ? Math.max(min, Math.min(ownMax, link.maxQuantity)) : ownMax
+    const cap = link ? maxQuantityOf(link) : null
+    const max = cap != null ? Math.max(min, Math.min(ownMax, cap)) : ownMax
     let q = Math.min(Math.max(quantity, min), max)
     q = round2(min + Math.round((q - min) / step) * step)
     const keep = !link || link.price === null
@@ -529,20 +622,23 @@ export function restoreSelections(saved: Record<number, Selection>, menu: Menu):
     const units = unitsOf(dish, { ...selection, addOns: selection.addOns ?? {} }).map((unit) => {
       const addOns: Record<number, AddOnSelection> = {}
       for (const [addOnId, addOn] of Object.entries(unit)) {
-        const addOnDish = dishes.get(Number(addOnId))
-        if (!addOnDish || !orderable(addOnDish) || !dish.addOnDishIds.includes(addOnDish.id)) {
+        const addOnDish = dishes.get(keyDishId(Number(addOnId)))
+        const key = Number(addOnId)
+        const offered = dish.addOns?.some((a) => a.dishId === keyDishId(key) && (a.slot ?? 0) === keySlot(key)) ?? keySlot(key) === 0
+        if (!addOnDish || !orderable(addOnDish) || !dish.addOnDishIds.includes(addOnDish.id) || !offered) {
           skipped++
           continue
         }
-        const link = addOnLink(dish, addOnDish.id)
+        const link = addOnLink(dish, key)
         const fitted = fit(addOnDish, addOn.optionId, addOn.quantity, link)
         // An add-on that no longer fits in its group's limit is left out.
         const group = link.groupId === null ? undefined : dish.addOnGroups?.find((g) => g.id === link.groupId)
-        if (group?.maxUnits != null && groupUsed(dish, addOns, group.id, dishes) + groupUnits(link, addOnDish, fitted.quantity) > group.maxUnits) {
+        const groupLimit = firmGroupLimit(group)
+        if (group && groupLimit !== null && groupUsed(dish, addOns, group.id, dishes) + groupUnits(link, addOnDish, fitted.quantity) > groupLimit) {
           skipped++
           continue
         }
-        addOns[addOnDish.id] = fitted
+        addOns[key] = fitted
       }
       return addOns
     })
@@ -561,6 +657,8 @@ export function restoreSelections(saved: Record<number, Selection>, menu: Menu):
         ...(selection.notes && { notes: selection.notes }),
         ...(answers && { answers }),
         ...(selection.confirmed && { confirmed: selection.confirmed }),
+        // A saved order keeps its add-ons as they were: units already there get no defaults.
+        defaultsApplied: selection.defaultsApplied ?? units.length,
       },
       dishes,
     )
@@ -586,6 +684,7 @@ interface SavedLine {
   dishId: number
   optionId: number | null
   quantity: number
+  /** Add-ons by key (see addOnKey). */
   addOns: { dishId: number; optionId: number | null; quantity: number }[]
 }
 
@@ -604,7 +703,9 @@ function selectionsFromLines(lines: SavedLine[], dishes: Map<number, MenuDish>):
       const whole = Number.isInteger(addOn.quantity)
       for (let i = 0; i < n; i++) {
         const quantity = whole ? Math.floor(addOn.quantity / n) + (i < addOn.quantity % n ? 1 : 0) : i === 0 ? addOn.quantity : 0
-        if (quantity > 0) lineUnits[i][addOn.dishId] = { optionId: addOn.optionId, quantity }
+        // The units above a limit come as a line of their own for the same add-on: they add up.
+        const before = lineUnits[i][addOn.dishId]
+        if (quantity > 0) lineUnits[i][addOn.dishId] = { optionId: addOn.optionId, quantity: (before?.quantity ?? 0) + quantity }
       }
     }
     units[line.dishId] = [...(units[line.dishId] ?? []), ...lineUnits]
@@ -621,6 +722,16 @@ function selectionsFromLines(lines: SavedLine[], dishes: Map<number, MenuDish>):
   return saved
 }
 
+/** The key of the offer a past order's add-on line was for, found again by the name it was saved under (its label). */
+function addOnKeyOfItem(parent: MenuDish | undefined, dishId: number, savedName: string) {
+  const name = savedName.replace(OVER_LIMIT_SUFFIX, '')
+  const link = parent?.addOns?.find((a) => a.dishId === dishId && (a.slot ?? 0) > 0 && a.label && name.endsWith(`(${a.label})`))
+  return addOnKey(dishId, link?.slot ?? 0)
+}
+
+/** What the server adds to the name of an add-on line priced above a limit. */
+const OVER_LIMIT_SUFFIX = ' (מעבר למכסה)'
+
 /** A past order as a saved selection. Options are found again by their label; a vanished one falls back to the default. */
 export function selectionsFromHistory(order: HistoryOrder, menu: Menu): Restored {
   const dishes = dishMap(menu)
@@ -635,7 +746,11 @@ export function selectionsFromHistory(order: HistoryOrder, menu: Menu): Restored
       quantity: item.quantity,
       addOns: order.items
         .filter((i) => i.parentItemId === item.id)
-        .map((addOn) => ({ dishId: addOn.dishId, optionId: optionOf(addOn.dishId, addOn.optionLabel), quantity: addOn.quantity })),
+        .map((addOn) => ({
+          dishId: addOnKeyOfItem(dishes.get(item.dishId), addOn.dishId, addOn.dishName),
+          optionId: optionOf(addOn.dishId, addOn.optionLabel),
+          quantity: addOn.quantity,
+        })),
     }))
   return restoreSelections(selectionsFromLines(lines, dishes), menu)
 }
