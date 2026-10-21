@@ -19,19 +19,21 @@ function open(path = '/admin/appearance') {
 }
 
 describe('Settings side menu', () => {
-  it('starts with every section folded and lists them in the menu', async () => {
+  it('starts with every section open and lists them in the menu', async () => {
     open()
     const menu = await screen.findByRole('navigation', { name: 'קטגוריות בדף' })
     expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toContain('עיגול פינות')
     const toggle = within(await screen.findByRole('region', { name: 'עיגול פינות' })).getByRole('button', { name: 'עיגול פינות' })
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
   })
 
-  it('opens the section picked in the menu', async () => {
+  it('opens a folded section when it is picked in the menu', async () => {
     const { user } = open()
     const menu = await screen.findByRole('navigation', { name: 'קטגוריות בדף' })
-    await user.click(within(menu).getByRole('button', { name: 'עיגול פינות' }))
     const region = screen.getByRole('region', { name: 'עיגול פינות' })
+    await user.click(within(region).getByRole('button', { name: 'עיגול פינות' }))
+    expect(within(region).getByRole('button', { name: 'עיגול פינות' })).toHaveAttribute('aria-expanded', 'false')
+    await user.click(within(menu).getByRole('button', { name: 'עיגול פינות' }))
     expect(within(region).getByRole('button', { name: 'עיגול פינות' })).toHaveAttribute('aria-expanded', 'true')
     expect(within(region).getByRole('radio', { name: /מרובע/ })).toBeVisible()
   })
@@ -45,6 +47,7 @@ describe('Settings side menu', () => {
     expect(within(menu).queryByRole('button', { name: /שמירת כל השינויים/ })).not.toBeInTheDocument()
 
     await user.click(within(region).getByRole('radio', { name: /מרובע/ }))
+    expect(await within(menu).findByText('*')).toBeInTheDocument()
     await user.click(await within(menu).findByRole('button', { name: /שמירת כל השינויים/ }))
 
     await waitFor(() => expect(api.sent('PUT', '/api/admin/settings')).toHaveLength(1))
