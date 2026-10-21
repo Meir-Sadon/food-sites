@@ -496,18 +496,19 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
 
         Assert.Equal(Enum.GetValues<DayOfWeek>(), days.Select(d => d.Weekday));
         Assert.All(days, d => Assert.False(d.Enabled));
-        Assert.Equal(new SupplyDayDto(DayOfWeek.Friday, false, DayOfWeek.Thursday, new TimeOnly(20, 0)), days[5]);
+        Assert.Equal(new SupplyDayDto(DayOfWeek.Friday, false, DayOfWeek.Thursday, new TimeOnly(20, 0), []), days[5] with { Hours = [] });
+        Assert.All(days, d => Assert.Empty(d.Hours!));
     }
 
     [Fact]
     public async Task Supply_days_save_cutoffs()
     {
         var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();
-        days[5] = new SupplyDayDto(DayOfWeek.Friday, true, DayOfWeek.Wednesday, new TimeOnly(20, 0));
+        days[5] = new SupplyDayDto(DayOfWeek.Friday, true, DayOfWeek.Wednesday, new TimeOnly(20, 0), []);
         days[3] = days[3] with { Enabled = true };
 
         var saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
-        Assert.Equal(days, saved);
+        Assert.Equal(days.Select(d => (d.Weekday, d.Enabled, d.CutoffDay, d.CutoffTime)), saved.Select(d => (d.Weekday, d.Enabled, d.CutoffDay, d.CutoffTime)));
 
         days[5] = days[5] with { Enabled = false };
         saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
