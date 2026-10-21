@@ -215,6 +215,8 @@ export const popup = (overrides: Partial<Popup> = {}): Popup => ({
   enabled: false,
   size: 'medium',
   frequency: 'always',
+  trigger: 'load',
+  delaySeconds: 0,
   title: null,
   body: null,
   imageUrl: null,

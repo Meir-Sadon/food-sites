@@ -14,7 +14,7 @@ namespace FoodSite.Api.Controllers.Admin;
 public class PopupController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site) : AdminControllerBase
 {
     public record PopupInput(
-        bool Enabled, string? Size, string? Frequency, string? Title, string? Body, string? ButtonText, string? ButtonUrl);
+        bool Enabled, string? Size, string? Frequency, string? Trigger, int? DelaySeconds, string? Title, string? Body, string? ButtonText, string? ButtonUrl);
 
     [HttpGet]
     public async Task<EntryPopup.Dto> Get() => EntryPopup.Of(await db.Settings.AsNoTracking().SingleAsync());
@@ -27,6 +27,10 @@ public class PopupController(AppDbContext db, IImageStore images, IOptions<SiteO
             errors.Add(nameof(input.Size), "invalid");
         if (!string.IsNullOrWhiteSpace(input.Frequency) && !EntryPopup.Frequencies.Contains(input.Frequency))
             errors.Add(nameof(input.Frequency), "invalid");
+        if (!string.IsNullOrWhiteSpace(input.Trigger) && !EntryPopup.Triggers.Contains(input.Trigger))
+            errors.Add(nameof(input.Trigger), "invalid");
+        if (input.DelaySeconds is < 0 or > EntryPopup.MaxDelaySeconds)
+            errors.Add(nameof(input.DelaySeconds), "invalid");
         // A draft can be saved while the pop-up is off; turning it on needs a title.
         errors.Text(nameof(input.Title), input.Title, EntryPopup.TitleMaxLength, required: input.Enabled);
         errors.Text(nameof(input.Body), input.Body, EntryPopup.BodyMaxLength);
@@ -55,6 +59,8 @@ public class PopupController(AppDbContext db, IImageStore images, IOptions<SiteO
         settings.PopupEnabled = input.Enabled;
         settings.PopupSize = EntryPopup.EffectiveSize(Clean(input.Size));
         settings.PopupFrequency = EntryPopup.EffectiveFrequency(Clean(input.Frequency));
+        settings.PopupTrigger = EntryPopup.EffectiveTrigger(Clean(input.Trigger));
+        settings.PopupDelaySeconds = EntryPopup.EffectiveDelay(input.DelaySeconds);
         settings.PopupTitle = Clean(input.Title);
         settings.PopupBody = Clean(input.Body);
         settings.PopupButtonText = text;

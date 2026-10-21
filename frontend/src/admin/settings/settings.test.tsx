@@ -735,6 +735,9 @@ describe('Entry pop-up', () => {
     await user.click(within(form).getByRole('checkbox', { name: 'להציג את הפופ-אפ באתר' }))
     await user.click(within(form).getByRole('radio', { name: /גדול/ }))
     await user.click(within(form).getByRole('radio', { name: /פעם אחת בביקור/ }))
+    await user.click(within(form).getByRole('radio', { name: /כשהלקוח עומד לעזוב/ }))
+    await user.clear(within(form).getByLabelText('כמה שניות לחכות לפני שמתחילים לזהות יציאה'))
+    await user.type(within(form).getByLabelText('כמה שניות לחכות לפני שמתחילים לזהות יציאה'), '8')
     await user.type(within(form).getByLabelText('כותרת'), 'מבצע חג')
     await user.type(within(form).getByLabelText('תוכן'), '10% הנחה')
     await user.type(within(form).getByLabelText('תוכן הכפתור'), 'להזמנה')
@@ -746,6 +749,8 @@ describe('Entry pop-up', () => {
       enabled: true,
       size: 'large',
       frequency: 'session',
+      trigger: 'exit',
+      delaySeconds: 8,
       title: 'מבצע חג',
       body: '10% הנחה',
       buttonText: 'להזמנה',

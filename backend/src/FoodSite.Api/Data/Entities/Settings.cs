@@ -201,6 +201,12 @@ public class Settings
     /// <summary>always (every page load) or session (once per browser tab); null means always.</summary>
     public string? PopupFrequency { get; set; }
 
+    /// <summary>load (when the page has loaded) or exit (when the visitor seems about to leave); null means load.</summary>
+    public string? PopupTrigger { get; set; }
+
+    /// <summary>Seconds to wait before opening it, or before watching for an exit; null means none.</summary>
+    public int? PopupDelaySeconds { get; set; }
+
     public string? PopupTitle { get; set; }
     public string? PopupBody { get; set; }
     public string? PopupImageUrl { get; set; }
