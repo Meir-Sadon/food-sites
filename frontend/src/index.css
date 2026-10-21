@@ -4328,9 +4328,22 @@ label {
   cursor: pointer;
 }
 
-.section-menu__link:hover {
-  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+/* Hovering only makes the text bolder: no background change (the global button hover would colour them). */
+.section-menu__link:hover:not(:disabled) {
+  background: transparent;
   color: var(--color-text);
+  font-weight: 800;
+}
+
+.section-menu__item.active .section-menu__link:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}
+
+.admin-section__toggle:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-accent);
+  text-shadow: 0 0 0.6px currentColor;
 }
 
 .section-menu__item.active .section-menu__link {
