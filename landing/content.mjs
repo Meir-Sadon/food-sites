@@ -4,7 +4,7 @@ export const VARIANT_CONTENT = {
     font: 'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;800;900&display=swap',
     title: 'אתר הזמנות לעסק שלך ב-₪0 | בצד שלך',
     badge: '★ בצד שלך',
-    headline: 'אתר ב-₪0.<br>משלמים <span class="mark">רק כשמוכרים</span>',
+    headline: 'אתר ב-0 שקלים.<br>משלמים <span class="mark">רק כשמוכרים</span>',
     sub: 'לפתח אתר עולה עשרות אלפי שקלים ועוד תחזוקה חודשית, בלי לדעת אם זה יצליח. אצלנו: לא מכרת, לא שילמת.',
   },
   c: {
