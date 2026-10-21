@@ -213,4 +213,7 @@ public class Settings
     public string? PopupImagePublicId { get; set; }
     public string? PopupButtonText { get; set; }
     public string? PopupButtonUrl { get; set; }
+
+    /// <summary>How working hours change around Shabbat and holidays, as JSON (see <c>Sites/ShabbatRules</c>); null means no change.</summary>
+    public string? ShabbatRules { get; set; }
 }

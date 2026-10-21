@@ -1,13 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { settings, supplyDays } from '../test/catalogData'
+import { settings, shabbatRules, supplyDays } from '../test/catalogData'
 import { adminSession, fakeApi, masterSession } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 
 const settingsRoutes = {
   'GET /api/admin/settings': () => settings(),
   'GET /api/admin/supply-days': () => supplyDays(),
+  'GET /api/admin/shabbat-rules': () => shabbatRules(),
   'GET /api/admin/closed-dates': () => [],
 }
 

@@ -1,4 +1,4 @@
-import type { Category, Dish, Settings, SupplyDay } from '../api/catalog'
+import type { Category, Dish, Settings, ShabbatRulesResponse, SupplyDay } from '../api/catalog'
 import type { Popup } from '../api/popup'
 import type { Menu, MenuDish, Site } from '../api/site'
 import { weekdays } from '../api/catalog'
@@ -222,4 +222,18 @@ export const popup = (overrides: Partial<Popup> = {}): Popup => ({
   buttonText: null,
   buttonUrl: null,
   ...overrides,
+})
+
+export const shabbatRules = (patch: Partial<ShabbatRulesResponse> = {}): ShabbatRulesResponse => ({
+  rules: {
+    city: null,
+    shabbat: { eve: { mode: 'none', time: null, hours: 0 }, start: { mode: 'none', time: null, hours: 0 } },
+    holiday: { eve: { mode: 'none', time: null, hours: 0 }, start: { mode: 'none', time: null, hours: 0 } },
+  },
+  cities: [
+    { id: 'gedera', name: 'גדרה' },
+    { id: 'haifa', name: 'חיפה' },
+  ],
+  preview: null,
+  ...patch,
 })

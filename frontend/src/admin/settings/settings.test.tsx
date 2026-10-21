@@ -1,8 +1,8 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import type { SupplyDay } from '../../api/catalog'
-import { popup, settings, supplyDays } from '../../test/catalogData'
+import type { ShabbatRules, SupplyDay } from '../../api/catalog'
+import { popup, settings, shabbatRules, supplyDays } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid, masterSession } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
 import { openSection } from '../../test/sections'
@@ -11,6 +11,7 @@ const base = {
   ...adminSession,
   'GET /api/admin/settings': () => settings(),
   'GET /api/admin/supply-days': () => supplyDays(),
+  'GET /api/admin/shabbat-rules': () => shabbatRules(),
   'GET /api/admin/closed-dates': () => [{ id: 1, date: '2026-10-14', reason: 'סוכות' }],
   'GET /api/admin/social-links': () => [],
   'GET /api/admin/popup': () => ({ body: popup() }),
@@ -444,6 +445,33 @@ describe('General settings', () => {
       { from: '11:00:00', to: '00:00:00' },
     ])
     expect(sent.find((d) => d.weekday === 'Sunday')?.hours).toEqual([])
+  })
+
+  it('saves Shabbat and holiday rules by city', async () => {
+    const api = fakeApi({
+      ...base,
+      'PUT /api/admin/shabbat-rules': (_, body) => ({ ...shabbatRules(), rules: body }),
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const box = await section('שבתות וחגים')
+
+    await user.selectOptions(within(box).getByLabelText('ערב שבת: סוף פעילות'), 'before')
+    fireEvent.change(within(box).getByLabelText('ערב שבת: סוף פעילות: מספר שעות (שלם או חצי)'), { target: { value: '2.5' } })
+    await user.selectOptions(within(box).getByLabelText('מוצאי שבת: תחילת פעילות'), 'after')
+    await user.click(within(box).getByRole('button', { name: 'שמירה' }))
+    expect(await within(box).findByText('כדי לחשב לפי כניסה ויציאה צריך לבחור עיר.')).toBeTruthy()
+
+    await user.selectOptions(within(box).getByLabelText('עיר העסק'), 'gedera')
+    await user.selectOptions(within(box).getByLabelText('מוצאי חג: תחילת פעילות'), 'closed')
+    await user.click(within(box).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    const sent = api.sent('PUT', '/api/admin/shabbat-rules')[0].body as ShabbatRules
+    expect(sent.city).toBe('gedera')
+    expect(sent.shabbat.eve).toMatchObject({ mode: 'before', hours: 2.5 })
+    expect(sent.shabbat.start.mode).toBe('after')
+    expect(sent.holiday.start.mode).toBe('closed')
   })
 
   it('saves how many orders can be supplied in an hour', async () => {
