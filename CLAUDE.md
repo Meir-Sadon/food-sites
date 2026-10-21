@@ -17,6 +17,8 @@ This repo started as a copy of `kuskus-shel-ima` (history imported) and is being
 - Mark a phase's checkboxes in `docs/MIGRATION-PLAN.md` in the PR that completes them.
 - `node scripts/check-sites.mjs` (run in CI) fails when a site folder is incomplete, a site's `theme.css` lacks a variable the shared CSS uses, a site overrides a `he.json` key the shared file lacks, or a site's id, name, emoji or template names appear in shared code.
 
+The landing page `landing/` (docs/LANDING.md) is a separate small Node service for advertising the business; it is not a site and not part of the feature guide.
+
 ## Feature guide maintenance (required)
 
 The reusable customer/admin feature catalog is [`docs/food-sites-feature-guide.html`](docs/food-sites-feature-guide.html). It targets small food businesses: **Hebrew by default, RTL, with a complete English switch**. Keep both languages, accessible labels, search, category filters, image enlargement and print support working. Document one business's capabilities, not the multi-site wrapper.

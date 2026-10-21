@@ -1,0 +1,7 @@
+:root{--bg:#fff;--fg:#1c2540;--muted:#4a5575;--accent:#c93a1c;--accent-fg:#fff;--surface:#f6f8ff;--line:#dde3f3;--font:'Assistant',system-ui,Arial,sans-serif}
+.hero{background:radial-gradient(circle at 15% 0,#ffe3d6,transparent 55%),radial-gradient(circle at 90% 30%,#dfe8ff,transparent 50%)}
+.brand{display:inline-block;background:#fff;border-radius:50px;padding:6px 14px;font-size:.9rem;box-shadow:0 2px 8px #0001}
+.grad{background:linear-gradient(90deg,#d63a12,#c11b63);-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn{background:linear-gradient(90deg,#c93a1c,#b81c5a);box-shadow:0 8px 20px #b81c5a44}.btn.ghost{background:transparent;box-shadow:none;border-color:#b81c5a;color:var(--fg)}
+.k,.box{background:#fff;box-shadow:0 6px 20px #1c254014;border:0}.box.new{outline:2px solid #c11b63}.price{background:linear-gradient(90deg,#d63a12,#c11b63);-webkit-background-clip:text;background-clip:text;color:transparent}
+.steps i{background:linear-gradient(135deg,#c93a1c,#b81c5a);border-radius:12px}.more summary{color:#b81c5a}.how{background:#f6f8ff}.exit{background:#fff}

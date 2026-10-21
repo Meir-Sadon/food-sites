@@ -603,3 +603,39 @@ services:
         value: Lax
       - key: PORT
         value: "8080"
+
+  # The "earn together" landing page (landing/), a separate small Node service with its own deploy.
+  # Leads go to Neon (LEAD_DATABASE_URL) and by mail; see docs/LANDING.md. Not part of the site rollout in deploy.yml.
+  - type: web
+    name: earn-together-landing
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./landing/Dockerfile
+    dockerContext: ./landing
+    healthCheckPath: /health
+    envVars:
+      - key: LANDING_VARIANT
+        value: b
+      - key: LANDING_PHONE
+        value: "0546359856"
+      - key: LEAD_DATABASE_URL
+        sync: false
+      - key: LEAD_NOTIFY_EMAIL
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: META_PIXEL_ID
+        sync: false
+      - key: GOOGLE_ANALYTICS_ID
+        sync: false
+      - key: GOOGLE_ADS_ID
+        sync: false
+      - key: GOOGLE_ADS_LEAD_LABEL
+        sync: false
+      - key: PORT
+        value: "8080"

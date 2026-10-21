@@ -100,7 +100,11 @@ describe('Entry pop-up', () => {
 
     fireEvent.mouseOut(document.body, { clientY: 300 })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    fireEvent.mouseOut(document.body, { clientY: 0 })
-    expect(await screen.findByRole('dialog', { name: 'מבצע חג' })).toBeInTheDocument()
+    // The site loads asynchronously and the pop-up only listens once it has, so on a slow machine the first exit can
+    // come too early: leave through the top again until it is heard.
+    await waitFor(() => {
+      fireEvent.mouseOut(document.body, { clientY: 0 })
+      expect(screen.getByRole('dialog', { name: 'מבצע חג' })).toBeInTheDocument()
+    })
   })
 })

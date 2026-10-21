@@ -1,0 +1,8 @@
+{
+  "name": "food-sites-landing",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": { "start": "node server.mjs", "test": "node --test \"test/*.test.mjs\"" },
+  "dependencies": { "pg": "8.13.1" }
+}
