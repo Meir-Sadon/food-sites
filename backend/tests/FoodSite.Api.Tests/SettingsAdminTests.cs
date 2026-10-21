@@ -496,7 +496,7 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
 
         Assert.Equal(Enum.GetValues<DayOfWeek>(), days.Select(d => d.Weekday));
         Assert.All(days, d => Assert.False(d.Enabled));
-        Assert.Equal(new SupplyDayDto(DayOfWeek.Friday, false, DayOfWeek.Thursday, new TimeOnly(20, 0), []), days[5] with { Hours = [] });
+        Assert.Equal((DayOfWeek.Friday, false, DayOfWeek.Thursday, new TimeOnly(20, 0)), (days[5].Weekday, days[5].Enabled, days[5].CutoffDay, days[5].CutoffTime));
         Assert.All(days, d => Assert.Empty(d.Hours!));
     }
 
