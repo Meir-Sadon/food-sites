@@ -11,6 +11,7 @@ import { ScrollButtons } from './ScrollButtons'
 import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
 import { useApplyColors } from '../site/useApplyColors'
+import { saveTheme } from '../site/themeCache'
 import { useColors, useCorners, useFinish, useSite, useSiteStyle } from '../site/useSite'
 import { initMarketing, trackMarketing } from '../tracking/marketing'
 import { trackUsage } from '../usage/track'
@@ -25,6 +26,11 @@ function useStyleAttribute() {
   const corners = useCorners()
   const { palette, customColors, lineWidth } = useColors()
   const { font, shadows, spacing, tileGroups } = useFinish()
+  const site = useSite()
+  // Kept for the next visit, whose first paint (index.html) then already has the look the admin chose.
+  useEffect(() => {
+    if (site) saveTheme(site)
+  }, [site])
   useEffect(() => {
     const root = document.documentElement
     root.dataset.style = style
