@@ -5,6 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title></title>
+    <script>
+      // Paint the look the admin chose from the first frame: the last /api/site look (see site/themeCache.ts)
+      // is applied before the page renders, so the site.json colours never show first. Client pages only.
+      try {
+        var theme = JSON.parse(localStorage.getItem('foodSiteTheme'))
+        if (theme && !/^\/(admin|d)(\/|$)/.test(location.pathname)) {
+          var root = document.documentElement
+          for (var name in theme.vars) root.style.setProperty(name, theme.vars[name])
+          for (var key in theme.attrs) root.dataset[key] = theme.attrs[key]
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
