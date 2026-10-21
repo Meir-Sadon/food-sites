@@ -1135,6 +1135,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("PopupButtonUrl")
                         .HasColumnType("text");
 
+                    b.Property<int?>("PopupDelaySeconds")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("PopupEnabled")
                         .HasColumnType("boolean");
 
@@ -1151,6 +1154,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("PopupTitle")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupTrigger")
                         .HasColumnType("text");
 
                     b.Property<int?>("PortionsPerSupplyDate")

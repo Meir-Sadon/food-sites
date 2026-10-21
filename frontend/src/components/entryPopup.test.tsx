@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { popup, publicApi, site } from '../test/catalogData'
@@ -19,7 +19,7 @@ afterEach(() => sessionStorage.clear())
 describe('Entry pop-up', () => {
   it('opens with its picture, text and button when the site opens, and closes on the X', async () => {
     fakeApi({ ...publicApi, 'GET /api/site': () => site({ popup: shown }) })
-    renderAt('/about')
+    renderAt('/')
 
     const dialog = await screen.findByRole('dialog', { name: 'מבצע חג' })
     expect(dialog).toHaveTextContent('עשר אחוז הנחה')
@@ -35,7 +35,7 @@ describe('Entry pop-up', () => {
 
   it('has no button unless it has both its text and its address', async () => {
     fakeApi({ ...publicApi, 'GET /api/site': () => site({ popup: popup({ enabled: true, title: 'שלום', buttonText: 'להזמנה' }) }) })
-    renderAt('/about')
+    renderAt('/')
     await screen.findByRole('dialog', { name: 'שלום' })
     expect(screen.queryByRole('link', { name: 'להזמנה' })).not.toBeInTheDocument()
   })
@@ -57,22 +57,50 @@ describe('Entry pop-up', () => {
 
   it('opens once per visit when the admin chose that', async () => {
     fakeApi({ ...publicApi, 'GET /api/site': () => site({ popup: { ...shown, frequency: 'session' } }) })
-    const first = renderAt('/about')
+    const first = renderAt('/')
     await userEvent.setup().click((await screen.findAllByRole('button', { name: 'סגירה' }))[0])
     first.unmount()
 
-    renderAt('/about')
-    await screen.findByRole('heading', { name: 'אודות' })
+    renderAt('/')
+    await new Promise((resolve) => setTimeout(resolve, 50))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('opens on every load by default', async () => {
     fakeApi({ ...publicApi, 'GET /api/site': () => site({ popup: shown }) })
-    const first = renderAt('/about')
+    const first = renderAt('/')
     await screen.findByRole('dialog', { name: 'מבצע חג' })
     first.unmount()
 
+    renderAt('/')
+    expect(await screen.findByRole('dialog', { name: 'מבצע חג' })).toBeInTheDocument()
+  })
+
+  it('opens on the home page only', async () => {
+    fakeApi({ ...publicApi, 'GET /api/site': () => site({ popup: shown }) })
     renderAt('/about')
+    await screen.findByRole('heading', { name: 'אודות' })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('waits the delay the admin set', async () => {
+    fakeApi({ ...publicApi, 'GET /api/site': () => site({ popup: { ...shown, delaySeconds: 1 } }) })
+    renderAt('/')
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'מבצע חג' }, { timeout: 2500 })).toBeInTheDocument()
+  })
+
+  it('opens only when the pointer leaves through the top when the admin chose exit', async () => {
+    fakeApi({ ...publicApi, 'GET /api/site': () => site({ popup: { ...shown, trigger: 'exit' } }) })
+    renderAt('/')
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    fireEvent.mouseOut(document.body, { clientY: 300 })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    fireEvent.mouseOut(document.body, { clientY: 0 })
     expect(await screen.findByRole('dialog', { name: 'מבצע חג' })).toBeInTheDocument()
   })
 })

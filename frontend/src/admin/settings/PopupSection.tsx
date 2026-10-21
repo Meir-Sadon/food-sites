@@ -2,17 +2,19 @@ import { useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IMAGE_TYPES, MAX_IMAGE_BYTES } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
-import { POPUP_FREQUENCIES, POPUP_LIMITS, POPUP_SIZES, popupApi, type Popup, type PopupInput } from '../../api/popup'
+import { POPUP_FREQUENCIES, POPUP_LIMITS, POPUP_MAX_DELAY_SECONDS, POPUP_SIZES, POPUP_TRIGGERS, popupApi, type Popup, type PopupInput } from '../../api/popup'
 import { PopupView } from '../../components/EntryPopup'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { useUnsavedChanges } from '../unsaved'
 import { fieldErrorsOf, useErrorMessage, useFormErrorMessage, useLoad } from '../hooks'
-import { FieldError, Loading, Section, Status } from '../ui'
+import { FieldError, Info, Loading, Section, Status } from '../ui'
 
 const toInput = (p: Popup): PopupInput => ({
   enabled: p.enabled,
   size: p.size,
   frequency: p.frequency,
+  trigger: p.trigger,
+  delaySeconds: p.delaySeconds,
   title: p.title ?? '',
   body: p.body ?? '',
   buttonText: p.buttonText ?? '',
@@ -140,6 +142,43 @@ export function PopupSection() {
             ))}
           </fieldset>
           {fieldError('frequency')}
+
+          <fieldset className="style-options">
+            <legend>{t('admin.popup.trigger')}</legend>
+            {POPUP_TRIGGERS.map((trigger) => (
+              <label key={trigger} className="style-option">
+                <input
+                  type="radio"
+                  name="popup-trigger"
+                  value={trigger}
+                  checked={form.trigger === trigger}
+                  onChange={() => change({ trigger })}
+                />
+                <strong>{t(`admin.popup.triggers.${trigger}.name`)}</strong>
+                <span className="hint">{t(`admin.popup.triggers.${trigger}.description`)}</span>
+              </label>
+            ))}
+          </fieldset>
+          {fieldError('trigger')}
+
+          <span className="field">
+            <span className="with-info">
+              <label htmlFor="popup-delay">{t(form.trigger === 'exit' ? 'admin.popup.delayExit' : 'admin.popup.delay')}</label>
+              <Info text={t('admin.popup.delayHint', { max: POPUP_MAX_DELAY_SECONDS })} about={t('admin.popup.delay')} />
+            </span>
+            <input
+              id="popup-delay"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={POPUP_MAX_DELAY_SECONDS}
+              step={1}
+              value={form.delaySeconds}
+              aria-describedby="popup-delaySeconds-error"
+              onChange={(e) => change({ delaySeconds: Math.min(POPUP_MAX_DELAY_SECONDS, Math.max(0, Math.floor(Number(e.target.value) || 0))) })}
+            />
+            {fieldError('delaySeconds')}
+          </span>
 
           <div className="stack">
             <strong>{t('admin.popup.image')}</strong>
