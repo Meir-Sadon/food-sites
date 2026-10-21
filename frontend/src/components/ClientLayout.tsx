@@ -12,7 +12,7 @@ import { TopBar } from './TopBar'
 import { SiteProvider } from '../site/SiteContext'
 import { useApplyColors } from '../site/useApplyColors'
 import { saveTheme } from '../site/themeCache'
-import { useColors, useCorners, useFinish, useSite, useSiteStyle } from '../site/useSite'
+import { useColors, useCorners, useFinish, useSite, useSiteSettled, useSiteStyle } from '../site/useSite'
 import { initMarketing, trackMarketing } from '../tracking/marketing'
 import { trackUsage } from '../usage/track'
 
@@ -27,6 +27,7 @@ function useStyleAttribute() {
   const { palette, customColors, lineWidth } = useColors()
   const { font, shadows, spacing, tileGroups } = useFinish()
   const site = useSite()
+  const settled = useSiteSettled()
   // Kept for the next visit, whose first paint (index.html) then already has the look the admin chose.
   useEffect(() => {
     if (site) saveTheme(site)
@@ -49,6 +50,10 @@ function useStyleAttribute() {
     }
   }, [style, corners, font, shadows, spacing, tileGroups])
   useApplyColors(palette, customColors, lineWidth)
+  // A first visit has no saved look, so index.html keeps the page hidden until the real one is on <html> (see its script).
+  useEffect(() => {
+    if (settled) document.getElementById('theme-pending')?.remove()
+  }, [settled])
 }
 
 /** Loads the marketing tools the owner connected (only those with an id) and tells them about each page the client opens. */

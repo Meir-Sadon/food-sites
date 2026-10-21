@@ -80,10 +80,13 @@ describe('Item badges', () => {
   it('saves the badges on their own and keeps the other settings out of the request', async () => {
     const api = fakeApi({
       ...base,
+      'GET /api/admin/categories': () => [],
+      'GET /api/admin/dishes': () => [],
       'PUT /api/admin/settings/badges': (_, body) => settings({ badges: { ...settings().badges, ...(body as object) } }),
     })
-    renderAt('/admin/appearance')
+    renderAt('/admin/dishes')
     const user = userEvent.setup()
+    await user.click(await screen.findByText('הגדרות כלליות למנות'))
     const form = await section('סימוני מנות')
     const save = within(form).getByRole('button', { name: 'שמירה' })
 
