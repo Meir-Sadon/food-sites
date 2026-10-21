@@ -1113,6 +1113,22 @@ label {
   text-align: end;
 }
 
+/* An add-on shown with its picture while the client adjusts the dish. */
+.addon__image {
+  inline-size: 3rem;
+  block-size: 3rem;
+  margin-inline-end: 0.5rem;
+  object-fit: cover;
+  vertical-align: middle;
+  border-radius: calc(0.5rem * var(--corner-scale, 1));
+}
+
+/* What the add-on costs above its limit, under its name. */
+.addon__over {
+  display: block;
+  font-size: 0.85em;
+}
+
 .addons + .addons {
   margin-block-start: 0.75rem;
 }

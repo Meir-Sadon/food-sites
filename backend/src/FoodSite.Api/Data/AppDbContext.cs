@@ -231,7 +231,7 @@ public class AppDbContext(
 
         model.Entity<DishAddOn>(e =>
         {
-            e.HasKey(a => new { a.ParentDishId, a.AddOnDishId });
+            e.HasKey(a => new { a.ParentDishId, a.AddOnDishId, a.Slot });
             e.HasOne(a => a.ParentDish).WithMany(d => d.AddOns)
                 .HasForeignKey(a => a.ParentDishId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -242,6 +242,8 @@ public class AppDbContext(
                 .HasForeignKey(a => a.GroupId)
                 .OnDelete(DeleteBehavior.SetNull);
             e.Property(a => a.MaxQuantity).HasPrecision(10, 3);
+            e.Property(a => a.OverLimitPrice).HasPrecision(10, 2);
+            e.Property(a => a.Label).HasMaxLength(DishAddOn.LabelMaxLength);
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_DishAddOns_NotSelf", "\"ParentDishId\" <> \"AddOnDishId\""));
         });

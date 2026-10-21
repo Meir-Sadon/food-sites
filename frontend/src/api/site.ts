@@ -254,11 +254,23 @@ export interface MenuAddOn {
   maxQuantity: number | null
   /** Added or not, never in an amount. */
   isCheckbox: boolean
+  /** Which offer of the add-on under the dish: 0, or 1, 2... when the dish offers the same add-on again. */
+  slot?: number
+  /** Tells the offers of the same add-on apart ("בפנים", "בחוץ"). */
+  label?: string | null
+  /** Its picture is shown while the client adjusts the dish. */
+  showImage?: boolean
+  /** Picked for every unit until the client takes it off. */
+  isDefault?: boolean
+  /** Price per unit above maxQuantity (per ordered unit); null means maxQuantity is firm. */
+  overLimitPrice?: number | null
 }
 
 export interface MenuAddOnGroup {
   id: number
   name: string
+  /** Price per unit above maxUnits; null means the limit is firm. */
+  overLimitPrice?: number | null
   /** Units picked from the group together (a check box or a weight counts one); null for no limit. */
   maxUnits: number | null
 }
@@ -302,13 +314,21 @@ export type Fulfillment = 'Delivery' | 'Pickup'
 /** `Transfer` is the older combined Bit / PayBox choice; new orders use `Bit` or `PayBox`. */
 export type Payment = 'OnDelivery' | 'Transfer' | 'Bit' | 'PayBox'
 
+/** An add-on of an ordered unit; slot says which offer of it under the dish (left out for the first). */
+export interface AddOnLineInput {
+  dishId: number
+  optionId: number | null
+  quantity: number
+  slot?: number
+}
+
 export interface OrderLineInput {
   dishId: number
   optionId: number | null
   quantity: number
-  addOns: { dishId: number; optionId: number | null; quantity: number }[]
+  addOns: AddOnLineInput[]
   /** One entry per ordered unit, each with its own add-ons; sent instead of addOns for a dish ordered in several units. */
-  addOnUnits?: { addOns: { dishId: number; optionId: number | null; quantity: number }[]; note?: string; answers?: AnswerInput[] }[]
+  addOnUnits?: { addOns: AddOnLineInput[]; note?: string; answers?: AnswerInput[] }[]
   /** A name or remark for the line (for a dish not sold by units; units carry their own). */
   note?: string
   /** Answers to the dish's questions (for a dish not sold by units; units carry their own). */

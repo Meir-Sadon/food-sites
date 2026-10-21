@@ -45,6 +45,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<decimal?>("OverLimitPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DishId");
@@ -295,6 +299,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int>("AddOnDishId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Slot")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
@@ -304,6 +311,13 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("IsCheckbox")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<bool>("LinkedFromAddOn")
                         .HasColumnType("boolean");
 
@@ -311,11 +325,18 @@ namespace FoodSite.Api.Data.Migrations
                         .HasPrecision(10, 3)
                         .HasColumnType("numeric(10,3)");
 
+                    b.Property<decimal?>("OverLimitPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<decimal?>("Price")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
-                    b.HasKey("ParentDishId", "AddOnDishId");
+                    b.Property<bool>("ShowImage")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("ParentDishId", "AddOnDishId", "Slot");
 
                     b.HasIndex("AddOnDishId");
 

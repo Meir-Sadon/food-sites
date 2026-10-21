@@ -643,7 +643,7 @@ describe('Dish form', () => {
 
 describe('Variant form', () => {
   it('lists the add-ons it gets from its main dish', async () => {
-    const main = dish(1, 'כריך', 1, { addOns: [{ dishId: 3, groupId: null, price: null, maxQuantity: null, isCheckbox: true }], addOnDishIds: [3] })
+    const main = dish(1, 'כריך', 1, { addOns: [{ dishId: 3, groupId: null, price: null, maxQuantity: null, isCheckbox: true, slot: 0, label: null, showImage: false, isDefault: false, overLimitPrice: null }], addOnDishIds: [3] })
     const side = dish(3, 'סלט', 1, { isAddOnOnly: true })
     const variant = dish(2, 'כריך שניצל', 1, { mainDishId: 1, useMainDishPrice: true, options: [] })
     fakeApi({ ...base, 'GET /api/admin/dishes': () => [main, variant, side] })

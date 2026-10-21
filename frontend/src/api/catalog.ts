@@ -200,6 +200,8 @@ export interface AddOnGroup {
   id: number
   name: string
   maxUnits: number | null
+  /** Price per unit above maxUnits; null means the limit is firm. */
+  overLimitPrice: number | null
 }
 
 export interface AddOnLink {
@@ -209,6 +211,12 @@ export interface AddOnLink {
   price: number | null
   maxQuantity: number | null
   isCheckbox: boolean
+  /** 0 for the first offer of the add-on under the dish; 1, 2... when it is offered again. */
+  slot: number
+  label: string | null
+  showImage: boolean
+  isDefault: boolean
+  overLimitPrice: number | null
 }
 
 export interface DishInput {
@@ -236,9 +244,20 @@ export interface DishInput {
   useMainDishPrice?: boolean
   isYesNo?: boolean
   /** Sent together with addOns; `group` in an add-on is an index into this list. */
-  addOnGroups?: { id: number | null; name: string; maxUnits: number | null }[]
+  addOnGroups?: { id: number | null; name: string; maxUnits: number | null; overLimitPrice?: number | null }[]
   /** The whole list of this dish's add-ons; left out, they stay as they are. */
-  addOns?: { dishId: number; group: number | null; price: number | null; maxQuantity: number | null; isCheckbox: boolean }[]
+  addOns?: {
+    dishId: number
+    group: number | null
+    price: number | null
+    maxQuantity: number | null
+    isCheckbox: boolean
+    slot?: number
+    label?: string | null
+    showImage?: boolean
+    isDefault?: boolean
+    overLimitPrice?: number | null
+  }[]
   /** The whole list of the dish's questions; left out, they stay as they are. */
   questions?: {
     id: number | null
