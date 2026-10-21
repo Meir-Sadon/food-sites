@@ -1,0 +1,6 @@
+:root{--bg:#0f2b22;--fg:#fff;--muted:#cfe3da;--accent:#ffd23f;--accent-fg:#0f2b22;--surface:#173f31;--line:#2c6b54;--font:'Rubik',system-ui,Arial,sans-serif}
+.brand{color:var(--accent)}.mark{background:var(--accent);color:var(--accent-fg);padding:0 .25em;border-radius:6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.btn{border-radius:50px}.chips li b{color:var(--accent)}.box.new{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}.box.new p,.box.new ul,.box.new .price,.box.new h3{color:var(--accent-fg)}
+.how,.exit,.faq{background:#143a2d}.form-sec{background:#173f31}.thanks{background:#0f2b22}
+input,select,textarea{background:#fff;color:#111}.err,.status{color:#ff9aa8}input[aria-invalid]{border-color:#ff9aa8}
+.slot{border-color:var(--line)}.wa{background:#25d366}.steps i{background:var(--accent)}
