@@ -20,10 +20,10 @@ const fontDir = arg('fonts', path.resolve(here, '../../frontend/node_modules/@fo
 for (const w of [400, 700, 900]) for (const sub of ['hebrew', 'latin']) cpSync(path.join(fontDir, `heebo-${sub}-${w}-normal.woff2`), path.join(work, 'fonts', `heebo-${sub}-${w}-normal.woff2`));
 // clips: re-encoded all-intra so the page can seek to any frame instantly
 mkdirSync(path.join(work, 'clips'), { recursive: true });
-const trim = { menu: 1.2, addons: 1.0, cart: 1.0, club: 1.0, admin: 1.0, zones: 0 };
+const trim = { menu: 1.2, addons: 1.0, cart: 1.0, club: 1.0, admin: 1.0, zones: 12.5 };
 for (const f of readdirSync(clipsDir).filter((f) => f.endsWith('.webm'))) {
   const n = f.replace('.webm', ''), dst = path.join(work, 'clips', f);
-  if (!existsSync(dst)) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(trim[n] ?? 0), '-i', path.join(clipsDir, f), '-vf', 'crop=390:844:0:0,scale=780:1688:flags=lanczos,unsharp=5:5:0.8', '-c:v', 'libvpx', '-g', '1', '-b:v', '6M', '-crf', '8', '-an', dst]);
+  if (!existsSync(dst)) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(trim[n] ?? 0), '-i', path.join(clipsDir, f), '-c:v', 'libvpx', '-g', '1', '-b:v', '6M', '-crf', '8', '-an', dst]);
 }
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM ?? '/opt/pw-browsers/chromium' });
 const open = async () => { const ctx = await browser.newContext({ viewport: { width: 1080, height: 1920 } }); const p = await ctx.newPage(); await p.addInitScript((c) => { window.CONFIG = c; }, config); await p.goto('file://' + path.join(work, 'index.html')); await p.evaluate(() => document.fonts.ready); await p.evaluate(() => window.ready()); await p.waitForTimeout(300); return p; };
@@ -33,6 +33,7 @@ if (only) { await probe.evaluate((t) => render(t), +only); await probe.waitForTi
 const caps = await probe.evaluate(() => window.captions());
 const ts = (s) => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${x.toFixed(3).padStart(6, '0').replace('.', ',')}`; };
 writeFileSync(output.replace(/\.mp4$/, '.srt'), caps.map((c, i) => `${i + 1}\n${ts(c.a)} --> ${ts(c.b)}\n${c.text}\n`).join('\n'));
+writeFileSync(output.replace(/\.mp4$/, '.captions.json'), JSON.stringify(caps, null, 1));
 writeFileSync(output.replace(/\.mp4$/, '.narration.txt'), caps.map((c) => `[${Math.floor(c.a / 60)}:${String(Math.floor(c.a % 60)).padStart(2, '0')}] ${c.text}`).join('\n') + '\n');
 const frames = path.join(work, 'frames'); rmSync(frames, { recursive: true, force: true }); mkdirSync(frames);
 const total = Math.round(dur * fps);
