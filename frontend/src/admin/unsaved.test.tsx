@@ -1,9 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { settings, supplyDays } from '../test/catalogData'
+import { popup, settings, supplyDays } from '../test/catalogData'
 import { adminSession, fakeApi } from '../test/fakeApi'
 import { renderAt } from '../test/render'
+import { openSection } from '../test/sections'
 
 function open() {
   let saved = settings()
@@ -14,13 +15,14 @@ function open() {
     'GET /api/admin/supply-days': () => supplyDays(),
     'GET /api/admin/closed-dates': () => [],
     'GET /api/admin/categories': () => [],
+    'GET /api/admin/popup': () => ({ body: popup() }),
   })
   renderAt('/admin/appearance')
   return { api, user: userEvent.setup() }
 }
 
 async function pickStreetStyle(user: ReturnType<typeof userEvent.setup>) {
-  const region = await screen.findByRole('region', { name: 'סגנון האתר' })
+  const region = await openSection('סגנון האתר')
   await waitFor(() => expect(within(region).queryByText('טוען…')).not.toBeInTheDocument())
   await user.click(within(region).getByRole('radio', { name: /דוכן רחוב/ }))
 }

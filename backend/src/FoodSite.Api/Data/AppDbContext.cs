@@ -163,7 +163,12 @@ public class AppDbContext(
                 "CK_Dishes_NotOwnVariant", "\"MainDishId\" <> \"Id\""));
         });
 
-        model.Entity<Settings>(e => e.Property(s => s.DeliveryFeeAmount).HasPrecision(10, 2));
+        model.Entity<Settings>(e =>
+        {
+            e.Property(s => s.DeliveryFeeAmount).HasPrecision(10, 2);
+            e.Property(s => s.DeliveryBaseFee).HasPrecision(10, 2);
+            e.Property(s => s.DeliveryDiscountMinOrder).HasPrecision(10, 2);
+        });
 
         model.Entity<DeliveryZone>(e =>
         {

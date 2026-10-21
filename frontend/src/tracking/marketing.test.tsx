@@ -8,6 +8,7 @@ import { adminSession, fakeApi, invalid } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 import { EXCLUDED_KEY } from '../usage/track'
 import { marketingTracking, resetMarketingForTests } from './marketing'
+import { openSection } from '../test/sections'
 
 const none: TrackingIds = { metaPixelId: '', googleAnalyticsId: '', googleTagManagerId: '', tikTokPixelId: '', googleAdsId: '', googleAdsPurchaseLabel: '', metaServerEvents: false }
 const all: TrackingIds = { metaPixelId: '123456789012345', googleAnalyticsId: 'G-ABC123XYZ9', googleTagManagerId: 'GTM-ABC123', tikTokPixelId: 'C1ABCDEF2GHIJKLMN3OP', googleAdsId: 'AW-123456789', googleAdsPurchaseLabel: 'AbC-dEf_123', metaServerEvents: true }
@@ -198,14 +199,14 @@ describe('Marketing tracking settings', () => {
   }
 
   async function trackingSection() {
-    const region = await screen.findByRole('region', { name: 'מעקב שיווקי' })
+    const region = await openSection('מעקב שיווקי')
     await waitFor(() => expect(within(region).queryByText('טוען…')).not.toBeInTheDocument())
     return region
   }
 
   it('saves only the ids that were changed, on their own', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/settings/tracking': (_, body) => settings({ tracking: { ...none, ...(body as object) } }) })
-    renderAt('/admin/settings')
+    renderAt('/admin/social')
     const user = userEvent.setup()
     const form = await trackingSection()
 
@@ -218,7 +219,7 @@ describe('Marketing tracking settings', () => {
 
   it('saves the Ads tag and the Meta token without ever showing the token', async () => {
     const api = fakeApi({ ...base, 'GET /api/admin/settings': () => settings({ tracking: { ...none, metaServerEvents: true } }), 'PUT /api/admin/settings/tracking': () => settings({ tracking: { ...none, googleAdsId: 'AW-123456789', metaServerEvents: true } }) })
-    renderAt('/admin/settings')
+    renderAt('/admin/social')
     const user = userEvent.setup()
     const form = await trackingSection()
 
@@ -239,7 +240,7 @@ describe('Marketing tracking settings', () => {
 
   it('shows the saved ids and explains an id that has the wrong shape', async () => {
     fakeApi({ ...base, 'GET /api/admin/settings': () => settings({ tracking: all }), 'PUT /api/admin/settings/tracking': () => invalid({ MetaPixelId: ['trackingId'] }) })
-    renderAt('/admin/settings')
+    renderAt('/admin/social')
     const user = userEvent.setup()
     const form = await trackingSection()
 

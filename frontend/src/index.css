@@ -531,6 +531,34 @@ label {
   font-size: 0.8125rem;
 }
 
+/* "On sale", "new" and "almost out" marks beside a dish's name. */
+.item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0 0 0.375rem;
+  padding: 0;
+  list-style: none;
+}
+
+.item-badge {
+  padding: 0.125rem 0.625rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.item-badge--new {
+  background: var(--color-success);
+}
+
+.item-badge--almostOut {
+  background: var(--color-error);
+}
+
 .numeric {
   font-variant-numeric: tabular-nums;
 }
@@ -1597,6 +1625,14 @@ label {
   border: 0;
   border-radius: 50%;
   cursor: pointer;
+}
+
+/* The searched words in a result: always yellow with dark text, so they read on any palette. */
+.dish-results mark {
+  background: #ffe94d;
+  color: #1a1a1a;
+  border-radius: calc(2px * var(--corner-scale, 1));
+  padding: 0 0.1em;
 }
 
 .dish-results__title {
@@ -4002,4 +4038,535 @@ label {
 
 .order-address-stage {
   margin-block-start: 1rem;
+}
+
+/* Why a delivery fee is not the regular one (large-order discount), and the small asterisk note under "free delivery above…". */
+.delivery-note {
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.delivery-discount-hint__note {
+  display: block;
+  opacity: 0.75;
+  font-size: 0.75rem;
+}
+
+/* The entry pop-up: a picture, a title, some text and a button, in one of three sizes. */
+.entry-popup__backdrop {
+  z-index: 40;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.modal.entry-popup {
+  gap: 0.75rem;
+  max-inline-size: 30rem;
+  padding: 1.75rem 1.5rem 1.25rem;
+  border-radius: calc(1rem * var(--corner-scale));
+  text-align: center;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
+}
+
+.modal.entry-popup--small {
+  max-inline-size: 22rem;
+}
+
+.modal.entry-popup--large {
+  max-inline-size: 44rem;
+  padding-inline: 2rem;
+}
+
+.entry-popup h2 {
+  font-size: 1.5rem;
+  line-height: 1.25;
+  color: var(--color-accent);
+}
+
+.entry-popup--small h2 {
+  font-size: 1.25rem;
+}
+
+.entry-popup--large h2 {
+  font-size: 1.9rem;
+}
+
+.entry-popup__body {
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+/* The picture runs edge to edge across the top of the window, under the X. */
+.modal.entry-popup--picture {
+  padding-block-start: 0;
+}
+
+.entry-popup__image {
+  display: block;
+  inline-size: calc(100% + 3rem);
+  max-inline-size: none;
+  aspect-ratio: 16 / 9;
+  margin-inline: -1.5rem;
+  margin-block-end: 0.5rem;
+  object-fit: cover;
+}
+
+.entry-popup--large .entry-popup__image {
+  inline-size: calc(100% + 4rem);
+  margin-inline: -2rem;
+}
+
+.entry-popup .modal__close {
+  z-index: 1;
+}
+
+.entry-popup--picture .modal__close {
+  background: rgb(255 255 255 / 0.9);
+  color: #1f1f1f;
+}
+
+.entry-popup .modal__title--with-close {
+  padding-inline-end: 0;
+}
+
+.entry-popup:not(.entry-popup--picture) .modal__title--with-close {
+  padding-inline: 2.75rem;
+}
+
+.entry-popup__button {
+  align-self: center;
+  min-inline-size: 60%;
+  margin-block-start: 0.25rem;
+  font-size: 1.05rem;
+}
+
+.entry-popup__dismiss {
+  align-self: center;
+  border-color: transparent;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .entry-popup__backdrop {
+    animation: entry-popup-fade 0.3s ease-out;
+  }
+
+  .modal.entry-popup {
+    animation: entry-popup-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  }
+
+  .entry-popup__image {
+    animation: entry-popup-zoom 1.2s ease-out both;
+  }
+
+  .entry-popup h2,
+  .entry-popup__body,
+  .entry-popup__button {
+    animation: entry-popup-rise 0.5s ease-out both;
+  }
+
+  .entry-popup__body {
+    animation-delay: 0.12s;
+  }
+
+  .entry-popup__button {
+    animation-delay: 0.24s;
+  }
+}
+
+@keyframes entry-popup-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes entry-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(2rem) scale(0.92);
+  }
+}
+
+@keyframes entry-popup-zoom {
+  from {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes entry-popup-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+/* A dish picture full screen, above any dialog. */
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  cursor: zoom-out;
+}
+
+.image-viewer__img {
+  /* Large enough to see clearly even for a small file; the picture keeps its proportions with no bands around it. */
+  inline-size: min(100%, 48rem);
+  block-size: auto;
+  max-block-size: 100%;
+  min-inline-size: min(100%, 22rem);
+  object-fit: contain;
+  border-radius: calc(0.75rem * var(--corner-scale, 1));
+  box-shadow: var(--shadow-md);
+}
+
+.image-viewer__close,
+.image-viewer__nav {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  min-block-size: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  cursor: pointer;
+}
+
+.image-viewer__close:hover:not(:disabled),
+.image-viewer__nav:hover:not(:disabled) {
+  background: rgb(0 0 0 / 0.8);
+}
+
+.image-viewer__close:focus-visible,
+.image-viewer__nav:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.image-viewer__close {
+  inset-block-start: 0.75rem;
+  inset-inline-end: 0.75rem;
+}
+
+.image-viewer__nav {
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.image-viewer__nav--prev {
+  inset-inline-start: 0.75rem;
+}
+
+.image-viewer__nav--next {
+  inset-inline-end: 0.75rem;
+}
+
+/* ---------- Admin: foldable settings sections with a side menu ---------- */
+
+.admin-page:has(.section-layout) {
+  max-inline-size: 72rem;
+}
+
+.section-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-layout__content {
+  min-inline-size: 0;
+  flex: 1;
+}
+
+/* Narrow screens: the menu is a bar of chips, pinned under the top bars. */
+.section-menu {
+  position: sticky;
+  inset-block-start: var(--admin-bars-height, 7rem);
+  z-index: 5;
+  margin-block-end: 0.5rem;
+  background: var(--color-bg, var(--color-surface));
+  border-block-end: var(--line-width, 1px) solid var(--color-border);
+}
+
+.section-menu ul {
+  display: flex;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0.5rem 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.section-menu__item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: var(--radius-pill);
+}
+
+.section-menu__link {
+  padding: 0.375rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Hovering only makes the text bolder: no background change (the global button hover would colour them). */
+.section-menu__link:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.section-menu__item.active .section-menu__link:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}
+
+.admin-section__toggle:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-accent);
+  text-shadow: 0 0 0.6px currentColor;
+}
+
+.section-menu__item.active .section-menu__link {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}
+
+.dirty-mark {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.section-menu__save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 2rem;
+  min-block-size: 2rem;
+  padding: 0;
+  border: var(--line-width, 1px) solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: none;
+}
+
+.section-menu__save:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  border-color: var(--color-accent);
+}
+
+.section-menu .saved-note {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* A foldable section: a prominent title that is the button, the settings behind it. */
+.admin-section--fold > .with-info {
+  margin: -0.25rem;
+}
+
+.admin-section--fold h2 {
+  flex: 1;
+  font-size: 1.25rem;
+}
+
+.admin-section__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  inline-size: 100%;
+  padding: 0.5rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+}
+
+.admin-section__toggle::after {
+  content: '';
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  margin-inline-start: 0.75rem;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.15s;
+}
+
+.admin-section__toggle[aria-expanded='true']::after {
+  transform: rotate(-135deg);
+}
+
+.admin-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-section__body[hidden] {
+  display: none;
+}
+
+.admin-section--fold {
+  scroll-margin-block-start: calc(var(--admin-bars-height, 7rem) + 4.5rem);
+}
+
+@media (min-width: 64rem) {
+  .admin-section--fold {
+    scroll-margin-block-start: calc(var(--admin-bars-height, 7rem) + 1rem);
+  }
+
+  .section-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 3rem;
+  }
+
+  .section-menu {
+    inset-block-start: calc(var(--admin-bars-height, 7rem) + 0.5rem);
+    flex: none;
+    inline-size: 14rem;
+    padding-inline-end: 1.5rem;
+    border: 0;
+    border-inline-end: var(--line-width, 1px) solid var(--color-border);
+    background: transparent;
+  }
+
+  .section-menu ul {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .section-menu__item {
+    justify-content: space-between;
+  }
+
+  .section-menu__link {
+    flex: 1;
+    text-align: start;
+    white-space: normal;
+  }
+}
+
+@media print {
+  .section-menu {
+    display: none !important;
+  }
+}
+
+/* The admin dishes list: folded category blocks, a search box and a picture that changes in place. */
+.dishes-tools {
+  align-items: center;
+  margin-block-end: 1rem;
+}
+
+.dishes-tools .dish-search {
+  flex: 1 1 14rem;
+  margin-block-end: 0;
+}
+
+.dishes-tools .dish-search input {
+  min-block-size: 2.5rem;
+  padding-inline: 1rem 2.75rem;
+}
+
+.category-fold {
+  margin: 0;
+}
+
+.category-fold button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  inline-size: 100%;
+  padding: 0.25rem 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-align: start;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.category-fold button:hover:not(:disabled) {
+  background: none;
+  color: inherit;
+  text-shadow: 0 0 0.6px currentColor;
+  font-weight: 800;
+}
+
+.category-fold button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.dish-thumb-button {
+  flex: none;
+  align-self: center;
+  padding: 0;
+  line-height: 0;
+  color: var(--color-muted);
+  background: none;
+  border: 0;
+  border-radius: calc(0.375rem * var(--corner-scale));
+  cursor: pointer;
+}
+
+.dish-thumb--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.dish-thumb-preview {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 50vh;
+  object-fit: contain;
+}
+
+/* Removed dishes are greyed out so they read as no longer on the menu. */
+.list__row--removed {
+  background: color-mix(in srgb, var(--color-muted) 8%, transparent);
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+
+.list__row--removed .muted {
+  text-decoration: line-through;
 }

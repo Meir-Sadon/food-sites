@@ -48,17 +48,18 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
     }
   }, [navigate])
 
+  const saveAll = useCallback(async () => {
+    for (const entry of [...entries.current]) {
+      if (!entry.current?.dirty) continue
+      if (!(await entry.current.save().catch(() => false))) return false
+    }
+    return true
+  }, [])
+
   async function saveAndLeave() {
     if (!pending) return
     setSaving(true)
-    let allSaved = true
-    for (const entry of [...entries.current]) {
-      if (!entry.current?.dirty) continue
-      if (!(await entry.current.save().catch(() => false))) {
-        allSaved = false
-        break
-      }
-    }
+    const allSaved = await saveAll()
     setSaving(false)
     const proceed = pending
     setPending(null)
@@ -69,7 +70,7 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
   const stay = () => setPending(null)
 
   return (
-    <GuardContext.Provider value={{ entries, leave }}>
+    <GuardContext.Provider value={{ entries, leave, saveAll }}>
       {children}
       {pending && (
         <Modal title={t('admin.unsaved.title')} onClose={stay} wide>

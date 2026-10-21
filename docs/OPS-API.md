@@ -60,9 +60,10 @@ Orders and their totals per period, by **supply date**.
   "period": "Month",
   "orders": 4,
   "sales": 250.00,
+  "deliveryFees": 30.00,
   "periods": [
-    { "start": "2030-01-01", "orders": 3, "sales": 180.00 },
-    { "start": "2030-02-01", "orders": 1, "sales": 70.00 }
+    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00 },
+    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0 }
   ],
   "statuses": ["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"],
   "byStatus": [
@@ -76,7 +77,7 @@ Orders and their totals per period, by **supply date**.
 }
 ```
 
-`sales` is the sum of the orders' totals in shekels. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
+`sales` is the sum of the orders' totals in shekels, delivery fees included; `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
 
 ### `GET /api/ops/usage?from=&to=`
 

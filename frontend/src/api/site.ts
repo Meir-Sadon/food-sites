@@ -1,5 +1,6 @@
 import { apiJson, send } from './client'
 import type { ChoiceMode, SellBy } from './catalog'
+import type { Popup } from './popup'
 import type { SocialLink } from './social'
 
 export interface Contact {
@@ -87,6 +88,10 @@ export interface Site {
   deliveryFeeText: string | null
   /** The regular setting's fixed delivery fee in ₪ (added to deliveries to a service city); null when there is none. */
   deliveryFeeAmount: number | null
+  /** The advanced setting's base fee: what a large order's delivery is discounted by; null means no discount there. */
+  deliveryBaseFee: number | null
+  /** From this dishes total (₪) the delivery fee is discounted; null means never. */
+  deliveryDiscountMinOrder: number | null
   kashrutText: string | null
   paymentPhone: string | null
   /** Whether the client may choose to pay with Bit / PayBox (needs the payment phone). */
@@ -130,6 +135,10 @@ export interface Site {
   socialLinks: SocialLink[]
   /** Which marketing tools to load. */
   tracking?: TrackingIds
+  /** Which item badges ("new", "almost out") are on, and when they apply. */
+  badges?: ItemBadges
+  /** The window shown when the site opens; missing while it is off. */
+  popup?: Popup | null
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
@@ -189,6 +198,26 @@ export interface MenuDish {
   showOptionDifference?: boolean
   /** Special-diet marks (ids from DIETARY_TAGS in api/catalog.ts). */
   dietaryTags?: string[]
+  /** The admin marked the dish as on sale. */
+  onSale?: boolean
+  /** Created within the period the admin set for the "new" badge (always false while that badge is off). */
+  isNew?: boolean
+  /** The most that can be ordered per date (its own limit or the site's portion limit), the base of the "almost out" percentage. */
+  limit?: number | null
+}
+
+/** The "new" and "almost out" badges (FoodSite.Api `ItemBadges`): the admin's settings. */
+export type BadgeNewUnit = 'day' | 'week' | 'month'
+export type LowStockMode = 'percent' | 'units'
+export const BADGE_NEW_UNITS: readonly BadgeNewUnit[] = ['day', 'week', 'month']
+export const LOW_STOCK_MODES: readonly LowStockMode[] = ['percent', 'units']
+export interface ItemBadges {
+  newEnabled: boolean
+  newAmount: number
+  newUnit: BadgeNewUnit
+  lowStockEnabled: boolean
+  lowStockMode: LowStockMode
+  lowStockAmount: number
 }
 
 /** How a dish question is answered (FoodSite.Api `QuestionKind`). */
@@ -330,6 +359,8 @@ export interface Confirmation {
   hourFull?: boolean
   /** The delivery fee in ₪ (already inside `total`). */
   deliveryFee?: number
+  /** What the large-order discount took off the delivery fee (0 for none; the fee is then already reduced). */
+  deliveryDiscount?: number
 }
 
 /** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */

@@ -10,7 +10,10 @@ import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
 import { formatMoney, optionPriceText, priceText, unitLabel } from './format'
+import { Highlighted } from './Highlight'
 import { ImageCarousel } from './ImageCarousel'
+import { ImageViewer } from './ImageViewer'
+import { ItemBadges } from './ItemBadges'
 import {
   addOnLineTotal,
   addOnRange,
@@ -70,13 +73,14 @@ function RemainingNote({ dish, remaining }: { dish: MenuDish; remaining: number 
 }
 
 /** The name, description, price and allergens of a dish (or of a variant, one heading level down). */
-function DishDetails({ dish, nameId, variant }: { dish: MenuDish; nameId: string; variant?: boolean }) {
+function DishDetails({ dish, nameId, variant, date }: { dish: MenuDish; nameId: string; variant?: boolean; date?: string }) {
   const { t } = useTranslation()
   const Heading = variant ? 'h4' : 'h3'
   return (
     <>
-      <Heading id={nameId}>{dish.name}</Heading>
-      {dish.description && <p className="dish__description">{dish.description}</p>}
+      <ItemBadges dish={dish} date={date} />
+      <Heading id={nameId}><Highlighted text={dish.name} /></Heading>
+      {dish.description && <p className="dish__description"><Highlighted text={dish.description} /></p>}
       <p className="dish__price">{priceText(dish, t)}</p>
       {dish.allergenInfo && (
         <p className="muted">
@@ -97,7 +101,7 @@ function PlainDishCard({ dish, dishes, selection, date, onChange }: Props) {
     <article className={`dish${selection ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
       <ImageCarousel images={dish.images} name={dish.name} />
       <div className="dish__body">
-        <DishDetails dish={dish} nameId={`${id}-name`} />
+        <DishDetails dish={dish} nameId={`${id}-name`} date={date} />
         <DishChoice dish={dish} dishes={dishes} selection={selection} date={date} onChange={onChange} />
       </div>
     </article>
@@ -140,8 +144,9 @@ function PlainDishGroupCard(props: GroupProps) {
     <article className={`dish dish--group${chosen ? ' dish--chosen' : ''}`} aria-labelledby={`${id}-name`}>
       <ImageCarousel images={dish.images} name={dish.name} />
       <div className="dish__body">
-        <h3 id={`${id}-name`}>{dish.name}</h3>
-        {dish.description && <p className="dish__description">{dish.description}</p>}
+        <ItemBadges dish={dish} />
+        <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+        {dish.description && <p className="dish__description"><Highlighted text={dish.description} /></p>}
         {dish.allergenInfo && (
           <p className="muted">
             {t('order.allergens')}: {dish.allergenInfo}
@@ -165,7 +170,7 @@ function VariantList({ dish, variants, dishes, selections, date, onChange, idPre
         >
           {/* A variant with pictures of its own shows them; without, the card's pictures (the main dish's) stay. */}
           <ImageCarousel images={variant.images} name={variant.name} />
-          <DishDetails dish={variant} nameId={`${idPrefix}-${variant.id}`} variant />
+          <DishDetails dish={variant} nameId={`${idPrefix}-${variant.id}`} variant date={date} />
           <DishChoice
             dish={variant}
             dishes={dishes}
@@ -289,7 +294,7 @@ function AllergenMark({ text }: { text?: string | null }) {
   )
 }
 
-/** The picture in a tile's dialog: whole, small, and a press enlarges it to fill the dialog. */
+/** The picture in a tile's dialog: whole, small, and a press opens it full screen. */
 function DialogPicture({ images, name, onZoom }: { images: string[]; name: string; onZoom: () => void }) {
   const { t } = useTranslation()
   if (images.length === 0) return null
@@ -300,23 +305,6 @@ function DialogPicture({ images, name, onZoom }: { images: string[]; name: strin
         ⤢
       </span>
     </button>
-  )
-}
-
-/** The enlarged picture: it takes the whole dialog until it is pressed again or the back button is. */
-function ZoomedPicture({ images, name, onBack }: { images: string[]; name: string; onBack: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <>
-      <button type="button" className="tile-dialog__zoomed" aria-label={t('order.shrinkImage')} onClick={onBack}>
-        <ImageCarousel images={images} name={name} />
-      </button>
-      <div className="modal__actions">
-        <button type="button" onClick={onBack}>
-          {t('order.shrinkImage')}
-        </button>
-      </div>
-    </>
   )
 }
 
@@ -363,6 +351,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
       style={tappable ? { cursor: 'pointer' } : undefined}
     >
       <TileMedia images={dish.images} name={dish.name}>
+        <ItemBadges dish={dish} date={date} className="tile__marks" />
         {dish.isSoldOut ? (
           <p className="badge tile__badge" role="status">
             {t('order.soldOut')}
@@ -404,16 +393,12 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         )}
       </TileMedia>
       <div className="tile__body">
-        <h3 id={`${id}-name`}>{dish.name}</h3>
+        <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
         <p className="dish__price">{priceText(dish, t)}</p>
-        {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
+        {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
-          {zoom ? (
-            <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
-          ) : (
-            <>
           <div className="tile-dialog__head">
             <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
             <div className="tile-dialog__info">
@@ -433,8 +418,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
               {t('order.doneCustomizing')}
             </button>
           </div>
-            </>
-          )}
+          {zoom && <ImageViewer images={dish.images} name={dish.name} onClose={() => setZoom(false)} />}
         </Modal>
       )}
     </article>
@@ -467,6 +451,7 @@ function DishGroupTile(props: GroupProps) {
       style={{ cursor: 'pointer' }}
     >
       <TileMedia slides={groupSlides(dish, variants)} name={dish.name}>
+        <ItemBadges dish={dish} variants={variants} date={props.date} className="tile__marks" />
         {count > 0 && <p className="badge tile__badge">{t('order.chosenCount', { count })}</p>}
         <AllergenMark text={dish.allergenInfo} />
         <button type="button" className="tile__add" aria-label={t('order.chooseVariant', { name: dish.name })} onClick={() => setOpen(true)}>
@@ -474,16 +459,12 @@ function DishGroupTile(props: GroupProps) {
         </button>
       </TileMedia>
       <div className="tile__body">
-        <h3 id={`${id}-name`}>{dish.name}</h3>
-        {dish.description && <p className="dish__description tile__description">{dish.description}</p>}
+        <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+        {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
         <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
-          {zoom ? (
-            <ZoomedPicture images={dish.images} name={dish.name} onBack={() => setZoom(false)} />
-          ) : (
-            <>
           <div className="tile-dialog__head">
             <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
             <div className="tile-dialog__info">
@@ -499,8 +480,7 @@ function DishGroupTile(props: GroupProps) {
               {t('order.doneCustomizing')}
             </button>
           </div>
-            </>
-          )}
+          {zoom && <ImageViewer images={dish.images} name={dish.name} onClose={() => setZoom(false)} />}
         </Modal>
       )}
     </article>

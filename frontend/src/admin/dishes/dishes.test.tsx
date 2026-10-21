@@ -19,6 +19,12 @@ const leg = dish(3, 'שוק', 1, { isAddOnOnly: true, parentDishIds: [1], option
 const removed = dish(4, 'עוגה', 2, { isHidden: true })
 const all = [chicken, eggplant, leg, removed]
 
+/** The dishes list starts with every category folded; opens them all. */
+async function openCategories() {
+  const toggles = await screen.findAllByRole('button', { expanded: false })
+  for (const toggle of toggles) if (toggle.closest('.category-fold')) await userEvent.click(toggle)
+}
+
 const base = {
   ...adminSession,
   'GET /api/admin/categories': () => categories,
@@ -29,13 +35,70 @@ describe('Dishes list', () => {
   it('groups dishes by category with price and badges', async () => {
     fakeApi(base)
     renderAt('/admin/dishes')
+    await openCategories()
 
-    const poultry = await screen.findByRole('region', { name: 'עופות' })
+    const poultry = await screen.findByRole('region', { name: /^עופות/ })
     const rows = within(poultry).getAllByRole('listitem')
     expect(rows[0]).toHaveTextContent('עוף בתנור')
     expect(rows[0]).toHaveTextContent('₪45 · חצי עוף')
     expect(rows[1]).toHaveTextContent('תוספת בלבד')
-    expect(within(screen.getByRole('region', { name: 'סלטים' })).getByText('₪90 לק"ג')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: /^סלטים/ })).getByText('₪90 לק"ג')).toBeInTheDocument()
+  })
+
+  it('starts with the categories folded and opens or closes them all', async () => {
+    fakeApi(base)
+    renderAt('/admin/dishes')
+    const user = userEvent.setup()
+    await screen.findByRole('region', { name: /^עופות/ })
+    expect(screen.queryByText('עוף בתנור')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'פתיחת הכול' }))
+    expect(screen.getByText('עוף בתנור')).toBeInTheDocument()
+    expect(screen.getByText('חציל')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'סגירת הכול' }))
+    expect(screen.queryByText('חציל')).not.toBeInTheDocument()
+  })
+
+  it('searches dishes and opens the categories that hold a match', async () => {
+    fakeApi(base)
+    renderAt('/admin/dishes')
+    const user = userEvent.setup()
+    await user.type(await screen.findByRole('searchbox', { name: 'חיפוש מנה' }), 'חצי')
+
+    expect(screen.getByText('חציל')).toBeInTheDocument()
+    expect(screen.queryByText('עוף בתנור')).not.toBeInTheDocument()
+    await user.clear(screen.getByRole('searchbox'))
+    await user.type(screen.getByRole('searchbox'), 'זזזז')
+    expect(screen.getByText('לא נמצאו מנות.')).toBeInTheDocument()
+  })
+
+  it('adds a picture from the list without opening the dish', async () => {
+    const api = fakeApi({ ...base, 'POST /api/admin/dishes/2/images': () => ({ ...eggplant, images: [{ id: 7, url: 'https://img/7.jpg', displayOrder: 0 }] }) })
+    renderAt('/admin/dishes')
+    await openCategories()
+    const user = userEvent.setup()
+    const file = new File(['x'], 'a.jpg', { type: 'image/jpeg' })
+    await user.upload(document.querySelector<HTMLInputElement>('input[type="file"]')!, file)
+    // The first picker belongs to the first dish without a picture in the list; both have none.
+    await waitFor(() => expect(api.sent('POST', '/images').length).toBe(1))
+  })
+
+  it('asks before changing a picture and deletes it on request', async () => {
+    const pictured = { ...eggplant, images: [{ id: 7, url: 'https://img/7.jpg', displayOrder: 0 }] }
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/dishes': () => [pictured],
+      'DELETE /api/admin/dishes/2/images/7': () => ({ ...pictured, images: [] }),
+    })
+    renderAt('/admin/dishes')
+    await openCategories()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'שינוי תמונה: חציל' }))
+    await user.click(screen.getByRole('button', { name: 'מחיקת התמונה' }))
+
+    await waitFor(() => expect(api.sent('DELETE', '/images/7')).toHaveLength(1))
+    expect(await screen.findByRole('button', { name: 'הוספת תמונה: חציל' })).toBeInTheDocument()
   })
 
   it('moves a dish down within its category', async () => {
@@ -46,7 +109,8 @@ describe('Dishes list', () => {
       'PUT /api/admin/dishes/order': () => [{ ...leg, displayOrder: 0 }, { ...chicken, displayOrder: 1 }, { ...third, displayOrder: 2 }, eggplant, removed],
     })
     renderAt('/admin/dishes')
-    const poultry = await screen.findByRole('region', { name: 'עופות' })
+    await openCategories()
+    const poultry = await screen.findByRole('region', { name: /^עופות/ })
 
     expect(within(poultry).getByRole('button', { name: 'העברה למעלה: עוף בתנור' })).toBeDisabled()
     await userEvent.setup().click(within(poultry).getByRole('button', { name: 'העברה למטה: עוף בתנור' }))
@@ -54,13 +118,14 @@ describe('Dishes list', () => {
     await waitFor(() => expect(within(poultry).getAllByRole('listitem')[1]).toHaveTextContent('עוף בתנור'))
     expect(api.sent('PUT', '/dishes/order')[0].body).toEqual({ categoryId: 1, dishIds: [3, 1, 5] })
     // A category with one dish has nothing to reorder.
-    expect(within(screen.getByRole('region', { name: 'סלטים' })).queryByRole('button', { name: /העברה/ })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: /^סלטים/ })).queryByRole('button', { name: /העברה/ })).not.toBeInTheDocument()
   })
 
   it('drags a dish to a new place', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/dishes/order': () => [{ ...leg, displayOrder: 0 }, { ...chicken, displayOrder: 1 }, eggplant, removed] })
     renderAt('/admin/dishes')
-    const poultry = await screen.findByRole('region', { name: 'עופות' })
+    await openCategories()
+    const poultry = await screen.findByRole('region', { name: /^עופות/ })
     // jsdom has no layout: the rows are 40px tall, one under the other.
     within(poultry).getAllByRole('listitem').forEach((row, i) => {
       row.getBoundingClientRect = () => ({ top: i * 40, bottom: i * 40 + 40, left: 0, right: 300 }) as DOMRect
@@ -79,7 +144,8 @@ describe('Dishes list', () => {
   it('puts the order back when saving it fails', async () => {
     fakeApi({ ...base, 'PUT /api/admin/dishes/order': () => ({ status: 409, body: { code: 'listChanged' } }) })
     renderAt('/admin/dishes')
-    const poultry = await screen.findByRole('region', { name: 'עופות' })
+    await openCategories()
+    const poultry = await screen.findByRole('region', { name: /^עופות/ })
 
     await userEvent.setup().click(within(poultry).getByRole('button', { name: 'העברה למטה: עוף בתנור' }))
 
@@ -90,6 +156,7 @@ describe('Dishes list', () => {
   it('marks a dish sold out', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1/sold-out': () => undefined })
     renderAt('/admin/dishes')
+    await openCategories()
     const row = (await screen.findByText('עוף בתנור')).closest('li')!
 
     await userEvent.setup().click(within(row).getByLabelText('אזל'))
@@ -101,6 +168,7 @@ describe('Dishes list', () => {
   it('undoes the sold-out mark when saving fails', async () => {
     fakeApi({ ...base, 'PUT /api/admin/dishes/1/sold-out': () => ({ status: 500 }) })
     renderAt('/admin/dishes')
+    await openCategories()
     const row = (await screen.findByText('עוף בתנור')).closest('li')!
 
     await userEvent.setup().click(within(row).getByLabelText('אזל'))
@@ -116,6 +184,7 @@ describe('Dishes list', () => {
       'POST /api/admin/dishes/4/restore': () => ({ ...removed, isHidden: false }),
     })
     renderAt('/admin/dishes')
+    await openCategories()
     const user = userEvent.setup()
     const row = (await screen.findByText('חציל')).closest('li')!
 
@@ -126,7 +195,7 @@ describe('Dishes list', () => {
     await user.click(screen.getByText('מנות שהוסרו (2)'))
     await user.click(screen.getByRole('button', { name: 'החזרה לתפריט: עוגה' }))
     expect(await screen.findByText('מנות שהוסרו (1)')).toBeInTheDocument()
-    expect(within(screen.getByRole('region', { name: 'סלטים' })).getByText('עוגה')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: /^סלטים/ })).getByText('עוגה')).toBeInTheDocument()
   })
 
   it('warns with the number of unsupplied orders before removing a dish', async () => {
@@ -136,6 +205,7 @@ describe('Dishes list', () => {
       'DELETE /api/admin/dishes/2': () => undefined,
     })
     renderAt('/admin/dishes')
+    await openCategories()
     const user = userEvent.setup()
     const row = (await screen.findByText('חציל')).closest('li')!
 
@@ -211,6 +281,7 @@ describe('Dish form', () => {
       isSoldOut: false,
       openByDefault: false,
       isSideDish: false,
+      onSale: false,
       maxPerSupplyDate: null,
       options: [
         { id: null, label: 'קטן', amount: 1, price: 5, isDefault: false },
@@ -239,6 +310,19 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).openByDefault).toBe(true)
+  })
+
+  it('saves a dish marked as on sale', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    await user.click(screen.getByLabelText(/במבצע/))
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).onSale).toBe(true)
   })
 
   it('saves a dish whose adjustment is optional', async () => {
@@ -307,6 +391,7 @@ describe('Dish form', () => {
   it('shows a named unit in the dishes list', async () => {
     fakeApi({ ...base, 'GET /api/admin/dishes': () => [{ ...eggplant, unitName: 'מגש' }] })
     renderAt('/admin/dishes')
+    await openCategories()
     expect(await screen.findByText('₪90 למגש')).toBeInTheDocument()
   })
 
@@ -353,6 +438,7 @@ describe('Dish form', () => {
       'GET /api/admin/dishes/9/affected-orders': () => ({ count: 0 }),
     })
     renderAt('/admin/dishes')
+    await openCategories()
     const user = userEvent.setup()
 
     await user.click(await screen.findByRole('link', { name: 'שכפול המנה: עוף בתנור' }))

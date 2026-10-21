@@ -16,6 +16,8 @@ import { ReportsPage } from './admin/reports/ReportsPage'
 import { ReviewsPage } from './admin/reviews/ReviewsPage'
 import { RoutePage } from './admin/route/RoutePage'
 import { AppearancePage } from './admin/settings/AppearancePage'
+import { SocialPage } from './admin/settings/SocialPage'
+import { PopupPage } from './admin/settings/PopupPage'
 import { SettingsPage } from './admin/settings/SettingsPage'
 import { UsagePage } from './admin/usage/UsagePage'
 import { ClientLayout } from './components/ClientLayout'
@@ -80,6 +82,8 @@ export function App() {
           <Route index element={<Navigate to="settings" replace />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="appearance" element={<AppearancePage />} />
+          <Route path="popup" element={<PopupPage />} />
+          <Route path="social" element={<SocialPage />} />
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="dish-groups" element={<DishGroupsPage />} />
           <Route path="dishes" element={<DishesPage />} />

@@ -2,9 +2,10 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { SupplyDay } from '../../api/catalog'
-import { settings, supplyDays } from '../../test/catalogData'
+import { popup, settings, supplyDays } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid, masterSession } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
+import { openSection } from '../../test/sections'
 
 const base = {
   ...adminSession,
@@ -12,11 +13,12 @@ const base = {
   'GET /api/admin/supply-days': () => supplyDays(),
   'GET /api/admin/closed-dates': () => [{ id: 1, date: '2026-10-14', reason: 'סוכות' }],
   'GET /api/admin/social-links': () => [],
+  'GET /api/admin/popup': () => ({ body: popup() }),
 }
 
 /** A settings section once its data has loaded. */
 async function section(name: string) {
-  const region = await screen.findByRole('region', { name })
+  const region = await openSection(name)
   await waitFor(() => expect(within(region).queryByText('טוען…')).not.toBeInTheDocument())
   return region
 }
@@ -71,6 +73,38 @@ describe('Order layout', () => {
     expect(body).toMatchObject({ orderTotalPosition: 'side', orderFlow: 'steps', kashrutText: 'נשמר בינתיים' })
     expect(body).not.toHaveProperty('style')
     expect(save).toBeDisabled()
+  })
+})
+
+describe('Item badges', () => {
+  it('saves the badges on their own and keeps the other settings out of the request', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/categories': () => [],
+      'GET /api/admin/dishes': () => [],
+      'PUT /api/admin/settings/badges': (_, body) => settings({ badges: { ...settings().badges, ...(body as object) } }),
+    })
+    renderAt('/admin/dishes')
+    const user = userEvent.setup()
+    await user.click(await screen.findByText('הגדרות כלליות למנות'))
+    const form = await section('סימוני מנות')
+    const save = within(form).getByRole('button', { name: 'שמירה' })
+
+    expect(save).toBeDisabled()
+    expect(within(form).queryByLabelText('כמה זמן מנה נחשבת חדשה')).not.toBeInTheDocument()
+    await user.click(within(form).getByRole('checkbox', { name: /סימון ״חדש״/ }))
+    fireEvent.change(within(form).getByLabelText('כמה זמן מנה נחשבת חדשה'), { target: { value: '3' } })
+    await user.selectOptions(within(form).getByLabelText('יחידת זמן'), 'month')
+    await user.click(within(form).getByRole('checkbox', { name: /סימון ״כמעט אזל״/ }))
+    await user.selectOptions(within(form).getByLabelText('לפי מה למדוד'), 'units')
+    fireEvent.change(within(form).getByLabelText('להציג כשנשארו עד (יחידות)'), { target: { value: '4' } })
+    await user.click(save)
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings/badges')[0].body).toEqual({
+      newEnabled: true, newAmount: 3, newUnit: 'month', lowStockEnabled: true, lowStockMode: 'units', lowStockAmount: 4,
+    })
+    expect(api.sent('PUT', '/api/admin/settings')).toHaveLength(0)
   })
 })
 
@@ -243,6 +277,8 @@ describe('General settings', () => {
       deliveryAreaText: 'חיפה',
       deliveryFeeText: null,
       deliveryFeeAmount: null,
+      deliveryBaseFee: null,
+      deliveryDiscountMinOrder: null,
       deliveryPricing: 'simple',
       kashrutText: 'בהשגחת הרב',
       paymentPhone: '050-1234567',
@@ -630,7 +666,7 @@ describe('Social links', () => {
         return (links = sent)
       },
     })
-    renderAt('/admin/settings')
+    renderAt('/admin/social')
     const user = userEvent.setup()
     const form = await section('קישורים לרשתות חברתיות')
 
@@ -664,7 +700,7 @@ describe('Social links', () => {
       'GET /api/admin/social-links': () => [{ kind: 'instagram', label: null, url: 'https://instagram.com/shop' }],
       'PUT /api/admin/social-links': (_, body) => (body as { links: unknown[] }).links,
     })
-    renderAt('/admin/settings')
+    renderAt('/admin/social')
     const user = userEvent.setup()
     const form = await section('קישורים לרשתות חברתיות')
 
@@ -673,5 +709,85 @@ describe('Social links', () => {
 
     await screen.findByText('נשמר.')
     expect(api.sent('PUT', '/api/admin/social-links')[0].body).toEqual({ links: [] })
+  })
+})
+
+describe('Entry pop-up', () => {
+  const open = (extra: Parameters<typeof fakeApi>[0] = {}) => {
+    let saved = popup()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/popup': () => ({ body: saved }),
+      'PUT /api/admin/popup': (_, input) => ({ body: (saved = { ...saved, ...(input as object) }) }),
+      ...extra,
+    })
+    renderAt('/admin/popup')
+    return api
+  }
+
+  it('saves the size, title, text and button', async () => {
+    const api = open()
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ בכניסה לאתר')
+
+    expect(within(form).getByRole('button', { name: 'שמירה' })).toBeDisabled()
+    expect(within(form).getByRole('radio', { name: /בינוני/ })).toBeChecked()
+    await user.click(within(form).getByRole('checkbox', { name: 'להציג את הפופ-אפ באתר' }))
+    await user.click(within(form).getByRole('radio', { name: /גדול/ }))
+    await user.click(within(form).getByRole('radio', { name: /פעם אחת בביקור/ }))
+    await user.click(within(form).getByRole('radio', { name: /כשהלקוח עומד לעזוב/ }))
+    await user.clear(within(form).getByLabelText('כמה שניות לחכות לפני שמתחילים לזהות יציאה'))
+    await user.type(within(form).getByLabelText('כמה שניות לחכות לפני שמתחילים לזהות יציאה'), '8')
+    await user.type(within(form).getByLabelText('כותרת'), 'מבצע חג')
+    await user.type(within(form).getByLabelText('תוכן'), '10% הנחה')
+    await user.type(within(form).getByLabelText('תוכן הכפתור'), 'להזמנה')
+    await user.type(within(form).getByLabelText('קישור'), 'https://example.com/sale')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/popup')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/popup')[0].body).toEqual({
+      enabled: true,
+      size: 'large',
+      frequency: 'session',
+      trigger: 'exit',
+      delaySeconds: 8,
+      title: 'מבצע חג',
+      body: '10% הנחה',
+      buttonText: 'להזמנה',
+      buttonUrl: 'https://example.com/sale',
+    })
+    expect(await within(form).findByText('נשמר.')).toBeInTheDocument()
+  })
+
+  it('shows what the server refused beside the field', async () => {
+    open({ 'PUT /api/admin/popup': () => invalid({ title: ['required'] }) })
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ בכניסה לאתר')
+    await user.click(within(form).getByRole('checkbox', { name: 'להציג את הפופ-אפ באתר' }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await within(form).findByText('שדה חובה.')).toBeInTheDocument()
+  })
+
+  it('uploads a picture without touching what is typed', async () => {
+    const api = open({ 'PUT /api/admin/popup/image': () => ({ body: popup({ imageUrl: 'https://img.test/popup.jpg' }) }) })
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ בכניסה לאתר')
+    await user.type(within(form).getByLabelText('כותרת'), 'מבצע')
+
+    const file = new File(['x'], 'p.jpg', { type: 'image/jpeg' })
+    await user.upload(within(form).getByLabelText('בחירת תמונה'), file)
+
+    expect(await within(form).findByRole('img')).toHaveAttribute('src', 'https://img.test/popup.jpg')
+    expect((api.sent('PUT', '/api/admin/popup/image')[0].body as FormData).get('file')).toBe(file)
+    expect(within(form).getByLabelText('כותרת')).toHaveValue('מבצע')
+  })
+
+  it('previews the pop-up with what is typed so far', async () => {
+    open()
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ בכניסה לאתר')
+    await user.type(within(form).getByLabelText('כותרת'), 'מבצע חג')
+    await user.click(within(form).getByRole('button', { name: 'תצוגה מקדימה' }))
+    expect(await screen.findByRole('dialog', { name: 'מבצע חג' })).toBeInTheDocument()
   })
 })

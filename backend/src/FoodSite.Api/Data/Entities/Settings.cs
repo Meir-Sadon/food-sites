@@ -21,6 +21,15 @@ public class Settings
     /// </summary>
     public decimal? DeliveryFeeAmount { get; set; }
 
+    /// <summary>
+    /// The advanced (zones) setting's base fee: what a delivery is discounted by once the dishes reach
+    /// <see cref="DeliveryDiscountMinOrder"/>, so a far zone still pays what is above it. Null means no discount there.
+    /// </summary>
+    public decimal? DeliveryBaseFee { get; set; }
+
+    /// <summary>The dishes total from which the delivery fee is discounted; null means never.</summary>
+    public decimal? DeliveryDiscountMinOrder { get; set; }
+
     public string? KashrutText { get; set; }
 
     /// <summary>The smallest order total (₪) a client may place; null means no minimum.</summary>
@@ -167,4 +176,41 @@ public class Settings
 
     /// <summary>When the coordinator details or notes were last saved; shown as the statement's update date.</summary>
     public DateTimeOffset? AccessibilityUpdatedAt { get; set; }
+
+    // Item badges (Sites/ItemBadges): "new" and "almost out" marks on dishes; both off until the admin turns them on.
+    public bool BadgeNewEnabled { get; set; }
+
+    /// <summary>A dish is new for this many days, weeks or months (<see cref="BadgeNewUnit"/>) after it was created; null means the default.</summary>
+    public int? BadgeNewAmount { get; set; }
+    public string? BadgeNewUnit { get; set; }
+
+    public bool BadgeLowStockEnabled { get; set; }
+
+    /// <summary><c>percent</c> of the dish's limit or a number of <c>units</c>; null means the default.</summary>
+    public string? BadgeLowStockMode { get; set; }
+
+    /// <summary>A limited dish is "almost out" when what is left is at most this percent or number of units.</summary>
+    public int? BadgeLowStockAmount { get; set; }
+
+    // Entry pop-up: a window shown when a client opens the site (see <c>Popup/EntryPopup</c>).
+    public bool PopupEnabled { get; set; }
+
+    /// <summary>small, medium or large; null means medium.</summary>
+    public string? PopupSize { get; set; }
+
+    /// <summary>always (every page load) or session (once per browser tab); null means always.</summary>
+    public string? PopupFrequency { get; set; }
+
+    /// <summary>load (when the page has loaded) or exit (when the visitor seems about to leave); null means load.</summary>
+    public string? PopupTrigger { get; set; }
+
+    /// <summary>Seconds to wait before opening it, or before watching for an exit; null means none.</summary>
+    public int? PopupDelaySeconds { get; set; }
+
+    public string? PopupTitle { get; set; }
+    public string? PopupBody { get; set; }
+    public string? PopupImageUrl { get; set; }
+    public string? PopupImagePublicId { get; set; }
+    public string? PopupButtonText { get; set; }
+    public string? PopupButtonUrl { get; set; }
 }

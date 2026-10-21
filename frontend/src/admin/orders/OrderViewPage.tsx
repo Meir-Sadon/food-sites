@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
 import { ordersAdminApi, type AdminOrder } from '../../api/operations'
 import { ItemAnswers } from '../../components/ItemAnswers'
+import { DeliveryFeeNote } from '../../order/DeliveryFeeNote'
 import { formatMoney, formatTime } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { whatsAppShareUrl } from '../messages/compose'
@@ -117,13 +118,14 @@ export function OrderViewPage() {
             </li>
           ))}
         </ul>
-        {!!order.deliveryFee && (
+        {(!!order.deliveryFee || !!order.deliveryDiscount) && (
           <p className="cart-sheet__total">
             <span>
               {t('order.deliveryFee')}
               {order.deliveryZoneName ? ` (${order.deliveryZoneName})` : ''}
+              <DeliveryFeeNote discount={order.deliveryDiscount} free={!order.deliveryFee} />
             </span>{' '}
-            <strong className="numeric">{formatMoney(order.deliveryFee)}</strong>
+            <strong className="numeric">{order.deliveryFee ? formatMoney(order.deliveryFee) : t('order.deliveryDiscount.freePrice')}</strong>
           </p>
         )}
         <p className="cart-sheet__total">

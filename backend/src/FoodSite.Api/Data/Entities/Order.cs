@@ -54,6 +54,9 @@ public class Order
     /// <summary>The delivery fee worked out from the zones when the order was placed; part of <see cref="Total"/>. Zero when none applied.</summary>
     public decimal DeliveryFee { get; set; }
 
+    /// <summary>What the large-order discount took off the fee when the order was placed (<see cref="DeliveryFee"/> is already reduced). Zero when none applied.</summary>
+    public decimal DeliveryDiscount { get; set; }
+
     /// <summary>The name of the zone the fee came from, as it was then.</summary>
     public string? DeliveryZoneName { get; set; }
 

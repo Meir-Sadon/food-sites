@@ -61,6 +61,28 @@ public class DeliveryZonesUnitTests
     public void A_polygon_needs_three_valid_points(string json) => Assert.Null(DeliveryZones.ParsePolygon(json));
 }
 
+public class DeliveryDiscountTests
+{
+    private static Settings Zoned(decimal? baseFee, decimal? minimum) =>
+        new() { DeliveryPricing = DeliveryPricing.Zones, DeliveryBaseFee = baseFee, DeliveryDiscountMinOrder = minimum };
+
+    [Theory]
+    [InlineData(15, 100, 100, 15, 15)]
+    [InlineData(15, 100, 99.99, 15, 0)]
+    [InlineData(15, 100, 150, 35, 15)]
+    [InlineData(40, 100, 150, 35, 35)]
+    [InlineData(15, 100, 150, 0, 0)]
+    public void The_discount_is_the_base_fee_but_never_more_than_the_fee(decimal baseFee, decimal minimum, decimal dishes, decimal fee, decimal expected) =>
+        Assert.Equal(expected, DeliveryDiscount.Amount(Zoned(baseFee, minimum), dishes, fee));
+
+    [Fact]
+    public void Nothing_is_discounted_without_a_threshold_or_in_zones_without_a_base_fee()
+    {
+        Assert.Equal(0, DeliveryDiscount.Amount(Zoned(15, null), 500, 35));
+        Assert.Equal(0, DeliveryDiscount.Amount(Zoned(null, 100), 500, 35));
+    }
+}
+
 [Collection(PostgresCollection.Name)]
 public sealed class DeliveryZonesTests(PostgresFixture postgres) : IAsyncLifetime
 {
@@ -201,6 +223,54 @@ public sealed class DeliveryZonesTests(PostgresFixture postgres) : IAsyncLifetim
         Assert.True(outside.NeedsReview);
         Assert.Equal(0, outside.DeliveryFee);
         Assert.Equal("simple", (await _client.GetAsync("/api/site").Read<SiteDto>()).DeliveryPricing);
+    }
+
+    private async Task UseDiscount(decimal? baseFee, decimal? minimum)
+    {
+        var body = System.Text.Json.Nodes.JsonNode.Parse((await _admin.GetAsync("/api/admin/settings").Read<System.Text.Json.JsonElement>()).GetRawText())!.AsObject();
+        body["deliveryBaseFee"] = baseFee;
+        body["deliveryDiscountMinOrder"] = minimum;
+        (await _admin.PutAsJsonAsync("/api/admin/settings", body, TestFiles.Json)).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task A_large_order_takes_the_base_fee_off_the_delivery_so_a_near_zone_is_free_and_a_far_one_pays_the_rest()
+    {
+        await Configure();
+        await UseDiscount(15, 80);
+        var near = await _client.PostAsJsonAsync("/api/orders", await Order(_client, "הרצל"), TestFiles.Json).Read<ConfirmationDto>();
+        Assert.Equal(0, near.DeliveryFee);
+        Assert.Equal(15, near.DeliveryDiscount);
+        var far = await _client.PostAsJsonAsync("/api/orders", await Order(_client, "רוטשילד"), TestFiles.Json).Read<ConfirmationDto>();
+        Assert.Equal(20, far.DeliveryFee);
+        Assert.Equal(15, far.DeliveryDiscount);
+        Assert.Equal(near.Total + 20, far.Total);
+
+        var admin = (await _admin.GetAsync("/api/admin/orders").Read<List<FoodSite.Api.Controllers.Admin.OrdersAdminController.OrderDto>>()).Single(o => o.Id == far.Id);
+        Assert.Equal(15, admin.DeliveryDiscount);
+        var site = await _client.GetAsync("/api/site").Read<SiteDto>();
+        Assert.Equal(15, site.DeliveryBaseFee);
+        Assert.Equal(80, site.DeliveryDiscountMinOrder);
+    }
+
+    [Fact]
+    public async Task An_order_under_the_threshold_pays_the_full_fee()
+    {
+        await Configure();
+        await UseDiscount(15, 500);
+        var placed = await _client.PostAsJsonAsync("/api/orders", await Order(_client, "הרצל"), TestFiles.Json).Read<ConfirmationDto>();
+        Assert.Equal(15, placed.DeliveryFee);
+        Assert.Equal(0, placed.DeliveryDiscount);
+    }
+
+    [Fact]
+    public async Task The_regular_setting_makes_its_fixed_fee_free_above_the_threshold()
+    {
+        await UseSimpleFee(25);
+        await UseDiscount(null, 80);
+        var placed = await _client.PostAsJsonAsync("/api/orders", await Order(_client, "הרצל"), TestFiles.Json).Read<ConfirmationDto>();
+        Assert.Equal(0, placed.DeliveryFee);
+        Assert.Equal(25, placed.DeliveryDiscount);
     }
 
     [Fact]

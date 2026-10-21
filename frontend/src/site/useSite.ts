@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react'
 import { FONTS, TILE_GROUPS, PALETTES, CORNERS, SHADOWS, SPACINGS, ORDER_FLOWS, ORDER_TOTAL_POSITIONS, SITE_STYLES, type ColorSet, type Corners, type Feature, type FontPair, type TileGroups, type Palette, type Shadows, type Spacing, type OrderFlow, type OrderTotalPosition, type Site, type SiteStyle } from '../api/site'
 import { site as siteConfig } from './config'
+import { readCachedTheme } from './themeCache'
 
 export interface SiteState {
   site: Site | null
@@ -31,7 +32,7 @@ export const useFeature = (feature: Feature) => useFeatures()(feature)
 export function useSiteStyle(): SiteStyle {
   const site = useSite()
   if (site) return site.style
-  const style = siteConfig.settings?.style
+  const style = readCachedTheme()?.style ?? siteConfig.settings?.style
   return SITE_STYLES.find((known) => known === style) ?? 'classic'
 }
 
@@ -50,7 +51,7 @@ export function useOrderLayout(): { totalPosition: OrderTotalPosition; flow: Ord
 export function useCorners(): Corners {
   const site = useSite()
   if (site) return site.corners
-  const corners = siteConfig.settings?.corners
+  const corners = readCachedTheme()?.corners ?? siteConfig.settings?.corners
   return CORNERS.find((known) => known === corners) ?? 'rounded'
 }
 
@@ -58,13 +59,14 @@ export function useCorners(): Corners {
 export function useColors(): { palette: Palette; customColors: ColorSet; lineWidth: number | null } {
   const site = useSite()
   if (site) return { palette: site.palette, customColors: site.customColors, lineWidth: site.lineWidth }
-  const palette = siteConfig.settings?.palette
-  return { palette: PALETTES.find((known) => known === palette) ?? 'site', customColors: {}, lineWidth: null }
+  const cached = readCachedTheme()
+  const palette = cached?.palette ?? siteConfig.settings?.palette
+  return { palette: PALETTES.find((known) => known === palette) ?? 'site', customColors: cached?.customColors ?? {}, lineWidth: cached?.lineWidth ?? null }
 }
 
 /** The font pair, shadow strength and spacing of the client site; `standard` (the style's own) until `/api/site` answers. */
 export function useFinish(): { font: FontPair; shadows: Shadows; spacing: Spacing; tileGroups: TileGroups } {
-  const site = useSite()
+  const site = useSite() ?? readCachedTheme()
   return {
     font: FONTS.find((known) => known === site?.font) ?? 'standard',
     shadows: SHADOWS.find((known) => known === site?.shadows) ?? 'standard',

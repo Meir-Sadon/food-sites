@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { menu, menuDish } from '../test/catalogData'
-import { normalizeSearchText, scoreDish, searchDishes } from './search'
+import { highlightRanges, normalizeSearchText, scoreDish, searchDishes } from './search'
 
 const dish = (name: string, description: string | null = null) => ({ name, description })
 
@@ -27,15 +27,26 @@ describe('scoreDish', () => {
     expect(description).toBeGreaterThan(0)
   })
 
-  it('matches final letters and tolerates a typo', () => {
+  it('matches final letters and niqqud, but not misspelled or scattered letters', () => {
     expect(scoreDish('חמוצים', dish('חמוצים'))).toBeGreaterThan(0)
-    expect(scoreDish('קובא', dish('קובה'))).toBeGreaterThan(0)
+    expect(scoreDish('כסכס', dish('כֻּסְכֻּס'))).toBeGreaterThan(0)
+    expect(scoreDish('קובא', dish('קובה'))).toBe(0)
+    expect(scoreDish('קבה', dish('קובה'))).toBe(0)
     expect(scoreDish('פיצה', dish('קובה'))).toBe(0)
   })
 
   it('needs every word of the query', () => {
     expect(scoreDish('עוף בתנור', dish('עוף בתנור'))).toBeGreaterThan(0)
     expect(scoreDish('עוף קובה', dish('עוף בתנור'))).toBe(0)
+  })
+})
+
+describe('highlightRanges', () => {
+  it('marks every appearance of every word, ignoring niqqud and case', () => {
+    expect(highlightRanges('עוף בתנור עם עוף', 'עוף')).toEqual([[0, 3], [13, 16]])
+    expect(highlightRanges('Chicken soup', 'SOUP chick')).toEqual([[0, 5], [8, 12]])
+    expect(highlightRanges('כֻּסְכֻּס חם', 'כסכס')).toEqual([[0, 9]])
+    expect(highlightRanges('קובה', 'xyz')).toEqual([])
   })
 })
 

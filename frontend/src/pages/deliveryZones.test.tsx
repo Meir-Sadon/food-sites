@@ -87,6 +87,44 @@ describe('Delivery fee by zones', () => {
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
   })
 
+  it('takes the base fee off the delivery of a large order and says why', async () => {
+    const { user } = await open(
+      { deliveryPricing: 'zones', deliveryBaseFee: 15, deliveryDiscountMinOrder: 40 },
+      () => ({ status: 'ok', fee: 35, zoneName: 'רחוק' }),
+    )
+    expect(screen.getByText(/משלוחים חינם בהזמנות מעל ₪40/)).toBeInTheDocument()
+    expect(screen.getByText(/לאזורים רחוקים תינתן הנחה בעלות המשלוח/)).toBeInTheDocument()
+
+    await typeAddress(user)
+
+    expect(await screen.findByText(/כולל הנחת משלוח של ₪15/, {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(totalText()).toContain('60')
+  })
+
+  it('makes the delivery free when the discount covers the whole fee', async () => {
+    const { user } = await open(
+      { deliveryPricing: 'zones', deliveryBaseFee: 15, deliveryDiscountMinOrder: 40 },
+      () => ({ status: 'ok', fee: 15, zoneName: 'קרוב' }),
+    )
+    await typeAddress(user)
+
+    expect(await screen.findByText('חינם', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.getByText(/הנחת משלוח בהזמנה גדולה/)).toBeInTheDocument()
+    expect(totalText()).toContain('40')
+  })
+
+  it('charges the full fee under the threshold', async () => {
+    const { user } = await open(
+      { deliveryPricing: 'zones', deliveryBaseFee: 15, deliveryDiscountMinOrder: 500 },
+      () => ({ status: 'ok', fee: 15, zoneName: 'החלק הקרוב' }),
+    )
+    await typeAddress(user)
+
+    expect(await screen.findByText(/החלק הקרוב/, {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.queryByText(/הנחת משלוח בהזמנה גדולה/)).not.toBeInTheDocument()
+    expect(totalText()).toContain('55')
+  })
+
   it('asks for nothing with the simple setting', async () => {
     const { api, user } = await open({ deliveryPricing: 'simple', deliveryFeeText: 'בין 20 ל-40 ₪' }, () => ({ status: 'outside', fee: 0, zoneName: null }))
     await typeAddress(user)

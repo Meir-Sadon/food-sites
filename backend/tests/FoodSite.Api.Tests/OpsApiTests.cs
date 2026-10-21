@@ -110,18 +110,18 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
     {
         await using (var db = _factory.CreateDbContext())
         {
-            Order Make(DateOnly date, decimal total, OrderStatus status = OrderStatus.New, bool needsReview = false) => new()
+            Order Make(DateOnly date, decimal total, OrderStatus status = OrderStatus.New, bool needsReview = false, decimal fee = 0) => new()
             {
-                Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = date, Total = total,
+                Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = date, Total = total, DeliveryFee = fee,
                 Status = status, NeedsReview = needsReview, CreatedAt = DateTimeOffset.UtcNow,
             };
             db.Orders.AddRange(
                 Make(new(2030, 1, 6), 100),
-                Make(new(2030, 1, 8), 50),
+                Make(new(2030, 1, 8), 50, fee: 15),
                 Make(new(2030, 1, 15), 30),
                 Make(new(2030, 2, 3), 70),
-                Make(new(2030, 2, 4), 999, OrderStatus.Cancelled),
-                Make(new(2030, 2, 5), 999, needsReview: true),
+                Make(new(2030, 2, 4), 999, OrderStatus.Cancelled, fee: 20),
+                Make(new(2030, 2, 5), 999, needsReview: true, fee: 25),
                 Make(new(2030, 4, 1), 999));
             await db.SaveChangesAsync();
         }
@@ -131,8 +131,10 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
         // A delivery waiting for the admin's approval counts; a cancelled order does not.
         Assert.Equal(5, months.Orders);
         Assert.Equal(1249, months.Sales);
+        // The delivery fees are part of the sales, and also given on their own.
+        Assert.Equal(40, months.DeliveryFees);
         Assert.Equal(
-            [new PeriodDto(new(2030, 1, 1), 3, 180), new PeriodDto(new(2030, 2, 1), 2, 1069)],
+            [new PeriodDto(new(2030, 1, 1), 3, 180, 15), new PeriodDto(new(2030, 2, 1), 2, 1069, 25)],
             months.Periods);
         Assert.Equal(["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"], months.Statuses);
         Assert.Equal(
@@ -144,8 +146,8 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
 
         // Asking for states picks what the totals count; byStatus still shows them all.
         var cancelled = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-03-31&statuses=cancelled").Read<SummaryDto>();
-        Assert.Equal((1, 999m), (cancelled.Orders, cancelled.Sales));
-        Assert.Equal([new PeriodDto(new(2030, 2, 1), 1, 999)], cancelled.Periods);
+        Assert.Equal((1, 999m, 20m), (cancelled.Orders, cancelled.Sales, cancelled.DeliveryFees));
+        Assert.Equal([new PeriodDto(new(2030, 2, 1), 1, 999, 20)], cancelled.Periods);
         Assert.Equal(["Cancelled"], cancelled.Statuses);
         Assert.Equal(months.ByStatus, cancelled.ByStatus);
         var two = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-03-31&statuses=WaitingApproval,New").Read<SummaryDto>();
@@ -155,7 +157,7 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
         // Weeks start on Sunday: 2030-01-06 is one.
         var weeks = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-01-31&period=week").Read<SummaryDto>();
         Assert.Equal(
-            [new PeriodDto(new(2030, 1, 6), 2, 150), new PeriodDto(new(2030, 1, 13), 1, 30)],
+            [new PeriodDto(new(2030, 1, 6), 2, 150, 15), new PeriodDto(new(2030, 1, 13), 1, 30, 0)],
             weeks.Periods);
 
         await (await console.GetAsync("/api/ops/summary?from=2030-02-01&to=2030-01-01")).AssertInvalid("from", "invalidRange");

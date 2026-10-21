@@ -195,6 +195,9 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Description")
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
@@ -243,6 +246,9 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("OnSale")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("OpenByDefault")
                         .HasColumnType("boolean");
@@ -699,6 +705,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DeliveryDiscount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<decimal>("DeliveryFee")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
@@ -965,6 +975,24 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("AdminPasswordHash")
                         .HasColumnType("text");
 
+                    b.Property<bool>("BadgeLowStockEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("BadgeLowStockAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BadgeLowStockMode")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("BadgeNewAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("BadgeNewEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BadgeNewUnit")
+                        .HasColumnType("text");
+
                     b.Property<string>("BackgroundImagePublicId")
                         .HasColumnType("text");
 
@@ -1001,6 +1029,14 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<string>("DeliveryAreaText")
                         .HasColumnType("text");
+
+                    b.Property<decimal?>("DeliveryBaseFee")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("DeliveryDiscountMinOrder")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<bool>("DeliveryEnabled")
                         .HasColumnType("boolean");
@@ -1090,6 +1126,39 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("PickupEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("PopupBody")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupButtonText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupButtonUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PopupDelaySeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("PopupEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PopupFrequency")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupImagePublicId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupSize")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupTitle")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PopupTrigger")
+                        .HasColumnType("text");
+
                     b.Property<int?>("PortionsPerSupplyDate")
                         .HasColumnType("integer");
 
@@ -1127,12 +1196,15 @@ namespace FoodSite.Api.Data.Migrations
                         {
                             Id = 1,
                             AddressFirst = false,
+                            BadgeLowStockEnabled = false,
+                            BadgeNewEnabled = false,
                             BitEnabled = false,
                             DeliveryEnabled = true,
                             MinimumOrderAppliesToPickup = true,
                             OwnerChangeMails = false,
                             PayBoxEnabled = false,
                             PickupEnabled = true,
+                            PopupEnabled = false,
                             SiteDefaultsApplied = false
                         });
                 });

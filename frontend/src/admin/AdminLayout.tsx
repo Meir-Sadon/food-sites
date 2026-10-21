@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { adminLogout } from '../api/admin'
@@ -24,6 +25,18 @@ function AdminFrame() {
   const session = useAdminSession()
   const leave = useAdminLeave()
   useAdminLook()
+  const bar = useRef<HTMLElement>(null)
+  // The side menu pins itself right under the sticky top bar, whatever height it wraps to.
+  useLayoutEffect(() => {
+    const el = bar.current
+    if (!el) return
+    const set = () => document.documentElement.style.setProperty('--admin-bars-height', `${el.offsetHeight}px`)
+    set()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(set)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
   const current = sectionOf(pathname)
   const visible = (tab: Tab) => !tab.feature || hasFeature(tab.feature)
 
@@ -34,7 +47,7 @@ function AdminFrame() {
 
   return (
     <>
-      <header className="top-bar admin-bar">
+      <header className="top-bar admin-bar" ref={bar}>
         <span className="top-bar__brand">
           {t('app.name')} · {t('admin.title')}
         </span>
