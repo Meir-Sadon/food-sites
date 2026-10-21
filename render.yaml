@@ -603,3 +603,59 @@ services:
         value: Lax
       - key: PORT
         value: "8080"
+
+  - type: web
+    name: ron-burger
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: SITE
+        value: ron-burger
+      # Npgsql format, e.g. Host=...;Database=...;Username=...;Password=...;SSL Mode=Require
+      - key: ConnectionStrings__Default
+        sync: false
+      # The site owner's first password. Output of: dotnet run --project backend/src/FoodSite.Api -- hash-password '<password>'
+      - key: Admin__PasswordHash
+        sync: false
+      # The master admin: the same two values on every service (see docs/DEPLOY.md, "Master admin")
+      - key: Admin__MasterUsername
+        sync: false
+      - key: Admin__MasterPasswordHash
+        sync: false
+      # cloudinary://<api_key>:<api_secret>@<cloud_name>; empty disables picture uploads
+      - key: Cloudinary__Url
+        sync: false
+      # Both empty: WhatsApp messages are only logged
+      - key: WhatsApp__Token
+        sync: false
+      - key: WhatsApp__PhoneNumberId
+        sync: false
+      # TextMe account for SMS order confirmations; empty: SMS is only logged.
+      # Sms__Source is the sender name the client sees (up to 11 English letters or digits, verified at TextMe).
+      - key: Sms__Username
+        sync: false
+      - key: Sms__Token
+        sync: false
+      - key: Sms__Source
+        sync: false
+      # Optional: this site's own message text, e.g. "{siteName}: הזמנה #{orderId} התקבלה, סה״כ ₪{total}"
+      - key: Sms__ConfirmationTemplate
+        sync: false
+      # A Resend API key turns on mail to the business owner (new orders, changes); empty: no mail
+      - key: Mail__ResendApiKey
+        sync: false
+      - key: Jwt__Secret
+        generateValue: true
+      - key: Database__MigrateOnStartup
+        value: "true"
+      - key: ForwardedHeaders__Enabled
+        value: "true"
+      - key: AuthCookie__SameSite
+        value: Lax
+      - key: PORT
+        value: "8080"

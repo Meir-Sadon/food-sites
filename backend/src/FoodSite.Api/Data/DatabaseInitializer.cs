@@ -152,6 +152,7 @@ public static class DatabaseInitializer
                         Price = addOn.Price,
                         MaxQuantity = addOn.MaxQuantity,
                         IsCheckbox = addOn.IsCheckbox,
+                        IsDefault = addOn.IsDefault,
                     });
                 }
             }

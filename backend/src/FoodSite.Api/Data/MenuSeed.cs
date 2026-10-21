@@ -46,9 +46,9 @@ public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
 
     /// <summary>
     /// An add-on this dish offers: the name of another dish (this seed's or the database's), at <c>Price</c> under this dish
-    /// (null keeps its own), in the named group, as a check box or up to <c>MaxQuantity</c> per ordered unit.
+    /// (null keeps its own), in the named group, as a check box or up to <c>MaxQuantity</c> per ordered unit; <c>IsDefault</c> picks it for every new unit.
     /// </summary>
-    public record SeedAddOn(string Dish, decimal? Price = null, string? Group = null, bool IsCheckbox = false, decimal? MaxQuantity = null);
+    public record SeedAddOn(string Dish, decimal? Price = null, string? Group = null, bool IsCheckbox = false, decimal? MaxQuantity = null, bool IsDefault = false);
 
     public record SeedQuestion(
         string Text,
