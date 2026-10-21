@@ -5,6 +5,7 @@ import type { DeliveryZone } from '../../api/catalog'
 import { settings } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
+import { openSection } from '../../test/sections'
 
 // The map needs a real browser; the section is tested through its zone list.
 vi.mock('./ZonesMap', () => ({
@@ -34,7 +35,7 @@ function api(zones: DeliveryZone[] = [], mode: 'simple' | 'zones' = 'zones') {
 }
 
 async function section() {
-  const region = await screen.findByRole('region', { name: 'דמי משלוח לפי אזורים' })
+  const region = await openSection('דמי משלוח לפי אזורים')
   await waitFor(() => expect(within(region).queryByText('טוען…')).not.toBeInTheDocument())
   return region
 }
@@ -44,7 +45,7 @@ describe('Delivery zones settings', () => {
     const mock = api([], 'simple')
     renderAt('/admin/settings')
     const user = userEvent.setup()
-    const general = await screen.findByRole('region', { name: 'משלוח, כשרות ותשלום' })
+    const general = await openSection('משלוח, כשרות ותשלום')
     await within(general).findByRole('radio', { name: /רגילה/ })
     expect(within(general).getByRole('radio', { name: /רגילה/ })).toBeChecked()
     expect(within(general).getByLabelText('דמי משלוח קבועים (₪)')).toBeInTheDocument()
@@ -66,7 +67,7 @@ describe('Delivery zones settings', () => {
     const mock = api([], 'simple')
     renderAt('/admin/settings')
     const user = userEvent.setup()
-    const general = await screen.findByRole('region', { name: 'משלוח, כשרות ותשלום' })
+    const general = await openSection('משלוח, כשרות ותשלום')
     await user.type(await within(general).findByLabelText('דמי משלוח קבועים (₪)'), '25')
     await user.click(within(general).getByRole('button', { name: 'שמירה' }))
 

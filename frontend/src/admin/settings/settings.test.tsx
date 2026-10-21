@@ -5,6 +5,7 @@ import type { SupplyDay } from '../../api/catalog'
 import { popup, settings, supplyDays } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid, masterSession } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
+import { openSection } from '../../test/sections'
 
 const base = {
   ...adminSession,
@@ -17,7 +18,7 @@ const base = {
 
 /** A settings section once its data has loaded. */
 async function section(name: string) {
-  const region = await screen.findByRole('region', { name })
+  const region = await openSection(name)
   await waitFor(() => expect(within(region).queryByText('טוען…')).not.toBeInTheDocument())
   return region
 }
@@ -662,7 +663,7 @@ describe('Social links', () => {
         return (links = sent)
       },
     })
-    renderAt('/admin/settings')
+    renderAt('/admin/social')
     const user = userEvent.setup()
     const form = await section('קישורים לרשתות חברתיות')
 
@@ -696,7 +697,7 @@ describe('Social links', () => {
       'GET /api/admin/social-links': () => [{ kind: 'instagram', label: null, url: 'https://instagram.com/shop' }],
       'PUT /api/admin/social-links': (_, body) => (body as { links: unknown[] }).links,
     })
-    renderAt('/admin/settings')
+    renderAt('/admin/social')
     const user = userEvent.setup()
     const form = await section('קישורים לרשתות חברתיות')
 
@@ -717,7 +718,7 @@ describe('Entry pop-up', () => {
       'PUT /api/admin/popup': (_, input) => ({ body: (saved = { ...saved, ...(input as object) }) }),
       ...extra,
     })
-    renderAt('/admin/appearance')
+    renderAt('/admin/popup')
     return api
   }
 

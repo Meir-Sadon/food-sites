@@ -6,6 +6,7 @@ import { publicApi, site } from '../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 import { PREFS_KEY } from './prefs'
+import { openSection } from '../test/sections'
 
 const info = (patch: Partial<AccessibilityInfo> = {}): AccessibilityInfo => ({
   name: null,
@@ -148,7 +149,7 @@ describe('admin accessibility coordinator', () => {
     })
     renderAt('/admin/contacts')
     const user = userEvent.setup()
-    const region = await screen.findByRole('region', { name: 'רכז נגישות והצהרת נגישות' })
+    const region = await openSection('רכז נגישות והצהרת נגישות')
     await waitFor(() => expect(within(region).queryByText('טוען…')).not.toBeInTheDocument())
 
     await user.type(within(region).getByLabelText('שם רכז הנגישות (לא חובה)'), 'דנה')

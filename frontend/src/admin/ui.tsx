@@ -1,6 +1,8 @@
-import { useEffect, useId, useRef, useState, type HTMLAttributes, type ReactNode } from 'react'
+import { useContext, useEffect, useId, useRef, useState, type HTMLAttributes, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../api/client'
+import { useRegisterSection, useSectionGroup } from './sectionGroup'
+import { SectionContext } from './unsaved'
 
 /** Validation messages for one field. Give the input aria-describedby={id}. */
 export function FieldError({ errors, field, id }: { errors: FieldErrors; field: string; id: string }) {
@@ -214,15 +216,56 @@ export function FormBlock({
   )
 }
 
-export function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
-  const id = useId()
+export function Section({
+  title,
+  hint,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  hint?: string
+  /** Inside a `SectionGroup` a section starts folded unless this is set. */
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  const ownId = useId()
+  const id = useContext(SectionContext)?.id ?? ownId
+  const group = useSectionGroup()
+  const [el, setEl] = useState<HTMLElement | null>(null)
+  const [heading, setHeading] = useState<HTMLElement | null>(null)
+  useRegisterSection(id, title, el, heading)
+  if (!group) {
+    return (
+      <section className="admin-section" aria-labelledby={id}>
+        <div className="with-info">
+          <h2 id={id}>{title}</h2>
+          {hint && <Info text={hint} about={title} />}
+        </div>
+        {children}
+      </section>
+    )
+  }
+  const open = group.isOpen(id, defaultOpen)
   return (
-    <section className="admin-section" aria-labelledby={id}>
+    <section className="admin-section admin-section--fold" aria-labelledby={id} ref={setEl}>
       <div className="with-info">
-        <h2 id={id}>{title}</h2>
+        <h2 id={id}>
+          <button
+            type="button"
+            className="admin-section__toggle"
+            aria-expanded={open}
+            aria-controls={`${id}-body`}
+            onClick={() => group.toggle(id, defaultOpen)}
+            ref={setHeading}
+          >
+            {title}
+          </button>
+        </h2>
         {hint && <Info text={hint} about={title} />}
       </div>
-      {children}
+      <div id={`${id}-body`} className="admin-section__body" hidden={!open}>
+        {children}
+      </div>
     </section>
   )
 }

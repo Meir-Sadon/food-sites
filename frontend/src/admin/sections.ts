@@ -20,6 +20,8 @@ export const sections: { key: string; tabs: Tab[] }[] = [
       { to: '/admin/categories', key: 'admin.nav.categories' },
       { to: '/admin/dish-groups', key: 'admin.nav.dishGroups' },
       { to: '/admin/appearance', key: 'admin.nav.appearance' },
+      { to: '/admin/popup', key: 'admin.nav.popup' },
+      { to: '/admin/social', key: 'admin.nav.social' },
       { to: '/admin/contacts', key: 'admin.nav.contacts' },
       { to: '/admin/reviews', key: 'admin.nav.reviews', feature: 'reviews' },
     ],
