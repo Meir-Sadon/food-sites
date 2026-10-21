@@ -41,7 +41,8 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
         Month,
     }
 
-    public record PeriodDto(DateOnly Start, int Orders, decimal Sales);
+    /// <param name="DeliveryFees">The part of <paramref name="Sales"/> that is delivery fees.</param>
+    public record PeriodDto(DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees);
 
     /// <summary>Where an order stands, as the summary tells it apart: its status, or <see cref="WaitingApproval"/> while the admin has not approved it.</summary>
     public static class OrderState
@@ -64,9 +65,10 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
 
     /// <param name="Statuses">The states the totals and periods count.</param>
     /// <param name="ByStatus">Every state's orders and sales in the range, whatever <paramref name="Statuses"/> asks for.</param>
+    /// <param name="DeliveryFees">The part of <paramref name="Sales"/> that is delivery fees.</param>
     public record SummaryDto(
         DateOnly From, DateOnly To, SummaryPeriod Period, int Orders, decimal Sales, IReadOnlyList<PeriodDto> Periods,
-        IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus);
+        IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus, decimal DeliveryFees);
 
     public record RecommendationDto(int Id, string Text, string? ClientName, DateTimeOffset CreatedAt, bool IsHandled);
 
@@ -117,20 +119,21 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
 
         var all = (await db.Orders.AsNoTracking()
                 .Where(o => o.SupplyDate >= start && o.SupplyDate <= end)
-                .Select(o => new { o.SupplyDate, o.Total, o.Status, o.NeedsReview })
+                .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, o.Status, o.NeedsReview })
                 .ToListAsync(ct))
-            .Select(o => new { o.SupplyDate, o.Total, State = OrderState.Of(o.Status, o.NeedsReview) })
+            .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, State = OrderState.Of(o.Status, o.NeedsReview) })
             .ToList();
         var orders = all.Where(o => counted.Contains(o.State)).ToList();
         var periods = orders
             .GroupBy(o => PeriodStart(o.SupplyDate, period))
             .OrderBy(g => g.Key)
-            .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Total)))
+            .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Total), g.Sum(o => o.DeliveryFee)))
             .ToList();
         var byStatus = OrderState.All
             .Select(state => new StatusDto(state, all.Count(o => o.State == state), all.Where(o => o.State == state).Sum(o => o.Total)))
             .ToList();
-        return new SummaryDto(start, end, period, orders.Count, orders.Sum(o => o.Total), periods, counted, byStatus);
+        return new SummaryDto(
+            start, end, period, orders.Count, orders.Sum(o => o.Total), periods, counted, byStatus, orders.Sum(o => o.DeliveryFee));
     }
 
     /// <summary>
