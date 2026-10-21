@@ -1,0 +1,1752 @@
+{
+ "categories": [
+  {
+   "name": "ארוחות",
+   "dishes": [
+    {
+     "name": "ארוחת המבורגר",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/burger_meal.jpg"
+     ],
+     "description": "המבורגר עסיסי עם צ'יפס ושתיה. אפשר להחליף את הצ'יפס בתוספת אחרת ב-15 ₪.",
+     "options": [
+      {
+       "label": "100 גרם",
+       "price": 39,
+       "isDefault": false,
+       "amount": 0.1
+      },
+      {
+       "label": "200 גרם",
+       "price": 49,
+       "isDefault": true,
+       "amount": 0.2
+      },
+      {
+       "label": "300 גרם",
+       "price": 59,
+       "isDefault": false,
+       "amount": 0.3
+      }
+     ],
+     "optionsTitle": "בחרו גודל",
+     "questions": [
+      {
+       "text": "מידת עשייה",
+       "kind": "SingleChoice",
+       "choices": [
+        "רייר",
+        "מדיום רייר",
+        "מדיום",
+        "מדיום וול",
+        "וול דאן"
+       ],
+       "isRequired": true
+      }
+     ],
+     "addOnGroups": [
+      {
+       "name": "שינוי תוספת 15 ש״ח",
+       "maxUnits": 1
+      },
+      {
+       "name": "בחרו שתיה",
+       "maxUnits": 1
+      },
+      {
+       "name": "רטבים בתוך המנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "רטבים בצד",
+       "maxUnits": 3
+      },
+      {
+       "name": "ירקות"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "צ'יפס",
+       "price": 0,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שניצלונים",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כדורי פירה",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טבעות בצל",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "הופ פרייז",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צ'יפס בטטה",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פוטטוס",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פפסי",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פפסי זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פאנטה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שוופס ענבים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שוופס תות",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרינג אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק תפוח נענע",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק לימונדה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק מנגו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק סודה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "XL אנרגיה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בלו אנרגיה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שזיפים",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ברביקיו",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אלף האיים",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מיונז",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קטשופ",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב הבית",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי חריף",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי מתוק",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שום",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שזיפים בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ברביקיו בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אלף האיים בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מיונז בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קטשופ בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב הבית בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי חריף בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי מתוק בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שום בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בצל חי",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "עגבניה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חסה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "ארוחת אנטריקוט",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 59,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/burger.jpg"
+     ],
+     "description": "אנטריקוט 220 גרם עם צ'יפס ושתיה. אפשר להחליף את הצ'יפס בתוספת אחרת ב-15 ₪.",
+     "unitName": "ארוחה",
+     "questions": [
+      {
+       "text": "מידת עשייה",
+       "kind": "SingleChoice",
+       "choices": [
+        "רייר",
+        "מדיום רייר",
+        "מדיום",
+        "מדיום וול",
+        "וול דאן"
+       ],
+       "isRequired": true
+      }
+     ],
+     "addOnGroups": [
+      {
+       "name": "שינוי תוספת 15 ש״ח",
+       "maxUnits": 1
+      },
+      {
+       "name": "בחרו שתיה",
+       "maxUnits": 1
+      },
+      {
+       "name": "רטבים בתוך המנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "רטבים בצד",
+       "maxUnits": 3
+      },
+      {
+       "name": "ירקות"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "צ'יפס",
+       "price": 0,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שניצלונים",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כדורי פירה",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טבעות בצל",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "הופ פרייז",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צ'יפס בטטה",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פוטטוס",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פפסי",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פפסי זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פאנטה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שוופס ענבים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שוופס תות",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרינג אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק תפוח נענע",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק לימונדה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק מנגו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק סודה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "XL אנרגיה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בלו אנרגיה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שזיפים",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ברביקיו",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אלף האיים",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מיונז",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קטשופ",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב הבית",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי חריף",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי מתוק",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שום",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שזיפים בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ברביקיו בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אלף האיים בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מיונז בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קטשופ בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב הבית בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי חריף בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי מתוק בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שום בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בצל חי",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "עגבניה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חסה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "ארוחת שניצלונים",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 39,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612785/%D7%90%D7%A8%D7%95%D7%97%D7%AA_%D7%A2%D7%95%D7%A3_%D7%95%D7%A6_%D7%99%D7%A4%D7%A1_%D7%91%D7%A7%D7%95%D7%A4%D7%A1%D7%94.png"
+     ],
+     "description": "שניצלונים עם צ'יפס ושתיה. אפשר להחליף את הצ'יפס בתוספת אחרת ב-15 ₪.",
+     "unitName": "ארוחה",
+     "addOnGroups": [
+      {
+       "name": "שינוי תוספת 15 ש״ח",
+       "maxUnits": 1
+      },
+      {
+       "name": "בחרו שתיה",
+       "maxUnits": 1
+      },
+      {
+       "name": "רטבים בתוך המנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "רטבים בצד",
+       "maxUnits": 3
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "צ'יפס",
+       "price": 0,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שניצלונים",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כדורי פירה",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טבעות בצל",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "הופ פרייז",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צ'יפס בטטה",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פוטטוס",
+       "price": 15,
+       "group": "שינוי תוספת 15 ש״ח",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פפסי",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פפסי זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פאנטה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שוופס ענבים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שוופס תות",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרינג אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק תפוח נענע",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק לימונדה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק מנגו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נורדיק סודה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "XL אנרגיה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בלו אנרגיה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שזיפים",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ברביקיו",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אלף האיים",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מיונז",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קטשופ",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב הבית",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי חריף",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי מתוק",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שום",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שזיפים בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ברביקיו בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אלף האיים בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מיונז בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קטשופ בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב הבית בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי חריף בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי מתוק בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שום בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "המבורגר בלבד",
+   "dishes": [
+    {
+     "name": "המבורגר",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/burger.jpg"
+     ],
+     "description": "המבורגר עסיסי על האש, בלי צ'יפס ובלי שתיה.",
+     "options": [
+      {
+       "label": "100 גרם",
+       "price": 25,
+       "isDefault": false,
+       "amount": 0.1
+      },
+      {
+       "label": "200 גרם",
+       "price": 35,
+       "isDefault": true,
+       "amount": 0.2
+      },
+      {
+       "label": "300 גרם",
+       "price": 45,
+       "isDefault": false,
+       "amount": 0.3
+      }
+     ],
+     "optionsTitle": "בחרו גודל",
+     "questions": [
+      {
+       "text": "מידת עשייה",
+       "kind": "SingleChoice",
+       "choices": [
+        "רייר",
+        "מדיום רייר",
+        "מדיום",
+        "מדיום וול",
+        "וול דאן"
+       ],
+       "isRequired": true
+      }
+     ],
+     "addOnGroups": [
+      {
+       "name": "רטבים בתוך המנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "רטבים בצד",
+       "maxUnits": 3
+      },
+      {
+       "name": "ירקות"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "שזיפים",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ברביקיו",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אלף האיים",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מיונז",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קטשופ",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב הבית",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי חריף",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי מתוק",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שום",
+       "price": 0,
+       "group": "רטבים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שזיפים בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ברביקיו בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אלף האיים בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מיונז בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קטשופ בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב הבית בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי חריף בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "צילי מתוק בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "שום בצד",
+       "price": 0,
+       "group": "רטבים בצד",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בצל חי",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "עגבניה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חסה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "תוספות",
+   "dishes": [
+    {
+     "name": "שניצלונים",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 30,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612794/%D7%A8%D7%A6%D7%95%D7%A2%D7%95%D7%AA_%D7%A2%D7%95%D7%A3_%D7%A4%D7%A8%D7%99%D7%9B%D7%95%D7%AA_%D7%A2%D7%9D_%D7%A9%D7%95%D7%9E%D7%A9%D7%95%D7%9D.png"
+     ],
+     "description": "כ-8 יחידות",
+     "isSideDish": true,
+     "unitName": "מנה"
+    },
+    {
+     "name": "צ'יפס",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612793/%D7%A6_%D7%99%D7%A4%D7%A1_%D7%96%D7%94%D7%95%D7%91_%D7%A2%D7%9C_%D7%A7%D7%A8%D7%A9_%D7%A2%D7%A5_%D7%9B%D7%A4%D7%A8%D7%99.png"
+     ],
+     "isSideDish": true,
+     "options": [
+      {
+       "label": "קטן",
+       "price": 12,
+       "isDefault": true,
+       "amount": 1
+      },
+      {
+       "label": "גדול",
+       "price": 20,
+       "isDefault": false,
+       "amount": 1
+      }
+     ],
+     "optionsTitle": "בחרו גודל"
+    },
+    {
+     "name": "כדורי פירה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 20,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612793/%D7%9B%D7%93%D7%95%D7%A8%D7%99_%D7%AA%D7%A4%D7%95%D7%97%D7%99_%D7%90%D7%93%D7%9E%D7%94_%D7%96%D7%94%D7%95%D7%91%D7%99%D7%9D_%D7%A2%D7%9D_%D7%A8%D7%98%D7%91%D7%99%D7%9D.png"
+     ],
+     "description": "כ-12 יחידות",
+     "isSideDish": true,
+     "unitName": "מנה"
+    },
+    {
+     "name": "טבעות בצל",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 30,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612737/onion_rings.jpg"
+     ],
+     "description": "כ-12 יחידות",
+     "isSideDish": true,
+     "unitName": "מנה"
+    },
+    {
+     "name": "הופ פרייז",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 30,
+     "isSideDish": true,
+     "unitName": "מנה"
+    },
+    {
+     "name": "צ'יפס בטטה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612794/%D7%A6_%D7%99%D7%A4%D7%A1_%D7%91%D7%98%D7%98%D7%94_%D7%A4%D7%A8%D7%99%D7%9A_%D7%91%D7%A7%D7%A2%D7%A8%D7%AA_%D7%9E%D7%AA%D7%9B%D7%AA.png"
+     ],
+     "isSideDish": true,
+     "options": [
+      {
+       "label": "קטן",
+       "price": 12,
+       "isDefault": true,
+       "amount": 1
+      },
+      {
+       "label": "גדול",
+       "price": 20,
+       "isDefault": false,
+       "amount": 1
+      }
+     ],
+     "optionsTitle": "בחרו גודל"
+    },
+    {
+     "name": "פוטטוס",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 22,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612794/%D7%AA%D7%A4%D7%95%D7%97%D7%99_%D7%90%D7%93%D7%9E%D7%94_%D7%A6%D7%9C%D7%95%D7%99%D7%99%D7%9D_%D7%A2%D7%9D_%D7%A2%D7%A9%D7%91%D7%99_%D7%AA%D7%99%D7%91%D7%95%D7%9C.png"
+     ],
+     "isSideDish": true,
+     "unitName": "מנה"
+    }
+   ]
+  },
+  {
+   "name": "שתיה",
+   "dishes": [
+    {
+     "name": "קולה",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406043/tin-cocaCola-coke.jpg"
+     ]
+    },
+    {
+     "name": "קולה זירו",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406044/tin-cocaCola-coke-zero.jpg"
+     ]
+    },
+    {
+     "name": "פפסי",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406079/tin-pepsi-coke.jpg"
+     ]
+    },
+    {
+     "name": "פפסי זירו",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405187/tin-pepsi-coke-zero.jpg"
+     ]
+    },
+    {
+     "name": "ספרייט",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406105/tin-sprite.jpg"
+     ]
+    },
+    {
+     "name": "ספרייט זירו",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406111/tin-sprite-zero.jpg"
+     ]
+    },
+    {
+     "name": "פאנטה",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406054/tin-fanta-orange.jpg"
+     ]
+    },
+    {
+     "name": "שוופס ענבים",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406089/tin-schweppes-grapes.jpg"
+     ]
+    },
+    {
+     "name": "שוופס תות",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791404829/tin-schweppes-strawberry.jpg"
+     ]
+    },
+    {
+     "name": "ספרינג אפרסק",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406100/tin-spring-peach.jpg"
+     ]
+    },
+    {
+     "name": "נורדיק תפוח נענע",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405171/tin-nordic-apple-mint.jpg"
+     ]
+    },
+    {
+     "name": "נורדיק לימונדה",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405184/tin-nordic-lemonad.jpg"
+     ]
+    },
+    {
+     "name": "נורדיק מנגו",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405178/tin-nordic-mango-ming.jpg"
+     ]
+    },
+    {
+     "name": "נורדיק אפרסק",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405176/tin-nordic-peach.jpg"
+     ]
+    },
+    {
+     "name": "נורדיק סודה",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405174/tin-nordic-soda.jpg"
+     ]
+    },
+    {
+     "name": "XL אנרגיה",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406118/tin-XL.avif"
+     ]
+    },
+    {
+     "name": "בלו אנרגיה",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405214/tin-blue.jpg"
+     ]
+    },
+    {
+     "name": "קולה 1.5 ליטר",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 15,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792613012/download.jpg"
+     ],
+     "description": "בקבוק 1.5 ליטר"
+    }
+   ]
+  },
+  {
+   "name": "רטבים וירקות לתוספת",
+   "dishes": [
+    {
+     "name": "שזיפים",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "שזיפים בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "ברביקיו",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612698/bbq.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "ברביקיו בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612698/bbq.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "אלף האיים",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612783/thousand_island.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "אלף האיים בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612783/thousand_island.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "מיונז",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612737/mayonnaise.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "מיונז בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612737/mayonnaise.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "קטשופ",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612700/ketchup.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "קטשופ בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612700/ketchup.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב הבית",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/house_sauce.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב הבית בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/house_sauce.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "צילי חריף",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612740/spicy_sauce.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "צילי חריף בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612740/spicy_sauce.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "צילי מתוק",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/chili_sauce.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "צילי מתוק בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/chili_sauce.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "שום",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/garlic_sauce.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "שום בצד",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612699/garlic_sauce.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "מלפפון חמוץ",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612737/pickles.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "בצל חי",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612737/red_onion.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "עגבניה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612784/tomato.jpg"
+     ],
+     "isAddOnOnly": true
+    },
+    {
+     "name": "חסה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612736/lettuce.jpg"
+     ],
+     "isAddOnOnly": true
+    }
+   ]
+  }
+ ]
+}
