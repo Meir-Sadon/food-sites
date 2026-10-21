@@ -219,12 +219,12 @@ export function FormBlock({
 export function Section({
   title,
   hint,
-  defaultOpen = false,
+  defaultOpen = true,
   children,
 }: {
   title: string
   hint?: string
-  /** Inside a `SectionGroup` a section starts folded unless this is set. */
+  /** Inside a `SectionGroup` a section starts open unless this is false. */
   defaultOpen?: boolean
   children: ReactNode
 }) {
@@ -258,7 +258,10 @@ export function Section({
             onClick={() => group.toggle(id, defaultOpen)}
             ref={setHeading}
           >
-            {title}
+            <span>
+              {title}
+              {group.isDirty(id) && <span className="dirty-mark" aria-hidden="true"> *</span>}
+            </span>
           </button>
         </h2>
         {hint && <Info text={hint} about={title} />}

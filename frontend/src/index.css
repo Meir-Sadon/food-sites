@@ -4293,6 +4293,7 @@ label {
   position: sticky;
   inset-block-start: var(--admin-bars-height, 7rem);
   z-index: 5;
+  margin-block-end: 0.5rem;
   background: var(--color-bg, var(--color-surface));
   border-block-end: var(--line-width, 1px) solid var(--color-border);
 }
@@ -4327,24 +4328,38 @@ label {
   cursor: pointer;
 }
 
-.section-menu__link:hover,
-.section-menu__item.active .section-menu__link {
-  background: var(--color-soft);
-  color: var(--color-accent);
+.section-menu__link:hover {
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  color: var(--color-text);
 }
 
 .section-menu__item.active .section-menu__link {
-  box-shadow: inset 0 0 0 1px var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}
+
+.dirty-mark {
+  color: var(--color-accent);
+  font-weight: 700;
 }
 
 .section-menu__save {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-inline-size: 2.25rem;
-  min-block-size: 2.25rem;
+  min-inline-size: 2rem;
+  min-block-size: 2rem;
   padding: 0;
+  border: var(--line-width, 1px) solid var(--color-border);
   border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: none;
+}
+
+.section-menu__save:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  border-color: var(--color-accent);
 }
 
 .section-menu .saved-note {
@@ -4403,21 +4418,27 @@ label {
 }
 
 .admin-section--fold {
-  scroll-margin-block-start: calc(var(--admin-bars-height, 7rem) + 3.5rem);
+  scroll-margin-block-start: calc(var(--admin-bars-height, 7rem) + 4.5rem);
 }
 
 @media (min-width: 64rem) {
+  .admin-section--fold {
+    scroll-margin-block-start: calc(var(--admin-bars-height, 7rem) + 1rem);
+  }
+
   .section-layout {
     flex-direction: row;
     align-items: flex-start;
-    gap: 1.5rem;
+    gap: 3rem;
   }
 
   .section-menu {
     inset-block-start: calc(var(--admin-bars-height, 7rem) + 0.5rem);
     flex: none;
     inline-size: 14rem;
+    padding-inline-end: 1.5rem;
     border: 0;
+    border-inline-end: var(--line-width, 1px) solid var(--color-border);
     background: transparent;
   }
 

@@ -58,7 +58,7 @@ export function DeliveryZonesSection() {
   )
 
   return (
-    <Section title={t('admin.zones.title')} defaultOpen>
+    <Section title={t('admin.zones.title')}>
       {!data ? (
         <Loading failed={failed} />
       ) : (

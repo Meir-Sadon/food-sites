@@ -9,7 +9,7 @@ export function PopupPage() {
     <SectionGroup>
       <h1>{t('admin.popup.page')}</h1>
       <SectionSlot>
-        <PopupSection defaultOpen />
+        <PopupSection />
       </SectionSlot>
     </SectionGroup>
   )
