@@ -13,7 +13,7 @@ const dir = path.join(path.dirname(path.resolve(outFile)), 'tts'); mkdirSync(dir
 const parts = [];
 for (const [i, c] of caps.entries()) {
   const raw = path.join(dir, `${i}.mp3`);
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ text: c.text, model_id: 'eleven_multilingual_v2', language_code: 'he', voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.25 } }) });
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ text: c.text, model_id: process.env.ELEVENLABS_MODEL ?? 'eleven_v3', language_code: 'he', voice_settings: { stability: 0.5 } }) });
   if (!res.ok) { console.error(i, res.status, await res.text()); process.exit(1); }
   writeFileSync(raw, Buffer.from(await res.arrayBuffer()));
   const len = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', raw]).toString();
