@@ -74,7 +74,8 @@
        "dish": "צ'יפס",
        "price": 0,
        "group": "שינוי תוספת 15 ש״ח",
-       "isCheckbox": true
+       "isCheckbox": true,
+       "isDefault": true
       },
       {
        "dish": "שניצלונים",
@@ -400,7 +401,8 @@
        "dish": "צ'יפס",
        "price": 0,
        "group": "שינוי תוספת 15 ש״ח",
-       "isCheckbox": true
+       "isCheckbox": true,
+       "isDefault": true
       },
       {
        "dish": "שניצלונים",
@@ -709,7 +711,8 @@
        "dish": "צ'יפס",
        "price": 0,
        "group": "שינוי תוספת 15 ש״ח",
-       "isCheckbox": true
+       "isCheckbox": true,
+       "isDefault": true
       },
       {
        "dish": "שניצלונים",
@@ -1237,6 +1240,9 @@
      "maxAmount": 10,
      "amountStep": 1,
      "unitPrice": 30,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612794/%D7%AA%D7%A4%D7%95%D7%97%D7%99_%D7%90%D7%93%D7%9E%D7%94_%D7%A6%D7%9C%D7%95%D7%99%D7%99%D7%9D_%D7%A2%D7%9D_%D7%A2%D7%A9%D7%91%D7%99_%D7%AA%D7%99%D7%91%D7%95%D7%9C.png"
+     ],
      "isSideDish": true,
      "unitName": "מנה"
     },
@@ -1273,9 +1279,6 @@
      "maxAmount": 10,
      "amountStep": 1,
      "unitPrice": 22,
-     "images": [
-      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792612794/%D7%AA%D7%A4%D7%95%D7%97%D7%99_%D7%90%D7%93%D7%9E%D7%94_%D7%A6%D7%9C%D7%95%D7%99%D7%99%D7%9D_%D7%A2%D7%9D_%D7%A2%D7%A9%D7%91%D7%99_%D7%AA%D7%99%D7%91%D7%95%D7%9C.png"
-     ],
      "isSideDish": true,
      "unitName": "מנה"
     }
@@ -1495,6 +1498,9 @@
      "maxAmount": 10,
      "amountStep": 1,
      "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792614362/%D7%A8%D7%95%D7%98%D7%91_%D7%A9%D7%96%D7%99%D7%A4%D7%99%D7%9D_%D7%9E%D7%91%D7%A8%D7%99%D7%A7_%D7%91%D7%A8%D7%9E%D7%99%D7%A7%D7%99%D7%9F_%D7%9E%D7%AA%D7%9B%D7%AA.png"
+     ],
      "isAddOnOnly": true
     },
     {
@@ -1504,6 +1510,9 @@
      "maxAmount": 10,
      "amountStep": 1,
      "unitPrice": 0,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/f_auto,q_auto,w_1000/v1792614362/%D7%A8%D7%95%D7%98%D7%91_%D7%A9%D7%96%D7%99%D7%A4%D7%99%D7%9D_%D7%9E%D7%91%D7%A8%D7%99%D7%A7_%D7%91%D7%A8%D7%9E%D7%99%D7%A7%D7%99%D7%9F_%D7%9E%D7%AA%D7%9B%D7%AA.png"
+     ],
      "isAddOnOnly": true
     },
     {
