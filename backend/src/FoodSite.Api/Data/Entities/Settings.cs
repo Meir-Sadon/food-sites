@@ -68,6 +68,18 @@ public class Settings
     /// </summary>
     public int? OrdersPerHour { get; set; }
 
+    /// <summary>Length of one hour slot a client picks, in minutes: 15, 30 or 60 (see <c>SlotTiming</c>).</summary>
+    public int SlotMinutes { get; set; } = 60;
+
+    /// <summary>Slots start on round marks of <see cref="SlotMinutes"/> (a range opening at 20:07 starts at 20:30), instead of at the range's own start.</summary>
+    public bool AlignSlots { get; set; }
+
+    /// <summary>Minutes before the start of a slot after which a delivery can no longer be ordered for it; 0 means none.</summary>
+    public int DeliveryLeadMinutes { get; set; }
+
+    /// <summary>The same for pickup.</summary>
+    public int PickupLeadMinutes { get; set; }
+
     /// <summary>
     /// How many portions can be ordered for one supply date, across all dishes (see <c>DailyPortions</c> for what
     /// counts); null means no limit.

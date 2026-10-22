@@ -30,7 +30,7 @@ import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
-import { formatMoney, formatSlot, formatSupplyDate } from '../order/format'
+import { formatMoney, formatSlot, formatSupplyDate, parseSlotId, slotId, slotsFor } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
 import { QuickFill } from '../order/QuickFill'
 import { ReviewsCarousel } from '../order/ReviewsCarousel'
@@ -247,23 +247,28 @@ export function OrderPage() {
     )
 
   // Choices the admin has since switched off fall back to what is still available.
-  const supplyDate = menu.supplyDates.find((d) => d.date === state.supplyDate) ?? menu.supplyDates[0]
   const fulfillment: Fulfillment =
     state.fulfillment === 'Delivery' && !site.deliveryEnabled
       ? 'Pickup'
       : state.fulfillment === 'Pickup' && !site.pickupEnabled
         ? 'Delivery'
         : state.fulfillment
+  // A date whose every hour is too soon for this way of receiving the order (the lead time) is not offered.
+  const supplyDates = menu.supplyDates.filter((d) => !d.hours?.length || slotsFor(d.hours, fulfillment === 'Delivery').length > 0)
+  const supplyDate = supplyDates.find((d) => d.date === state.supplyDate) ?? supplyDates[0]
   const minimum = fulfillment === 'Pickup' && !site.minimumOrderAppliesToPickup ? 0 : (site.minimumOrderAmount ?? 0)
   // The minimum is on the dishes, the delivery fee does not count towards it.
   const belowMinimum = count > 0 && itemsTotal < minimum
   const unadjusted = unadjustedDishes(state.selections, dishes)
   const transfers = transferChoices(site)
   const payment: Payment = availablePayment(state.payment, site)
-  const hours = supplyDate?.hours ?? []
-  // An hour from a draft that the date no longer offers is dropped.
-  const deliveryHour = hours.some((h) => h.from === state.deliveryHour) ? state.deliveryHour : null
-  const hourIsFull = !!supplyDate && !!deliveryHour && fullSlots.includes(slotKey(supplyDate.date, deliveryHour))
+  const hours = slotsFor(supplyDate?.hours, fulfillment === 'Delivery')
+  // An hour from a draft that the date no longer offers is dropped. The value is the slot's start, with its date in front
+  // when it is after midnight (the day after the supply date).
+  const deliveryHour = hours.some((h) => slotId(h) === state.deliveryHour) ? state.deliveryHour : null
+  const pickedSlot = deliveryHour ? parseSlotId(deliveryHour) : null
+  const hourIsFull =
+    !!supplyDate && !!pickedSlot && fullSlots.includes(slotKey(pickedSlot.date ?? supplyDate.date, pickedSlot.hour))
   const normalizedPhone = normalizePhone(state.phone)
 
   const categories = menu.categories
@@ -353,18 +358,19 @@ export function OrderPage() {
    * Asks whether a picked hour is already full. A full hour can still be sent: the client only gets a note.
    * Nothing is shown in advance, so the client doesn't learn how busy the other hours are.
    */
-  function checkHour(date: string, hour: string | null) {
-    if (!hour) return
-    const key = slotKey(date, hour)
+  function checkHour(date: string, id: string | null) {
+    if (!id) return
+    const slot = parseSlotId(id)
+    const key = slotKey(slot.date ?? date, slot.hour)
     siteApi
-      .hourAvailability(date, hour)
+      .hourAvailability(slot.date ?? date, slot.hour)
       .then(({ full }) => setFullSlots((current) => (full ? [...current, key] : current.filter((k) => k !== key))))
       .catch(() => undefined)
   }
 
   function changeDate(date: string) {
-    const offered = menu?.supplyDates.find((d) => d.date === date)?.hours ?? []
-    const hour = offered.some((h) => h.from === deliveryHour) ? deliveryHour : null
+    const offered = slotsFor(menu?.supplyDates.find((d) => d.date === date)?.hours, fulfillment === 'Delivery')
+    const hour = offered.some((h) => slotId(h) === deliveryHour) ? deliveryHour : null
     change({ supplyDate: date, deliveryHour: hour })
     checkHour(date, hour)
   }
@@ -499,7 +505,8 @@ export function OrderPage() {
         name: state.name.trim(),
         ...(fulfillment === 'Delivery' ? addressOf(state) : noAddress()),
         supplyDate: supplyDate.date,
-        deliveryHour,
+        deliveryHour: pickedSlot?.hour ?? null,
+        ...(pickedSlot?.date ? { deliveryHourDate: pickedSlot.date } : {}),
         fulfillmentMethod: fulfillment,
         paymentMethod: payment,
         notes: state.notes.trim(),
@@ -778,7 +785,7 @@ export function OrderPage() {
                       aria-describedby="order-date-hint order-date-error"
                       onChange={(e) => changeDate(e.target.value)}
                     >
-                      {menu.supplyDates.map((d) => (
+                      {supplyDates.map((d) => (
                         <option key={d.date} value={d.date}>
                           {formatSupplyDate(d.date, t)}
                         </option>
@@ -809,7 +816,7 @@ export function OrderPage() {
                     >
                       <option value="">{t('order.chooseHour')}</option>
                       {hours.map((slot) => (
-                        <option key={slot.from} value={slot.from}>
+                        <option key={slotId(slot)} value={slotId(slot)}>
                           {formatSlot(slot, t)}
                         </option>
                       ))}

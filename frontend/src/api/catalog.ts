@@ -33,6 +33,14 @@ export interface Settings {
   serviceCities: string
   /** How many orders can be supplied in one hour; null means no limit. */
   ordersPerHour: number | null
+  /** The length of one slot the client picks, in minutes: 15, 30 or 60. */
+  slotMinutes: number
+  /** Slots start on round marks of the slot length (a range opening at 20:07 starts at 20:30). */
+  alignSlots: boolean
+  /** Minutes before a slot's start that a delivery for it can no longer be ordered; 0 means none. */
+  deliveryLeadMinutes: number
+  /** The same for pickup. */
+  pickupLeadMinutes: number
   /** How many portions (dishes sold by units, not sides or add-ons) can be ordered per supply date, across all dishes; null means no limit. */
   portionsPerSupplyDate: number | null
   /** The look the client site shows. */

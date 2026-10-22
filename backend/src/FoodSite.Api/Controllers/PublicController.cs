@@ -303,6 +303,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     {
         var days = await db.SupplyDays.AsNoTracking().Include(d => d.Hours).ToListAsync();
         var closed = await db.ClosedDates.AsNoTracking().Select(c => c.Date).ToListAsync();
-        return SupplyCalendar.OpenDates(clock.NowLocal(), days, closed, schedule: await ShabbatSchedule.LoadAsync(db, clock));
+        var timing = SlotTiming.Of(await db.Settings.AsNoTracking().SingleAsync());
+        return SupplyCalendar.OpenDates(clock.NowLocal(), days, closed, schedule: await ShabbatSchedule.LoadAsync(db, clock), timing: timing);
     }
 }

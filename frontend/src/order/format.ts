@@ -29,9 +29,24 @@ export function formatSupplyDate(iso: string, t: TFunction): string {
 /** "08:00" for "08:00:00". */
 export const formatTime = (time: string) => time.slice(0, 5)
 
-/** "08:00 עד 09:00": words between the times, so right-to-left text keeps them in order. */
-export const formatSlot = (slot: HourSlot, t: TFunction) =>
-  t('order.hourRange', { from: formatTime(slot.from), to: formatTime(slot.to) })
+/** "08:00 עד 09:00": words between the times, so right-to-left text keeps them in order. A slot after midnight adds its day and date. */
+export const formatSlot = (slot: HourSlot, t: TFunction) => {
+  const range = t('order.hourRange', { from: formatTime(slot.from), to: formatTime(slot.to) })
+  return slot.date ? t('order.nextDaySlot', { range, day: formatSupplyDate(slot.date, t) }) : range
+}
+
+/** What the hour select holds for a slot: its start, with the date in front when it is on the day after the supply date. */
+export const slotId = (slot: HourSlot) => (slot.date ? `${slot.date}T${slot.from}` : slot.from)
+
+/** The hour and (for a slot after midnight) the date a select value stands for. */
+export function parseSlotId(id: string): { hour: string; date: string | null } {
+  const at = id.indexOf('T')
+  return at < 0 ? { hour: id, date: null } : { date: id.slice(0, at), hour: id.slice(at + 1) }
+}
+
+/** Slots the lead time of this way of receiving the order still allows. */
+export const slotsFor = (slots: HourSlot[] | null | undefined, delivery: boolean) =>
+  (slots ?? []).filter((s) => (delivery ? s.deliveryOk : s.pickupOk) !== false)
 
 /**
  * The unit shown next to an amount when the client picks a free amount: the dish's own unit name,

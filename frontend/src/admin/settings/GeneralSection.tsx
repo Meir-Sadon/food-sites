@@ -288,6 +288,54 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
           </span>
           <span className="field">
             <span className="with-info">
+              <label htmlFor="settings-slotMinutes">{t('admin.settings.slotMinutes')}</label>
+              <Info text={t('admin.settings.slotMinutesHint')} about={t('admin.settings.slotMinutes')} />
+            </span>
+            <select
+              id="settings-slotMinutes"
+              className="input-narrow"
+              value={settings.slotMinutes}
+              onChange={(e) => change({ slotMinutes: Number(e.target.value) })}
+            >
+              {[15, 30, 60].map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {t(`admin.settings.slotOptions.${minutes}`)}
+                </option>
+              ))}
+            </select>
+            <label className="checkbox">
+              <input type="checkbox" checked={settings.alignSlots} onChange={(e) => change({ alignSlots: e.target.checked })} />
+              {t('admin.settings.alignSlots')}
+              <Info text={t('admin.settings.alignSlotsHint')} about={t('admin.settings.alignSlots')} />
+            </label>
+            <FieldError errors={errors} field="slotMinutes" id="settings-slotMinutes-error" />
+          </span>
+          {(['delivery', 'pickup'] as const).map((way) => {
+            const field = `${way}LeadMinutes` as const
+            return (
+              <span className="field" key={field}>
+                <span className="with-info">
+                  <label htmlFor={`settings-${field}`}>{t(`admin.settings.${field}`)}</label>
+                  <Info text={t(`admin.settings.${field}Hint`)} about={t(`admin.settings.${field}`)} />
+                </span>
+                <input
+                  id={`settings-${field}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={5}
+                  dir="ltr"
+                  className="input-narrow"
+                  value={settings[field]}
+                  aria-describedby={`settings-${field}-error`}
+                  onChange={(e) => change({ [field]: e.target.value === '' ? 0 : Number(e.target.value) })}
+                />
+                <FieldError errors={errors} field={field} id={`settings-${field}-error`} />
+              </span>
+            )
+          })}
+          <span className="field">
+            <span className="with-info">
               <label htmlFor="settings-portionsPerSupplyDate">{t('admin.settings.portionsPerSupplyDate')}</label>
               <Info text={t('admin.settings.portionsPerSupplyDateHint')} about={t('admin.settings.portionsPerSupplyDate')} />
             </span>

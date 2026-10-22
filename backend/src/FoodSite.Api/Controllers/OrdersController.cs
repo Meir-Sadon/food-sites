@@ -46,6 +46,7 @@ public class OrdersController(
         string? Notes,
         List<OrderLineInput>? Items,
         TimeOnly? DeliveryHour = null,
+        DateOnly? DeliveryHourDate = null,
         MarketingInput? Marketing = null);
 
     public record ConfirmationItemDto(
@@ -104,17 +105,23 @@ public class OrdersController(
 
         var days = await db.SupplyDays.AsNoTracking().Include(d => d.Hours).ToListAsync(ct);
         var closed = await db.ClosedDates.AsNoTracking().Select(c => c.Date).ToListAsync(ct);
-        var openDate = SupplyCalendar.Find(input.SupplyDate, clock.NowLocal(), days, closed, await ShabbatSchedule.LoadAsync(db, clock, ct));
+        var openDate = SupplyCalendar.Find(input.SupplyDate, clock.NowLocal(), days, closed, await ShabbatSchedule.LoadAsync(db, clock, ct), SlotTiming.Of(settings));
         if (openDate is null)
             errors.Add(nameof(input.SupplyDate), "supplyDateUnavailable");
         // A day with supply hours needs one of them; on a day without, any hour sent is dropped.
         var hour = openDate is { Hours.Count: > 0 } ? input.DeliveryHour : null;
+        // A slot after midnight that continues the day's shift belongs to the next date, which is where the order is saved.
+        var supplyDate = input.SupplyDate;
         if (openDate is { Hours.Count: > 0 })
         {
+            var slotDate = input.DeliveryHourDate ?? input.SupplyDate;
+            var delivery = input.FulfillmentMethod == FulfillmentMethod.Delivery;
             if (input.DeliveryHour is null)
                 errors.Add(nameof(input.DeliveryHour), "required");
-            else if (openDate.Hours.All(h => h.From != input.DeliveryHour))
+            else if (!openDate.Hours.Any(h => h.From == input.DeliveryHour && (h.Date ?? input.SupplyDate) == slotDate && (delivery ? h.DeliveryOk : h.PickupOk)))
                 errors.Add(nameof(input.DeliveryHour), "deliveryHourUnavailable");
+            else
+                supplyDate = slotDate;
         }
 
         var ids = (input.Items ?? [])
@@ -133,9 +140,9 @@ public class OrdersController(
         if (!errors.Any && minimumApplies && settings.MinimumOrderAmount is { } minimum && OrderBuilder.Total(items) < minimum)
             errors.Add("items", "belowMinimumOrder");
         if (!errors.Any)
-            await CheckDishLimitsAsync(input.SupplyDate, items, dishes, errors, ct);
+            await CheckDishLimitsAsync(supplyDate, items, dishes, errors, ct);
         if (!errors.Any && settings.PortionsPerSupplyDate is { } portions)
-            await CheckPortionLimitAsync(input.SupplyDate, items, dishes, portions, errors, ct);
+            await CheckPortionLimitAsync(supplyDate, items, dishes, portions, errors, ct);
 
         // The fee comes from the address, worked out here again so a quote the client saw cannot be changed.
         var quote = input.FulfillmentMethod == FulfillmentMethod.Delivery && !errors.Any
@@ -149,7 +156,7 @@ public class OrdersController(
 
         // A full hour is still taken: the client was told the admin may call to move it.
         var hourFull = hour is { } slot && HourCapacity.IsFull(
-            await db.Orders.AsNoTracking().InSlot(input.SupplyDate, slot).CountAsync(ct), settings.OrdersPerHour);
+            await db.Orders.AsNoTracking().InSlot(supplyDate, slot).CountAsync(ct), settings.OrdersPerHour);
 
         // The order is added to that phone's account, if there is one.
         var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);
@@ -165,7 +172,7 @@ public class OrdersController(
             Phone = phone!,
             Name = input.Name!.Trim(),
             Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment),
-            SupplyDate = input.SupplyDate,
+            SupplyDate = supplyDate,
             DeliveryHour = hour,
             FulfillmentMethod = input.FulfillmentMethod,
             Notes = Clean(input.Notes),

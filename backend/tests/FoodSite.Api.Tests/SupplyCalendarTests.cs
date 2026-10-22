@@ -139,4 +139,74 @@ public class SupplyCalendarTests
         var open = SupplyCalendar.Find(Friday, new DateTime(2026, 10, 5, 9, 0, 0), [day], []);
         Assert.Equal([new TimeOnly(12, 0), new TimeOnly(13, 0)], open!.Hours.Select(h => h.From));
     }
+
+    private static SupplyDay Day(DayOfWeek weekday, TimeOnly from, TimeOnly to)
+    {
+        var day = new SupplyDay { Weekday = weekday, Enabled = true, CutoffDay = weekday, CutoffTime = new TimeOnly(23, 59) };
+        Hours(day, (from, to));
+        return day;
+    }
+
+    // Thursday 2026-10-08 12:00 to 23:59 followed by Friday 2026-10-09 00:00 to 02:00.
+    private static SupplyDay[] Shift() => [Day(DayOfWeek.Thursday, new(12, 0), new(23, 59)), Day(DayOfWeek.Friday, new(0, 0), new(2, 0))];
+
+    [Fact]
+    public void A_day_ending_at_the_end_of_the_day_continues_with_the_next_days_opening_slots()
+    {
+        var thursday = SupplyCalendar.Find(new DateOnly(2026, 10, 8), new DateTime(2026, 10, 5, 9, 0, 0), Shift(), []);
+        var after = thursday!.Hours.SkipWhile(h => h.Date is null).ToList();
+        Assert.Equal([new TimeOnly(0, 0), new TimeOnly(1, 0)], after.Select(h => h.From));
+        Assert.All(after, h => Assert.Equal(new DateOnly(2026, 10, 9), h.Date));
+        Assert.Equal(12, thursday.Hours.Count(h => h.Date is null));
+    }
+
+    [Fact]
+    public void No_continuation_when_the_next_day_is_closed_or_opens_later()
+    {
+        var closed = SupplyCalendar.Find(new DateOnly(2026, 10, 8), new DateTime(2026, 10, 5, 9, 0, 0), Shift(), [new DateOnly(2026, 10, 9)]);
+        Assert.All(closed!.Hours, h => Assert.Null(h.Date));
+        var late = new[] { Shift()[0], Day(DayOfWeek.Friday, new(8, 0), new(12, 0)) };
+        Assert.All(SupplyCalendar.Find(new DateOnly(2026, 10, 8), new DateTime(2026, 10, 5, 9, 0, 0), late, [])!.Hours, h => Assert.Null(h.Date));
+    }
+
+    [Theory]
+    [InlineData(15, 4)]
+    [InlineData(30, 2)]
+    [InlineData(60, 1)]
+    public void Slot_length_cuts_each_hour_into_pieces(int minutes, int perHour)
+    {
+        var day = FridayRule();
+        Hours(day, (new(10, 0), new(12, 0)));
+        var slots = SupplyCalendar.HourSlots(day.Hours.Select(h => new ShabbatSchedule.HoursRange(h.From.ToTimeSpan(), h.End)), new SlotTiming(minutes));
+        Assert.Equal(2 * perHour, slots.Count);
+        Assert.Equal(new TimeOnly(12, 0), slots[^1].To);
+    }
+
+    [Fact]
+    public void Aligned_slots_start_on_round_marks_of_the_slot_length()
+    {
+        var ranges = new[] { new ShabbatSchedule.HoursRange(new TimeSpan(20, 7, 0), new TimeSpan(22, 10, 0)) };
+        var half = SupplyCalendar.HourSlots(ranges, new SlotTiming(30, Align: true));
+        Assert.Equal(new TimeOnly(20, 30), half[0].From);
+        Assert.Equal(new SupplyCalendar.HourSlot(new(22, 0), new(22, 10)), half[^1]);
+        var hour = SupplyCalendar.HourSlots(ranges, new SlotTiming(60, Align: true));
+        Assert.Equal(new TimeOnly(21, 0), hour[0].From);
+        // Not aligned: the first slot starts when the range does.
+        Assert.Equal(new TimeOnly(20, 7), SupplyCalendar.HourSlots(ranges, new SlotTiming(30))[0].From);
+    }
+
+    [Fact]
+    public void Lead_time_blocks_slots_that_start_too_soon_apart_for_delivery_and_pickup()
+    {
+        var day = Day(DayOfWeek.Thursday, new(12, 0), new(16, 0));
+        var now = new DateTime(2026, 10, 8, 12, 10, 0);
+        var timing = new SlotTiming(60, false, DeliveryLeadMinutes: 120, PickupLeadMinutes: 30);
+        var open = SupplyCalendar.Find(new DateOnly(2026, 10, 8), now, [day], [], timing: timing)!;
+        Assert.Equal([13, 14, 15], open.Hours.Where(h => h.PickupOk).Select(h => h.From.Hour));
+        Assert.Equal([15], open.Hours.Where(h => h.DeliveryOk).Select(h => h.From.Hour));
+        // Without a lead time a slot is open until it is over.
+        Assert.Equal(4, SupplyCalendar.Find(new DateOnly(2026, 10, 8), now, [day], [])!.Hours.Count);
+        // When every slot is blocked for both methods the date is not offered.
+        Assert.Null(SupplyCalendar.Find(new DateOnly(2026, 10, 8), new DateTime(2026, 10, 8, 14, 45, 0), [day], [], timing: timing));
+    }
 }

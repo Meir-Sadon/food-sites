@@ -17,6 +17,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     public const int TextMaxLength = 1000;
     public const decimal MaxMinimumOrder = 100_000;
     public const int MaxOrdersPerHour = 1000;
+    public const int MaxLeadMinutes = 7 * 24 * 60;
     public const int MaxPortionsPerSupplyDate = 100_000;
     public const int OwnerEmailMaxLength = 500;
 
@@ -36,6 +37,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool MinimumOrderAppliesToPickup,
         string ServiceCities,
         int? OrdersPerHour,
+        int SlotMinutes,
+        bool AlignSlots,
+        int DeliveryLeadMinutes,
+        int PickupLeadMinutes,
         int? PortionsPerSupplyDate,
         string Style,
         string OrderTotalPosition,
@@ -91,7 +96,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool? AddressFirst = null,
         decimal? DeliveryFeeAmount = null,
         decimal? DeliveryBaseFee = null,
-        decimal? DeliveryDiscountMinOrder = null);
+        decimal? DeliveryDiscountMinOrder = null,
+        int? SlotMinutes = null,
+        bool? AlignSlots = null,
+        int? DeliveryLeadMinutes = null,
+        int? PickupLeadMinutes = null);
 
     public const int LinkMaxLength = 500;
 
@@ -122,6 +131,12 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.MinimumOrderAmount), "invalid");
         if (input.OrdersPerHour is < 0 or > MaxOrdersPerHour)
             errors.Add(nameof(input.OrdersPerHour), "invalid");
+        if (input.SlotMinutes is { } slotMinutes && !SlotTiming.AllowedMinutes.Contains(slotMinutes))
+            errors.Add(nameof(input.SlotMinutes), "invalid");
+        if (input.DeliveryLeadMinutes is < 0 or > MaxLeadMinutes)
+            errors.Add(nameof(input.DeliveryLeadMinutes), "invalid");
+        if (input.PickupLeadMinutes is < 0 or > MaxLeadMinutes)
+            errors.Add(nameof(input.PickupLeadMinutes), "invalid");
         if (input.PortionsPerSupplyDate is < 0 or > MaxPortionsPerSupplyDate)
             errors.Add(nameof(input.PortionsPerSupplyDate), "invalid");
         var serviceCities = ServiceArea.Format(ServiceArea.Parse(input.ServiceCities));
@@ -190,6 +205,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.MinimumOrderAppliesToPickup = appliesToPickup;
         // Zero (or empty) means no limit.
         settings.OrdersPerHour = input.OrdersPerHour is > 0 ? input.OrdersPerHour : null;
+        // Missing (an older client) keeps the slot timing.
+        if (input.SlotMinutes is { } minutes) settings.SlotMinutes = minutes;
+        if (input.AlignSlots is { } align) settings.AlignSlots = align;
+        if (input.DeliveryLeadMinutes is { } deliveryLead) settings.DeliveryLeadMinutes = deliveryLead;
+        if (input.PickupLeadMinutes is { } pickupLead) settings.PickupLeadMinutes = pickupLead;
         settings.PortionsPerSupplyDate = input.PortionsPerSupplyDate is > 0 ? input.PortionsPerSupplyDate : null;
         // Missing (an older client) keeps the cities; an empty list is kept as "", meaning every city is served.
         if (input.ServiceCities is not null)
@@ -355,7 +375,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     private async Task<SettingsDto> ToDtoAsync(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.BitEnabled, s.PayBoxEnabled, s.BitLink, s.PayBoxLink, s.MinimumOrderAmount,
-        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.PortionsPerSupplyDate,
+        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour,
+        SlotTiming.Of(s).SlotMinutes, s.AlignSlots, s.DeliveryLeadMinutes, s.PickupLeadMinutes, s.PortionsPerSupplyDate,
         SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
         OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
