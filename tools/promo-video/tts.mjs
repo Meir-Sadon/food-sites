@@ -10,10 +10,12 @@ const key = process.env.ELEVENLABS_API_KEY; if (!key) { console.error('ELEVENLAB
 const voice = process.env.ELEVENLABS_VOICE_ID ?? 'pNInz6obpgDQGcFmaJgB';
 const caps = JSON.parse(readFileSync(capsFile, 'utf8'));
 const dir = path.join(path.dirname(path.resolve(outFile)), 'tts'); mkdirSync(dir, { recursive: true });
+// optional voice-script.json: the caption text -> the same text with niqqud, so the voice reads it correctly (captions stay unvowelled)
+const vowels = process.env.VOICE_SCRIPT ? JSON.parse(readFileSync(process.env.VOICE_SCRIPT, 'utf8')) : {};
 const parts = [];
 for (const [i, c] of caps.entries()) {
   const raw = path.join(dir, `${i}.mp3`);
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ text: c.text, model_id: process.env.ELEVENLABS_MODEL ?? 'eleven_v3', language_code: 'he', voice_settings: { stability: 0.5 } }) });
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ text: vowels[c.text] ?? c.text, model_id: process.env.ELEVENLABS_MODEL ?? 'eleven_v3', language_code: 'he', voice_settings: { stability: 0.5 } }) });
   if (!res.ok) { console.error(i, res.status, await res.text()); process.exit(1); }
   writeFileSync(raw, Buffer.from(await res.arrayBuffer()));
   const len = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', raw]).toString();
