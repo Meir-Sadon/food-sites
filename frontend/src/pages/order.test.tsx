@@ -351,6 +351,41 @@ describe('Order page', () => {
     })
   })
 
+  describe('hours after midnight and lead times', () => {
+    const shift = () =>
+      menu({
+        supplyDates: [
+          {
+            date: '2026-10-08',
+            cutoff: '2026-10-07T20:00:00',
+            hours: [
+              { from: '23:00:00', to: '00:00:00', deliveryOk: false, pickupOk: true },
+              { from: '00:00:00', to: '01:00:00', date: '2026-10-09', deliveryOk: true, pickupOk: true },
+            ],
+          },
+        ],
+      })
+
+    it('lists the hours of the next day after the day\'s own, with its day and date, and sends that date', async () => {
+      const { api, user } = await openOrderPage({ 'GET /api/menu': shift, 'POST /api/orders': () => confirmation })
+      const hour = screen.getByLabelText('שעת אספקה מועדפת')
+      expect([...hour.querySelectorAll('option')].map((o) => o.textContent)).toEqual([
+        'בחרו שעה',
+        expect.stringContaining('00:00 עד 01:00 (יום שישי'),
+      ])
+      await user.selectOptions(hour, '2026-10-09T00:00:00')
+      await fillAndSubmit(user)
+      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ deliveryHour: '00:00:00', deliveryHourDate: '2026-10-09' })
+    })
+
+    it('hides hours the lead time blocks for the chosen way of receiving the order', async () => {
+      const { user } = await openOrderPage({ 'GET /api/menu': shift })
+      await user.click(screen.getByRole('radio', { name: /איסוף עצמי/ }))
+      const hour = screen.getByLabelText('שעת אספקה מועדפת')
+      expect([...hour.querySelectorAll('option')]).toHaveLength(3)
+    })
+  })
+
   it('lets the client write a name on each ordered dish and sends it with its unit', async () => {
     const { api, user } = await openOrderPage({ 'POST /api/orders': () => confirmation })
     const card = dishCard('עוף בתנור')

@@ -996,6 +996,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("AdminPasswordHash")
                         .HasColumnType("text");
 
+                    b.Property<bool>("AlignSlots")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("BackgroundImagePublicId")
                         .HasColumnType("text");
 
@@ -1068,6 +1071,9 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<string>("DeliveryFeeText")
                         .HasColumnType("text");
+
+                    b.Property<int>("DeliveryLeadMinutes")
+                        .HasColumnType("integer");
 
                     b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
@@ -1147,6 +1153,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("PickupEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("PickupLeadMinutes")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PopupBody")
                         .HasColumnType("text");
 
@@ -1186,6 +1195,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");
 
+                    b.Property<string>("ShabbatRules")
+                        .HasColumnType("text");
+
                     b.Property<string>("ShadowStrength")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -1193,12 +1205,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("SiteDefaultsApplied")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ShabbatRules")
-                        .HasColumnType("text");
-
                     b.Property<string>("SiteStyle")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int>("SlotMinutes")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Spacing")
                         .HasMaxLength(20)
@@ -1220,16 +1232,20 @@ namespace FoodSite.Api.Data.Migrations
                         {
                             Id = 1,
                             AddressFirst = false,
+                            AlignSlots = false,
                             BadgeLowStockEnabled = false,
                             BadgeNewEnabled = false,
                             BitEnabled = false,
                             DeliveryEnabled = true,
+                            DeliveryLeadMinutes = 0,
                             MinimumOrderAppliesToPickup = true,
                             OwnerChangeMails = false,
                             PayBoxEnabled = false,
                             PickupEnabled = true,
+                            PickupLeadMinutes = 0,
                             PopupEnabled = false,
-                            SiteDefaultsApplied = false
+                            SiteDefaultsApplied = false,
+                            SlotMinutes = 60
                         });
                 });
 

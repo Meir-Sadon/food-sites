@@ -284,6 +284,11 @@ export interface MenuCategory {
 export interface HourSlot {
   from: string
   to: string
+  /** Only on a slot of the next day that continues the day's hours past midnight ("yyyy-MM-dd"). */
+  date?: string | null
+  /** Whether the lead time still allows a delivery / a pickup in this slot; absent means yes. */
+  deliveryOk?: boolean
+  pickupOk?: boolean
 }
 
 export interface SupplyDate {
@@ -349,6 +354,8 @@ export interface OrderInput {
   items: OrderLineInput[]
   /** The start of the picked hour ("HH:mm:ss"); required when the date has hours. */
   deliveryHour: string | null
+  /** The date of the picked slot when it is on the day after the supply date ("yyyy-MM-dd"). */
+  deliveryHourDate?: string | null
   /** Only when the server reports orders to Meta. */
   marketing?: { fbp?: string; fbc?: string; sourceUrl?: string }
 }
