@@ -51,7 +51,7 @@ const back = (x) => { x = clamp(x); const c = 1.8; return 1 + (c + 1) * Math.pow
 const el = (cls, html, style, parent) => { const d = document.createElement('div'); d.className = cls; if (html) d.innerHTML = html; if (style) Object.assign(d.style, style); (parent || S).appendChild(d); return d; };
 const updaters = [], videos = [], captions = [];
 let OFF = 0;
-const DUR = 126;
+const DUR = 63;
 
 // ---------- captions ----------
 const capBox = el('cap', '');
@@ -145,105 +145,97 @@ const MINT = 'linear-gradient(160deg,#0f8b6d 0%,#2bb673 100%)';
 const PLUM = 'linear-gradient(160deg,#4a2c82 0%,#e0457b 100%)';
 const NAVY = 'linear-gradient(160deg,#10243e 0%,#1f6fb5 100%)';
 
-// ===== 1. hook (0-8) =====
-scene(0, 8, TEAL, (s) => {
-  s.heads([[0.2, 3.8, 'רוצים שהלקוחות<br><b>יזמינו ישר מהטלפון?</b>'], [3.8, 7.9, 'אתר הזמנות<br><b>לעסק שלכם</b>', C.siteName]]);
+// ===== 1. hook (0-6) =====
+scene(0, 6, TEAL, (s) => {
+  s.heads([[0.2, 3.0, 'רוצים שהלקוחות<br><b>יזמינו מהטלפון?</b>'], [3.0, 5.9, 'אתר הזמנות<br><b>לעסק שלכם</b>', C.siteName]]);
   s.phone([{ clip: 'menu', from: 0, speed: .45, t0: 0, t1: 9 }], { at: .5 });
-  s.cards([[1.2, 4.2, '📱', 'הלקוחות מזמינים ישר מהטלפון'], [4.2, 7.9, '🧾', 'וההזמנה מגיעה אליכם מסודרת']]);
-  say(0.3, 3.7, 'רוצים שהלקוחות יזמינו ישר מהטלפון?');
-  say(3.7, 7.8, 'אתר הזמנות לעסק שלכם, בלי לשלם על הפיתוח');
+  s.cards([[1.2, 3.0, '📱', 'מזמינים ישר מהטלפון'], [3.0, 5.9, '🧾', 'וההזמנה מגיעה אליכם']]);
+  say(0.3, 2.9, 'רוצים שהלקוחות יזמינו מהטלפון?');
+  say(3.0, 5.8, 'אתר הזמנות לעסק שלכם');
 });
 
-// ===== 2. earn together (8-26) =====
-scene(8, 26, SUN, (s) => {
-  s.heads([[0.1, 17.9, 'התוכנית שלנו:<br><b>מרוויחים ביחד</b>']]);
+// ===== 2. earn together (6-18) =====
+scene(6, 18, SUN, (s) => {
+  s.heads([[0.1, 11.9, 'התוכנית שלנו:<br><b>מרוויחים ביחד</b>']]);
   const zero = el('big', '0 ₪', { top: '360px', fontSize: '330px', lineHeight: 1, color: '#fff', textShadow: '0 12px 0 rgba(0,0,0,.15)' }, s.root);
   const zl = el('big', 'עלות פיתוח', { top: '690px', fontSize: '90px' }, s.root);
   s.on((lt) => { const k = back((lt - .5) / .8); zero.style.opacity = clamp((lt - .5) / .2); zero.style.transform = `scale(${k})`; zl.style.opacity = ease((lt - 1.2) / .5); zl.style.transform = `translateY(${(1 - ease((lt - 1.2) / .6)) * 60}px)`; });
-  const p1 = el('pill', 'משלמים רק <span dir="ltr" style="color:#ff7a00">4%–6%</span> מהמכירות באתר', { top: '850px', background: '#fff', color: '#0d2b36' }, s.root);
-  const p2 = el('pill', 'עם תקרה חודשית שנקבעת מראש', { top: '1030px', background: '#0b4a5e', color: '#fff' }, s.root);
-  const p3 = el('pill', 'בלי עמלות בלי סוף על כל המכירות', { top: '1200px', background: '#2bb673', color: '#fff' }, s.root);
-  [[p1, 4], [p2, 8.6], [p3, 12.4]].forEach(([p, t0]) => s.on((lt) => { const k = back((lt - t0) / .6); p.style.opacity = clamp((lt - t0) / .2); p.style.transform = `translateX(${(1 - k) * 700}px)`; }));
-  const meter = el('card', '', { left: '90px', top: '1325px', width: '900px', height: '235px', padding: '26px 40px' }, s.root);
+  const p1 = el('pill', 'רק <span dir="ltr" style="color:#ff7a00">4%–6%</span> מהמכירות באתר', { top: '880px', background: '#fff', color: '#0d2b36' }, s.root);
+  const p2 = el('pill', 'עם תקרה חודשית', { top: '1060px', background: '#0b4a5e', color: '#fff' }, s.root);
+  [[p1, 3.4], [p2, 7.2]].forEach(([p, t0]) => s.on((lt) => { const k = back((lt - t0) / .6); p.style.opacity = clamp((lt - t0) / .2); p.style.transform = `translateX(${(1 - k) * 700}px)`; }));
+  const meter = el('card', '', { left: '90px', top: '1280px', width: '900px', height: '235px', padding: '26px 40px' }, s.root);
   meter.innerHTML = `<div style="font-weight:900;font-size:40px;color:#0b4a5e;text-align:right">העמלה החודשית</div>
     <div style="position:relative;margin-top:14px;height:50px;border-radius:30px;background:#e4eef1;overflow:hidden"><div id="mb" style="position:absolute;right:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#ffb703,#ff9f1c);border-radius:30px"></div></div>
-    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:34px;color:#4a6470;margin-top:10px"><span>התקרה שנקבעה מראש</span><span>עד כאן ולא יותר</span></div>`;
+    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:34px;color:#4a6470;margin-top:10px"><span>התקרה</span><span>עד כאן ולא יותר</span></div>`;
   const mb = meter.querySelector('#mb');
-  s.on((lt) => { const k = back((lt - 12.6) / .6); meter.style.opacity = clamp((lt - 12.6) / .2); meter.style.transform = `translateY(${(1 - k) * 300}px)`; mb.style.width = Math.min(100, ease((lt - 13.6) / 2.6) * 100) + '%'; });
+  s.on((lt) => { const k = back((lt - 7.6) / .6); meter.style.opacity = clamp((lt - 7.6) / .2); meter.style.transform = `translateY(${(1 - k) * 300}px)`; mb.style.width = Math.min(100, ease((lt - 8.4) / 2.6) * 100) + '%'; });
   s.sticker('💰', 'left', 480, 1.6, -8); s.sticker('🤝', 'right', 520, 4.6, 8);
-  say(0.4, 3.8, 'אפס שקלים עלות פיתוח');
-  say(3.8, 8.4, 'משלמים רק ארבעה עד שישה אחוזים מהמכירות באתר');
-  say(8.4, 12.4, 'וגם זה עם תקרה חודשית שנקבעת מראש');
-  say(12.4, 17.8, 'כשמגיעים לתקרה, העמלה נעצרת');
+  say(0.4, 3.2, 'אפס שקלים פיתוח');
+  say(3.4, 7.0, 'רק ארבעה עד שישה אחוזים מהמכירות');
+  say(7.2, 11.8, 'ועם תקרה חודשית');
 });
 
-// ===== 3. menu (26-42) =====
-scene(26, 42, MINT, (s) => {
-  s.heads([[0.1, 15.9, 'התפריט <b>והחיפוש</b>']]);
-  s.phone([{ clip: 'menu', from: 1.8, speed: 1.15, t0: 0, t1: 17 }], { at: .3 });
-  s.cards([[0.6, 5.3, '📸', 'תפריט עם תמונות ומחירים'], [5.3, 10.6, '🏷️', 'מבצע, חדש או כמעט אזל? מסומן לבד'], [10.6, 15.9, '🔎', 'חיפוש שמוצא מנה תוך שניות']]);
-  say(0.3, 5.2, 'תפריט מסודר עם תמונות ומחירים');
-  say(5.2, 10.5, 'מבצע, חדש או כמעט אזל? מסומן אוטומטית');
-  say(10.5, 15.8, 'והלקוח מוצא מנה בחיפוש תוך שניות');
+// ===== 3. menu (18-25) =====
+scene(18, 25, MINT, (s) => {
+  s.heads([[0.1, 6.9, 'התפריט <b>והחיפוש</b>']]);
+  s.phone([{ clip: 'menu', from: 1.8, speed: 1.4, t0: 0, t1: 8 }], { at: .3 });
+  s.cards([[0.5, 2.8, '📸', 'תפריט עם תמונות'], [2.8, 4.9, '🔎', 'חיפוש מהיר'], [4.9, 6.9, '🏷️', 'מבצע, חדש, כמעט אזל']]);
+  say(0.4, 2.7, 'תפריט מסודר');
+  say(2.8, 4.8, 'חיפוש מהיר');
+  say(4.9, 6.9, 'מבצעים ומנות חדשות');
 });
 
-// ===== 4. add-ons (42-58) =====
-scene(42, 58, PLUM, (s) => {
-  s.heads([[0.1, 15.9, 'תוספות <b>למנה</b>']]);
-  s.phone([{ clip: 'addons', from: .8, speed: .92, t0: 0, t1: 17 }], { at: .3 });
-  s.cards([[0.6, 5.2, '🫓', 'תוספות לכל מנה: פיתה, ביצה ועוד'], [5.2, 10.6, '🔢', 'אתם קובעים כמה מותר, למשל עד 5'], [10.6, 15.9, '✋', 'הלקוח לא יכול לעבור את הגבול']]);
-  say(0.3, 5.2, 'כל מנה יכולה לקבל תוספות, כמו פיתה או ביצה');
-  say(5.2, 10.5, 'ואתם קובעים כמה תוספות מותר לקחת בכל מנה');
-  say(10.5, 15.8, 'הלקוח רואה כמה נשאר ולא עובר את הכמות');
+// ===== 4. add-ons (25-31) =====
+scene(25, 31, PLUM, (s) => {
+  s.heads([[0.1, 5.9, 'תוספות <b>למנה</b>']]);
+  s.phone([{ clip: 'addons', from: .8, speed: 1.2, t0: 0, t1: 7 }], { at: .3 });
+  s.cards([[0.5, 3.0, '🫓', 'תוספות לכל מנה'], [3.0, 5.9, '🔢', 'עם הגבלת כמות']]);
+  say(0.4, 2.9, 'תוספות לכל מנה');
+  say(3.0, 5.8, 'עם הגבלת כמות');
 });
 
-// ===== 5. delivery (58-74) =====
-scene(58, 74, NAVY, (s) => {
-  s.heads([[0.1, 15.9, 'מחיר משלוח <b>לפי אזור</b>']]);
-  s.phone([{ clip: 'zones', from: 1.5, speed: .95, t0: 0, t1: 8.2 }, { clip: 'cart', from: 2.2, speed: 1, t0: 8.2, t1: 17 }], { at: .3 });
-  s.cards([[0.6, 4.2, '📍', 'מחיר משלוח שונה לכל אזור'], [4.2, 8.1, '🚫', 'אזור שלא מגיעים אליו אפשר לחסום'], [8.1, 12.2, '🛒', 'הלקוח רואה את דמי המשלוח בעגלה'], [12.2, 15.9, '🎁', 'ובהזמנה גדולה אפשר לתת הנחה']]);
-  say(0.3, 4.2, 'מחיר משלוח שונה לכל אזור');
-  say(4.2, 8.1, 'ואזור שלא מגיעים אליו אפשר לחסום');
-  say(8.1, 12.2, 'הלקוח רואה את דמי המשלוח בעגלה לפני ההזמנה');
-  say(12.2, 15.8, 'ובהזמנה גדולה אפשר לתת הנחה על המשלוח');
+// ===== 5. delivery (31-37) =====
+scene(31, 37, NAVY, (s) => {
+  s.heads([[0.1, 5.9, 'מחיר משלוח <b>לפי אזור</b>']]);
+  s.phone([{ clip: 'cart', from: 2.2, speed: 1.2, t0: 0, t1: 7 }], { at: .3 });
+  s.cards([[0.5, 3.0, '📍', 'משלוח לפי אזור'], [3.0, 5.9, '🎁', 'הנחה בהזמנה גדולה']]);
+  say(0.4, 2.9, 'משלוח לפי אזור');
+  say(3.0, 5.8, 'והנחה בהזמנה גדולה');
 });
 
-// ===== 6. club (74-90) =====
-scene(74, 90, SUN, (s) => {
-  s.heads([[0.1, 15.9, 'מועדון <b>לקוחות</b>']]);
-  s.phone([{ clip: 'club', from: 1.0, speed: .96, t0: 0, t1: 17 }], { at: .3 });
-  s.cards([[0.6, 4.4, '📞', 'נרשמים עם מספר טלפון בלבד'], [4.4, 8.2, '🔓', 'בלי סיסמאות ובלי טפסים ארוכים'], [8.2, 12.6, '📋', 'בפעם הבאה רואים את ההזמנות הקודמות'], [12.6, 15.9, '🔁', 'ומזמינים שוב בלחיצה אחת']]);
-  say(0.3, 4.4, 'הלקוחות נרשמים למועדון רק עם מספר טלפון');
-  say(4.4, 8.2, 'בלי סיסמאות ובלי טפסים ארוכים');
-  say(8.2, 12.6, 'בפעם הבאה הם רואים את ההזמנות הקודמות');
-  say(12.6, 15.8, 'ומזמינים שוב בלחיצה אחת');
+// ===== 6. club (37-43) =====
+scene(37, 43, SUN, (s) => {
+  s.heads([[0.1, 5.9, 'מועדון <b>לקוחות</b>']]);
+  s.phone([{ clip: 'club', from: 5.5, speed: 1.2, t0: 0, t1: 7 }], { at: .3 });
+  s.cards([[0.5, 3.0, '📞', 'נרשמים עם טלפון בלבד'], [3.0, 5.9, '🔁', 'הזמנה חוזרת בלחיצה']]);
+  say(0.4, 2.9, 'מועדון לקוחות, רק עם טלפון');
+  say(3.0, 5.8, 'ומזמינים שוב בלחיצה');
 });
 
-// ===== 7a. admin (90-104) =====
-scene(90, 104, TEAL, (s) => {
-  s.heads([[0.1, 13.9, 'ניהול <b>פשוט</b>']]);
-  s.phone([{ clip: 'admin', from: 1.0, speed: 1.05, t0: 0, t1: 15 }], { at: .3 });
-  s.cards([[0.6, 6.9, '🛠️', 'מנהלים מנות, הזמנות ועיצוב לבד'], [6.9, 13.9, '📊', 'ורואים כמה נכנסו וכמה הזמינו']]);
-  say(0.3, 6.8, 'מנהלים את האתר לבד, בלי מתכנת');
-  say(6.8, 13.8, 'ורואים כמה אנשים נכנסו לאתר וכמה הזמינו');
+// ===== 7a. admin (43-49) =====
+scene(43, 49, TEAL, (s) => {
+  s.heads([[0.1, 5.9, 'ניהול <b>פשוט</b>']]);
+  s.phone([{ clip: 'admin', from: 3.5, speed: 1.4, t0: 0, t1: 7 }], { at: .3 });
+  s.cards([[0.5, 3.0, '🛠️', 'מנהלים הכל לבד'], [3.0, 5.9, '📊', 'ורואים נתונים']]);
+  say(0.4, 2.9, 'מנהלים הכל לבד');
+  say(3.0, 5.8, 'ורואים נתונים');
 });
 
-// ===== 7b. more (104-114) =====
-const feats = [['📩', 'מייל על כל הזמנה'], ['💳', 'תשלום בביט ובפייבוקס'], ['🔔', 'הודעה שקופצת כשנכנסים'], ['🥗', 'סימון צמחוני וללא גלוטן'], ['📈', 'מעקב לפרסום מדויק'], ['🎨', 'עיצוב שמתאים לעסק']];
-scene(104, 114, PLUM, (s) => {
-  s.heads([[0.1, 9.9, 'ועוד<br><b>הרבה</b>']]);
+// ===== 7b. more (49-55) =====
+const feats = [['📩', 'מייל על כל הזמנה'], ['💳', 'ביט ופייבוקס'], ['🔔', 'הודעה קופצת'], ['🥗', 'צמחוני וללא גלוטן'], ['📈', 'מעקב לפרסום'], ['🎨', 'עיצוב לעסק']];
+scene(49, 55, PLUM, (s) => {
+  s.heads([[0.1, 5.9, 'ועוד<br><b>הרבה</b>']]);
   feats.forEach(([ico, txt], i) => {
     const c = el('card', `<i>${ico}</i><b>${txt}</b>`, { left: (i % 2 === 0 ? 555 : 75) + 'px', top: 330 + Math.floor(i / 2) * 370 + 'px' }, s.root);
-    s.on((lt) => { const t0 = .6 + i * 1.1, k = back((lt - t0) / .6); c.style.opacity = clamp((lt - t0) / .15); c.style.transform = `scale(${k}) rotate(${(1 - k) * 10}deg)`; });
+    s.on((lt) => { const t0 = .5 + i * .7, k = back((lt - t0) / .6); c.style.opacity = clamp((lt - t0) / .15); c.style.transform = `scale(${k}) rotate(${(1 - k) * 10}deg)`; });
   });
-  say(0.3, 4.8, 'מייל על כל הזמנה, תשלום בביט או בפייבוקס');
-  say(4.8, 9.8, 'הודעה שקופצת ללקוחות, סימון מנות צמחוניות ועוד');
+  say(0.4, 5.8, 'ועוד הרבה דברים');
 });
 
 // ===== 8. outro (114-126) =====
-scene(114, 126, SUN, (s) => {
+scene(55, 63, SUN, (s) => {
   const t = el('big', 'מרוויחים<br>ביחד', { top: '120px', fontSize: '190px', lineHeight: .95, textShadow: '0 10px 0 rgba(0,0,0,.15)' }, s.root);
-  const sub = el('big', '<span dir="ltr">0 ₪</span> פיתוח · <span dir="ltr">4%–6%</span> מהמכירות · עם תקרה חודשית', { top: '570px', fontSize: '40px', fontWeight: 700 }, s.root);
+  const sub = el('big', '<span dir="ltr">0 ₪</span> פיתוח · <span dir="ltr">4%–6%</span> מהמכירות', { top: '570px', fontSize: '40px', fontWeight: 700 }, s.root);
   const ph = el('pill', `<div style="font-size:44px;font-weight:700;color:#4a6470">דברו איתי</div><div style="font-size:84px;color:#0b4a5e;line-height:1.05">${C.contactName}</div><div dir="ltr" style="font-size:100px;color:#ff7a00;line-height:1.05">${C.phone}</div>`, { top: '700px', left: '70px', right: '70px', background: '#fff', borderRadius: '60px' }, s.root);
   const q = el('ph', 'מקום שמור<br>לקישור / ברקוד<br>לדף נחיתה', { top: '1130px', left: '330px', width: '420px', height: '420px' }, s.root);
   s.on((lt) => {
@@ -253,8 +245,8 @@ scene(114, 126, SUN, (s) => {
     const k2 = back((lt - 2.8) / .6); q.style.opacity = clamp((lt - 2.8) / .2); q.style.transform = `scale(${k2})`;
   });
   s.sticker('🎉', 'left', 300, 1, -10); s.sticker('🎉', 'right', 330, 1.4, 10);
-  say(0.4, 4.4, 'מרוויחים ביחד, אפס שקלים פיתוח');
-  say(4.4, 11.6, 'דברו איתי ונקים לעסק שלכם אתר הזמנות');
+  say(0.4, 3.0, 'מרוויחים ביחד');
+  say(3.2, 7.4, 'דברו איתי, ונסגור את זה');
 });
 el('brand', C.siteName + ' · מרוויחים ביחד');
 S.appendChild(capBox);
