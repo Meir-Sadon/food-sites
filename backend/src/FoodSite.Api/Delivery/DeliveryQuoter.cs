@@ -55,6 +55,18 @@ public class DeliveryQuoter(AppDbContext db, IAddressGeocoder geocoder)
         return DeliveryZones.Quote(zones, point);
     }
 
+    /// <summary>
+    /// What an address nobody could price is charged until the owner phones: the fixed fee of the regular setting, or the
+    /// cheapest zone that delivers. The owner tells the client if more is due.
+    /// </summary>
+    public async Task<decimal> MinimumFeeAsync(Settings settings, CancellationToken ct)
+    {
+        if (Mode(settings) != DeliveryPricing.Zones)
+            return settings.DeliveryFeeAmount ?? 0m;
+        var fees = await db.DeliveryZones.AsNoTracking().Where(z => !z.IsBlocked).Select(z => z.Fee).ToListAsync(ct);
+        return fees.Count == 0 ? 0m : fees.Min();
+    }
+
     /// <summary>The fee at a point the client's phone reported, with the address read back from it.</summary>
     public async Task<DeliveryQuote> QuoteAtAsync(Settings settings, string city, GeoPoint point, CancellationToken ct)
     {

@@ -421,6 +421,32 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         await missing.AssertInvalid("Street", "required");
     }
 
+    [Theory]
+    [InlineData("city", null)]
+    [InlineData("city", "")]
+    [InlineData("city", "   ")]
+    [InlineData("street", null)]
+    [InlineData("street", "")]
+    [InlineData("street", "   ")]
+    [InlineData("houseNumber", null)]
+    [InlineData("houseNumber", "")]
+    [InlineData("houseNumber", "   ")]
+    public async Task A_delivery_without_a_whole_address_is_refused_so_no_fee_is_ever_left_out(string field, string? value)
+    {
+        var response = await Place(await ValidOrder(o => o[field] = value));
+        await response.AssertInvalid(char.ToUpperInvariant(field[0]) + field[1..], "required");
+        Assert.Empty(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
+    }
+
+    [Fact]
+    public async Task A_delivery_sent_directly_with_no_address_fields_at_all_is_refused()
+    {
+        var response = await Place(await ValidOrder(o => { o.Remove("city"); o.Remove("street"); o.Remove("houseNumber"); o.Remove("apartment"); }));
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("required", body);
+    }
+
     [Fact]
     public async Task An_order_below_the_minimum_is_rejected_and_one_at_it_passes()
     {

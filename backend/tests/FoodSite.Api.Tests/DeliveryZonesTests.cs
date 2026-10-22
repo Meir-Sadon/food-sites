@@ -188,13 +188,14 @@ public sealed class DeliveryZonesTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task An_address_the_map_cannot_place_waits_for_the_admin_without_a_fee()
+    public async Task An_address_the_map_cannot_place_waits_for_the_admin_and_pays_the_cheapest_zone_fee()
     {
         await Configure();
         var client = WithFakeGeocoder();
         var order = await client.PostAsJsonAsync("/api/orders", await Order(client, "לא ידוע"), TestFiles.Json).Read<ConfirmationDto>();
         Assert.True(order.NeedsReview);
-        Assert.Equal(0, order.DeliveryFee);
+        // The cheapest zone that delivers (the blocked one is not counted); the owner phones if more is due.
+        Assert.Equal(15, order.DeliveryFee);
     }
 
     private async Task UseSimpleFee(decimal? fee)
@@ -221,7 +222,8 @@ public sealed class DeliveryZonesTests(PostgresFixture postgres) : IAsyncLifetim
         far = new Dictionary<string, object?>(System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(System.Text.Json.JsonSerializer.Serialize(far))!) { ["city"] = "חיפה" };
         var outside = await _client.PostAsJsonAsync("/api/orders", far, TestFiles.Json).Read<ConfirmationDto>();
         Assert.True(outside.NeedsReview);
-        Assert.Equal(0, outside.DeliveryFee);
+        Assert.Equal(25, outside.DeliveryFee);
+        Assert.Equal(pickup.Total + 25, outside.Total);
         Assert.Equal("simple", (await _client.GetAsync("/api/site").Read<SiteDto>()).DeliveryPricing);
     }
 
