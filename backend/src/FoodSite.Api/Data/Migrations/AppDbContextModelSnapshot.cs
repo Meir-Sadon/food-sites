@@ -1193,6 +1193,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("SiteDefaultsApplied")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ShabbatRules")
+                        .HasColumnType("text");
+
                     b.Property<string>("SiteStyle")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");

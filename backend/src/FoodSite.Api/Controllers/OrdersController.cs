@@ -104,7 +104,7 @@ public class OrdersController(
 
         var days = await db.SupplyDays.AsNoTracking().Include(d => d.Hours).ToListAsync(ct);
         var closed = await db.ClosedDates.AsNoTracking().Select(c => c.Date).ToListAsync(ct);
-        var openDate = SupplyCalendar.Find(input.SupplyDate, clock.NowLocal(), days, closed);
+        var openDate = SupplyCalendar.Find(input.SupplyDate, clock.NowLocal(), days, closed, await ShabbatSchedule.LoadAsync(db, clock, ct));
         if (openDate is null)
             errors.Add(nameof(input.SupplyDate), "supplyDateUnavailable");
         // A day with supply hours needs one of them; on a day without, any hour sent is dropped.

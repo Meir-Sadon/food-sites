@@ -4593,3 +4593,6 @@ label {
   align-items: flex-start;
   gap: 0.4rem;
 }
+
+.shabbat-kind { display: flex; flex-direction: column; gap: 0.6rem; }
+.shabbat-side { align-items: flex-end; }

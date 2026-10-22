@@ -4,6 +4,7 @@ import { ClosedDatesSection } from './ClosedDatesSection'
 import { ConsoleTokenSection } from './ConsoleTokenSection'
 import { GeneralSection } from './GeneralSection'
 import { PasswordSection } from './PasswordSection'
+import { ShabbatRulesSection } from './ShabbatRulesSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
 import { DeliveryZonesSection } from '../delivery/DeliveryZonesSection'
 import type { DeliveryPricing } from '../../api/site'
@@ -19,6 +20,9 @@ export function SettingsPage() {
       <h1>{t('admin.settings.title')}</h1>
       <SectionSlot>
         <SupplyDaysSection />
+      </SectionSlot>
+      <SectionSlot>
+        <ShabbatRulesSection />
       </SectionSlot>
       <SectionSlot>
         <ClosedDatesSection />

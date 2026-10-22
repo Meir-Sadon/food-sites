@@ -310,6 +310,39 @@ export const supplyDaysApi = {
   save: (days: SupplyDay[]) => apiJson<SupplyDay[]>(`${admin}/supply-days`, send('PUT', days)),
 }
 
+export type ShabbatEveMode = 'none' | 'closed' | 'fixed' | 'before'
+export type ShabbatStartMode = 'none' | 'closed' | 'fixed' | 'after'
+
+/** One side of a rule: `time` ("HH:mm") for a fixed time, `hours` (whole or half) before candle lighting / after Shabbat ends. */
+export interface ShabbatSide<Mode> {
+  mode: Mode
+  time: string | null
+  hours: number
+}
+
+export interface ShabbatKindRules {
+  eve: ShabbatSide<ShabbatEveMode>
+  start: ShabbatSide<ShabbatStartMode>
+}
+
+export interface ShabbatRules {
+  city: string | null
+  shabbat: ShabbatKindRules
+  holiday: ShabbatKindRules
+}
+
+export interface ShabbatRulesResponse {
+  rules: ShabbatRules
+  cities: { id: string; name: string }[]
+  /** The coming Shabbat in the chosen city; null without a city. */
+  preview: { eve: string; candleLighting: string; shabbatEnds: string } | null
+}
+
+export const shabbatRulesApi = {
+  get: () => apiJson<ShabbatRulesResponse>(`${admin}/shabbat-rules`),
+  save: (rules: ShabbatRules) => apiJson<ShabbatRulesResponse>(`${admin}/shabbat-rules`, send('PUT', rules)),
+}
+
 export const closedDatesApi = {
   get: () => apiJson<ClosedDate[]>(`${admin}/closed-dates`),
   add: (date: string, reason: string) => apiJson<ClosedDate>(`${admin}/closed-dates`, send('POST', { date, reason })),

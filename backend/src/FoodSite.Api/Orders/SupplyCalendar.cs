@@ -14,14 +14,20 @@ public static class SupplyCalendar
     public record OpenDate(DateOnly Date, DateTime Cutoff, IReadOnlyList<HourSlot> Hours);
 
     /// <summary>The day's working hours, range by range, cut into one-hour slots; none when the day has no (valid) hours.</summary>
-    public static IReadOnlyList<HourSlot> HourSlots(SupplyDay day)
+    public static IReadOnlyList<HourSlot> HourSlots(SupplyDay day) =>
+        HourSlots(RangesOf(day));
+
+    private static List<ShabbatSchedule.HoursRange> RangesOf(SupplyDay day) =>
+        day.Hours.Where(h => h.IsValid).OrderBy(h => h.From).Select(h => new ShabbatSchedule.HoursRange(h.From.ToTimeSpan(), h.End)).ToList();
+
+    public static IReadOnlyList<HourSlot> HourSlots(IEnumerable<ShabbatSchedule.HoursRange> ranges)
     {
         var slots = new List<HourSlot>();
-        foreach (var range in day.Hours.Where(h => h.IsValid).OrderBy(h => h.From))
+        foreach (var range in ranges)
         {
             var end = range.End;
             // TimeSpan, not TimeOnly, so that a range ending at midnight (24:00) does not wrap.
-            for (var start = range.From.ToTimeSpan(); start < end; start += TimeSpan.FromHours(1))
+            for (var start = range.From; start < end; start += TimeSpan.FromHours(1))
             {
                 var slotEnd = end - start <= TimeSpan.FromHours(1) ? end : start + TimeSpan.FromHours(1);
                 slots.Add(new HourSlot(TimeOnly.FromTimeSpan(start), slotEnd >= TimeSpan.FromDays(1) ? TimeOnly.MinValue : TimeOnly.FromTimeSpan(slotEnd)));
@@ -42,7 +48,8 @@ public static class SupplyCalendar
     }
 
     public static IReadOnlyList<OpenDate> OpenDates(
-        DateTime nowLocal, IEnumerable<SupplyDay> days, IEnumerable<DateOnly> closedDates, int max = MaxDates)
+        DateTime nowLocal, IEnumerable<SupplyDay> days, IEnumerable<DateOnly> closedDates, int max = MaxDates,
+        ShabbatSchedule? schedule = null)
     {
         var enabled = days.Where(d => d.Enabled).ToDictionary(d => d.Weekday);
         var closed = closedDates.ToHashSet();
@@ -59,7 +66,15 @@ public static class SupplyCalendar
                 continue;
             // Hours already over are left out (the order page and the server both use this list), and a day
             // whose hours have all passed is not offered at all.
-            var allSlots = HourSlots(day);
+            var ranges = RangesOf(day);
+            if (schedule is not null)
+            {
+                var adjusted = schedule.Adjust(date, ranges);
+                if (adjusted is null)
+                    continue;
+                ranges = adjusted.ToList();
+            }
+            var allSlots = HourSlots(ranges);
             var slots = allSlots.Where(s => EndOf(date, s) > nowLocal).ToList();
             if (allSlots.Count > 0 && slots.Count == 0)
                 continue;
@@ -69,19 +84,23 @@ public static class SupplyCalendar
     }
 
     public static bool IsOpen(
-        DateOnly date, DateTime nowLocal, IEnumerable<SupplyDay> days, IEnumerable<DateOnly> closedDates) =>
-        Find(date, nowLocal, days, closedDates) is not null;
+        DateOnly date, DateTime nowLocal, IEnumerable<SupplyDay> days, IEnumerable<DateOnly> closedDates,
+        ShabbatSchedule? schedule = null) =>
+        Find(date, nowLocal, days, closedDates, schedule) is not null;
 
     /// <summary>The open date <paramref name="date"/>, with its hours, or null when it cannot be ordered for.</summary>
     public static OpenDate? Find(
-        DateOnly date, DateTime nowLocal, IEnumerable<SupplyDay> days, IEnumerable<DateOnly> closedDates) =>
-        OpenDates(nowLocal, days, closedDates, int.MaxValue).FirstOrDefault(d => d.Date == date);
+        DateOnly date, DateTime nowLocal, IEnumerable<SupplyDay> days, IEnumerable<DateOnly> closedDates,
+        ShabbatSchedule? schedule = null) =>
+        OpenDates(nowLocal, days, closedDates, int.MaxValue, schedule).FirstOrDefault(d => d.Date == date);
 }
 
 /// <summary>The current time in the business's time zone (Israel unless <c>Site:TimeZone</c> says otherwise).</summary>
 public class SiteClock(TimeProvider time, IConfiguration config)
 {
     private readonly TimeZoneInfo _zone = Find(config["Site:TimeZone"] ?? "Asia/Jerusalem");
+
+    public TimeZoneInfo Zone => _zone;
 
     public DateTime NowLocal() => TimeZoneInfo.ConvertTime(time.GetUtcNow(), _zone).DateTime;
 
