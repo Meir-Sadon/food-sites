@@ -157,7 +157,13 @@ public class OrdersController(
         // With zones there is no list of cities: a client who waits for approval waits because the map could not place the address.
         var serviceCities = DeliveryQuoter.Mode(settings) == DeliveryPricing.Zones ? (IReadOnlyList<string>)[] : ServiceArea.Parse(settings.ServiceCities);
         var dishesTotal = OrderBuilder.Total(items);
-        var fee = quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m;
+        // An address nobody could price pays the minimum fee, and the order waits while the owner phones about any extra.
+        var fee = quote switch
+        {
+            { Status: DeliveryQuote.Ok } => quote.Fee,
+            { Status: DeliveryQuote.Outside or DeliveryQuote.Unknown } => await deliveryQuoter.MinimumFeeAsync(settings, ct),
+            _ => 0m,
+        };
         var discount = DeliveryDiscount.Amount(settings, dishesTotal, fee);
         var order = new Order
         {
