@@ -79,6 +79,41 @@ Orders and their totals per period, by **supply date**.
 
 `sales` is the sum of the orders' totals in shekels, delivery fees included; `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
 
+### `GET /api/ops/cancellations?from=&to=`
+
+The cancelled orders with the admin's cancellation reason and the order's general details, so the console can check cancellations (no sales commission is charged on them). By **supply date**, newest first, at most 500 listed (`orders` and `total` count all of them in the range).
+
+- `from`, `to`: dates, both included. Without them: the first of the month 11 months ago up to today. Same limits as `summary` (`from: ["invalidRange"]`).
+- The admin must give a reason to cancel an order (`PUT /api/admin/orders/{id}/status` with `status: "Cancelled"` is `400` with `cancelReason: ["required"]` without one). An order cancelled before this was required has `reason` and `cancelledAt` `null`.
+
+```json
+{
+  "from": "2030-01-01",
+  "to": "2030-12-31",
+  "orders": 1,
+  "total": 80.00,
+  "cancellations": [{
+    "orderId": 42,
+    "reason": "הלקוח התקשר",
+    "cancelledAt": "2030-01-05T09:00:00+00:00",
+    "orderedAt": "2030-01-04T18:30:00+00:00",
+    "supplyDate": "2030-01-06",
+    "deliveryHour": "12:00:00",
+    "clientName": "דנה כהן",
+    "phone": "0501234567",
+    "fulfillmentMethod": "Delivery",
+    "address": "אשקלון",
+    "paymentMethod": "Cash",
+    "isPaid": false,
+    "total": 80.00,
+    "deliveryFee": 10.00,
+    "items": [{ "dishName": "קוסקוס", "optionLabel": null, "quantity": 2, "lineTotal": 70.00 }]
+  }]
+}
+```
+
+- `address` is `null` for a pickup. `total` includes the delivery fee, like `summary`'s `sales`.
+
 ### `GET /api/ops/usage?from=&to=`
 
 How the client site is used: the numbers on the admin's **שימוש באתר** page, as `UsageReportDto` (`Controllers/Admin/UsageReportController`).

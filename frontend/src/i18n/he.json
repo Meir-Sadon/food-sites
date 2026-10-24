@@ -1048,8 +1048,11 @@
         "Cancelled": "בוטלה"
       },
       "cancelOrder": "ביטול הזמנה",
-      "confirmCancel": "לבטל את הזמנה #{{id}}?",
+      "confirmCancel": "לבטל את הזמנה #{{id}}? על הזמנה מבוטלת לא משולמת עמלת מכירה, ולכן חובה לכתוב את סיבת הביטול.",
+      "cancelFor": "ביטול הזמנה #{{id}}",
+      "cancelReason": "סיבת הביטול",
       "yesCancel": "כן, לבטל",
+      "keepOrder": "להשאיר את ההזמנה",
       "cookingSummary": "סיכום בישול",
       "summaryFor": "סיכום בישול ליום {{date}}",
       "summaryCounts": "{{orders}} הזמנות · {{delivery}} משלוחים · {{pickup}} איסוף עצמי",

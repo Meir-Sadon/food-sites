@@ -16,6 +16,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     public const int AddressMaxLength = 300;
     public const int NotesMaxLength = 500;
     public const int PaymentCommentMaxLength = 200;
+    public const int CancelReasonMaxLength = Order.CancelReasonMaxLength;
     public const decimal MaxQuantity = 999;
 
     public record ItemDto(
@@ -49,12 +50,15 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         DeliveryReportDto? Delivery = null,
         decimal DeliveryFee = 0m,
         string? DeliveryZoneName = null,
-        decimal DeliveryDiscount = 0m);
+        decimal DeliveryDiscount = 0m,
+        string? CancelReason = null,
+        DateTimeOffset? CancelledAt = null);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
 
-    public record StatusInput(OrderStatus Status);
+    /// <param name="CancelReason">Required when cancelling (the business pays no sales commission on a cancelled order); ignored otherwise.</param>
+    public record StatusInput(OrderStatus Status, string? CancelReason = null);
 
     /// <summary>Marking an order paid takes how it was paid (Unknown is only for old orders) and an optional comment.</summary>
     public record PaidInput(bool IsPaid, PaidWith? PaidWith = null, string? PaymentComment = null);
@@ -172,6 +176,22 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         var order = await db.Orders.FindAsync(id);
         if (order is null)
             return NotFound();
+        if (input.Status == OrderStatus.Cancelled)
+        {
+            // A cancelled order carries no sales commission, so cancelling always says why.
+            var errors = new Errors();
+            errors.Text(nameof(input.CancelReason), input.CancelReason, CancelReasonMaxLength, required: true);
+            if (errors.Any)
+                return Invalid(errors);
+            if (order.Status != OrderStatus.Cancelled)
+                order.CancelledAt = DateTimeOffset.UtcNow;
+            order.CancelReason = input.CancelReason!.Trim();
+        }
+        else
+        {
+            order.CancelReason = null;
+            order.CancelledAt = null;
+        }
         order.Status = input.Status;
         await db.SaveChangesAsync();
         return NoContent();
@@ -332,7 +352,9 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         DeliveryReport(o),
         o.DeliveryFee,
         o.DeliveryZoneName,
-        o.DeliveryDiscount);
+        o.DeliveryDiscount,
+        o.CancelReason,
+        o.CancelledAt);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

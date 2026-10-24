@@ -70,6 +70,17 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
         DateOnly From, DateOnly To, SummaryPeriod Period, int Orders, decimal Sales, IReadOnlyList<PeriodDto> Periods,
         IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus, decimal DeliveryFees);
 
+    public record CancellationItemDto(string DishName, string? OptionLabel, decimal Quantity, decimal LineTotal);
+
+    /// <param name="Reason">Why the admin cancelled; null for an order cancelled before the reason was required.</param>
+    /// <param name="CancelledAt">When it was cancelled; null for an order cancelled before the reason was required.</param>
+    public record CancellationDto(
+        int OrderId, string? Reason, DateTimeOffset? CancelledAt, DateTimeOffset OrderedAt, DateOnly SupplyDate, TimeOnly? DeliveryHour,
+        string ClientName, string Phone, FulfillmentMethod FulfillmentMethod, string? Address, PaymentMethod PaymentMethod, bool IsPaid,
+        decimal Total, decimal DeliveryFee, IReadOnlyList<CancellationItemDto> Items);
+
+    public record CancellationsDto(DateOnly From, DateOnly To, int Orders, decimal Total, IReadOnlyList<CancellationDto> Cancellations);
+
     public record RecommendationDto(int Id, string Text, string? ClientName, DateTimeOffset CreatedAt, bool IsHandled);
 
     public record HandledInput(bool IsHandled);
@@ -150,6 +161,37 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                 new Admin.Errors().Add(nameof(from), "invalidRange").ToDictionary()));
 
         return await usage.BuildAsync(start, end, ct);
+    }
+
+    /// <summary>
+    /// The cancelled orders with the admin's reason and the order's details, by supply date, newest first (at most
+    /// <see cref="ListLimit"/>; <c>orders</c> and <c>total</c> count all of them). Without dates: the last 12 months up to today.
+    /// </summary>
+    [HttpGet("cancellations")]
+    public async Task<ActionResult<CancellationsDto>> Cancellations(DateOnly? from, DateOnly? to, CancellationToken ct)
+    {
+        var end = to ?? clock.Today();
+        var start = from ?? new DateOnly(end.Year, end.Month, 1).AddMonths(-11);
+        if (start > end || end.DayNumber - start.DayNumber >= SummaryMaxDays)
+            return ValidationProblem(new ValidationProblemDetails(
+                new Admin.Errors().Add(nameof(from), "invalidRange").ToDictionary()));
+
+        var cancelled = db.Orders.AsNoTracking()
+            .Where(o => o.Status == OrderStatus.Cancelled && o.SupplyDate >= start && o.SupplyDate <= end);
+        var count = await cancelled.CountAsync(ct);
+        var total = (await cancelled.Select(o => o.Total).ToListAsync(ct)).Sum();
+        var rows = await cancelled
+            .OrderByDescending(o => o.SupplyDate).ThenByDescending(o => o.Id)
+            .Take(ListLimit)
+            .Include(o => o.Items)
+            .ToListAsync(ct);
+        var list = rows.Select(o => new CancellationDto(
+                o.Id, o.CancelReason, o.CancelledAt, o.CreatedAt, o.SupplyDate, o.DeliveryHour, o.Name, o.Phone, o.FulfillmentMethod,
+                o.FulfillmentMethod == FulfillmentMethod.Delivery ? o.Address : null, o.PaymentMethod, o.IsPaid, o.Total, o.DeliveryFee,
+                o.Items.OrderBy(i => i.Id)
+                    .Select(i => new CancellationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.LineTotal)).ToList()))
+            .ToList();
+        return new CancellationsDto(start, end, count, total, list);
     }
 
     internal static DateOnly PeriodStart(DateOnly date, SummaryPeriod period) => period switch
