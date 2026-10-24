@@ -75,14 +75,24 @@ describe.each(styles.flatMap((style) => flows.flatMap((flow) => totals.map((orde
       expect(api.sent('POST', '/api/orders')).toHaveLength(1)
     })
 
-    it('scrolls to the first invalid field when the form is not filled in', async () => {
+    it('settles what is missing in a panel at the send button, without going to the field', async () => {
       const { api, user } = await open(layout)
       await addPlainDish(user, flow)
       await toDetails(user, flow)
       await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
-      await vi.waitFor(() => expect(screen.getByLabelText('טלפון')).toHaveFocus())
-      expect(scrolled).toContain(screen.getByLabelText('טלפון'))
+      const panel = await screen.findByRole('group', { name: /חסר לנו/ })
+      expect(within(panel).getByLabelText('טלפון')).toBeInTheDocument()
+      expect(within(panel).getByLabelText('רחוב')).toBeInTheDocument()
+      expect(scrolled).not.toContain(screen.getAllByLabelText('טלפון')[0])
       expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+      await user.type(within(panel).getByLabelText('שם מלא'), 'דנה')
+      await user.type(within(panel).getByLabelText('טלפון'), '050-123-4567')
+      await user.type(within(panel).getByLabelText('רחוב'), 'הרצל')
+      await user.type(within(panel).getByLabelText('מספר בית'), '1')
+      expect(await screen.findByRole('group', { name: 'הכול מולא' })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+      await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
+      expect(api.sent('POST', '/api/orders')).toHaveLength(1)
     })
   },
 )
@@ -122,6 +132,19 @@ describe.each(styles.flatMap((style) => flows.map((flow) => ({ style, flow }))))
     })
   },
 )
+
+describe('The counts in the total bar', () => {
+  it('are a button that offers to jump to finishing the order', async () => {
+    const { user } = await open({})
+    await addPlainDish(user, 'page')
+    const bar = screen.getByRole('region', { name: 'סיכום הזמנה' })
+    await user.click(within(bar).getByRole('button', { name: /מנה אחת/ }))
+    const dialog = screen.getByRole('dialog', { name: 'לסיים את ההזמנה?' })
+    await user.click(within(dialog).getByRole('button', { name: 'קפיצה לסיום ההזמנה' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(scrolled.at(-1)).toBe(screen.getByText('משלוח או איסוף').closest('fieldset'))
+  })
+})
 
 describe('The "to details and payment" buttons', () => {
   const addressFieldset = () => screen.getByText('משלוח או איסוף').closest('fieldset')!
