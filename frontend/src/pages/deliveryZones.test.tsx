@@ -209,6 +209,21 @@ describe('Delivery fee by zones', () => {
     expect(await screen.findByText(/אשדוד\)/)).toBeInTheDocument()
   })
 
+  it('offers to switch to pickup under the locate button when the address is incomplete', async () => {
+    const api = fakeApi({ 'GET /api/site': () => site({ deliveryPricing: 'zones' }), 'GET /api/menu': menuWithPlainDish })
+    renderAt('/')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
+    await user.click(within(panel).getByRole('button', { name: 'שנה לאיסוף עצמי' }))
+
+    // No address is needed any more: the dialog moves on to the send step and the order is a pickup.
+    await within(panel).findByRole('heading', { name: 'הכול מוכן' })
+    expect(screen.getByRole('radio', { name: 'איסוף עצמי' })).toBeChecked()
+    expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+  })
+
   it('calculates at once when the button is pressed', async () => {
     const { api, user } = await open({ deliveryPricing: 'zones' }, () => ({ status: 'ok', fee: 10, zoneName: 'קרוב' }))
     await typeAddress(user)
