@@ -4701,7 +4701,7 @@ label {
 .complete-dialog__track {
   display: flex;
   direction: rtl;
-  transform: translateX(calc(var(--step) * 100%));
+  transform: translateX(calc(var(--step, 0) * 100%));
   transition: transform 0.35s ease;
 }
 
