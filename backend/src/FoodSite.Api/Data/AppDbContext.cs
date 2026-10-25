@@ -254,6 +254,7 @@ public class AppDbContext(
         model.Entity<User>(e =>
         {
             e.HasIndex(u => u.Phone).IsUnique();
+            e.HasIndex(u => u.GoogleSub).IsUnique().HasFilter("\"GoogleSub\" IS NOT NULL");
         });
 
         model.Entity<Order>(e =>

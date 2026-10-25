@@ -11,6 +11,8 @@ import { useAccount } from '../account/useAccount'
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { useToast } from '../components/toast'
+import { GoogleSignInButton } from '../account/GoogleSignInButton'
+import { useSite } from '../site/useSite'
 
 type Mode = 'login' | 'register'
 
@@ -19,6 +21,9 @@ export function LoginPage() {
   const navigate = useNavigate()
   const formError = useFormErrorMessage()
   const { user, loading, setUser, logout } = useAccount()
+  const googleClientId = useSite()?.googleClientId
+  // Set once Google confirmed someone who has no account: registering then sends it along instead of a plain register.
+  const [googleCredential, setGoogleCredential] = useState<string | null>(null)
 
   const [mode, setMode] = useState<Mode>('login')
   const [phone, setPhone] = useState('')
@@ -57,8 +62,36 @@ export function LoginPage() {
 
   const switchTo = (next: Mode) => {
     setMode(next)
+    setGoogleCredential(null)
     setErrors({})
     setError(null)
+  }
+
+  async function handleGoogle(credential: string) {
+    setErrors({})
+    setError(null)
+    setBusy(true)
+    try {
+      const result = await accountApi.google(credential)
+      if (result.profile) {
+        setUser(result.profile)
+        navigate('/')
+      } else {
+        // First time with this Google account: the phone and address are still needed to order.
+        setGoogleCredential(credential)
+        setMode('register')
+        setForm((f) => ({
+          ...f,
+          fullName: f.fullName || (result.registration?.fullName ?? ''),
+          email: f.email || (result.registration?.email ?? ''),
+        }))
+        toast(t('account.googleNeedsDetails'))
+      }
+    } catch (err) {
+      setError(formError(err))
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -77,9 +110,8 @@ export function LoginPage() {
       if (mode === 'login') {
         setUser(await accountApi.login(normalized))
       } else {
-        setUser(
-          await accountApi.register(profileInput(normalized, form)),
-        )
+        const input = profileInput(normalized, form)
+        setUser(googleCredential ? await accountApi.googleRegister(googleCredential, input) : await accountApi.register(input))
       }
       navigate('/')
     } catch (err) {
@@ -135,6 +167,12 @@ export function LoginPage() {
           )}
         </div>
       </form>
+      {googleClientId && mode === 'login' && (
+        <div className="stack google-login">
+          <p className="hint">{t('account.or')}</p>
+          <GoogleSignInButton clientId={googleClientId} onCredential={handleGoogle} />
+        </div>
+      )}
     </section>
   )
 }

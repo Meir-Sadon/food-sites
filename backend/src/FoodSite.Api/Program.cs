@@ -78,6 +78,8 @@ builder.Services.Configure<AdminOptions>(config.GetSection(AdminOptions.Section)
 builder.Services.Configure<FoodSite.Api.Auth.CookieOptions>(config.GetSection(FoodSite.Api.Auth.CookieOptions.Section));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<AccountOptions>(config.GetSection(AccountOptions.Section));
+builder.Services.Configure<GoogleOptions>(config.GetSection(GoogleOptions.Section));
+builder.Services.AddHttpClient<IGoogleTokenVerifier, GoogleTokenVerifier>(c => c.Timeout = TimeSpan.FromSeconds(10));
 builder.Services.AddSingleton<AdminTokenService>();
 builder.Services.AddSingleton<UserTokenService>();
 builder.Services.AddSingleton<SiteClock>();
