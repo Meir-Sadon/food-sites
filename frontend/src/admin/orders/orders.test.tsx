@@ -222,13 +222,21 @@ describe('Admin Orders', () => {
     const user = userEvent.setup()
     const card = await screen.findByRole('article', { name: 'הזמנה #7' })
 
-    await user.click(within(card).getByRole('button', { name: 'ביטול הזמנה' }))
+    await user.click(within(card).getByRole('button', { name: /ביטול הזמנה/ }))
     expect(api.sent('PUT', '/status')).toHaveLength(0)
     await user.click(within(card).getByRole('button', { name: 'כן, לבטל' }))
 
-    await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/status')[0].body).toEqual({ status: 'Cancelled' }))
+    // The reason is required: nothing is sent without it.
+    expect(api.sent('PUT', '/status')).toHaveLength(0)
+    await user.type(within(card).getByLabelText('סיבת הביטול'), 'הלקוח התקשר')
+    await user.click(within(card).getByRole('button', { name: 'כן, לבטל' }))
+
+    await waitFor(() =>
+      expect(api.sent('PUT', '/api/admin/orders/7/status')[0].body).toEqual({ status: 'Cancelled', cancelReason: 'הלקוח התקשר' }),
+    )
     expect(within(card).getByLabelText('סטטוס')).toHaveValue('Cancelled')
-    expect(within(card).queryByRole('button', { name: 'ביטול הזמנה' })).not.toBeInTheDocument()
+    expect(within(card).getByText(/הלקוח התקשר/)).toBeInTheDocument()
+    expect(within(card).queryByRole('button', { name: /ביטול הזמנה/ })).not.toBeInTheDocument()
   })
 
   it('shows the cooking summary of a day', async () => {

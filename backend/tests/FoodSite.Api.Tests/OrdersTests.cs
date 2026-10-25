@@ -697,10 +697,10 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal([third.Id], orders.Where(o => o.HourFull).Select(o => o.Id));
 
         // A cancelled order frees its place: the third now fits, and the hour is full again with two.
-        (await _admin.PutAsJsonAsync($"/api/admin/orders/{second.Id}/status", new StatusInput(OrderStatus.Cancelled), TestFiles.Json)).EnsureSuccessStatusCode();
+        (await _admin.PutAsJsonAsync($"/api/admin/orders/{second.Id}/status", new StatusInput(OrderStatus.Cancelled, "test"), TestFiles.Json)).EnsureSuccessStatusCode();
         Assert.DoesNotContain(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>(), o => o.HourFull);
         Assert.True(await HourFull(date, "08:00"));
-        (await _admin.PutAsJsonAsync($"/api/admin/orders/{third.Id}/status", new StatusInput(OrderStatus.Cancelled), TestFiles.Json)).EnsureSuccessStatusCode();
+        (await _admin.PutAsJsonAsync($"/api/admin/orders/{third.Id}/status", new StatusInput(OrderStatus.Cancelled, "test"), TestFiles.Json)).EnsureSuccessStatusCode();
         Assert.False(await HourFull(date, "08:00"));
     }
 

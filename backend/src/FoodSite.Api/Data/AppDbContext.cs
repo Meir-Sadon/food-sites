@@ -260,6 +260,7 @@ public class AppDbContext(
         {
             e.HasIndex(o => o.SupplyDate);
             e.Property(o => o.DeliveryNote).HasMaxLength(Order.DeliveryNoteMaxLength);
+            e.Property(o => o.CancelReason).HasMaxLength(Order.CancelReasonMaxLength);
             e.HasOne(o => o.User).WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
