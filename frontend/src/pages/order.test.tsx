@@ -235,6 +235,27 @@ describe('Order page', () => {
       expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ acceptMinimumTopUp: true })
     })
 
+    it('asks after the missing details are settled in the completion dialog', async () => {
+      const { api, user } = await underMinimum()
+      await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+      await confirmNoAdjustments(user)
+      await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+
+      const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
+      await user.type(within(panel).getByLabelText('שם מלא'), 'דנה')
+      await user.type(within(panel).getByLabelText('טלפון'), '050-123-4567')
+      await user.click(within(panel).getByRole('button', { name: 'המשך' }))
+      await user.click(within(panel).getByRole('button', { name: /הגדרה ידנית/ }))
+      await user.type(within(panel).getByLabelText('רחוב'), 'הרצל')
+      await user.type(within(panel).getByLabelText('מספר בית'), '1')
+      await user.click(within(panel).getAllByRole('button', { name: /^המשך/ }).at(-1)!)
+      await user.click(await within(panel).findByRole('button', { name: 'שליחת ההזמנה' }))
+
+      expect(await screen.findByRole('dialog', { name: 'ההזמנה נמוכה ממינימום ההזמנה' })).toBeInTheDocument()
+      expect(screen.queryByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })).not.toBeInTheDocument()
+      expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+    })
+
     it('takes the client back to the dishes to add one', async () => {
       const { api, user } = await underMinimum()
       await fillAndSubmit(user)
