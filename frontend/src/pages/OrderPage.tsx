@@ -21,7 +21,7 @@ import { DishSearch } from '../order/DishSearch'
 import { SearchQueryContext } from '../order/searchQuery'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
-import { FixPanel } from '../order/FixPanel'
+import { CompleteDialog } from '../order/CompleteDialog'
 import { anyMissing, type Missing } from '../order/missing'
 import { CartSheet } from '../order/CartSheet'
 import { OPEN_DISH_DIALOG } from '../order/DishCard'
@@ -285,7 +285,6 @@ export function OrderPage() {
     street: fulfillment === 'Delivery' && state.street.trim() === '',
     houseNumber: fulfillment === 'Delivery' && state.houseNumber.trim() === '',
   }
-  const chosenSlot = hours.find((h) => slotId(h) === deliveryHour)
 
   const categories = menu.categories
     .map((category) => ({
@@ -495,8 +494,8 @@ export function OrderPage() {
     } else reveal()
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+  async function handleSubmit(event?: FormEvent) {
+    event?.preventDefault()
     setErrors({})
     setSubmitError(null)
     // The dishes come before the form, so a dish still waiting for the client is the first thing to fix.
@@ -958,28 +957,6 @@ export function OrderPage() {
                           : undefined
                   }
                 />
-                {fix && (
-                  <FixPanel
-                    was={fix}
-                    now={missingNow}
-                    name={state.name}
-                    phone={state.phone}
-                    city={state.city}
-                    street={state.street}
-                    houseNumber={state.houseNumber}
-                    onChange={change}
-                    supplyDates={menu.supplyDates}
-                    delivery={fulfillment === 'Delivery'}
-                    chosen={supplyDate && chosenSlot ? { date: supplyDate.date, slot: chosenSlot } : null}
-                    onPickHour={pickHour}
-                    zones={zonesOn}
-                    onLocated={(found) => {
-                      change({ city: found.city, street: found.street, houseNumber: found.houseNumber })
-                      setLocated(found.quote && { city: found.city, street: found.street, houseNumber: found.houseNumber, quote: found.quote })
-                    }}
-                    onCalculate={() => setCalculations((n) => n + 1)}
-                  />
-                )}
                 <div className="row">
                   <button
                     ref={submitRef}
@@ -1046,6 +1023,38 @@ export function OrderPage() {
             </button>
           )}
       </div>
+      )}
+
+      {fix && (
+        <CompleteDialog
+          was={fix}
+          now={missingNow}
+          name={state.name}
+          phone={state.phone}
+          city={state.city}
+          street={state.street}
+          houseNumber={state.houseNumber}
+          onChange={change}
+          supplyDates={menu.supplyDates}
+          delivery={fulfillment === 'Delivery'}
+          onPickHour={pickHour}
+          zones={zonesOn}
+          onLocated={(found) => {
+            change({ city: found.city, street: found.street, houseNumber: found.houseNumber })
+            setLocated(found.quote && { city: found.city, street: found.street, houseNumber: found.houseNumber, quote: found.quote })
+          }}
+          onCalculate={() => setCalculations((n) => n + 1)}
+          feePending={fulfillment === 'Delivery' && zonesOn && quote.state === 'loading'}
+          blocked={fulfillment === 'Delivery' && noDelivery}
+          feeText={
+            fulfillment === 'Delivery' && (zonesOn ? !!quoted : regularFee > 0)
+              ? `${t('order.deliveryFee')}: ${deliveryFee > 0 ? formatMoney(deliveryFee) : t('order.deliveryDiscount.freePrice')}`
+              : null
+          }
+          submitting={submitting}
+          onSend={() => void handleSubmit()}
+          onClose={() => setFix(null)}
+        />
       )}
 
       {finishOpen && (
