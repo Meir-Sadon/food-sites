@@ -1445,6 +1445,9 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("GoogleSub")
+                        .HasColumnType("text");
+
                     b.Property<string>("HouseNumber")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1458,6 +1461,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GoogleSub")
+                        .IsUnique()
+                        .HasFilter("\"GoogleSub\" IS NOT NULL");
 
                     b.HasIndex("Phone")
                         .IsUnique();

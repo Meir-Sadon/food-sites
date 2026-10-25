@@ -85,7 +85,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IMailer>(Mail);
             services.AddSingleton<FoodSite.Api.Marketing.IMetaConversionsSender>(Meta);
             services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
-            services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
+            services.AddSingleton<IGoogleTokenVerifier>(new FakeGoogleVerifier());
         });
     }
 

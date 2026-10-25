@@ -4682,3 +4682,8 @@ label {
     border-inline-end: 1px solid var(--color-border);
   }
 }
+
+.google-login {
+  align-items: center;
+  margin-top: 1rem;
+}
