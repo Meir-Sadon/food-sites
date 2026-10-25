@@ -184,6 +184,29 @@ describe('Delivery fee by zones', () => {
     expect(totalText()).toContain('70')
   })
 
+  it('offers to find the location at the send button when the address is incomplete', async () => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (ok: (p: unknown) => void) => ok({ coords: { latitude: 31.8, longitude: 34.65 } }) },
+    })
+    const api = fakeApi({
+      'GET /api/site': () => site({ deliveryPricing: 'zones' }),
+      'GET /api/menu': menuWithPlainDish,
+      'POST /api/delivery-quote/locate': () => ({
+        body: { found: true, city: 'אשדוד', street: 'הרצל', houseNumber: '5', quote: { status: 'ok', fee: 30, zoneName: 'אשדוד' } },
+      }),
+    })
+    renderAt('/')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    const panel = await screen.findByRole('group', { name: /חסר לנו/ })
+    await user.click(within(panel).getByRole('button', { name: 'אתרו את המיקום שלי' }))
+    await waitFor(() => expect(within(panel).getByLabelText('רחוב')).toHaveValue('הרצל'))
+    expect(api.sent('POST', '/api/delivery-quote/locate')).toHaveLength(1)
+    expect(await screen.findByText(/אשדוד\)/)).toBeInTheDocument()
+  })
+
   it('calculates at once when the button is pressed', async () => {
     const { api, user } = await open({ deliveryPricing: 'zones' }, () => ({ status: 'ok', fee: 10, zoneName: 'קרוב' }))
     await typeAddress(user)
