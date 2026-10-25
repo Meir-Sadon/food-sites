@@ -4687,3 +4687,66 @@ label {
   align-items: center;
   margin-top: 1rem;
 }
+
+/* The floating dialog for what the order still lacks: a finished subject slides right, the next one comes in from the left. */
+.complete-dialog__viewport {
+  overflow: hidden;
+}
+
+.complete-dialog__track {
+  display: flex;
+  direction: rtl;
+  transform: translateX(calc(var(--step) * 100%));
+  transition: transform 0.35s ease;
+}
+
+.complete-dialog__slide {
+  display: flex;
+  flex: 0 0 100%;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-inline-size: 0;
+  padding: 0.25rem;
+}
+
+.complete-dialog__slide[inert] {
+  visibility: hidden;
+  transition: visibility 0s 0.35s;
+}
+
+.complete-dialog__slide h3 {
+  margin: 0;
+}
+
+.complete-dialog__choices {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.complete-dialog__choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  inline-size: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+.complete-dialog__pick,
+.complete-dialog__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.complete-dialog__fee {
+  margin: 0;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .complete-dialog__track {
+    transition: none;
+  }
+}

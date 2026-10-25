@@ -295,13 +295,14 @@ describe('Order page', () => {
     await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
 
     // The phone is asked for again right above the send button.
-    const panel = await screen.findByRole('group', { name: /חסר לנו/ })
+    const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
     expect(within(panel).getByLabelText('טלפון')).toHaveValue('12')
     expect(api.sent('POST', '/api/orders')).toHaveLength(0)
 
     await user.clear(within(panel).getByLabelText('טלפון'))
     await user.type(within(panel).getByLabelText('טלפון'), '050-123-4567')
-    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    await user.click(within(panel).getByRole('button', { name: 'המשך' }))
+    await user.click(await within(panel).findByRole('button', { name: 'שליחת ההזמנה' }))
     await vi.waitFor(() => expect(api.sent('POST', '/api/orders')).toHaveLength(1))
   })
 
@@ -327,18 +328,18 @@ describe('Order page', () => {
       expect([...hour.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['בחרו שעה', '08:00 עד 09:00', '09:00 עד 09:30'])
 
       await fillAndSubmit(user)
-      const panel = await screen.findByRole('group', { name: /חסר לנו/ })
+      const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
       expect(api.sent('POST', '/api/orders')).toHaveLength(0)
 
       // "The closest possible" picks the first hour of the first date.
-      await user.click(within(panel).getByRole('button', { name: 'הכי קרוב שאפשר' }))
+      await user.click(within(panel).getByRole('button', { name: /^הכי קרוב שאפשר/ }))
       expect(hour).toHaveValue('08:00:00')
-      expect(within(panel).getByText(/נבחר:/)).toBeInTheDocument()
+      expect(await within(panel).findByRole('heading', { name: 'הכול מוכן' })).toBeInTheDocument()
+      await user.click(within(panel).getByRole('button', { name: 'חזרה להזמנה' }))
 
       // A date without hours asks for none.
-      await user.selectOptions(screen.getAllByLabelText('יום אספקה')[0], '2026-10-16')
-      // Only the panel's own hour pick is left (it stays until the order is sent).
-      expect(screen.getAllByLabelText('שעת אספקה מועדפת')).toHaveLength(1)
+      await user.selectOptions(screen.getByLabelText('יום אספקה'), '2026-10-16')
+      expect(screen.queryByLabelText('שעת אספקה מועדפת')).not.toBeInTheDocument()
     })
 
     it('says nothing about a free hour, and notes a full one without blocking the order', async () => {
