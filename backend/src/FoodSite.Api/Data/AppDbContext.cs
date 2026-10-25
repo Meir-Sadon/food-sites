@@ -254,12 +254,14 @@ public class AppDbContext(
         model.Entity<User>(e =>
         {
             e.HasIndex(u => u.Phone).IsUnique();
+            e.HasIndex(u => u.GoogleSub).IsUnique().HasFilter("\"GoogleSub\" IS NOT NULL");
         });
 
         model.Entity<Order>(e =>
         {
             e.HasIndex(o => o.SupplyDate);
             e.Property(o => o.DeliveryNote).HasMaxLength(Order.DeliveryNoteMaxLength);
+            e.Property(o => o.CancelReason).HasMaxLength(Order.CancelReasonMaxLength);
             e.HasOne(o => o.User).WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.SetNull);

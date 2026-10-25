@@ -7,7 +7,7 @@ namespace FoodSite.Api.Data.Migrations
 {
     /// <inheritdoc />
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261025090000_OrderMinimumTopUp")]
+    [Migration("20261025100000_OrderMinimumTopUp")]
     public partial class OrderMinimumTopUp : Migration
     {
         /// <inheritdoc />

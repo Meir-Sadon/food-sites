@@ -189,7 +189,7 @@ public sealed class DriverRoutesTests(PostgresFixture postgres) : IAsyncLifetime
     {
         var order = await SeedOrder();
         var link = await CreateLink(order);
-        await _admin.PutAsJsonAsync($"/api/admin/orders/{order}/status", new { status = "Cancelled" });
+        await _admin.PutAsJsonAsync($"/api/admin/orders/{order}/status", new { status = "Cancelled", cancelReason = "test" });
 
         var route = await _driver.GetAsync($"/api/driver/{link.Token}").Read<DriverRoute>();
         Assert.True(route.Stops[0].Cancelled);

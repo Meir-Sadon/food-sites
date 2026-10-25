@@ -176,12 +176,37 @@ describe('Delivery fee by zones', () => {
     await user.click(await screen.findByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
     await user.click(screen.getByRole('button', { name: 'אתרו את המיקום שלי' }))
 
-    await waitFor(() => expect(screen.getByLabelText('רחוב')).toHaveValue('הרצל'))
+    await waitFor(() => expect(screen.getAllByLabelText('רחוב')[0]).toHaveValue('הרצל'))
     expect(screen.getByLabelText('עיר')).toHaveValue('אשדוד')
     expect(await screen.findByText(/אשדוד\)/)).toBeInTheDocument()
     expect(api.sent('POST', '/api/delivery-quote/locate')[0].body).toMatchObject({ lat: 31.8, lng: 34.65 })
     expect(api.sent('POST', '/api/delivery-quote')).toHaveLength(0)
     expect(totalText()).toContain('70')
+  })
+
+  it('offers to find the location at the send button when the address is incomplete', async () => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (ok: (p: unknown) => void) => ok({ coords: { latitude: 31.8, longitude: 34.65 } }) },
+    })
+    const api = fakeApi({
+      'GET /api/site': () => site({ deliveryPricing: 'zones' }),
+      'GET /api/menu': menuWithPlainDish,
+      'POST /api/delivery-quote/locate': () => ({
+        body: { found: true, city: 'אשדוד', street: 'הרצל', houseNumber: '5', quote: { status: 'ok', fee: 30, zoneName: 'אשדוד' } },
+      }),
+    })
+    renderAt('/')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
+    await user.click(within(panel).getByRole('button', { name: /^אתרו אותי/ }))
+    // The located address fills in and the dialog moves on to the send step by itself.
+    await within(panel).findByRole('heading', { name: 'הכול מוכן' })
+    expect(screen.getAllByLabelText('רחוב')[0]).toHaveValue('הרצל')
+    expect(api.sent('POST', '/api/delivery-quote/locate')).toHaveLength(1)
+    expect(await screen.findByText(/אשדוד\)/)).toBeInTheDocument()
   })
 
   it('calculates at once when the button is pressed', async () => {

@@ -3,6 +3,7 @@ namespace FoodSite.Api.Data.Entities;
 public class Order
 {
     public const int DeliveryNoteMaxLength = 300;
+    public const int CancelReasonMaxLength = 300;
 
     public int Id { get; set; }
 
@@ -39,6 +40,12 @@ public class Order
     /// </summary>
     public bool NeedsReview { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.New;
+
+    /// <summary>Why the admin cancelled the order; required to cancel, empty while the order is not cancelled.</summary>
+    public string? CancelReason { get; set; }
+
+    /// <summary>When the admin cancelled the order; empty while it is not cancelled.</summary>
+    public DateTimeOffset? CancelledAt { get; set; }
 
     /// <summary>What the driver reported at the door, through the driver's link; empty until a report.</summary>
     public DeliveryOutcome? DeliveryOutcome { get; set; }

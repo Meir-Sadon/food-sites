@@ -53,6 +53,9 @@ export interface AdminOrder {
   paidWith: PaidWith | null
   paymentComment: string | null
   status: OrderStatus
+  /** Why the admin cancelled the order; null for an order cancelled before a reason was required. */
+  cancelReason?: string | null
+  cancelledAt?: string | null
   total: number
   createdAt: string
   isGuest: boolean
@@ -150,6 +153,8 @@ export const ordersAdminApi = {
   get: (id: number) => apiJson<AdminOrder>(`${orders}/${id}`),
   summary: (date: string) => apiJson<CookingSummary>(`${orders}/summary?date=${date}`),
   setStatus: (id: number, status: OrderStatus) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status })),
+  /** Cancelling needs a reason (the business pays no sales commission on a cancelled order). */
+  cancel: (id: number, cancelReason: string) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status: 'Cancelled', cancelReason })),
   approve: (id: number) => apiJson<void>(`${orders}/${id}/approve`, send('PUT')),
   setPaid: (id: number, input: PaidInput) => apiJson<void>(`${orders}/${id}/paid`, send('PUT', input)),
   update: (id: number, input: AdminOrderInput) => apiJson<AdminOrder>(`${orders}/${id}`, send('PUT', input)),

@@ -13,13 +13,16 @@ import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
-import { bringIntoView } from '../components/scrollToInvalid'
+import { bringIntoView, holdScroll } from '../components/scrollToInvalid'
+import { Modal } from '../components/Modal'
 import { useFeature, useOrderLayout, useSite, useSiteFailed } from '../site/useSite'
 import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DishSearch } from '../order/DishSearch'
 import { SearchQueryContext } from '../order/searchQuery'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
+import { CompleteDialog } from '../order/CompleteDialog'
+import { anyMissing, type Missing } from '../order/missing'
 import { CartSheet } from '../order/CartSheet'
 import { OPEN_DISH_DIALOG } from '../order/DishCard'
 import { useRegisterCart } from '../components/cartNav'
@@ -120,6 +123,10 @@ export function OrderPage() {
   // Bumped on every press of a "to details and payment" button: the page then scrolls to the address and payment.
   const [detailsMoves, setDetailsMoves] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
+  // The total bar's counts open a short prompt offering to jump to finishing the order.
+  const [finishOpen, setFinishOpen] = useState(false)
+  // What was missing when the client pressed send: it is settled in a panel above the button, not by going to each field.
+  const [fix, setFix] = useState<Missing | null>(null)
   // The shown step: a category's position, or the number of categories for the contact and payment details.
   const [step, setStep] = useState(0)
   const [query, setQuery] = useState('')
@@ -272,6 +279,14 @@ export function OrderPage() {
   const hourIsFull =
     !!supplyDate && !!pickedSlot && fullSlots.includes(slotKey(pickedSlot.date ?? supplyDate.date, pickedSlot.hour))
   const normalizedPhone = normalizePhone(state.phone)
+  const missingNow: Missing = {
+    hour: hours.length > 0 && !deliveryHour,
+    name: state.name.trim() === '',
+    phone: !normalizedPhone,
+    city: fulfillment === 'Delivery' && state.city.trim() === '',
+    street: fulfillment === 'Delivery' && state.street.trim() === '',
+    houseNumber: fulfillment === 'Delivery' && state.houseNumber.trim() === '',
+  }
 
   const categories = menu.categories
     .map((category) => ({
@@ -377,6 +392,12 @@ export function OrderPage() {
     checkHour(date, hour)
   }
 
+  /** "The closest possible" or a day and hour confirmed in the panel. */
+  function pickHour(date: string, hour: string) {
+    change({ supplyDate: date, deliveryHour: hour })
+    checkHour(date, hour)
+  }
+
   function changeHour(hour: string | null) {
     change({ deliveryHour: hour })
     if (supplyDate) checkHour(supplyDate.date, hour)
@@ -406,6 +427,7 @@ export function OrderPage() {
     }))
     setErrors({})
     setSubmitError(null)
+    setFix(null)
     clearDraft()
     setStep(0)
     setDetailsOpen(false)
@@ -474,8 +496,8 @@ export function OrderPage() {
     } else reveal()
   }
 
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+  function handleSubmit(event?: FormEvent) {
+    event?.preventDefault()
     return submit(false)
   }
 
@@ -492,19 +514,15 @@ export function OrderPage() {
       showUnfinished([...unadjusted, ...unanswered])
       return
     }
-    if (!normalizedPhone) {
-      setErrors({ phone: ['phone'] })
-      openBlocksWith({ phone: ['phone'] })
-      if (addressFirst) setAddressDone(false)
-      setSubmitError(t('errors.checkFields'))
-      return
-    }
     if (!supplyDate) return
-    if (hours.length > 0 && !deliveryHour) {
-      setErrors({ deliveryhour: ['required'] })
-      setSubmitError(t('errors.checkFields'))
+    if (anyMissing(missingNow)) {
+      // The client stays at the send button: what is missing is settled in the panel above it.
+      holdScroll()
+      setFix(missingNow)
       return
     }
+    setFix(null)
+    if (!normalizedPhone) return
 
     // An order under the minimum is not blocked: the client is asked whether to add a dish or to pay the minimum.
     if (belowMinimum && !acceptTopUp) {
@@ -993,11 +1011,23 @@ export function OrderPage() {
 
       {!atAddress && (
         <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
-          <span className="total-bar__counts">
-            {totals.main > 0 && <span>{t('order.itemCount', { count: totals.main })}</span>}
-            {totals.side > 0 && <span>{t('order.sideDishCount', { count: totals.side })}</span>}
-            {totals.drinks > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
-          </span>
+          {(() => {
+            const counts = (
+              <>
+                {totals.main > 0 && <span>{t('order.itemCount', { count: totals.main })}</span>}
+                {totals.side > 0 && <span>{t('order.sideDishCount', { count: totals.side })}</span>}
+                {totals.drinks > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
+              </>
+            )
+            return count > 0 ? (
+              <button type="button" className="total-bar__counts total-bar__summary" aria-haspopup="dialog" onClick={() => setFinishOpen(true)}>
+                <span className="total-bar__summary-lines">{counts}</span>
+                <span className="total-bar__summary-cue">{t('order.finish.cue')}</span>
+              </button>
+            ) : (
+              <span className="total-bar__counts">{counts}</span>
+            )
+          })()}
           <strong className="numeric" aria-live="polite">
             {t('order.total')}: {formatMoney(total)}
           </strong>
@@ -1007,6 +1037,58 @@ export function OrderPage() {
             </button>
           )}
       </div>
+      )}
+
+      {fix && (
+        <CompleteDialog
+          was={fix}
+          now={missingNow}
+          name={state.name}
+          phone={state.phone}
+          city={state.city}
+          street={state.street}
+          houseNumber={state.houseNumber}
+          onChange={change}
+          supplyDates={menu.supplyDates}
+          delivery={fulfillment === 'Delivery'}
+          onPickHour={pickHour}
+          zones={zonesOn}
+          onLocated={(found) => {
+            change({ city: found.city, street: found.street, houseNumber: found.houseNumber })
+            setLocated(found.quote && { city: found.city, street: found.street, houseNumber: found.houseNumber, quote: found.quote })
+          }}
+          onCalculate={() => setCalculations((n) => n + 1)}
+          feePending={fulfillment === 'Delivery' && zonesOn && quote.state === 'loading'}
+          blocked={fulfillment === 'Delivery' && noDelivery}
+          feeText={
+            fulfillment === 'Delivery' && (zonesOn ? !!quoted : regularFee > 0)
+              ? `${t('order.deliveryFee')}: ${deliveryFee > 0 ? formatMoney(deliveryFee) : t('order.deliveryDiscount.freePrice')}`
+              : null
+          }
+          submitting={submitting}
+          onSend={() => void handleSubmit()}
+          onClose={() => setFix(null)}
+        />
+      )}
+
+      {finishOpen && (
+        <Modal title={t('order.finish.title')} onClose={() => setFinishOpen(false)}>
+          <p>{t('order.finish.text', { total: formatMoney(total) })}</p>
+          <div className="modal__actions">
+            <button
+              type="button"
+              onClick={() => {
+                setFinishOpen(false)
+                goToDetails()
+              }}
+            >
+              {t('order.finish.jump')}
+            </button>
+            <button type="button" className="button-quiet" onClick={() => setFinishOpen(false)}>
+              {t('order.cart.keepChoosing')}
+            </button>
+          </div>
+        </Modal>
       )}
 
       {cartOpen && (

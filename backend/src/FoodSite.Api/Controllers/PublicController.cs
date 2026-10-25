@@ -12,7 +12,7 @@ namespace FoodSite.Api.Controllers;
 
 /// <summary>What the client site shows: site info, contact details, the enabled features, the menu and the open supply dates.</summary>
 [Route("api")]
-public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features, IOptions<SiteOptions> site) : PublicControllerBase
+public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features, IOptions<SiteOptions> site, IOptions<Auth.GoogleOptions> google) : PublicControllerBase
 {
     public record ContactDto(string? Name, string? Phone, string? Address, string? Email, string? OpeningHours);
 
@@ -53,7 +53,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<SocialLinkDto>? SocialLinks = null,
         Tracking.Ids? Tracking = null,
         ItemBadges.Effective? Badges = null,
-        EntryPopup.Dto? Popup = null);
+        EntryPopup.Dto? Popup = null,
+        string? GoogleClientId = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -162,7 +163,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList(),
             Sites.Tracking.Of(s),
             ItemBadges.Of(s),
-            EntryPopup.ForClient(s));
+            EntryPopup.ForClient(s),
+            google.Value.IsConfigured ? google.Value.ClientId!.Trim() : null);
     }
 
     [HttpGet("menu")]

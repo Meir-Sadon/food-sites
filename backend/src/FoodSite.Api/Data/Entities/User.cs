@@ -12,6 +12,8 @@ public class User
     public string HouseNumber { get; set; } = "";
     public string Apartment { get; set; } = "";
     public string? Email { get; set; }
+    /// <summary>Google's account id ("sub") once the client signed in with Google; the email alone is never the key.</summary>
+    public string? GoogleSub { get; set; }
     public DateOnly? Birthday { get; set; }
     public string? EthnicBackground { get; set; }
 
