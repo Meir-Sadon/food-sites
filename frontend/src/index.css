@@ -220,20 +220,22 @@ textarea {
   background: var(--color-surface);
 }
 
+/* Buttons are light: the site's button colour as the border and the text, on a faint tint of it. */
 button {
+  --btn-main: var(--btn-bg, var(--color-accent));
   font: inherit;
   font-weight: 600;
   padding: 0.625rem 1.25rem;
-  border: 0;
+  border: var(--line-width, 1px) solid var(--btn-main);
   border-radius: var(--radius);
   transition: background-color 0.15s, box-shadow 0.15s;
-  background: var(--btn-bg, var(--color-accent));
-  color: var(--btn-text, var(--color-accent-contrast));
+  background: color-mix(in srgb, var(--btn-main) 8%, var(--color-surface));
+  color: var(--btn-main);
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  background: var(--btn-bg-hover, var(--color-accent-hover));
+  background: color-mix(in srgb, var(--btn-main) 18%, var(--color-surface));
 }
 
 .button-quiet:hover:not(:disabled),
@@ -593,7 +595,16 @@ label {
 }
 
 .button-danger {
-  background: var(--color-error);
+  --btn-main: var(--color-error);
+}
+
+/* A hint that warns (an order under the minimum): yellow, like the notices. */
+.hint--warning {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-gold);
+  border-radius: calc(0.375rem * var(--corner-scale));
+  background: #fff7e6;
+  color: #6b4a0b;
 }
 
 .button-file input {

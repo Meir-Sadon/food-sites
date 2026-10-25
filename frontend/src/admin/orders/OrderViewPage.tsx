@@ -118,6 +118,11 @@ export function OrderViewPage() {
             </li>
           ))}
         </ul>
+        {!!order.minimumTopUp && (
+          <p className="cart-sheet__total">
+            <span>{t('order.minimumTopUp')}</span> <strong className="numeric">{formatMoney(order.minimumTopUp)}</strong>
+          </p>
+        )}
         {(!!order.deliveryFee || !!order.deliveryDiscount) && (
           <p className="cart-sheet__total">
             <span>

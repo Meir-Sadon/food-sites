@@ -50,6 +50,11 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           </ul>
         </div>
       )}
+      {!!confirmation.minimumTopUp && (
+        <p className="summary__total">
+          {t('order.minimumTopUp')}: <strong className="numeric">{formatMoney(confirmation.minimumTopUp)}</strong>
+        </p>
+      )}
       {(!!confirmation.deliveryFee || !!confirmation.deliveryDiscount) && (
         <p className="summary__total">
           {t('order.deliveryFee')}:{' '}

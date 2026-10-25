@@ -192,17 +192,59 @@ describe('Order page', () => {
     expect(screen.getByText('התשלום יבוצע במעמד מסירת המשלוח')).toBeInTheDocument()
   })
 
-  it('blocks sending an order below the admin minimum and says how much is missing', async () => {
-    const { user } = await openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }) })
-    await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
-    await confirmNoAdjustments(user)
+  describe('an order under the minimum', () => {
+    const underMinimum = () => openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }), 'POST /api/orders': () => confirmation })
 
-    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeDisabled()
-    expect(screen.getByText(/המינימום להזמנה הוא ₪100\. חסרים עוד ₪30\./)).toBeInTheDocument()
+    it('keeps the send button pressable, with a warning sign and a yellow note under it', async () => {
+      const { user } = await openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }) })
+      await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+      await confirmNoAdjustments(user)
 
-    await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה: עוף בתנור/ }))
-    await confirmNoAdjustments(user)
-    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
+      const send = screen.getByRole('button', { name: /שליחת ההזמנה/ })
+      expect(send).toBeEnabled()
+      expect(send).toHaveTextContent('⚠️')
+      expect(screen.getByText(/המינימום להזמנה הוא ₪100\. חסרים עוד ₪30\./)).toHaveClass('hint--warning')
+
+      await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה: עוף בתנור/ }))
+      await confirmNoAdjustments(user)
+      expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).not.toHaveTextContent('⚠️')
+      expect(screen.queryByText(/המינימום להזמנה הוא/)).not.toBeInTheDocument()
+    })
+
+    it('asks first, and sends nothing when the client cancels', async () => {
+      const { api, user } = await underMinimum()
+      await fillAndSubmit(user)
+
+      const dialog = await screen.findByRole('dialog', { name: 'ההזמנה נמוכה ממינימום ההזמנה' })
+      expect(within(dialog).getByText(/נשארו ₪30 על מנת להגיע למינימום הזמנה/)).toBeInTheDocument()
+      expect(within(dialog).getByText(/ההזמנה תחויב בסכום מינימום ההזמנה, ₪100/)).toBeInTheDocument()
+      await user.click(within(dialog).getByRole('button', { name: 'ביטול' }))
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+    })
+
+    it('sends the order with the top-up agreed when the client goes on anyway', async () => {
+      const { api, user } = await underMinimum()
+      await fillAndSubmit(user)
+
+      const dialog = await screen.findByRole('dialog', { name: 'ההזמנה נמוכה ממינימום ההזמנה' })
+      await user.click(within(dialog).getByRole('button', { name: /לשגר ולשלם ₪100/ }))
+
+      expect(await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })).toBeInTheDocument()
+      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ acceptMinimumTopUp: true })
+    })
+
+    it('takes the client back to the dishes to add one', async () => {
+      const { api, user } = await underMinimum()
+      await fillAndSubmit(user)
+
+      const dialog = await screen.findByRole('dialog', { name: 'ההזמנה נמוכה ממינימום ההזמנה' })
+      await user.click(within(dialog).getByRole('button', { name: 'להוסיף מנה' }))
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+    })
   })
 
   it('lets a pickup order below the minimum through when the minimum is for deliveries only', async () => {
@@ -211,7 +253,7 @@ describe('Order page', () => {
     })
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
     await confirmNoAdjustments(user)
-    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeDisabled()
+    expect(screen.getByText(/המינימום להזמנה הוא/)).toBeInTheDocument()
 
     await user.click(screen.getByRole('radio', { name: 'איסוף עצמי' }))
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()

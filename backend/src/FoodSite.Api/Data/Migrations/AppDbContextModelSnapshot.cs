@@ -763,6 +763,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("IsPaid")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal>("MinimumTopUp")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");

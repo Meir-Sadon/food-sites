@@ -465,6 +465,29 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task An_order_below_the_minimum_is_sent_at_the_minimum_when_the_client_agrees()
+    {
+        (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+            kashrutText = (string?)null, paymentPhone = (string?)null, minimumOrderAmount = 400m,
+        })).EnsureSuccessStatusCode();
+
+        var confirmation = await (await Place(await ValidOrder(o => o["acceptMinimumTopUp"] = true))).Read<ConfirmationDto>();
+        Assert.Equal(400m + confirmation.DeliveryFee, confirmation.Total);
+        Assert.Equal(400m, confirmation.Items.Sum(i => i.LineTotal) + confirmation.MinimumTopUp);
+
+        // Agreeing changes nothing for an order that already reaches the minimum.
+        (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+            kashrutText = (string?)null, paymentPhone = (string?)null, minimumOrderAmount = 311m,
+        })).EnsureSuccessStatusCode();
+        var plain = await (await Place(await ValidOrder(o => o["acceptMinimumTopUp"] = true))).Read<ConfirmationDto>();
+        Assert.Equal(0m, plain.MinimumTopUp);
+    }
+
+    [Fact]
     public async Task The_minimum_can_apply_to_deliveries_only()
     {
         async Task SetMinimum(bool appliesToPickup) =>
