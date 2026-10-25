@@ -1006,9 +1006,7 @@ export function OrderPage() {
             return count > 0 ? (
               <button type="button" className="total-bar__counts total-bar__summary" aria-haspopup="dialog" onClick={() => setFinishOpen(true)}>
                 <span className="total-bar__summary-lines">{counts}</span>
-                <span className="total-bar__summary-cue" aria-hidden="true">
-                  ‹
-                </span>
+                <span className="total-bar__summary-cue">{t('order.finish.cue')}</span>
               </button>
             ) : (
               <span className="total-bar__counts">{counts}</span>
