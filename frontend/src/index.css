@@ -4683,6 +4683,11 @@ label {
   }
 }
 
+.google-login {
+  align-items: center;
+  margin-top: 1rem;
+}
+
 /* The floating dialog for what the order still lacks: a finished subject slides right, the next one comes in from the left. */
 .complete-dialog__viewport {
   overflow: hidden;

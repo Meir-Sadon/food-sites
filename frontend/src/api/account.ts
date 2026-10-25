@@ -19,6 +19,12 @@ export interface Profile {
   ethnicBackground: string | null
 }
 
+/** A Google sign-in answers with the profile, or, for a person with no account yet, what Google knows to prefill the form. */
+export interface GoogleLogin {
+  profile: Profile | null
+  registration: { fullName: string | null; email: string | null } | null
+}
+
 export interface ProfileInput {
   phone: string
   fullName: string
@@ -93,6 +99,9 @@ export const accountApi = {
   me: () => apiJson<Profile>(`${account}/me`),
   login: (phone: string) => apiJson<Profile>(`${account}/login`, send('POST', { phone })),
   register: (input: ProfileInput) => apiJson<Profile>(`${account}/register`, send('POST', input)),
+  google: (credential: string) => apiJson<GoogleLogin>(`${account}/google`, send('POST', { credential })),
+  googleRegister: (credential: string, profile: ProfileInput) =>
+    apiJson<Profile>(`${account}/google/register`, send('POST', { credential, profile })),
   logout: () => apiJson<void>(`${account}/logout`, send('POST')),
   update: (input: ProfileInput) => apiJson<Profile>(`${account}/me`, send('PUT', input)),
   orders: () => apiJson<HistoryOrder[]>(`${account}/orders`),

@@ -24,6 +24,8 @@ public class AccountController(
     AppDbContext db,
     UserTokenService tokens,
     IOptions<Auth.CookieOptions> cookie,
+    IOptions<GoogleOptions> google,
+    IGoogleTokenVerifier googleVerifier,
     TimeProvider time) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
@@ -38,6 +40,16 @@ public class AccountController(
     private static readonly DateOnly EarliestBirthday = new(1900, 1, 1);
 
     public record LoginInput(string? Phone);
+
+    public record GoogleInput(string? Credential);
+
+    public record GoogleRegisterInput(string? Credential, ProfileInput? Profile);
+
+    /// <summary>What Google already told us about a person with no account yet, to prefill the registration form.</summary>
+    public record GoogleRegistrationDto(string? FullName, string? Email);
+
+    /// <summary>Either the client is logged in (<see cref="Profile"/>) or has to register first (<see cref="Registration"/>).</summary>
+    public record GoogleLoginDto(ProfileDto? Profile, GoogleRegistrationDto? Registration);
 
     public record ProfileInput(
         string? Phone,
@@ -131,6 +143,93 @@ public class AccountController(
         }
 
         // Orders placed as a guest with this phone now belong to the new account.
+        await db.Orders.Where(o => o.UserId == null && o.Phone == phone)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.UserId, (int?)user.Id), ct);
+
+        StartSession(user.Id);
+        return ToDto(user);
+    }
+
+    /// <summary>
+    /// Sign in with a Google ID token. An account already tied to this Google id is logged in; else one whose email is the
+    /// Google account's verified email (and is not tied to another Google account) is tied to it and logged in; else the
+    /// client has to register (the address and phone are still needed), see <see cref="GoogleRegister"/>.
+    /// </summary>
+    [HttpPost("google")]
+    [EnableRateLimiting(WriteRateLimitPolicy)]
+    public async Task<ActionResult<GoogleLoginDto>> GoogleLogin(GoogleInput input, CancellationToken ct)
+    {
+        if (!google.Value.IsConfigured)
+            return NotFound(new { code = "googleDisabled" });
+        if (await googleVerifier.VerifyAsync(input.Credential ?? "", ct) is not { } identity)
+            return Unauthorized(new { code = "googleInvalid" });
+
+        var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleSub == identity.Subject, ct);
+        if (user is null && VerifiedEmail(identity) is { } email)
+        {
+            var matches = await db.Users
+                .Where(u => u.GoogleSub == null && u.Email != null && u.Email.ToLower() == email.ToLower())
+                .Take(2).ToListAsync(ct);
+            // Two accounts with this email: not sure which is theirs, so register instead of guessing.
+            if (matches.Count == 1)
+            {
+                user = matches[0];
+                user.GoogleSub = identity.Subject;
+                try
+                {
+                    await db.SaveChangesAsync(ct);
+                }
+                catch (DbUpdateException)
+                {
+                    return Conflict("googleTaken");
+                }
+            }
+        }
+
+        if (user is null)
+            return new GoogleLoginDto(null, new GoogleRegistrationDto(Clean(identity.Name), VerifiedEmail(identity)));
+
+        StartSession(user.Id);
+        return new GoogleLoginDto(ToDto(user), null);
+    }
+
+    /// <summary>Registers a new account for a Google identity, with the phone and address the order needs.</summary>
+    [HttpPost("google/register")]
+    [EnableRateLimiting(WriteRateLimitPolicy)]
+    public async Task<ActionResult<ProfileDto>> GoogleRegister(GoogleRegisterInput input, CancellationToken ct)
+    {
+        if (!google.Value.IsConfigured)
+            return NotFound(new { code = "googleDisabled" });
+        if (await googleVerifier.VerifyAsync(input.Credential ?? "", ct) is not { } identity)
+            return Unauthorized(new { code = "googleInvalid" });
+        if (input.Profile is not { } profile)
+            return Invalid(nameof(input.Profile), "required");
+
+        if (await db.Users.AnyAsync(u => u.GoogleSub == identity.Subject, ct))
+            return Conflict("googleTaken");
+
+        var errors = Validate(profile);
+        var phone = PhoneNumber.Normalize(profile.Phone);
+        if (phone is null)
+            errors.Add(nameof(profile.Phone), "phone");
+        if (errors.Any)
+            return Invalid(errors);
+        if (await db.Users.AnyAsync(u => u.Phone == phone, ct))
+            return Conflict("phoneTaken");
+
+        var user = new User { Phone = phone!, FullName = "", Address = "", CreatedAt = time.GetUtcNow(), GoogleSub = identity.Subject };
+        Apply(user, profile);
+        user.Email ??= VerifiedEmail(identity);
+        db.Users.Add(user);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict("phoneTaken");
+        }
+
         await db.Orders.Where(o => o.UserId == null && o.Phone == phone)
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.UserId, (int?)user.Id), ct);
 
@@ -349,6 +448,9 @@ public class AccountController(
     }
 
     // ---------- Helpers ----------
+
+    private static string? VerifiedEmail(GoogleIdentity identity) =>
+        identity.EmailVerified && Clean(identity.Email) is { Length: <= EmailMaxLength } email ? email : null;
 
     private int CurrentUserId() => int.Parse(User.FindFirst("sub")!.Value);
 

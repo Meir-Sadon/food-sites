@@ -133,6 +133,8 @@ export interface Site {
   deliveryPricing: DeliveryPricing
   /** The buttons on the About page: Facebook, Instagram, TikTok, then the custom links. Empty: none. */
   socialLinks: SocialLink[]
+  /** The site's Google OAuth client id; missing while "Sign in with Google" is not set up, and the button stays hidden. */
+  googleClientId?: string | null
   /** Which marketing tools to load. */
   tracking?: TrackingIds
   /** Which item badges ("new", "almost out") are on, and when they apply. */
