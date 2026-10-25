@@ -26,6 +26,8 @@ interface Props {
   zones: boolean
   onLocated: (found: LocatedAddress) => void
   onCalculate: () => void
+  /** Switches the order to pickup, which needs no address; left out when the site has no pickup. */
+  onPickup?: () => void
   /** The delivery fee is still being worked out, or the address is one that cannot be delivered to. */
   feePending: boolean
   blocked: boolean
@@ -191,6 +193,18 @@ export function CompleteDialog(props: Props) {
             <strong>{t('order.fix.manual')}</strong>
           </button>
         </div>
+        {props.onPickup && (
+          <button
+            type="button"
+            className="button-quiet"
+            onClick={() => {
+              setConfirmed((c) => ({ ...c, address: true }))
+              props.onPickup?.()
+            }}
+          >
+            {t('order.fix.pickup')}
+          </button>
+        )}
         {locating !== 'idle' && locating !== 'busy' && (
           <p role="alert" className="form-error">
             {t(`address.locateErrors.${locating}`)}

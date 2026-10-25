@@ -1058,6 +1058,7 @@ export function OrderPage() {
             setLocated(found.quote && { city: found.city, street: found.street, houseNumber: found.houseNumber, quote: found.quote })
           }}
           onCalculate={() => setCalculations((n) => n + 1)}
+          onPickup={site.pickupEnabled ? () => change({ fulfillment: 'Pickup' }) : undefined}
           feePending={fulfillment === 'Delivery' && zonesOn && quote.state === 'loading'}
           blocked={fulfillment === 'Delivery' && noDelivery}
           feeText={
