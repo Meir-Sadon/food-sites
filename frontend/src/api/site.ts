@@ -360,6 +360,8 @@ export interface OrderInput {
   deliveryHourDate?: string | null
   /** Only when the server reports orders to Meta. */
   marketing?: { fbp?: string; fbc?: string; sourceUrl?: string }
+  /** The client agreed to be charged the site's minimum for an order under it. */
+  acceptMinimumTopUp?: boolean
 }
 
 export interface Confirmation {
@@ -390,6 +392,8 @@ export interface Confirmation {
   deliveryFee?: number
   /** What the large-order discount took off the delivery fee (0 for none; the fee is then already reduced). */
   deliveryDiscount?: number
+  /** What was added so the order reached the minimum (already inside `total`; 0 for none). */
+  minimumTopUp?: number
 }
 
 /** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */

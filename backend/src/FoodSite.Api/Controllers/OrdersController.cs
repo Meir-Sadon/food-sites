@@ -47,7 +47,8 @@ public class OrdersController(
         List<OrderLineInput>? Items,
         TimeOnly? DeliveryHour = null,
         DateOnly? DeliveryHourDate = null,
-        MarketingInput? Marketing = null);
+        MarketingInput? Marketing = null,
+        bool AcceptMinimumTopUp = false);
 
     public record ConfirmationItemDto(
         string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null);
@@ -65,7 +66,8 @@ public class OrdersController(
         TimeOnly? DeliveryHour = null,
         bool HourFull = false,
         decimal DeliveryFee = 0m,
-        decimal DeliveryDiscount = 0m);
+        decimal DeliveryDiscount = 0m,
+        decimal MinimumTopUp = 0m);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
@@ -137,8 +139,15 @@ public class OrdersController(
             .ToDictionaryAsync(d => d.Id, ct);
         var items = OrderBuilder.Build(input.Items, dishes, errors);
         var minimumApplies = input.FulfillmentMethod == FulfillmentMethod.Delivery || settings.MinimumOrderAppliesToPickup;
+        // An order under the minimum is only sent when the client agreed to be charged the minimum.
+        var minimumTopUp = 0m;
         if (!errors.Any && minimumApplies && settings.MinimumOrderAmount is { } minimum && OrderBuilder.Total(items) < minimum)
-            errors.Add("items", "belowMinimumOrder");
+        {
+            if (input.AcceptMinimumTopUp)
+                minimumTopUp = minimum - OrderBuilder.Total(items);
+            else
+                errors.Add("items", "belowMinimumOrder");
+        }
         if (!errors.Any)
             await CheckDishLimitsAsync(supplyDate, items, dishes, errors, ct);
         if (!errors.Any && settings.PortionsPerSupplyDate is { } portions)
@@ -193,7 +202,8 @@ public class OrdersController(
             DeliveryFee = fee - discount,
             DeliveryDiscount = discount,
             DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
-            Total = dishesTotal + fee - discount,
+            MinimumTopUp = minimumTopUp,
+            Total = dishesTotal + minimumTopUp + fee - discount,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         foreach (var item in items)
@@ -215,7 +225,8 @@ public class OrdersController(
             order.DeliveryHour,
             hourFull,
             order.DeliveryFee,
-            order.DeliveryDiscount);
+            order.DeliveryDiscount,
+            order.MinimumTopUp);
     }
 
     /// <summary>A manual payment needs the business's number and that service switched on.</summary>

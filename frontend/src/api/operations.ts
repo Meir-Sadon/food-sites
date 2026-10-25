@@ -74,6 +74,8 @@ export interface AdminOrder {
   deliveryFee?: number
   /** What the large-order discount took off the delivery fee; the fee is already reduced. */
   deliveryDiscount?: number
+  /** What was added so the order reached the site's minimum (already inside `total`); 0 for none. */
+  minimumTopUp?: number
   deliveryZoneName?: string | null
 }
 

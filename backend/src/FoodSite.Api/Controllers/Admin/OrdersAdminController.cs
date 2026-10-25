@@ -52,7 +52,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         string? DeliveryZoneName = null,
         decimal DeliveryDiscount = 0m,
         string? CancelReason = null,
-        DateTimeOffset? CancelledAt = null);
+        DateTimeOffset? CancelledAt = null,
+        decimal MinimumTopUp = 0m);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -281,6 +282,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         if (errors.Any)
             return Invalid(errors);
 
+        // The dishes plus the top-up as the order stood: the least it is billed for.
+        var billedBefore = order.MinimumTopUp > 0 ? order.Items.Sum(i => i.LineTotal) + order.MinimumTopUp : 0m;
         order.Name = input.Name!.Trim();
         order.Phone = phone!;
         order.Address = Clean(input.Address) ?? "";
@@ -306,7 +309,10 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             order.DeliveryDiscount = 0m;
             order.DeliveryZoneName = null;
         }
-        order.Total = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal) + order.DeliveryFee;
+        // A client who agreed to the minimum still pays at least what the dishes plus the top-up came to, until the dishes pass it.
+        var dishesTotal = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal);
+        order.MinimumTopUp = Math.Max(0m, billedBefore - dishesTotal);
+        order.Total = dishesTotal + order.MinimumTopUp + order.DeliveryFee;
 
         // An account holds the orders of its own phone: a changed phone follows the matching account, or none.
         order.UserId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync();
@@ -354,7 +360,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.DeliveryZoneName,
         o.DeliveryDiscount,
         o.CancelReason,
-        o.CancelledAt);
+        o.CancelledAt,
+        o.MinimumTopUp);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

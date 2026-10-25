@@ -67,7 +67,10 @@ public class Order
     /// <summary>The name of the zone the fee came from, as it was then.</summary>
     public string? DeliveryZoneName { get; set; }
 
-    /// <summary>The order's total to pay, the delivery fee included.</summary>
+    /// <summary>What was added to the dishes so the order reached the site's minimum, when the client agreed to be charged it (part of <see cref="Total"/>). Zero when none.</summary>
+    public decimal MinimumTopUp { get; set; }
+
+    /// <summary>The order's total to pay, the delivery fee and any minimum top-up included.</summary>
     public decimal Total { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 

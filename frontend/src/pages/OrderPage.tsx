@@ -35,6 +35,7 @@ import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { formatMoney, formatSlot, formatSupplyDate, parseSlotId, slotId, slotsFor } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
+import { MinimumDialog } from '../order/MinimumDialog'
 import { QuickFill } from '../order/QuickFill'
 import { ReviewsCarousel } from '../order/ReviewsCarousel'
 import {
@@ -98,6 +99,7 @@ export function OrderPage() {
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [minimumAsked, setMinimumAsked] = useState(false)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [leaveTo, setLeaveTo] = useState<{
     to: string
@@ -494,8 +496,14 @@ export function OrderPage() {
     } else reveal()
   }
 
-  async function handleSubmit(event?: FormEvent) {
+  function handleSubmit(event?: FormEvent) {
     event?.preventDefault()
+    return submit(false)
+  }
+
+  /** `acceptTopUp`: the client agreed to be charged the minimum for an order under it. */
+  async function submit(acceptTopUp: boolean) {
+    setMinimumAsked(false)
     setErrors({})
     setSubmitError(null)
     // The dishes come before the form, so a dish still waiting for the client is the first thing to fix.
@@ -516,6 +524,12 @@ export function OrderPage() {
     setFix(null)
     if (!normalizedPhone) return
 
+    // An order under the minimum is not blocked: the client is asked whether to add a dish or to pay the minimum.
+    if (belowMinimum && !acceptTopUp) {
+      setMinimumAsked(true)
+      return
+    }
+
     setSubmitting(true)
     try {
       const result = await ordersApi.create({
@@ -530,6 +544,7 @@ export function OrderPage() {
         notes: state.notes.trim(),
         items: toLines(state.selections, dishes),
         marketing: marketingForOrder(site?.tracking),
+        ...(acceptTopUp ? { acceptMinimumTopUp: true } : {}),
       })
       clearDraft()
       trackUsage('OrderSubmitted')
@@ -961,8 +976,9 @@ export function OrderPage() {
                   <button
                     ref={submitRef}
                     type="submit"
-                    disabled={submitting || count === 0 || !supplyDate || belowMinimum || (fulfillment === 'Delivery' && noDelivery)}
+                    disabled={submitting || count === 0 || !supplyDate || (fulfillment === 'Delivery' && noDelivery)}
                   >
+                    {belowMinimum && !submitting && <span aria-hidden="true">⚠️ </span>}
                     {submitting ? t('order.submitting') : t('order.submit')}
                   </button>
                   <button type="button" className="button-quiet" onClick={reset}>
@@ -978,7 +994,7 @@ export function OrderPage() {
                   </p>
                 )}
                 {belowMinimum && (
-                  <p role="status" className="hint">
+                  <p role="status" className="hint hint--warning">
                     {t('order.belowMinimum', {
                       minimum: formatMoney(minimum),
                       missing: formatMoney(round2(minimum - itemsTotal)),
@@ -1093,6 +1109,19 @@ export function OrderPage() {
         />
       )}
 
+      {minimumAsked && (
+        <MinimumDialog
+          minimum={minimum}
+          missing={round2(minimum - itemsTotal)}
+          onAddDish={() => {
+            setMinimumAsked(false)
+            if (steps) setStep(0)
+            setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
+          }}
+          onSend={() => submit(true)}
+          onCancel={() => setMinimumAsked(false)}
+        />
+      )}
       {leaveTo && <LeaveDialog onSave={() => leave(true)} onDiscard={() => leave(false)} onStay={() => setLeaveTo(null)} />}
       {confirmation && (
         <SuccessDialog
