@@ -49,6 +49,9 @@ describe('Sign in with Google', () => {
 
     await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
     expect(api.sent('POST', '/api/account/google')[0].body).toEqual({ credential: 'google-token' })
+    // Logged in: the menu offers the way out instead of "login / register".
+    expect(screen.getByRole('button', { name: 'התנתקות' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'התחברות / הרשמה' })).not.toBeInTheDocument()
   })
 
   it('asks a new person only for the phone, then registers with the token and offers the optional details', async () => {
