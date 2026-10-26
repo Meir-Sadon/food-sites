@@ -3846,7 +3846,7 @@ label {
   margin: 0;
   font-size: 0.8rem;
   font-weight: 400;
-  color: var(--color-muted);
+  color: inherit;
 }
 
 .total-bar__sum {
