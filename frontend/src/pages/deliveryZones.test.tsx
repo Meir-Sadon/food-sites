@@ -2,6 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DeliveryQuote, Site } from '../api/site'
+import { DRAFT_KEY } from '../order/draft'
+import { emptyOrder } from '../order/model'
 import { menu, menuDish, site } from '../test/catalogData'
 import { fakeApi } from '../test/fakeApi'
 import { renderAt } from '../test/render'
@@ -67,6 +69,23 @@ describe('Delivery fee by zones', () => {
     expect(after).not.toBe(before)
     expect(after).toContain('55')
     expect(screen.getByText(/כולל משלוח ₪15/)).toBeInTheDocument()
+  })
+
+  it('asks for the fee at once when the address and dishes come back from a saved draft', async () => {
+    localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ ...emptyOrder(), city: 'חיפה', street: 'הרצל', houseNumber: '1', selections: { 4: { quantity: 1 } } }),
+    )
+    const api = fakeApi({
+      'GET /api/site': () => site({ deliveryPricing: 'zones' }),
+      'GET /api/menu': menuWithPlainDish,
+      'POST /api/delivery-quote': () => ({ body: { status: 'ok', fee: 15, zoneName: 'החלק הקרוב' } }),
+    })
+    renderAt('/')
+
+    // Well under the wait kept for typing.
+    await waitFor(() => expect(api.sent('POST', '/api/delivery-quote')).toHaveLength(1), { timeout: 500 })
+    expect(await screen.findByText(/כולל משלוח ₪15/)).toBeInTheDocument()
   })
 
   it('stops the order where there is no delivery, and pickup still works', async () => {

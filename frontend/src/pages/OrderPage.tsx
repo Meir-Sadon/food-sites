@@ -30,7 +30,7 @@ import { OPEN_DISH_DIALOG } from '../order/DishCard'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
 import { deliveryDiscount } from '../order/deliveryDiscount'
-import { useDeliveryQuote, type SeededQuote } from '../order/useDeliveryQuote'
+import { addressKeyOf, useDeliveryQuote, type SeededQuote } from '../order/useDeliveryQuote'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
@@ -148,7 +148,9 @@ export function OrderPage() {
   // The address "find my location" filled in, with the fee it brought; and a bump on every press of "calculate".
   const [located, setLocated] = useState<SeededQuote | null>(null)
   const [calculations, setCalculations] = useState(0)
-  const quote = useDeliveryQuote(zonesOn && delivering, state.city, state.street, state.houseNumber, located, calculations)
+  // The address the client typed by hand: only that one waits for the typing to stop before the fee is asked for.
+  const [typedKey, setTypedKey] = useState<string | null>(null)
+  const quote = useDeliveryQuote(zonesOn && delivering, state.city, state.street, state.houseNumber, located, calculations, typedKey)
   const quoted = quote.state === 'ready' ? quote.quote : null
   // The regular setting: the fixed fee is added for a service city; elsewhere the business phones about the price.
   const regularFee =
@@ -685,7 +687,11 @@ export function OrderPage() {
       {fulfillment === 'Delivery' && (
         <AddressFields
           value={state}
-          onChange={change}
+          onChange={(patch) => {
+            const next = { ...state, ...patch }
+            setTypedKey(addressKeyOf(next.city, next.street, next.houseNumber))
+            change(patch)
+          }}
           errors={errors}
           idPrefix="order"
           context="order"
