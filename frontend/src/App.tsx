@@ -27,6 +27,7 @@ import { ToastProvider } from './components/ToastProvider'
 import { DriverPage, DriverStops } from './driver/DriverPage'
 import { DriverStopPage } from './driver/DriverStopPage'
 import { AboutPage } from './pages/AboutPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 import { AccessibilityStatementPage } from './pages/AccessibilityStatementPage'
 import { LoginPage } from './pages/LoginPage'
 import { OrderPage } from './pages/OrderPage'
@@ -61,6 +62,7 @@ export function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="accessibility" element={<AccessibilityStatementPage />} />
+          <Route path="privacy" element={<PrivacyPage />} />
         </Route>
 
         {/* The driver's page behind the link from the driver's report: the link is its only key. */}
