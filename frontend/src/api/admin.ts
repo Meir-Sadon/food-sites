@@ -105,3 +105,23 @@ export const opsTokenApi = {
   create: () => apiJson<{ token: string; createdAt: string }>('/api/admin/ops-token', send('POST')),
   revoke: () => apiJson<void>('/api/admin/ops-token', send('DELETE')),
 }
+
+/** A client who registered on this site (FoodSite.Api `ClientsController`). */
+export interface RegisteredClient {
+  id: number
+  fullName: string
+  /** Local form, "0501234567" */
+  phone: string
+  email: string | null
+  /** Missing for accounts made before registration dates were kept. */
+  createdAt: string | null
+  orders: number
+  withGoogle: boolean
+}
+
+export interface RegisteredClients {
+  total: number
+  clients: RegisteredClient[]
+}
+
+export const listClients = () => apiJson<RegisteredClients>('/api/admin/clients')

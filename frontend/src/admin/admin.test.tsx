@@ -147,7 +147,7 @@ describe('admin layout', () => {
     renderAt('/admin/orders/route?date=2026-10-14')
 
     const pages = await screen.findByRole('navigation', { name: 'דוחות' })
-    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual(['הזמנות', 'סטטיסטיקה', 'שימוש באתר', 'יומן שינויים'])
+    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual(['הזמנות', 'סטטיסטיקה', 'שימוש באתר', 'לקוחות רשומים', 'יומן שינויים'])
   })
 
   it('shows when the master admin is logged in', async () => {

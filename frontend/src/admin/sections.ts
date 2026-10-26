@@ -10,6 +10,7 @@ export const sections: { key: string; tabs: Tab[] }[] = [
       { to: '/admin/orders', key: 'admin.nav.orders' },
       { to: '/admin/reports', key: 'admin.nav.reports' },
       { to: '/admin/usage', key: 'admin.nav.usage' },
+      { to: '/admin/clients', key: 'admin.nav.clients' },
       { to: '/admin/audit', key: 'admin.nav.audit' },
     ],
   },
