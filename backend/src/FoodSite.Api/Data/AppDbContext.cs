@@ -30,6 +30,8 @@ public class AppDbContext(
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
+    public DbSet<GuestDetails> GuestDetails => Set<GuestDetails>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<FavoriteOrder> FavoriteOrders => Set<FavoriteOrder>();
@@ -255,6 +257,20 @@ public class AppDbContext(
         {
             e.HasIndex(u => u.Phone).IsUnique();
             e.HasIndex(u => u.GoogleSub).IsUnique().HasFilter("\"GoogleSub\" IS NOT NULL");
+        });
+
+        model.Entity<UserAddress>(e =>
+        {
+            e.Property(a => a.Label).HasMaxLength(UserAddress.LabelMaxLength);
+            e.HasIndex(a => a.UserId);
+            e.HasOne(a => a.User).WithMany(u => u.Addresses)
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<GuestDetails>(e =>
+        {
+            e.HasIndex(g => g.Phone).IsUnique();
         });
 
         model.Entity<Order>(e =>

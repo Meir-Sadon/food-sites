@@ -20,6 +20,7 @@ public class User
     /// <summary>When the client registered. Empty for accounts made before it was recorded.</summary>
     public DateTimeOffset? CreatedAt { get; set; }
 
+    public List<UserAddress> Addresses { get; set; } = [];
     public List<Order> Orders { get; set; } = [];
     public List<FavoriteOrder> FavoriteOrders { get; set; } = [];
     public List<Recommendation> Recommendations { get; set; } = [];

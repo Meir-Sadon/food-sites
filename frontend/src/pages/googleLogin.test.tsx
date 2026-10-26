@@ -17,7 +17,7 @@ vi.mock('../account/GoogleSignInButton', () => ({
 
 const profile: Profile = {
   id: 1, phone: '0501234567', fullName: 'דנה כהן', city: 'חיפה', street: 'הרצל', houseNumber: '1',
-  apartment: '', address: 'הרצל 1, חיפה', email: 'dana@gmail.com', birthday: null, ethnicBackground: null,
+  apartment: '', address: 'הרצל 1, חיפה', email: 'dana@gmail.com', birthday: null, ethnicBackground: null, addresses: [],
 }
 
 const guest = { 'GET /api/account/me': () => ({ status: 401, body: {} }) }
@@ -51,7 +51,7 @@ describe('Sign in with Google', () => {
     expect(api.sent('POST', '/api/account/google')[0].body).toEqual({ credential: 'google-token' })
   })
 
-  it('asks a new person for phone and address, prefilled from Google, then registers with the token', async () => {
+  it('asks a new person only for the phone, then registers with the token and offers the optional details', async () => {
     const { api, user } = open({
       'POST /api/account/google': () => ({ profile: null, registration: { fullName: 'Dana Cohen', email: 'dana@gmail.com' } }),
       'POST /api/account/google/register': () => profile,
@@ -59,17 +59,16 @@ describe('Sign in with Google', () => {
     await user.click(await screen.findByRole('button', { name: 'Google' }))
 
     await screen.findByRole('heading', { name: 'הרשמה' })
-    expect(screen.getByLabelText('שם מלא')).toHaveValue('Dana Cohen')
-    expect(screen.getByLabelText(/אימייל/)).toHaveValue('dana@gmail.com')
+    expect(screen.queryByLabelText('שם מלא')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('רחוב')).not.toBeInTheDocument()
     await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
-    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
-    await user.type(screen.getByLabelText('מספר בית'), '1')
     await user.click(screen.getByRole('button', { name: 'הרשמה' }))
 
-    await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
+    await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
+    expect(screen.getByLabelText('שם מלא')).toHaveValue('דנה כהן')
     expect(api.sent('POST', '/api/account/google/register')[0].body).toMatchObject({
       credential: 'google-token',
-      profile: { phone: '0501234567', fullName: 'Dana Cohen', email: 'dana@gmail.com', street: 'הרצל' },
+      profile: { phone: '0501234567', fullName: 'Dana Cohen', email: 'dana@gmail.com', street: '' },
     })
   })
 })
