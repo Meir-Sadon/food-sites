@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router'
 import { AdminLayout } from './admin/AdminLayout'
 import { AdminLoginPage } from './admin/AdminLoginPage'
 import { AuditPage } from './admin/audit/AuditPage'
+import { ClientsPage } from './admin/clients/ClientsPage'
 import { RequireAdmin } from './admin/RequireAdmin'
 import { CategoriesPage } from './admin/categories/CategoriesPage'
 import { DishGroupsPage } from './admin/dish-groups/DishGroupsPage'
@@ -99,6 +100,7 @@ export function App() {
           <Route path="usage" element={<UsagePage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="audit" element={<AuditPage />} />
+          <Route path="clients" element={<ClientsPage />} />
           <Route path="feedback" element={<FeedbackPage />} />
           <Route
             path="reviews"
