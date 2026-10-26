@@ -66,6 +66,7 @@ describe('Delivery fee by zones', () => {
     const after = totalText()
     expect(after).not.toBe(before)
     expect(after).toContain('55')
+    expect(screen.getByText(/כולל משלוח ₪15/)).toBeInTheDocument()
   })
 
   it('stops the order where there is no delivery, and pickup still works', async () => {

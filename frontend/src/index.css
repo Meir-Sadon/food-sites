@@ -3840,6 +3840,20 @@ label {
   font-size: 1.125rem;
 }
 
+/* The delivery part of the total, small under it, so the fee is not read before a dish is chosen. */
+.cart-sheet__delivery,
+.total-bar__delivery {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.total-bar__sum {
+  display: flex;
+  flex-direction: column;
+}
+
 @media (max-width: 29.99rem) {
   /* On a narrow screen the basket button keeps the number and drops the total, so the other icons stay in view. */
   .top-bar__cart {
