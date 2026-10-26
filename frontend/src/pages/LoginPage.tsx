@@ -10,7 +10,7 @@ import { emptyProfileForm, formFromProfile, profileInput } from '../account/prof
 import { useAccount } from '../account/useAccount'
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
-import { useToast } from '../components/toast'
+import { Modal } from '../components/Modal'
 import { GoogleSignInButton } from '../account/GoogleSignInButton'
 import { useSite } from '../site/useSite'
 
@@ -29,7 +29,6 @@ export function LoginPage() {
   const [phone, setPhone] = useState('')
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
-  const toast = useToast()
   const [busy, setBusy] = useState(false)
 
   if (newcomer) return <GetToKnowYou profile={newcomer} onDone={() => navigate('/')} onSaved={setUser} />
@@ -73,7 +72,6 @@ export function LoginPage() {
       } else {
         // First time with this Google account: the phone is the one thing still needed.
         setGoogle({ credential, fullName: result.registration?.fullName ?? '', email: result.registration?.email ?? '' })
-        toast(t('account.googleNeedsDetails'))
       }
     } catch (err) {
       setError(formError(err))
@@ -116,33 +114,46 @@ export function LoginPage() {
     }
   }
 
-  const title = google ? t('account.registerTitle') : t('account.loginTitle')
+  const title = t('account.loginTitle')
   return (
     <section>
       <h1>{title}</h1>
       <form className="stack" onSubmit={handleSubmit} noValidate aria-label={title}>
-        <p className="hint">{google ? t('account.googleNeedsDetails') : t('account.loginHint')}</p>
+        <p className="hint">{t('account.loginHint')}</p>
 
         <PhoneField phone={phone} onPhoneChange={setPhone} errors={errors} />
 
-        {error && <Status message={error} error />}
+        {!google && error && <Status message={error} error />}
 
         <div className="row">
           <button type="submit" disabled={busy}>
-            {busy ? t('account.loggingIn') : google ? t('account.registerSubmit') : t('account.loginSubmit')}
+            {busy && !google ? t('account.loggingIn') : t('account.loginSubmit')}
           </button>
-          {google && (
-            <button type="button" className="button-quiet" onClick={() => setGoogle(null)}>
-              {t('account.cancelGoogle')}
-            </button>
-          )}
         </div>
       </form>
-      {googleClientId && !google && (
+      {googleClientId && (
         <div className="stack google-login">
           <p className="hint">{t('account.or')}</p>
           <GoogleSignInButton clientId={googleClientId} onCredential={handleGoogle} />
         </div>
+      )}
+      {google && (
+        // First time with this Google account: the phone is the one thing still needed, asked in a small window.
+        <Modal title={t('account.googlePhone.title')} onClose={() => setGoogle(null)}>
+          <form className="stack" onSubmit={handleSubmit} noValidate aria-label={t('account.googlePhone.title')}>
+            <p>{t('account.googlePhone.text')}</p>
+            <PhoneField id="google-phone" phone={phone} onPhoneChange={setPhone} errors={errors} />
+            {error && <Status message={error} error />}
+            <div className="row">
+              <button type="submit" disabled={busy}>
+                {busy ? t('account.registering') : t('account.googlePhone.submit')}
+              </button>
+              <button type="button" className="button-quiet" onClick={() => setGoogle(null)}>
+                {t('account.cancelGoogle')}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </section>
   )

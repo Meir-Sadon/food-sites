@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Profile } from '../api/account'
@@ -61,11 +61,11 @@ describe('Sign in with Google', () => {
     })
     await user.click(await screen.findByRole('button', { name: 'Google' }))
 
-    await screen.findByRole('heading', { name: 'הרשמה' })
-    expect(screen.queryByLabelText('שם מלא')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('רחוב')).not.toBeInTheDocument()
-    await user.type(screen.getByLabelText('טלפון'), '050-123-4567')
-    await user.click(screen.getByRole('button', { name: 'הרשמה' }))
+    // A small window over the login page with the phone as its only field.
+    const dialog = await screen.findByRole('dialog', { name: 'עוד פרט אחד ואנחנו מוכנים' })
+    expect(within(dialog).getAllByRole('textbox')).toHaveLength(1)
+    await user.type(within(dialog).getByLabelText('טלפון'), '050-123-4567')
+    await user.click(within(dialog).getByRole('button', { name: 'המשך' }))
 
     await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
     expect(screen.getByLabelText('שם מלא')).toHaveValue('דנה כהן')
