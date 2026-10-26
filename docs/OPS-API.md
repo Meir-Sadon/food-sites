@@ -143,6 +143,30 @@ How the client site is used: the numbers on the admin's **שימוש באתר** 
 - Visitors, started and submitted count devices (a random id the browser keeps), not people. `approximate` is `true` when the range starts before `keptSince`: older days only keep daily counts, so a device seen on several of them counts more than once.
 - `orders` counts non-cancelled orders by the day they were **sent** (not their supply date); `registered.total` is every client account, `new` those made in the range.
 
+### `GET /api/ops/clients`
+
+The registered client accounts with their contact details, so the console can list them and reach them by WhatsApp or email. Newest first by registration time (accounts made before it was recorded come last), at most 500 listed; `total` counts every account.
+
+```json
+{
+  "total": 1,
+  "clients": [{
+    "id": 12,
+    "fullName": "דנה כהן",
+    "phone": "0501234567",
+    "email": "dana@example.com",
+    "city": "אשקלון",
+    "createdAt": "2030-01-04T18:30:00+00:00",
+    "orders": 3,
+    "lastOrderAt": "2030-02-01T10:00:00+00:00"
+  }]
+}
+```
+
+- `phone` is in the site's local form (`0501234567`). `email` is `null` when the client gave none; `city` is `""` when unknown.
+- `createdAt` is `null` for accounts made before it was recorded.
+- `orders` counts the client's orders that were not cancelled; `lastOrderAt` is when the last of them was sent, `null` when there is none.
+
 ### `GET /api/ops/recommendations?handled=`
 
 Clients' recommendations (feature `recommendations`). `handled=true` or `false` filters; leave it out for all.

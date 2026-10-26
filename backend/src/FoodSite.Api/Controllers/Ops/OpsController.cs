@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace FoodSite.Api.Controllers.Ops;
 
 /// <summary>
-/// The console's view into this site (<c>docs/OPS-API.md</c>): its version, sales, client recommendations, the
+/// The console's view into this site (<c>docs/OPS-API.md</c>): its version, sales, registered clients, client recommendations, the
 /// admin's feedback and its feature flags. Signed in only with the site's console token (<see cref="OpsToken"/>).
 /// Changes made here are audited as <see cref="OpsToken.Actor"/>.
 /// </summary>
@@ -80,6 +80,16 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
         decimal Total, decimal DeliveryFee, IReadOnlyList<CancellationItemDto> Items);
 
     public record CancellationsDto(DateOnly From, DateOnly To, int Orders, decimal Total, IReadOnlyList<CancellationDto> Cancellations);
+
+    /// <param name="Email">Null when the client gave none.</param>
+    /// <param name="CreatedAt">When the client registered; null for accounts made before it was recorded.</param>
+    /// <param name="Orders">The client's orders that were not cancelled.</param>
+    /// <param name="LastOrderAt">When the client last sent an order that was not cancelled; null when none.</param>
+    public record ClientDto(
+        int Id, string FullName, string Phone, string? Email, string City, DateTimeOffset? CreatedAt, int Orders, DateTimeOffset? LastOrderAt);
+
+    /// <param name="Total">Every client account, also when more than <see cref="ListLimit"/>.</param>
+    public record ClientsDto(int Total, IReadOnlyList<ClientDto> Clients);
 
     public record RecommendationDto(int Id, string Text, string? ClientName, DateTimeOffset CreatedAt, bool IsHandled);
 
@@ -192,6 +202,25 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                     .Select(i => new CancellationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.LineTotal)).ToList()))
             .ToList();
         return new CancellationsDto(start, end, count, total, list);
+    }
+
+    /// <summary>
+    /// The registered clients with their contact details, so the console can reach them; newest first (at most
+    /// <see cref="ListLimit"/>; <c>total</c> counts all of them), accounts without a registration time last.
+    /// </summary>
+    [HttpGet("clients")]
+    public async Task<ClientsDto> Clients(CancellationToken ct)
+    {
+        var total = await db.Users.CountAsync(ct);
+        var clients = await db.Users.AsNoTracking()
+            .OrderByDescending(u => u.CreatedAt.HasValue).ThenByDescending(u => u.CreatedAt).ThenByDescending(u => u.Id)
+            .Take(ListLimit)
+            .Select(u => new ClientDto(
+                u.Id, u.FullName, u.Phone, u.Email, u.City, u.CreatedAt,
+                u.Orders.Count(o => o.Status != OrderStatus.Cancelled),
+                u.Orders.Where(o => o.Status != OrderStatus.Cancelled).Max(o => (DateTimeOffset?)o.CreatedAt)))
+            .ToListAsync(ct);
+        return new ClientsDto(total, clients);
     }
 
     internal static DateOnly PeriodStart(DateOnly date, SummaryPeriod period) => period switch
