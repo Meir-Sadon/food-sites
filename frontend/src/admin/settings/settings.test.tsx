@@ -14,7 +14,7 @@ const base = {
   'GET /api/admin/shabbat-rules': () => shabbatRules(),
   'GET /api/admin/closed-dates': () => [{ id: 1, date: '2026-10-14', reason: 'סוכות' }],
   'GET /api/admin/social-links': () => [],
-  'GET /api/admin/popup': () => ({ body: popup() }),
+  'GET /api/admin/popups': () => ({ body: [popup({ slot: 1 }), popup({ slot: 2 }), popup({ slot: 3 })] }),
 }
 
 /** A settings section once its data has loaded. */
@@ -751,38 +751,51 @@ describe('Social links', () => {
 
 describe('Entry pop-up', () => {
   const open = (extra: Parameters<typeof fakeApi>[0] = {}) => {
-    let saved = popup()
+    const saved = [popup({ slot: 1 }), popup({ slot: 2 }), popup({ slot: 3 })]
     const api = fakeApi({
       ...base,
-      'GET /api/admin/popup': () => ({ body: saved }),
-      'PUT /api/admin/popup': (_, input) => ({ body: (saved = { ...saved, ...(input as object) }) }),
       ...extra,
+      'GET /api/admin/popups': () => ({ body: saved }),
+      'PUT /api/admin/popups/(\\d)': (match, input) => {
+        const index = Number(match[1]) - 1
+        return { body: (saved[index] = { ...saved[index], ...(input as object) }) }
+      },
     })
     renderAt('/admin/popup')
     return api
   }
 
+  it('has a section for each of three pop-ups', async () => {
+    open()
+    await section('פופ-אפ 1')
+    await section('פופ-אפ 2')
+    await section('פופ-אפ 3')
+    expect(screen.queryByRole('region', { name: 'פופ-אפ 4' })).not.toBeInTheDocument()
+  })
+
   it('saves the size, title, text and button', async () => {
     const api = open()
     const user = userEvent.setup()
-    const form = await section('פופ-אפ בכניסה לאתר')
+    const form = await section('פופ-אפ 1')
 
     expect(within(form).getByRole('button', { name: 'שמירה' })).toBeDisabled()
     expect(within(form).getByRole('radio', { name: /בינוני/ })).toBeChecked()
+    expect(within(form).getByRole('checkbox', { name: 'תמיד (בלי תנאי)' })).toBeChecked()
     await user.click(within(form).getByRole('checkbox', { name: 'להציג את הפופ-אפ באתר' }))
     await user.click(within(form).getByRole('radio', { name: /גדול/ }))
     await user.click(within(form).getByRole('radio', { name: /פעם אחת בביקור/ }))
-    await user.click(within(form).getByRole('radio', { name: /כשהלקוח עומד לעזוב/ }))
+    await user.click(within(form).getByRole('checkbox', { name: 'כשהלקוח עומד לעזוב את האתר' }))
+    expect(within(form).getByRole('checkbox', { name: 'תמיד (בלי תנאי)' })).not.toBeChecked()
     await user.clear(within(form).getByLabelText('כמה שניות לחכות לפני שמתחילים לזהות יציאה'))
     await user.type(within(form).getByLabelText('כמה שניות לחכות לפני שמתחילים לזהות יציאה'), '8')
     await user.type(within(form).getByLabelText('כותרת'), 'מבצע חג')
     await user.type(within(form).getByLabelText('תוכן'), '10% הנחה')
     await user.type(within(form).getByLabelText('תוכן הכפתור'), 'להזמנה')
-    await user.type(within(form).getByLabelText('קישור'), 'https://example.com/sale')
+    await user.type(within(form).getByLabelText('קישור'), '/about')
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
 
-    await waitFor(() => expect(api.sent('PUT', '/api/admin/popup')).toHaveLength(1))
-    expect(api.sent('PUT', '/api/admin/popup')[0].body).toEqual({
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/popups/1')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/popups/1')[0].body).toEqual({
       enabled: true,
       size: 'large',
       frequency: 'session',
@@ -791,40 +804,117 @@ describe('Entry pop-up', () => {
       title: 'מבצע חג',
       body: '10% הנחה',
       buttonText: 'להזמנה',
-      buttonUrl: 'https://example.com/sale',
+      buttonUrl: '/about',
+      login: null,
+      activity: null,
+      orderSource: null,
+      orderTotal: false,
+      minTotal: null,
+      maxTotal: null,
     })
     expect(await within(form).findByText('נשמר.')).toBeInTheDocument()
   })
 
-  it('shows what the server refused beside the field', async () => {
-    open({ 'PUT /api/admin/popup': () => invalid({ title: ['required'] }) })
+  it('saves the display conditions of the second pop-up, each with its own choice', async () => {
+    const api = open()
     const user = userEvent.setup()
-    const form = await section('פופ-אפ בכניסה לאתר')
+    const form = await section('פופ-אפ 2')
+
+    await user.click(within(form).getByRole('checkbox', { name: 'להציג את הפופ-אפ באתר' }))
+    await user.type(within(form).getByLabelText('כותרת'), 'חזרו אלינו')
+    await user.click(within(form).getByRole('checkbox', { name: 'לפי התחברות' }))
+    await user.click(within(form).getByRole('radio', { name: 'ללקוח מחובר' }))
+    await user.click(within(form).getByRole('checkbox', { name: 'לפי פעילות הלקוח' }))
+    await user.click(within(form).getByRole('radio', { name: 'ללקוח לא פעיל' }))
+    await user.click(within(form).getByRole('checkbox', { name: 'כששוחזרה הזמנה או שנפתחה הזמנה קודמת' }))
+    await user.click(within(form).getByRole('radio', { name: 'הזמנה שנפתחה ממועדפת' }))
+    await user.click(within(form).getByRole('checkbox', { name: 'כשיש הזמנה פעילה בסכום מסוים' }))
+    await user.type(within(form).getByLabelText('מעל סכום (₪)'), '100')
+    await user.type(within(form).getByLabelText('מתחת לסכום (₪)'), '300')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/popups/2')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/popups/2')[0].body).toMatchObject({
+      login: 'loggedIn',
+      activity: 'inactive',
+      orderSource: 'favorite',
+      orderTotal: true,
+      minTotal: 100,
+      maxTotal: 300,
+      trigger: 'load',
+    })
+    expect(api.sent('PUT', '/api/admin/popups/1')).toHaveLength(0)
+  })
+
+  it('clears the conditions when "always" is ticked', async () => {
+    const api = open()
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ 3')
+    await user.type(within(form).getByLabelText('כותרת'), 'שלום')
+    await user.click(within(form).getByRole('checkbox', { name: 'לפי התחברות' }))
+    expect(within(form).getByRole('radio', { name: 'ללקוח מחובר' })).toBeChecked()
+    await user.click(within(form).getByRole('checkbox', { name: 'תמיד (בלי תנאי)' }))
+    expect(within(form).queryByRole('radio', { name: 'ללקוח מחובר' })).not.toBeInTheDocument()
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/popups/3')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/popups/3')[0].body).toMatchObject({ login: null, orderTotal: false })
+  })
+
+  it('shows what the server refused beside the field', async () => {
+    open({ 'PUT /api/admin/popups/1': () => invalid({ title: ['required'] }) })
+    const user = userEvent.setup()
+    const form = await section('פופ-אפ 1')
     await user.click(within(form).getByRole('checkbox', { name: 'להציג את הפופ-אפ באתר' }))
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
     expect(await within(form).findByText('שדה חובה.')).toBeInTheDocument()
   })
 
-  it('uploads a picture without touching what is typed', async () => {
-    const api = open({ 'PUT /api/admin/popup/image': () => ({ body: popup({ imageUrl: 'https://img.test/popup.jpg' }) }) })
+  it('uploads a picture to that pop-up without touching what is typed', async () => {
+    const api = open({ 'PUT /api/admin/popups/2/image': () => ({ body: popup({ slot: 2, imageUrl: 'https://img.test/popup.jpg' }) }) })
     const user = userEvent.setup()
-    const form = await section('פופ-אפ בכניסה לאתר')
+    const form = await section('פופ-אפ 2')
     await user.type(within(form).getByLabelText('כותרת'), 'מבצע')
 
     const file = new File(['x'], 'p.jpg', { type: 'image/jpeg' })
     await user.upload(within(form).getByLabelText('בחירת תמונה'), file)
 
     expect(await within(form).findByRole('img')).toHaveAttribute('src', 'https://img.test/popup.jpg')
-    expect((api.sent('PUT', '/api/admin/popup/image')[0].body as FormData).get('file')).toBe(file)
+    expect((api.sent('PUT', '/api/admin/popups/2/image')[0].body as FormData).get('file')).toBe(file)
     expect(within(form).getByLabelText('כותרת')).toHaveValue('מבצע')
   })
 
   it('previews the pop-up with what is typed so far', async () => {
     open()
     const user = userEvent.setup()
-    const form = await section('פופ-אפ בכניסה לאתר')
+    const form = await section('פופ-אפ 1')
     await user.type(within(form).getByLabelText('כותרת'), 'מבצע חג')
     await user.click(within(form).getByRole('button', { name: 'תצוגה מקדימה' }))
     expect(await screen.findByRole('dialog', { name: 'מבצע חג' })).toBeInTheDocument()
+  })
+})
+
+describe('Inactive client period', () => {
+  it('saves how long without an order makes a client inactive, on its own', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings/inactive-after': (_, body) => (saved = { ...saved, inactiveAfter: { ...saved.inactiveAfter, ...(body as object) } }),
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('לקוח לא פעיל')
+
+    expect(within(form).getByLabelText('כמה זמן בלי הזמנה')).toHaveValue(3)
+    expect(within(form).getByLabelText('יחידת זמן')).toHaveValue('month')
+    expect(within(form).getByRole('button', { name: 'שמירה' })).toBeDisabled()
+    await user.clear(within(form).getByLabelText('כמה זמן בלי הזמנה'))
+    await user.type(within(form).getByLabelText('כמה זמן בלי הזמנה'), '6')
+    await user.selectOptions(within(form).getByLabelText('יחידת זמן'), 'week')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/settings/inactive-after')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/settings/inactive-after')[0].body).toEqual({ amount: 6, unit: 'week' })
+    expect(await within(form).findByText('נשמר.')).toBeInTheDocument()
   })
 })

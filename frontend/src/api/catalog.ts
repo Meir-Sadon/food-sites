@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ColorSet, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, InactiveAfter, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -75,9 +75,11 @@ export interface Settings {
   tracking: TrackingIds
   /** The "new" and "almost out" badges; saved by `settingsApi.saveBadges`, never by `save`. */
   badges: ItemBadges
+  /** After this long without an order a client counts as inactive (the pop-ups' conditions use it); saved by `settingsApi.saveInactiveAfter`, never by `save`. */
+  inactiveAfter: InactiveAfter
 }
 /** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking' | 'badges'> &
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking' | 'badges' | 'inactiveAfter'> &
   Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'>>
 
 /** Saved on its own (`settingsApi.saveTracking`); a missing id keeps that tool, an empty one turns it off. */
@@ -85,6 +87,9 @@ export type TrackingInput = Partial<Omit<TrackingIds, 'metaServerEvents'>> & {
   /** Write-only: the Meta Conversions API access token; an empty text removes it. */
   metaAccessToken?: string
 }
+
+/** Saved on its own (`settingsApi.saveInactiveAfter`); a missing field keeps its value. */
+export type InactiveAfterInput = Partial<InactiveAfter>
 
 /** Saved on its own (`settingsApi.saveBadges`); a missing field keeps its value. */
 export type BadgesInput = Partial<ItemBadges>
@@ -308,6 +313,7 @@ export const settingsApi = {
   get: () => apiJson<Settings>(`${admin}/settings`),
   save: (input: SettingsInput) => apiJson<Settings>(`${admin}/settings`, send('PUT', input)),
   saveBadges: (input: BadgesInput) => apiJson<Settings>(`${admin}/settings/badges`, send('PUT', input)),
+  saveInactiveAfter: (input: InactiveAfterInput) => apiJson<Settings>(`${admin}/settings/inactive-after`, send('PUT', input)),
   saveTracking: (input: TrackingInput) => apiJson<Settings>(`${admin}/settings/tracking`, send('PUT', input)),
   uploadBackground: (file: File) => apiJson<Settings>(`${admin}/settings/background`, { ...upload(file), method: 'PUT' }),
   removeBackground: () => apiJson<Settings>(`${admin}/settings/background`, send('DELETE')),

@@ -61,7 +61,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         decimal? DeliveryDiscountMinOrder,
         bool AddressFirst,
         Tracking.Ids Tracking,
-        ItemBadges.Effective Badges);
+        ItemBadges.Effective Badges,
+        ClientActivity.Period InactiveAfter);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -101,6 +102,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool? AlignSlots = null,
         int? DeliveryLeadMinutes = null,
         int? PickupLeadMinutes = null);
+
+    public record InactiveAfterInput(int? Amount, string? Unit);
 
     public const int LinkMaxLength = 500;
 
@@ -254,6 +257,29 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     }
 
     /// <summary>
+    /// After how long without an order a client counts as inactive, which the pop-ups' conditions use. It has its own save,
+    /// like the badges, so another section never overwrites it with an older copy. A missing field keeps its value.
+    /// </summary>
+    [HttpPut("inactive-after")]
+    public async Task<ActionResult<SettingsDto>> UpdateInactiveAfter(InactiveAfterInput input)
+    {
+        var errors = new Errors();
+        if (input.Unit is not null && !ClientActivity.Units.Contains(input.Unit))
+            errors.Add(nameof(input.Unit), "invalid");
+        if (input.Amount is < 1 or > ClientActivity.MaxAmount)
+            errors.Add(nameof(input.Amount), "invalid");
+        if (errors.Any)
+            return Invalid(errors);
+
+        var settings = await db.Settings.SingleAsync();
+        var current = ClientActivity.Of(settings);
+        settings.InactiveAfterAmount = input.Amount ?? current.Amount;
+        settings.InactiveAfterUnit = input.Unit ?? current.Unit;
+        await db.SaveChangesAsync();
+        return await ToDtoAsync(settings);
+    }
+
+    /// <summary>
     /// The marketing ids have their own save, so saving another section never overwrites them with an older copy.
     /// A missing id keeps that tool as it is; an empty one turns it off.
     /// </summary>
@@ -396,7 +422,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         s.DeliveryDiscountMinOrder,
         s.AddressFirst,
         Sites.Tracking.Of(s),
-        ItemBadges.Of(s));
+        ItemBadges.Of(s),
+        ClientActivity.Of(s));
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

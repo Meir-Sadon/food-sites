@@ -39,6 +39,7 @@ import { formatMoney, formatSlot, formatSupplyDate, parseSlotId, slotId, slotsFo
 import { LeaveDialog } from '../order/LeaveDialog'
 import { MinimumDialog } from '../order/MinimumDialog'
 import { QuickFill } from '../order/QuickFill'
+import { useReportOrderSignals, type OrderSource } from '../order/orderSignals'
 import { ReviewsCarousel } from '../order/ReviewsCarousel'
 import {
   DRINKS_CATEGORY_NAME,
@@ -98,6 +99,8 @@ export function OrderPage() {
   const submitRef = useRef<HTMLButtonElement>(null)
   // Bumped by a quick fill: once the filled order renders, the page scrolls to the submit button.
   const [quickFills, setQuickFills] = useState(0)
+  // How the order got its dishes besides the client's own choosing; the entry pop-ups' conditions read it.
+  const [sources, setSources] = useState<readonly OrderSource[]>([])
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -169,6 +172,7 @@ export function OrderPage() {
   const totals = dishTotals(state.selections, dishes, drinksCategoryIds)
   const dirty = count > 0 && !confirmation
   useRegisterCart(totals.main + totals.side + totals.drinks, total, () => setCartOpen(true), !!menu)
+  useReportOrderSignals(itemsTotal, count > 0, sources)
   // Set when the profile page's "Reorder" put a past order in the draft.
   const filledSkipped = (location.state as { filled?: { skipped: number } } | null)?.filled?.skipped
 
@@ -226,6 +230,8 @@ export function OrderPage() {
         if (draft) {
           const { selections, skipped } = restoreSelections(draft.selections, loaded)
           setState({ ...draft, selections })
+          // A draft the profile page filled from a past order counts as filled from the last order, not as a restored one.
+          if (Object.keys(selections).length > 0) setSources([filledSkipped !== undefined ? 'last' : 'draft'])
           if (filledSkipped !== undefined)
             toast(filledSkipped > 0 ? t('order.filledSkipped', { count: filledSkipped }) : t('order.filled'))
           else toast(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
@@ -422,6 +428,7 @@ export function OrderPage() {
   }
 
   function reset() {
+    setSources([])
     setState((current) => ({
       ...emptyOrder(),
       name: current.name,
@@ -448,9 +455,10 @@ export function OrderPage() {
     }))
   }
 
-  function applyQuickFill({ selections, skipped }: Restored) {
+  function applyQuickFill({ selections, skipped }: Restored, source: Exclude<OrderSource, 'draft'>) {
     trackUsage('OrderStarted')
     setState((current) => ({ ...current, selections }))
+    setSources([source])
     toast(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
     setErrors({})
     setSubmitError(null)

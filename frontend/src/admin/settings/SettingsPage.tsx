@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ClosedDatesSection } from './ClosedDatesSection'
 import { ConsoleTokenSection } from './ConsoleTokenSection'
 import { GeneralSection } from './GeneralSection'
+import { InactiveAfterSection } from './InactiveAfterSection'
 import { PasswordSection } from './PasswordSection'
 import { ShabbatRulesSection } from './ShabbatRulesSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
@@ -29,6 +30,9 @@ export function SettingsPage() {
       </SectionSlot>
       <SectionSlot>
         <GeneralSection onPricing={setPricing} />
+      </SectionSlot>
+      <SectionSlot>
+        <InactiveAfterSection />
       </SectionSlot>
       {pricing === 'zones' && (
         <SectionSlot>

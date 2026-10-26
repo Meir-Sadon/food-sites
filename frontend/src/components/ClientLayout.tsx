@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router'
 import { AccountProvider } from '../account/AccountContext'
+import { OrderSignalsProvider } from '../order/orderSignals'
 import { AccessibilityMenu } from '../accessibility/AccessibilityMenu'
 import { CartNavProvider } from './CartNavProvider'
 import { EntryPopup } from './EntryPopup'
@@ -95,7 +96,9 @@ export function ClientLayout() {
       <AccountProvider>
         <LeaveGuardProvider>
           <CartNavProvider>
-            <Shell />
+            <OrderSignalsProvider>
+              <Shell />
+            </OrderSignalsProvider>
           </CartNavProvider>
         </LeaveGuardProvider>
       </AccountProvider>

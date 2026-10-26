@@ -50,13 +50,13 @@ public static class AuditTrail
     /// review link tokens and bookkeeping flags. An update that changes nothing else writes no entry.
     /// </summary>
     private static readonly HashSet<string> SkippedFields =
-        ["DisplayOrder", "PublicId", "BackgroundImagePublicId", "Token", nameof(Settings.SiteDefaultsApplied)];
+        ["DisplayOrder", "PublicId", "BackgroundImagePublicId", "ImagePublicId", "Token", nameof(Settings.SiteDefaultsApplied)];
 
     /// <summary>Recorded as changed, never with their values.</summary>
     private static readonly HashSet<string> SecretFields = [nameof(Settings.AdminPasswordHash), nameof(Settings.OpsTokenHash), nameof(Settings.MetaAccessToken)];
 
     /// <summary>Properties that name an entity, tried in order.</summary>
-    private static readonly string[] LabelFields = ["Name", "Label", "DishName", "Phone", "Date", "Weekday"];
+    private static readonly string[] LabelFields = ["Name", "Label", "Title", "DishName", "Phone", "Date", "Weekday"];
 
     /// <summary>An entry waiting for its entity to be saved, so an added row's generated key can be read.</summary>
     public sealed class Pending(EntityEntry entry, AuditEntry audit)

@@ -11,7 +11,7 @@ function open(path = '/admin/appearance') {
     ...adminSession,
     'GET /api/admin/settings': () => saved,
     'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
-    'GET /api/admin/popup': () => ({ body: popup() }),
+    'GET /api/admin/popups': () => ({ body: [popup({ slot: 1 }), popup({ slot: 2 }), popup({ slot: 3 })] }),
     'GET /api/admin/social-links': () => [],
   })
   renderAt(path)

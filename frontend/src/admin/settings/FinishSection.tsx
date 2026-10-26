@@ -37,7 +37,7 @@ export function FinishSection() {
     setSaving(true)
     setError(null)
     try {
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, tileGroups: _tg, tracking: _tr, badges: _bd, ...current } = await settingsApi.get()
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, tileGroups: _tg, tracking: _tr, badges: _bd, inactiveAfter: _ia, ...current } = await settingsApi.get()
       const result = await settingsApi.save({ ...current, font: shown.font, shadows: shown.shadows, spacing: shown.spacing })
       setData(result)
       announceLook(result)
