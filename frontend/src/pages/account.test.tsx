@@ -95,12 +95,29 @@ describe('Login', () => {
 
     await submitPhone(user)
 
+    await user.click(await screen.findByRole('button', { name: 'כן, אמלא פרטים' }))
     await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
     expect(api.sent('POST', '/api/account/register')).toHaveLength(0)
     expect(screen.getByLabelText('אימייל (לא חובה)')).toBeInTheDocument()
     expect(screen.getByLabelText('תאריך לידה (לא חובה)')).toHaveAttribute('type', 'date')
 
     await user.click(screen.getByRole('button', { name: 'דילוג' }))
+
+    await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
+    expect(api.sent('PUT', '/api/account/me')).toHaveLength(0)
+  })
+
+  it('first asks whether to add details, and "not now" goes straight to the order page', async () => {
+    const { api, user } = open('/login', {
+      ...guest,
+      'POST /api/account/login': () => ({ profile: fresh, isNew: true }),
+    })
+    await screen.findByRole('heading', { name: 'התחברות' })
+    await submitPhone(user)
+
+    const dialog = await screen.findByRole('dialog', { name: 'החשבון שלכם מוכן' })
+    expect(screen.queryByLabelText('אימייל (לא חובה)')).not.toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'לא עכשיו, להזמנה' }))
 
     await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
     expect(api.sent('PUT', '/api/account/me')).toHaveLength(0)
@@ -114,6 +131,7 @@ describe('Login', () => {
     })
     await screen.findByRole('heading', { name: 'התחברות' })
     await submitPhone(user)
+    await user.click(await screen.findByRole('button', { name: 'כן, אמלא פרטים' }))
     await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
 
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
@@ -134,6 +152,7 @@ describe('Login', () => {
     })
     await screen.findByRole('heading', { name: 'התחברות' })
     await submitPhone(user)
+    await user.click(await screen.findByRole('button', { name: 'כן, אמלא פרטים' }))
     await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
     await user.type(screen.getByLabelText('אימייל (לא חובה)'), 'bad')
 

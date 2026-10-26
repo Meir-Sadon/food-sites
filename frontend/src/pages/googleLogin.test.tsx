@@ -67,6 +67,7 @@ describe('Sign in with Google', () => {
     await user.type(within(dialog).getByLabelText('טלפון'), '050-123-4567')
     await user.click(within(dialog).getByRole('button', { name: 'המשך' }))
 
+    await user.click(await screen.findByRole('button', { name: 'כן, אמלא פרטים' }))
     await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
     expect(screen.getByLabelText('שם מלא')).toHaveValue('דנה כהן')
     expect(api.sent('POST', '/api/account/google/register')[0].body).toMatchObject({

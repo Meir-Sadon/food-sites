@@ -167,6 +167,26 @@ function GetToKnowYou({ profile, onDone, onSaved }: { profile: Profile; onDone: 
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // First only a question, so a client who just wants to order is not met by a long form.
+  const [wantsForm, setWantsForm] = useState(false)
+
+  if (!wantsForm)
+    return (
+      <section>
+        <h1>{t('pages.login.title')}</h1>
+        <Modal title={t('account.getToKnow.askTitle')} onClose={onDone}>
+          <p>{t('account.getToKnow.ask')}</p>
+          <div className="row">
+            <button type="button" onClick={() => setWantsForm(true)}>
+              {t('account.getToKnow.yes')}
+            </button>
+            <button type="button" className="button-quiet" onClick={onDone}>
+              {t('account.getToKnow.no')}
+            </button>
+          </div>
+        </Modal>
+      </section>
+    )
 
   async function save(event: FormEvent) {
     event.preventDefault()
