@@ -625,6 +625,49 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("Feedback", (string)null);
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.GuestDetails", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Apartment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("HouseNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("SavedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.ToTable("GuestDetails");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.LoginCode", b =>
                 {
                     b.Property<int>("Id")
@@ -1476,6 +1519,54 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.UserAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Apartment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("HouseNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserAddresses");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.AddOnGroup", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
@@ -1774,6 +1865,17 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("SupplyDay");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.UserAddress", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.User", "User")
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.AddOnGroup", b =>
                 {
                     b.Navigation("AddOns");
@@ -1833,6 +1935,8 @@ namespace FoodSite.Api.Data.Migrations
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.User", b =>
                 {
+                    b.Navigation("Addresses");
+
                     b.Navigation("FavoriteOrders");
 
                     b.Navigation("Orders");

@@ -5,6 +5,7 @@ using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Phones;
 using FoodSite.Api.Sites;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -39,7 +40,26 @@ public class AccountController(
 
     private static readonly DateOnly EarliestBirthday = new(1900, 1, 1);
 
+    public const int MaxAddresses = UserAddress.MaxPerUser;
+    /// <summary>A guest's choice to keep their details is only taken for an order placed this recently.</summary>
+    public static readonly TimeSpan RememberWindow = TimeSpan.FromHours(2);
+
     public record LoginInput(string? Phone);
+
+    /// <summary>The client's session profile, and whether this login just made the account (the first time this phone came).</summary>
+    public record LoginDto(ProfileDto Profile, bool IsNew);
+
+    public record AddressInput(string? Label, string? City, string? Street, string? HouseNumber, string? Apartment, bool MakeDefault = false);
+
+    public record AddressDto(
+        int Id, string? Label, string City, string Street, string HouseNumber, string Apartment, string Address, bool IsDefault);
+
+    /// <summary>What a client chose to keep after an order (<see cref="OrderId"/> is the order that was just placed).</summary>
+    public record RememberInput(
+        int OrderId, string? Phone, string? Name, string? City, string? Street, string? HouseNumber, string? Apartment);
+
+    /// <summary>Whether the details were kept, and the profile when the client is logged in.</summary>
+    public record RememberDto(bool Saved, ProfileDto? Profile);
 
     public record GoogleInput(string? Credential);
 
@@ -64,7 +84,7 @@ public class AccountController(
 
     public record ProfileDto(
         int Id, string Phone, string FullName, string City, string Street, string HouseNumber, string Apartment,
-        string Address, string? Email, DateOnly? Birthday, string? EthnicBackground);
+        string Address, string? Email, DateOnly? Birthday, string? EthnicBackground, IReadOnlyList<AddressDto> Addresses);
 
     public record HistoryItemDto(
         int Id, int DishId, int? ParentItemId, string DishName, string? OptionLabel,
@@ -100,21 +120,39 @@ public class AccountController(
 
     // ---------- Login, registration, session ----------
 
+    /// <summary>
+    /// Login and registration are the same step: a phone number that has no account yet gets one right here, with
+    /// nothing else filled in (the client adds details afterwards, or never). Whatever a guest with this phone chose to
+    /// keep after an order starts the new account off.
+    /// </summary>
     [HttpPost("login")]
     [EnableRateLimiting(WriteRateLimitPolicy)]
-    public async Task<ActionResult<ProfileDto>> Login(LoginInput input, CancellationToken ct)
+    public async Task<ActionResult<LoginDto>> Login(LoginInput input, CancellationToken ct)
     {
         if (PhoneNumber.Normalize(input.Phone) is not { } phone)
             return Invalid(nameof(input.Phone), "phone");
 
-        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Phone == phone, ct);
+        var user = await WithAddresses(db.Users.AsNoTracking()).FirstOrDefaultAsync(u => u.Phone == phone, ct);
+        var isNew = user is null;
         if (user is null)
-            return NotFound(new { code = "notRegistered" });
+        {
+            user = await CreateUserAsync(phone, googleSub: null, ct);
+            if (user is null)
+            {
+                // Someone made the same account a moment ago.
+                user = await WithAddresses(db.Users.AsNoTracking()).FirstAsync(u => u.Phone == phone, ct);
+                isNew = false;
+            }
+        }
 
         StartSession(user.Id);
-        return ToDto(user);
+        return new LoginDto(ToDto(user), isNew);
     }
 
+    /// <summary>
+    /// Registers with the details in one go (the order page and the login page use <see cref="Login"/> and add
+    /// details afterwards); only the phone is required.
+    /// </summary>
     [HttpPost("register")]
     [EnableRateLimiting(WriteRateLimitPolicy)]
     public async Task<ActionResult<ProfileDto>> Register(ProfileInput input, CancellationToken ct)
@@ -125,26 +163,12 @@ public class AccountController(
             errors.Add(nameof(input.Phone), "phone");
         if (errors.Any)
             return Invalid(errors);
-
         if (await db.Users.AnyAsync(u => u.Phone == phone, ct))
             return Conflict("phoneTaken");
 
-        var user = new User { Phone = phone!, FullName = "", Address = "", CreatedAt = time.GetUtcNow() };
-        Apply(user, input);
-        db.Users.Add(user);
-        try
-        {
-            await db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateException)
-        {
-            // Someone registered the same phone a moment ago.
+        var user = await CreateUserAsync(phone!, googleSub: null, ct, input);
+        if (user is null)
             return Conflict("phoneTaken");
-        }
-
-        // Orders placed as a guest with this phone now belong to the new account.
-        await db.Orders.Where(o => o.UserId == null && o.Phone == phone)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.UserId, (int?)user.Id), ct);
 
         StartSession(user.Id);
         return ToDto(user);
@@ -164,10 +188,10 @@ public class AccountController(
         if (await googleVerifier.VerifyAsync(input.Credential ?? "", ct) is not { } identity)
             return Unauthorized(new { code = "googleInvalid" });
 
-        var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleSub == identity.Subject, ct);
+        var user = await WithAddresses(db.Users).FirstOrDefaultAsync(u => u.GoogleSub == identity.Subject, ct);
         if (user is null && VerifiedEmail(identity) is { } email)
         {
-            var matches = await db.Users
+            var matches = await WithAddresses(db.Users)
                 .Where(u => u.GoogleSub == null && u.Email != null && u.Email.ToLower() == email.ToLower())
                 .Take(2).ToListAsync(ct);
             // Two accounts with this email: not sure which is theirs, so register instead of guessing.
@@ -217,21 +241,9 @@ public class AccountController(
         if (await db.Users.AnyAsync(u => u.Phone == phone, ct))
             return Conflict("phoneTaken");
 
-        var user = new User { Phone = phone!, FullName = "", Address = "", CreatedAt = time.GetUtcNow(), GoogleSub = identity.Subject };
-        Apply(user, profile);
-        user.Email ??= VerifiedEmail(identity);
-        db.Users.Add(user);
-        try
-        {
-            await db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateException)
-        {
+        var user = await CreateUserAsync(phone!, identity.Subject, ct, profile, VerifiedEmail(identity));
+        if (user is null)
             return Conflict("phoneTaken");
-        }
-
-        await db.Orders.Where(o => o.UserId == null && o.Phone == phone)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.UserId, (int?)user.Id), ct);
 
         StartSession(user.Id);
         return ToDto(user);
@@ -274,6 +286,7 @@ public class AccountController(
 
         user.Phone = phone!;
         Apply(user, input);
+        AddAddress(user, null, input.City, input.Street, input.HouseNumber, input.Apartment, makeDefault: false, time.GetUtcNow());
         try
         {
             await db.SaveChangesAsync(ct);
@@ -283,6 +296,174 @@ public class AccountController(
             return Conflict("phoneTaken");
         }
         return ToDto(user);
+    }
+
+    // ---------- Addresses ----------
+
+    [HttpGet("addresses")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    public async Task<IReadOnlyList<AddressDto>> Addresses(CancellationToken ct)
+    {
+        var userId = CurrentUserId();
+        var addresses = await db.UserAddresses.AsNoTracking().Where(a => a.UserId == userId).ToListAsync(ct);
+        return Sorted(addresses).Select(ToDto).ToList();
+    }
+
+    /// <summary>Adds an address. The first one is the default; <c>MakeDefault</c> makes a later one the default.</summary>
+    [HttpPost("addresses")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    [EnableRateLimiting(WriteRateLimitPolicy)]
+    public async Task<ActionResult<ProfileDto>> AddAddress(AddressInput input, CancellationToken ct)
+    {
+        var errors = ValidateAddress(input);
+        if (errors.Any)
+            return Invalid(errors);
+
+        var user = await CurrentUserAsync(tracking: true, ct);
+        if (user is null)
+            return Unauthorized();
+        if (user.Addresses.Count >= MaxAddresses)
+            return Invalid(nameof(input.Street), "tooManyAddresses");
+        if (user.Addresses.Any(a => a.Address == ComposeOf(input)))
+            return Invalid(nameof(input.Street), "duplicate");
+
+        AddAddress(user, input.Label, input.City, input.Street, input.HouseNumber, input.Apartment, input.MakeDefault, time.GetUtcNow());
+        await db.SaveChangesAsync(ct);
+        return ToDto(user);
+    }
+
+    [HttpPut("addresses/{id:int}")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    [EnableRateLimiting(WriteRateLimitPolicy)]
+    public async Task<ActionResult<ProfileDto>> UpdateAddress(int id, AddressInput input, CancellationToken ct)
+    {
+        var errors = ValidateAddress(input);
+        if (errors.Any)
+            return Invalid(errors);
+
+        var user = await CurrentUserAsync(tracking: true, ct);
+        if (user is null)
+            return Unauthorized();
+        if (user.Addresses.FirstOrDefault(a => a.Id == id) is not { } address)
+            return NotFound();
+        if (user.Addresses.Any(a => a.Id != id && a.Address == ComposeOf(input)))
+            return Invalid(nameof(input.Street), "duplicate");
+
+        address.Label = Clean(input.Label);
+        address.City = input.City!.Trim();
+        address.Street = input.Street!.Trim();
+        address.HouseNumber = input.HouseNumber!.Trim();
+        address.Apartment = input.Apartment?.Trim() ?? "";
+        address.Address = AddressFormat.Compose(address.City, address.Street, address.HouseNumber, address.Apartment);
+        if (input.MakeDefault)
+            SetDefault(user, address);
+        SyncDefault(user);
+        await db.SaveChangesAsync(ct);
+        return ToDto(user);
+    }
+
+    [HttpPut("addresses/{id:int}/default")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    [EnableRateLimiting(WriteRateLimitPolicy)]
+    public async Task<ActionResult<ProfileDto>> MakeDefaultAddress(int id, CancellationToken ct)
+    {
+        var user = await CurrentUserAsync(tracking: true, ct);
+        if (user is null)
+            return Unauthorized();
+        if (user.Addresses.FirstOrDefault(a => a.Id == id) is not { } address)
+            return NotFound();
+
+        SetDefault(user, address);
+        SyncDefault(user);
+        await db.SaveChangesAsync(ct);
+        return ToDto(user);
+    }
+
+    /// <summary>Deletes an address; when it was the default, the oldest of the rest takes over.</summary>
+    [HttpDelete("addresses/{id:int}")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    [EnableRateLimiting(WriteRateLimitPolicy)]
+    public async Task<ActionResult<ProfileDto>> DeleteAddress(int id, CancellationToken ct)
+    {
+        var user = await CurrentUserAsync(tracking: true, ct);
+        if (user is null)
+            return Unauthorized();
+        if (user.Addresses.FirstOrDefault(a => a.Id == id) is not { } address)
+            return NotFound();
+
+        user.Addresses.Remove(address);
+        db.UserAddresses.Remove(address);
+        if (address.IsDefault && user.Addresses.OrderBy(a => a.CreatedAt).ThenBy(a => a.Id).FirstOrDefault() is { } next)
+            next.IsDefault = true;
+        SyncDefault(user);
+        await db.SaveChangesAsync(ct);
+        return ToDto(user);
+    }
+
+    // ---------- Keeping details after an order ----------
+
+    /// <summary>
+    /// After an order the client says "keep my details for next time". A logged-in client gets them on their account
+    /// (the name if it was empty, the address among their addresses). A guest with no account is remembered by phone,
+    /// and the account made for that phone later starts from it. The order has to be real, recent and for the same phone;
+    /// a phone that already has an account is not written to by someone who is not logged in as it.
+    /// </summary>
+    [HttpPost("remember")]
+    [EnableRateLimiting(WriteRateLimitPolicy)]
+    public async Task<ActionResult<RememberDto>> Remember(RememberInput input, CancellationToken ct)
+    {
+        if (PhoneNumber.Normalize(input.Phone) is not { } phone)
+            return Invalid(nameof(input.Phone), "phone");
+        var errors = new Errors();
+        errors.Text(nameof(input.Name), input.Name, NameMaxLength);
+        errors.Text(nameof(input.City), input.City, AddressFormat.PartMaxLength);
+        errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength);
+        errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength);
+        errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
+        var hasAddress = new[] { input.City, input.Street, input.HouseNumber }.All(p => !string.IsNullOrWhiteSpace(p));
+        if (!hasAddress && new[] { input.City, input.Street, input.HouseNumber }.Any(p => !string.IsNullOrWhiteSpace(p)))
+            errors.Add(nameof(input.Street), "required");
+        if (errors.Any)
+            return Invalid(errors);
+
+        var since = time.GetUtcNow() - RememberWindow;
+        if (!await db.Orders.AnyAsync(o => o.Id == input.OrderId && o.Phone == phone && o.CreatedAt >= since, ct))
+            return NotFound();
+
+        var session = await HttpContext.AuthenticateAsync(UserTokenService.Scheme);
+        var userId = session.Succeeded && int.TryParse(session.Principal!.FindFirst("sub")?.Value, out var id) ? id : (int?)null;
+        var user = await WithAddresses(db.Users).FirstOrDefaultAsync(u => u.Phone == phone, ct);
+        if (user is not null)
+        {
+            if (user.Id != userId)
+                return new RememberDto(false, null);
+            if (user.FullName == "" && Clean(input.Name) is { } name)
+                user.FullName = name.Length <= NameMaxLength ? name : name[..NameMaxLength];
+            if (hasAddress && !user.Addresses.Any(a => a.Address == AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment))
+                && user.Addresses.Count < MaxAddresses)
+                AddAddress(user, null, input.City, input.Street, input.HouseNumber, input.Apartment, makeDefault: false, time.GetUtcNow());
+            await db.SaveChangesAsync(ct);
+            return new RememberDto(true, ToDto(user));
+        }
+
+        var guest = await db.GuestDetails.FirstOrDefaultAsync(g => g.Phone == phone, ct);
+        if (guest is null)
+            db.GuestDetails.Add(guest = new GuestDetails { Phone = phone });
+        guest.FullName = Clean(input.Name) ?? "";
+        guest.City = hasAddress ? input.City!.Trim() : "";
+        guest.Street = hasAddress ? input.Street!.Trim() : "";
+        guest.HouseNumber = hasAddress ? input.HouseNumber!.Trim() : "";
+        guest.Apartment = hasAddress ? input.Apartment?.Trim() ?? "" : "";
+        guest.SavedAt = time.GetUtcNow();
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Another save for this phone landed first; either copy is fine.
+        }
+        return new RememberDto(true, null);
     }
 
     // ---------- Order history ----------
@@ -459,8 +640,98 @@ public class AccountController(
     private async Task<User?> CurrentUserAsync(bool tracking, CancellationToken ct)
     {
         var id = CurrentUserId();
-        var users = tracking ? db.Users : db.Users.AsNoTracking();
+        var users = WithAddresses(tracking ? db.Users : db.Users.AsNoTracking());
         return await users.FirstOrDefaultAsync(u => u.Id == id, ct);
+    }
+
+    private static IQueryable<User> WithAddresses(IQueryable<User> users) => users.Include(u => u.Addresses);
+
+    /// <summary>
+    /// A new account for a phone, started from what a guest with that phone kept (and from the profile the client gave,
+    /// if any). Null when the phone was taken in the meantime. Orders placed as a guest with this phone now belong to it.
+    /// </summary>
+    private async Task<User?> CreateUserAsync(string phone, string? googleSub, CancellationToken ct, ProfileInput? profile = null, string? email = null)
+    {
+        var now = time.GetUtcNow();
+        var user = new User { Phone = phone, FullName = "", Address = "", CreatedAt = now, GoogleSub = googleSub };
+        if (profile is not null)
+            Apply(user, profile);
+        user.Email ??= email;
+
+        var guest = await db.GuestDetails.FirstOrDefaultAsync(g => g.Phone == phone, ct);
+        if (guest is not null)
+        {
+            if (user.FullName == "")
+                user.FullName = guest.FullName;
+            if (guest.Street != "")
+                AddAddress(user, null, guest.City, guest.Street, guest.HouseNumber, guest.Apartment, makeDefault: false, now);
+            db.GuestDetails.Remove(guest);
+        }
+        if (profile is not null)
+            AddAddress(user, null, profile.City, profile.Street, profile.HouseNumber, profile.Apartment, makeDefault: true, now);
+
+        db.Users.Add(user);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            db.ChangeTracker.Clear();
+            return null;
+        }
+
+        await db.Orders.Where(o => o.UserId == null && o.Phone == phone)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.UserId, (int?)user.Id), ct);
+        return user;
+    }
+
+    private static string ComposeOf(AddressInput input) =>
+        AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment);
+
+    private static IEnumerable<UserAddress> Sorted(IEnumerable<UserAddress> addresses) =>
+        addresses.OrderByDescending(a => a.IsDefault).ThenBy(a => a.CreatedAt).ThenBy(a => a.Id);
+
+    private static void SetDefault(User user, UserAddress address)
+    {
+        foreach (var other in user.Addresses)
+            other.IsDefault = other == address;
+    }
+
+    /// <summary>Keeps one default among the addresses and the address columns of <see cref="User"/> equal to it.</summary>
+    private static void SyncDefault(User user)
+    {
+        var chosen = user.Addresses.FirstOrDefault(a => a.IsDefault)
+            ?? user.Addresses.OrderBy(a => a.CreatedAt).ThenBy(a => a.Id).FirstOrDefault();
+        foreach (var address in user.Addresses)
+            address.IsDefault = address == chosen;
+        user.City = chosen?.City ?? "";
+        user.Street = chosen?.Street ?? "";
+        user.HouseNumber = chosen?.HouseNumber ?? "";
+        user.Apartment = chosen?.Apartment ?? "";
+        user.Address = chosen?.Address ?? "";
+    }
+
+    /// <summary>Adds an address unless the user has it already (or the parts are empty); the first one is the default.</summary>
+    private static void AddAddress(
+        User user, string? label, string? city, string? street, string? houseNumber, string? apartment, bool makeDefault, DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(street) || string.IsNullOrWhiteSpace(houseNumber))
+            return;
+        var composed = AddressFormat.Compose(city, street, houseNumber, apartment);
+        var existing = user.Addresses.FirstOrDefault(a => a.Address == composed);
+        if (existing is null)
+        {
+            existing = new UserAddress
+            {
+                City = city.Trim(), Street = street.Trim(), HouseNumber = houseNumber.Trim(), Apartment = apartment?.Trim() ?? "",
+                Address = composed, Label = Clean(label), CreatedAt = now,
+            };
+            user.Addresses.Add(existing);
+        }
+        if (makeDefault || user.Addresses.Count == 1)
+            SetDefault(user, existing);
+        SyncDefault(user);
     }
 
     private void StartSession(int userId)
@@ -483,16 +754,23 @@ public class AccountController(
         DishRules.Pricing(dish) is var pricing && pricing.ChoiceMode == ChoiceMode.Free
             ? null : pricing.Options.FirstOrDefault(o => o.Label == label)?.Id;
 
+    /// <summary>Nothing is required but the phone; an address, once started, needs its city, street and house number.</summary>
     private static Errors Validate(ProfileInput input)
     {
         var errors = new Errors();
-        errors.Text(nameof(input.FullName), input.FullName, NameMaxLength, required: true);
-        errors.Text(nameof(input.City), input.City, AddressFormat.PartMaxLength, required: true);
-        errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength, required: true);
-        errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength, required: true);
+        errors.Text(nameof(input.FullName), input.FullName, NameMaxLength);
+        errors.Text(nameof(input.City), input.City, AddressFormat.PartMaxLength);
+        errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength);
+        errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength);
         errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
         errors.Text(nameof(input.Email), input.Email, EmailMaxLength);
         errors.Text(nameof(input.EthnicBackground), input.EthnicBackground, EthnicBackgroundMaxLength);
+        if (new[] { input.City, input.Street, input.HouseNumber, input.Apartment }.Any(p => !string.IsNullOrWhiteSpace(p)))
+        {
+            if (string.IsNullOrWhiteSpace(input.City)) errors.Add(nameof(input.City), "required");
+            if (string.IsNullOrWhiteSpace(input.Street)) errors.Add(nameof(input.Street), "required");
+            if (string.IsNullOrWhiteSpace(input.HouseNumber)) errors.Add(nameof(input.HouseNumber), "required");
+        }
         if (!string.IsNullOrWhiteSpace(input.Email) && !ContactsController.LooksLikeEmail(input.Email.Trim()))
             errors.Add(nameof(input.Email), "email");
         if (input.Birthday is { } birthday
@@ -501,21 +779,32 @@ public class AccountController(
         return errors;
     }
 
+    private static Errors ValidateAddress(AddressInput input)
+    {
+        var errors = new Errors();
+        errors.Text(nameof(input.Label), input.Label, UserAddress.LabelMaxLength);
+        errors.Text(nameof(input.City), input.City, AddressFormat.PartMaxLength, required: true);
+        errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength, required: true);
+        errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength, required: true);
+        errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
+        return errors;
+    }
+
+    /// <summary>The personal details; the address (the parts, if sent) is added with <see cref="AddAddress"/>.</summary>
     private static void Apply(User user, ProfileInput input)
     {
-        user.FullName = input.FullName!.Trim();
-        user.City = input.City!.Trim();
-        user.Street = input.Street!.Trim();
-        user.HouseNumber = input.HouseNumber!.Trim();
-        user.Apartment = input.Apartment?.Trim() ?? "";
-        user.Address = AddressFormat.Compose(user.City, user.Street, user.HouseNumber, user.Apartment);
+        user.FullName = input.FullName?.Trim() ?? "";
         user.Email = Clean(input.Email);
         user.Birthday = input.Birthday;
         user.EthnicBackground = Clean(input.EthnicBackground);
     }
 
+    private static AddressDto ToDto(UserAddress a) =>
+        new(a.Id, a.Label, a.City, a.Street, a.HouseNumber, a.Apartment, a.Address, a.IsDefault);
+
     private static ProfileDto ToDto(User u) =>
-        new(u.Id, u.Phone, u.FullName, u.City, u.Street, u.HouseNumber, u.Apartment, u.Address, u.Email, u.Birthday, u.EthnicBackground);
+        new(u.Id, u.Phone, u.FullName, u.City, u.Street, u.HouseNumber, u.Apartment, u.Address, u.Email, u.Birthday, u.EthnicBackground,
+            Sorted(u.Addresses).Select(ToDto).ToList());
 
     private static FavoriteDto ToDto(FavoriteOrder f) =>
         new(f.Id, f.Name, f.Items.Select(i => new FavoriteItemDto(

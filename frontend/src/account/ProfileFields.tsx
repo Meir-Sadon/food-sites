@@ -11,9 +11,11 @@ interface Props {
   errors: FieldErrors
   /** Prefix for the input ids, so two forms on a page never clash. */
   idPrefix: string
+  /** The profile page keeps addresses in their own section, so its details form leaves them out. */
+  showAddress?: boolean
 }
 
-export function ProfileFields({ form, onChange, errors, idPrefix }: Props) {
+export function ProfileFields({ form, onChange, errors, idPrefix, showAddress = true }: Props) {
   const { t } = useTranslation()
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
   const id = (name: string) => `${idPrefix}-${name}`
@@ -26,7 +28,6 @@ export function ProfileFields({ form, onChange, errors, idPrefix }: Props) {
           id={id('name')}
           autoComplete="name"
           maxLength={100}
-          required
           value={form.fullName}
           aria-describedby={id('name-error')}
           onChange={(e) => onChange({ fullName: e.target.value })}
@@ -34,7 +35,7 @@ export function ProfileFields({ form, onChange, errors, idPrefix }: Props) {
         <FieldError errors={errors} field="fullName" id={id('name-error')} />
       </span>
 
-      <AddressFields value={form} onChange={onChange} errors={errors} idPrefix={idPrefix} context="profile" />
+      {showAddress && <AddressFields value={form} onChange={onChange} errors={errors} idPrefix={idPrefix} context="profile" />}
 
       <span className="field">
         <label htmlFor={id('email')}>{t('account.email')}</label>

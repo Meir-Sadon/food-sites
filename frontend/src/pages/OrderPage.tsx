@@ -8,7 +8,9 @@ import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
 import { MapLinks } from '../components/MapLinks'
 import { AddressFields } from '../account/AddressFields'
-import { addressOf, formatAddress, hasAddress, isServiceCity, noAddress } from '../account/addressParts'
+import { addressOf, formatAddress, hasAddress, isServiceCity, noAddress, sameAddress, type AddressParts } from '../account/addressParts'
+import type { RememberInput } from '../api/account'
+import { SavedAddressPicker } from '../order/SavedAddressPicker'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useToast } from '../components/toast'
@@ -82,7 +84,7 @@ export function OrderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useAccount()
+  const { user, setUser } = useAccount()
   const site = useSite()
   const siteFailed = useSiteFailed()
   const reviewsOn = useFeature('reviews')
@@ -101,6 +103,8 @@ export function OrderPage() {
   const [submitting, setSubmitting] = useState(false)
   const [minimumAsked, setMinimumAsked] = useState(false)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
+  // What the client could keep for next time, asked about on the confirmation.
+  const [remember, setRemember] = useState<RememberInput | null>(null)
   const [leaveTo, setLeaveTo] = useState<{
     to: string
     proceed?: () => void | Promise<void>
@@ -502,6 +506,24 @@ export function OrderPage() {
   }
 
   /** `acceptTopUp`: the client agreed to be charged the minimum for an order under it. */
+  /** What to offer to keep after an order: a guest is always asked; a client only for a name or address their account lacks. */
+  function rememberOffer(orderId: number, phone: string): RememberInput | null {
+    const address = fulfillment === 'Delivery' ? addressOf(state) : noAddress()
+    const name = state.name.trim()
+    if (user) {
+      const newAddress = hasAddress(address) && !user.addresses.some((a) => sameAddress(a, address))
+      if (!newAddress && (user.fullName !== '' || name === '')) return null
+    }
+    return { orderId, phone, name, ...address }
+  }
+
+  /** The client picked one of their saved addresses (or "another"): the fee is worked out again for it. */
+  function pickSavedAddress(address: AddressParts) {
+    change(address)
+    setLocated(null)
+    setCalculations((n) => n + 1)
+  }
+
   async function submit(acceptTopUp: boolean) {
     setMinimumAsked(false)
     setErrors({})
@@ -550,6 +572,7 @@ export function OrderPage() {
       trackUsage('OrderSubmitted')
       trackMarketing({ name: 'Purchase', orderId: result.id, value: result.total })
       setConfirmation(result)
+      setRemember(rememberOffer(result.id, normalizedPhone))
     } catch (err) {
       const fieldErrors = fieldErrorsOf(err)
       setErrors(fieldErrors)
@@ -654,6 +677,10 @@ export function OrderPage() {
       </span>
 
       <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
+
+      {fulfillment === 'Delivery' && !!user?.addresses.length && (
+        <SavedAddressPicker addresses={user.addresses} value={state} onPick={pickSavedAddress} />
+      )}
 
       {fulfillment === 'Delivery' && (
         <AddressFields
@@ -1133,8 +1160,11 @@ export function OrderPage() {
         <SuccessDialog
           confirmation={confirmation}
           contactPhone={site.contact.phone}
+          remember={remember ?? undefined}
+          onRemembered={setUser}
           onClose={() => {
             setConfirmation(null)
+            setRemember(null)
             reset()
           }}
         />

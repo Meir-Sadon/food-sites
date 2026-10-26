@@ -5,6 +5,7 @@ import type { FieldErrors } from '../api/client'
 import { Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { ProfileFields } from '../account/ProfileFields'
+import { emptyAddress } from '../account/addressParts'
 import { formFromProfile, profileInput } from '../account/profileForm'
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
@@ -15,7 +16,7 @@ interface Props {
   onSaved: (profile: Profile) => void
 }
 
-/** The personal details, all editable. */
+/** The personal details, all editable. The addresses are in their own section. */
 export function DetailsSection({ user, onSaved }: Props) {
   const { t } = useTranslation()
   const formError = useFormErrorMessage()
@@ -40,7 +41,7 @@ export function DetailsSection({ user, onSaved }: Props) {
 
     setBusy(true)
     try {
-      const saved = await accountApi.update(profileInput(normalized, form))
+      const saved = await accountApi.update({ ...profileInput(normalized, form), ...emptyAddress() })
       onSaved(saved)
       setPhone(saved.phone)
       flash()
@@ -57,7 +58,7 @@ export function DetailsSection({ user, onSaved }: Props) {
       <h2 id="profile-details-title">{t('profile.details')}</h2>
       <form className="stack" onSubmit={handleSubmit} noValidate>
         <PhoneField phone={phone} onPhoneChange={setPhone} errors={errors} />
-        <ProfileFields form={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} errors={errors} idPrefix="profile" />
+        <ProfileFields form={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} errors={errors} idPrefix="profile" showAddress={false} />
         {error && <Status message={error} error />}
         <div className="row">
           <button type="submit" disabled={busy}>

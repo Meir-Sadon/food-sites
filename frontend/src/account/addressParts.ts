@@ -40,3 +40,9 @@ export const formatAddress = (source: AddressParts, apartmentLabel: (apartment: 
 /** Whether every required part of the address is filled in. */
 export const hasAddress = (source: AddressParts) =>
   [source.city, source.street, source.houseNumber].every((part) => part.trim() !== '')
+
+/** Whether two addresses are the same, ignoring spaces around the parts. */
+export const sameAddress = (a: AddressParts, b: AddressParts) => {
+  const [x, y] = [addressOf(a), addressOf(b)]
+  return x.city === y.city && x.street === y.street && x.houseNumber === y.houseNumber && x.apartment === y.apartment
+}

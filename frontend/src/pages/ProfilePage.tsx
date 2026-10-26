@@ -9,6 +9,7 @@ import { useAccount } from '../account/useAccount'
 import { useFeature, useSiteSettled } from '../site/useSite'
 import { loadDraft, saveDraft } from '../order/draft'
 import { emptyOrder, selectionsFromHistory } from '../order/model'
+import { AddressesSection } from '../profile/AddressesSection'
 import { DetailsSection } from '../profile/DetailsSection'
 import { FavoritesSection, RecommendationsSection } from '../profile/FavoritesSection'
 import { HistorySection } from '../profile/HistorySection'
@@ -80,6 +81,7 @@ function ProfileContent({ user, onSaved }: { user: Profile; onSaved: (profile: P
   return (
     <>
       <DetailsSection user={user} onSaved={onSaved} />
+      <AddressesSection user={user} onSaved={onSaved} />
       {orders.data ? (
         <HistorySection orders={orders.data} onReorder={reorder} onSaveFavorite={favoritesOn ? saveFavorite : undefined} />
       ) : (
