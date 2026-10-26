@@ -89,18 +89,15 @@ export function CartSheet({ selections, dishes, date, total, deliveryFee = 0, de
           })}
         </ul>
       )}
-      {(deliveryFee > 0 || deliveryDiscount > 0) && (
-        <p className="cart-sheet__total">
-          <span>
-            {t('order.deliveryFee')}
-            <DeliveryFeeNote discount={deliveryDiscount} free={deliveryFee <= 0} />
-          </span>{' '}
-          <strong className="numeric">{deliveryFee > 0 ? formatMoney(deliveryFee) : t('order.deliveryDiscount.freePrice')}</strong>
+      <p className="cart-sheet__total">
+        <span>{t('order.cart.total')}</span> <strong key={total} className="numeric cart-sheet__sum">{formatMoney(lines.length > 0 ? total : total - deliveryFee)}</strong>
+      </p>
+      {lines.length > 0 && (deliveryFee > 0 || deliveryDiscount > 0) && (
+        <p className="cart-sheet__delivery">
+          {deliveryFee > 0 ? t('order.includesDelivery', { amount: formatMoney(deliveryFee) }) : t('order.deliveryDiscount.freePrice')}
+          <DeliveryFeeNote discount={deliveryDiscount} free={deliveryFee <= 0} />
         </p>
       )}
-      <p className="cart-sheet__total">
-        <span>{t('order.cart.total')}</span> <strong key={total} className="numeric cart-sheet__sum">{formatMoney(total)}</strong>
-      </p>
       <div className="modal__actions cart-sheet__actions">
         {lines.length > 0 && (
           <button type="button" onClick={onContinue}>

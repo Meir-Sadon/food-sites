@@ -1638,6 +1638,7 @@
     "pickup": "איסוף עצמי",
     "deliveryArea": "אזור המשלוחים",
     "deliveryFee": "דמי משלוח",
+    "includesDelivery": "כולל משלוח {{amount}}",
     "deliveryDiscount": {
       "free": "(הנחת משלוח בהזמנה גדולה)",
       "partial": "(כולל הנחת משלוח של {{amount}} בהזמנה גדולה)",

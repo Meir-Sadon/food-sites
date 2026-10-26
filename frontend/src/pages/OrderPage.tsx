@@ -1028,9 +1028,14 @@ export function OrderPage() {
               <span className="total-bar__counts">{counts}</span>
             )
           })()}
-          <strong className="numeric" aria-live="polite">
-            {t('order.total')}: {formatMoney(total)}
-          </strong>
+          <span className="total-bar__sum" aria-live="polite">
+            <strong className="numeric">
+              {t('order.total')}: {formatMoney(count > 0 ? total : itemsTotal)}
+            </strong>
+            {count > 0 && deliveryFee > 0 && (
+              <small className="total-bar__delivery numeric">{t('order.includesDelivery', { amount: formatMoney(deliveryFee) })}</small>
+            )}
+          </span>
           {(totalPosition === 'side' || (deferred && !detailsOpen)) && (
             <button type="button" className="total-bar__details" onClick={goToDetails}>
               {t('order.toDetails')}
