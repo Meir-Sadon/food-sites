@@ -72,3 +72,13 @@ describe('Sign in with Google', () => {
     })
   })
 })
+
+describe('Privacy page', () => {
+  it('has an address of its own, and mentions Google sign-in only when it is set up', async () => {
+    const api = fakeApi({ ...publicApi, 'GET /api/site': () => site({ googleClientId: 'client-id' }), ...guest } as Routes)
+    renderAt('/privacy')
+    await screen.findByRole('heading', { level: 1, name: /תנאי/ })
+    expect(await screen.findByText(/חשבון Google/)).toBeInTheDocument()
+    expect(api.sent('GET', '/api/site').length).toBeGreaterThan(0)
+  })
+})
