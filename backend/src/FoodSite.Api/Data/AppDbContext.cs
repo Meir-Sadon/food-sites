@@ -27,6 +27,7 @@ public class AppDbContext(
     public DbSet<DishGroup> DishGroups => Set<DishGroup>();
     public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
     public DbSet<SocialLink> SocialLinks => Set<SocialLink>();
+    public DbSet<PopupSlot> PopupSlots => Set<PopupSlot>();
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<User> Users => Set<User>();
@@ -187,6 +188,19 @@ public class AppDbContext(
             e.Property(l => l.Kind).HasMaxLength(20).IsRequired();
             e.Property(l => l.Label).HasMaxLength(SocialLink.LabelMaxLength);
             e.Property(l => l.Url).HasMaxLength(SocialLink.UrlMaxLength).IsRequired();
+        });
+
+        model.Entity<PopupSlot>(e =>
+        {
+            e.ToTable("Popups");
+            e.HasKey(p => p.Slot);
+            e.Property(p => p.Slot).ValueGeneratedNever();
+            e.Property(p => p.Title).HasMaxLength(Popup.EntryPopup.TitleMaxLength);
+            e.Property(p => p.Body).HasMaxLength(Popup.EntryPopup.BodyMaxLength);
+            e.Property(p => p.ButtonText).HasMaxLength(Popup.EntryPopup.ButtonTextMaxLength);
+            e.Property(p => p.ButtonUrl).HasMaxLength(Popup.EntryPopup.ButtonUrlMaxLength);
+            e.Property(p => p.MinTotal).HasPrecision(10, 2);
+            e.Property(p => p.MaxTotal).HasPrecision(10, 2);
         });
 
         model.Entity<DishGroup>(e =>

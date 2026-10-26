@@ -1,4 +1,5 @@
 using FoodSite.Api.Data;
+using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Images;
 using FoodSite.Api.Popup;
 using FoodSite.Api.Sites;
@@ -9,19 +10,26 @@ using static FoodSite.Api.Controllers.Admin.Ordering;
 
 namespace FoodSite.Api.Controllers.Admin;
 
-/// <summary>The pop-up shown when a client opens the site. Its text and choices are saved together; its picture on its own.</summary>
-[Route("api/admin/popup")]
+/// <summary>
+/// The pop-ups shown when a client opens the site (up to <see cref="EntryPopup.MaxPopups"/>, one per slot). A slot's text,
+/// choices and conditions are saved together; its picture on its own.
+/// </summary>
+[Route("api/admin/popups")]
 public class PopupController(AppDbContext db, IImageStore images, IOptions<SiteOptions> site) : AdminControllerBase
 {
     public record PopupInput(
-        bool Enabled, string? Size, string? Frequency, string? Trigger, int? DelaySeconds, string? Title, string? Body, string? ButtonText, string? ButtonUrl);
+        bool Enabled, string? Size, string? Frequency, string? Trigger, int? DelaySeconds, string? Title, string? Body, string? ButtonText, string? ButtonUrl,
+        string? Login = null, string? Activity = null, string? OrderSource = null, bool? OrderTotal = null, decimal? MinTotal = null, decimal? MaxTotal = null);
 
     [HttpGet]
-    public async Task<EntryPopup.Dto> Get() => EntryPopup.Of(await db.Settings.AsNoTracking().SingleAsync());
+    public async Task<List<EntryPopup.Dto>> List() => EntryPopup.ForAdmin(await db.PopupSlots.AsNoTracking().ToListAsync());
 
-    [HttpPut]
-    public async Task<ActionResult<EntryPopup.Dto>> Update(PopupInput input)
+    [HttpPut("{slot:int}")]
+    public async Task<ActionResult<EntryPopup.Dto>> Update(int slot, PopupInput input)
     {
+        if (slot is < 1 or > EntryPopup.MaxPopups)
+            return NotFound();
+
         var errors = new Errors();
         if (!string.IsNullOrWhiteSpace(input.Size) && !EntryPopup.Sizes.Contains(input.Size))
             errors.Add(nameof(input.Size), "invalid");
@@ -31,6 +39,18 @@ public class PopupController(AppDbContext db, IImageStore images, IOptions<SiteO
             errors.Add(nameof(input.Trigger), "invalid");
         if (input.DelaySeconds is < 0 or > EntryPopup.MaxDelaySeconds)
             errors.Add(nameof(input.DelaySeconds), "invalid");
+        if (!string.IsNullOrWhiteSpace(input.Login) && !EntryPopup.LoginChoices.Contains(input.Login))
+            errors.Add(nameof(input.Login), "invalid");
+        if (!string.IsNullOrWhiteSpace(input.Activity) && !EntryPopup.ActivityChoices.Contains(input.Activity))
+            errors.Add(nameof(input.Activity), "invalid");
+        if (!string.IsNullOrWhiteSpace(input.OrderSource) && !EntryPopup.OrderSources.Contains(input.OrderSource))
+            errors.Add(nameof(input.OrderSource), "invalid");
+        if (input.MinTotal is < 0m or > EntryPopup.MaxTotal)
+            errors.Add(nameof(input.MinTotal), "invalid");
+        if (input.MaxTotal is < 0m or > EntryPopup.MaxTotal)
+            errors.Add(nameof(input.MaxTotal), "invalid");
+        else if (input.MinTotal is > 0m && input.MaxTotal is > 0m && input.MinTotal >= input.MaxTotal)
+            errors.Add(nameof(input.MaxTotal), "invalid");
         // A draft can be saved while the pop-up is off; turning it on needs a title.
         errors.Text(nameof(input.Title), input.Title, EntryPopup.TitleMaxLength, required: input.Enabled);
         errors.Text(nameof(input.Body), input.Body, EntryPopup.BodyMaxLength);
@@ -55,25 +75,34 @@ public class PopupController(AppDbContext db, IImageStore images, IOptions<SiteO
         if (errors.Any)
             return Invalid(errors);
 
-        var settings = await db.Settings.SingleAsync();
-        settings.PopupEnabled = input.Enabled;
-        settings.PopupSize = EntryPopup.EffectiveSize(Clean(input.Size));
-        settings.PopupFrequency = EntryPopup.EffectiveFrequency(Clean(input.Frequency));
-        settings.PopupTrigger = EntryPopup.EffectiveTrigger(Clean(input.Trigger));
-        settings.PopupDelaySeconds = EntryPopup.EffectiveDelay(input.DelaySeconds);
-        settings.PopupTitle = Clean(input.Title);
-        settings.PopupBody = Clean(input.Body);
-        settings.PopupButtonText = text;
-        settings.PopupButtonUrl = url;
+        var popup = await FindOrAddAsync(slot, CancellationToken.None);
+        popup.Enabled = input.Enabled;
+        popup.Size = EntryPopup.EffectiveSize(Clean(input.Size));
+        popup.Frequency = EntryPopup.EffectiveFrequency(Clean(input.Frequency));
+        popup.Trigger = EntryPopup.EffectiveTrigger(Clean(input.Trigger));
+        popup.DelaySeconds = EntryPopup.EffectiveDelay(input.DelaySeconds);
+        popup.Title = Clean(input.Title);
+        popup.Body = Clean(input.Body);
+        popup.ButtonText = text;
+        popup.ButtonUrl = url;
+        popup.Login = EntryPopup.EffectiveChoice(Clean(input.Login), EntryPopup.LoginChoices);
+        popup.Activity = EntryPopup.EffectiveChoice(Clean(input.Activity), EntryPopup.ActivityChoices);
+        popup.OrderSource = EntryPopup.EffectiveChoice(Clean(input.OrderSource), EntryPopup.OrderSources);
+        popup.OrderTotal = input.OrderTotal ?? false;
+        // Zero (or empty) means no limit on that side.
+        popup.MinTotal = popup.OrderTotal && input.MinTotal is > 0m ? decimal.Round(input.MinTotal.Value, 2) : null;
+        popup.MaxTotal = popup.OrderTotal && input.MaxTotal is > 0m ? decimal.Round(input.MaxTotal.Value, 2) : null;
         await db.SaveChangesAsync();
-        return EntryPopup.Of(settings);
+        return EntryPopup.Of(popup);
     }
 
-    [HttpPut("image")]
+    [HttpPut("{slot:int}/image")]
     [RequestSizeLimit(ImageUploadRules.MaxRequestBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = ImageUploadRules.MaxRequestBytes)]
-    public async Task<ActionResult<EntryPopup.Dto>> UploadImage(IFormFile? file, CancellationToken ct)
+    public async Task<ActionResult<EntryPopup.Dto>> UploadImage(int slot, IFormFile? file, CancellationToken ct)
     {
+        if (slot is < 1 or > EntryPopup.MaxPopups)
+            return NotFound();
         if (ImageUploadRules.Validate(file) is { } code)
             return Invalid("file", code);
 
@@ -88,28 +117,43 @@ public class PopupController(AppDbContext db, IImageStore images, IOptions<SiteO
             return ImageStoreUnavailable(e);
         }
 
-        var settings = await db.Settings.SingleAsync(ct);
-        var previous = settings.PopupImagePublicId;
-        settings.PopupImageUrl = stored.Url;
-        settings.PopupImagePublicId = stored.PublicId;
+        var popup = await FindOrAddAsync(slot, ct);
+        var previous = popup.ImagePublicId;
+        popup.ImageUrl = stored.Url;
+        popup.ImagePublicId = stored.PublicId;
         await db.SaveChangesAsync(ct);
 
         if (previous is not null)
             await images.DeleteAsync(previous, ct);
-        return EntryPopup.Of(settings);
+        return EntryPopup.Of(popup);
     }
 
-    [HttpDelete("image")]
-    public async Task<ActionResult<EntryPopup.Dto>> RemoveImage(CancellationToken ct)
+    [HttpDelete("{slot:int}/image")]
+    public async Task<ActionResult<EntryPopup.Dto>> RemoveImage(int slot, CancellationToken ct)
     {
-        var settings = await db.Settings.SingleAsync(ct);
-        var previous = settings.PopupImagePublicId;
-        settings.PopupImageUrl = null;
-        settings.PopupImagePublicId = null;
+        if (slot is < 1 or > EntryPopup.MaxPopups)
+            return NotFound();
+
+        var popup = await FindOrAddAsync(slot, ct);
+        var previous = popup.ImagePublicId;
+        popup.ImageUrl = null;
+        popup.ImagePublicId = null;
         await db.SaveChangesAsync(ct);
 
         if (previous is not null)
             await images.DeleteAsync(previous, ct);
-        return EntryPopup.Of(settings);
+        return EntryPopup.Of(popup);
+    }
+
+    /// <summary>The slot's row; a slot nobody saved yet gets one (turned off) so its picture can be kept.</summary>
+    private async Task<PopupSlot> FindOrAddAsync(int slot, CancellationToken ct)
+    {
+        var popup = await db.PopupSlots.SingleOrDefaultAsync(p => p.Slot == slot, ct);
+        if (popup is null)
+        {
+            popup = new PopupSlot { Slot = slot };
+            db.PopupSlots.Add(popup);
+        }
+        return popup;
     }
 }

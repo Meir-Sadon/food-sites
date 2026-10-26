@@ -80,6 +80,14 @@ export interface TrackingIds {
   metaServerEvents: boolean
 }
 
+/** After how long without an order a client is inactive (FoodSite.Api `ClientActivity`). */
+export const INACTIVE_UNITS = ['week', 'month'] as const
+export type InactiveUnit = (typeof INACTIVE_UNITS)[number]
+export interface InactiveAfter {
+  amount: number
+  unit: InactiveUnit
+}
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -139,8 +147,10 @@ export interface Site {
   tracking?: TrackingIds
   /** Which item badges ("new", "almost out") are on, and when they apply. */
   badges?: ItemBadges
-  /** The window shown when the site opens; missing while it is off. */
-  popup?: Popup | null
+  /** The pop-ups that are on and have something to say, in slot order; the page shows those whose conditions the visitor meets. */
+  popups?: Popup[]
+  /** After this long without an order a client counts as inactive. */
+  inactiveAfter?: InactiveAfter
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */

@@ -53,7 +53,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<SocialLinkDto>? SocialLinks = null,
         Tracking.Ids? Tracking = null,
         ItemBadges.Effective? Badges = null,
-        EntryPopup.Dto? Popup = null,
+        IReadOnlyList<EntryPopup.Dto>? Popups = null,
+        ClientActivity.Period? InactiveAfter = null,
         string? GoogleClientId = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
@@ -163,7 +164,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList(),
             Sites.Tracking.Of(s),
             ItemBadges.Of(s),
-            EntryPopup.ForClient(s),
+            EntryPopup.ForClient(await db.PopupSlots.AsNoTracking().ToListAsync()),
+            ClientActivity.Of(s),
             google.Value.IsConfigured ? google.Value.ClientId!.Trim() : null);
     }
 

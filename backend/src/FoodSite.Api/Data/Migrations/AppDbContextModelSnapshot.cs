@@ -917,6 +917,73 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PopupSlot", b =>
+                {
+                    b.Property<int>("Slot")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Activity")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)");
+
+                    b.Property<string>("ButtonText")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ButtonUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("DelaySeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Frequency")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImagePublicId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Login")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("MaxTotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("MinTotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("OrderSource")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("OrderTotal")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Size")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Trigger")
+                        .HasColumnType("text");
+
+                    b.HasKey("Slot");
+
+                    b.ToTable("Popups", (string)null);
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Recommendation", b =>
                 {
                     b.Property<int>("Id")
@@ -1146,6 +1213,12 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("GoogleTagManagerId")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("InactiveAfterAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("InactiveAfterUnit")
                         .HasColumnType("text");
 
                     b.Property<string>("KashrutText")

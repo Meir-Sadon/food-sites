@@ -16,7 +16,7 @@ function open() {
     'GET /api/admin/shabbat-rules': () => shabbatRules(),
     'GET /api/admin/closed-dates': () => [],
     'GET /api/admin/categories': () => [],
-    'GET /api/admin/popup': () => ({ body: popup() }),
+    'GET /api/admin/popups': () => ({ body: [popup({ slot: 1 }), popup({ slot: 2 }), popup({ slot: 3 })] }),
   })
   renderAt('/admin/appearance')
   return { api, user: userEvent.setup() }

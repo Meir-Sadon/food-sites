@@ -42,6 +42,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   spacing: 'standard',
   tileGroups: 'framed',
   deliveryPricing: 'simple',
+  inactiveAfter: { amount: 3, unit: 'month' },
   badges: { newEnabled: false, newAmount: 1, newUnit: 'week', lowStockEnabled: false, lowStockMode: 'percent', lowStockAmount: 20 },
   tracking: { metaPixelId: '', googleAnalyticsId: '', googleTagManagerId: '', tikTokPixelId: '', googleAdsId: '', googleAdsPurchaseLabel: '', metaServerEvents: false },
   ...patch,
@@ -215,6 +216,7 @@ export const groupedMenu = (): Menu => ({
 
 /** The entry pop-up as the admin sees it: off, with nothing filled in. */
 export const popup = (overrides: Partial<Popup> = {}): Popup => ({
+  slot: 1,
   enabled: false,
   size: 'medium',
   frequency: 'always',
@@ -225,6 +227,12 @@ export const popup = (overrides: Partial<Popup> = {}): Popup => ({
   imageUrl: null,
   buttonText: null,
   buttonUrl: null,
+  login: null,
+  activity: null,
+  orderSource: null,
+  orderTotal: false,
+  minTotal: null,
+  maxTotal: null,
   ...overrides,
 })
 
