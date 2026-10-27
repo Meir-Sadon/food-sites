@@ -30,6 +30,7 @@ public class AppDbContext(
     public DbSet<PopupSlot> PopupSlots => Set<PopupSlot>();
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
+    public DbSet<DishAvailabilityRule> DishAvailabilityRules => Set<DishAvailabilityRule>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
     public DbSet<GuestDetails> GuestDetails => Set<GuestDetails>();
@@ -231,6 +232,15 @@ public class AppDbContext(
             e.HasOne(q => q.Dish).WithMany(d => d.Questions)
                 .HasForeignKey(q => q.DishId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<DishAvailabilityRule>(e =>
+        {
+            e.HasOne(r => r.Dish).WithMany(d => d.AvailabilityRules)
+                .HasForeignKey(r => r.DishId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Ignore(r => r.WholeDay);
+            e.Ignore(r => r.End);
         });
 
         model.Entity<DishImage>(e =>

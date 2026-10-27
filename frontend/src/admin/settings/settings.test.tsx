@@ -451,6 +451,29 @@ describe('General settings', () => {
     expect(sent.find((d) => d.weekday === 'Sunday')?.hours).toEqual([])
   })
 
+  it('asks before saving new hours of a day that dishes are sold in specific hours of', async () => {
+    const api = fakeApi({
+      ...base,
+      'PUT /api/admin/supply-days': () => ({ status: 409, body: { code: 'dishAvailabilityAffected', dishes: [{ id: 1, name: 'חביתה' }, { id: 2, name: 'שקשוקה' }] } }),
+      'PUT /api/admin/supply-days\\?confirmed=true': (_, body) => body,
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const days = await section('ימי ושעות עבודה')
+
+    await user.click(within(days).getByRole('button', { name: 'הוספת טווח שעות לשישי' }))
+    await user.click(within(days).getByRole('button', { name: 'שמירה' }))
+
+    const warning = await within(days).findByRole('alert')
+    expect(warning).toHaveTextContent('חביתה, שקשוקה')
+    expect(screen.queryByText('נשמר.')).not.toBeInTheDocument()
+
+    await user.click(within(warning).getByRole('button', { name: 'שמירה בכל זאת' }))
+    await screen.findByText('נשמר.')
+    expect(api.sent('PUT', '/api/admin/supply-days?confirmed=true')).toHaveLength(1)
+    expect(within(days).queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   it('saves Shabbat and holiday rules by city', async () => {
     const api = fakeApi({
       ...base,

@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ChoiceMode, SellBy } from './catalog'
+import type { AvailabilityRule, ChoiceMode, SellBy } from './catalog'
 import type { Popup } from './popup'
 import type { SocialLink } from './social'
 
@@ -216,6 +216,8 @@ export interface MenuDish {
   isNew?: boolean
   /** The most that can be ordered per date (its own limit or the site's portion limit), the base of the "almost out" percentage. */
   limit?: number | null
+  /** The times the dish is sold; absent means whenever the business works. A variant is sold only when its main dish is too. */
+  availability?: AvailabilityRule[] | null
 }
 
 /** The "new" and "almost out" badges (FoodSite.Api `ItemBadges`): the admin's settings. */

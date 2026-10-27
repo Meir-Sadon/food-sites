@@ -55,7 +55,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         bool ShowOptionDifference = false,
         IReadOnlyList<string>? DietaryTags = null,
         bool DietaryTagsSingle = false,
-        bool OnSale = false);
+        bool OnSale = false,
+        IReadOnlyList<AvailabilityRuleDto>? Availability = null);
 
     public record QuestionDto(
         int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
@@ -107,6 +108,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     /// OptionsTitle is the heading over the fixed options ("בחרו גודל"), ShowOptionDifference shows each option on the
     /// order page as what it adds to the default option's price; both only matter for fixed options.
     /// DietaryTags, when sent, is the whole list of the dish's special-diet marks (ids in <c>DietaryTags.All</c>); left out, they stay. DietaryTagsSingle (sent with them) lets the client pick only one.
+    /// Availability, when sent, is the whole list of the times the dish is sold (a weekday, with From and To null for the whole day); empty means whenever the business works, left out they stay.
     /// CopyImagesFrom, on a new dish only, gives it the images of that dish (a copy of it); the picture files are shared.
     /// </summary>
     public record DishInput(
@@ -140,7 +142,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         bool ShowOptionDifference = false,
         List<string>? DietaryTags = null,
         bool DietaryTagsSingle = false,
-        bool? OnSale = null);
+        bool? OnSale = null,
+        List<AvailabilityRuleDto>? Availability = null);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -394,6 +397,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         await ValidateAddOnLinks(input, dish, errors);
         await ValidateOwnAddOns(input, dish, errors);
         ValidateQuestions(input, dish, errors);
+        DishAvailability.Validate(input.Availability, errors);
         if (input.CopyImagesFrom is { } sourceId && !await db.Dishes.AnyAsync(d => d.Id == sourceId))
             errors.Add(nameof(input.CopyImagesFrom), "notFound");
         return errors.Any ? Invalid(errors) : null;
@@ -656,6 +660,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             ApplyOwnAddOns(input.AddOnGroups ?? [], input.AddOns, dish);
         if (input.Questions is not null)
             ApplyQuestions(input.Questions, dish);
+        if (input.Availability is not null)
+            DishAvailability.Apply(input.Availability, dish);
     }
 
     // Questions keep their ids when edited, so an order page already open still matches them.
@@ -745,6 +751,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         .Include(d => d.AddOnOf)
         .Include(d => d.AddOnGroups)
         .Include(d => d.Questions)
+        .Include(d => d.AvailabilityRules)
         .AsSplitQuery();
 
     private Task<Dish?> LoadOrNull(int id) => WithDetails().SingleOrDefaultAsync(d => d.Id == id);
@@ -780,5 +787,6 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.ShowOptionDifference,
         d.DietaryTags,
         d.DietaryTagsSingle,
-        d.OnSale);
+        d.OnSale,
+        DishAvailability.ToDtos(d.AvailabilityRules));
 }

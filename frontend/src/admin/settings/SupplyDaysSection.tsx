@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supplyDaysApi, weekdays, type SupplyDay, type SupplyHours, type Weekday } from '../../api/catalog'
+import { ApiError } from '../../api/client'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
 import { useDirty, useUnsavedChanges } from '../unsaved'
@@ -15,6 +16,8 @@ export function SupplyDaysSection() {
   const [error, setError] = useState<string | null>(null)
   const { saved, flash } = useSavedFlash()
   const [saving, setSaving] = useState(false)
+  /** Dishes sold in specific hours of a weekday whose hours changed; set while the admin decides whether to save anyway. */
+  const [affectedDishes, setAffectedDishes] = useState<string[] | null>(null)
 
   function change(weekday: Weekday, patch: Partial<SupplyDay>) {
     setData((current) => current && current.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d)))
@@ -26,24 +29,32 @@ export function SupplyDaysSection() {
   }
 
   const { dirty, markSaved } = useDirty(days)
-  useUnsavedChanges(dirty, save)
+  useUnsavedChanges(dirty, () => save())
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     void save()
   }
 
-  async function save(): Promise<boolean> {
+  async function save(confirmed = false): Promise<boolean> {
     if (!days) return false
     setSaving(true)
     try {
-      const result = await supplyDaysApi.save(days)
+      const result = await supplyDaysApi.save(days, confirmed)
+      setAffectedDishes(null)
       setData(result)
       markSaved(result)
       setError(null)
       flash()
       return true
     } catch (err) {
+      if (err instanceof ApiError && err.code === 'dishAvailabilityAffected') {
+        const dishes = (err.body?.dishes ?? []) as { name: string }[]
+        setAffectedDishes(dishes.map((d) => d.name))
+        setError(null)
+        return false
+      }
+      setAffectedDishes(null)
       setError(errorMessage(err))
       return false
     } finally {
@@ -146,6 +157,19 @@ export function SupplyDaysSection() {
             <SavedNote show={saved} />
             {error && <Status message={error} error />}
           </div>
+          {affectedDishes !== null && (
+            <div className="warning" role="alert">
+              <p>{t('admin.settings.availabilityAffected', { names: affectedDishes.join(', ') })}</p>
+              <div className="row">
+                <button type="button" onClick={() => void save(true)}>
+                  {t('admin.dishes.saveAnyway')}
+                </button>
+                <button type="button" className="button-quiet" onClick={() => setAffectedDishes(null)}>
+                  {t('admin.cancel')}
+                </button>
+              </div>
+            </div>
+          )}
         </form>
       )}
     </Section>
