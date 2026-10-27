@@ -74,7 +74,7 @@ describe('Admin Contacts', () => {
     })
     renderAt('/admin/contacts')
     const user = userEvent.setup()
-    const list = await section('הודעות על הזמנות חדשות')
+    const list = await section("מספרים להתראות ולצ'אט בוואטסאפ")
     expect(within(list).getByText('0521111111')).toBeInTheDocument()
 
     await user.type(within(list).getByLabelText('טלפון'), '052-222-2222')
@@ -92,7 +92,7 @@ describe('Admin Contacts', () => {
     fakeApi({ ...base, 'POST /api/admin/notify-phones': () => invalid({ Phone: ['duplicate'] }) })
     renderAt('/admin/contacts')
     const user = userEvent.setup()
-    const list = await section('הודעות על הזמנות חדשות')
+    const list = await section("מספרים להתראות ולצ'אט בוואטסאפ")
 
     await user.type(within(list).getByLabelText('טלפון'), '0521111111')
     await user.click(within(list).getByRole('button', { name: 'הוספה' }))
