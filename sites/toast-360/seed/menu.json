@@ -1,0 +1,941 @@
+{
+ "categories": [
+  {
+   "name": "טוסטים",
+   "dishes": [
+    {
+     "name": "טוסט נקניק",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 40,
+     "description": "טוסט עם רטבים לבחירה ו-6 סוגי נקניקים לבחירה.",
+     "questions": [
+      {
+       "text": "נקניקים לבחירה (עד 6 סוגים)",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "רטבים לבחירה",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "לשרוף קצת את הטוסט?",
+       "kind": "YesNo",
+       "isRequired": false
+      }
+     ],
+     "addOnGroups": [
+      {
+       "name": "ירקות"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "עגבנייה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בצל",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "טוסט אקסטרא",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 45,
+     "description": "טוסט עם רטבים לבחירה ו-9 סוגי נקניקים לבחירה.",
+     "questions": [
+      {
+       "text": "נקניקים לבחירה (עד 9 סוגים)",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "רטבים לבחירה",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "לשרוף קצת את הטוסט?",
+       "kind": "YesNo",
+       "isRequired": false
+      }
+     ],
+     "addOnGroups": [
+      {
+       "name": "ירקות"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "עגבנייה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בצל",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "טוסט אסאדו",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 48,
+     "description": "טוסט עם רטבים לבחירה ואסאדו מפורק.",
+     "questions": [
+      {
+       "text": "רטבים לבחירה",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "לשרוף קצת את הטוסט?",
+       "kind": "YesNo",
+       "isRequired": false
+      }
+     ],
+     "addOnGroups": [
+      {
+       "name": "ירקות"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "עגבנייה",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      },
+      {
+       "dish": "בצל",
+       "price": 0,
+       "group": "ירקות",
+       "isCheckbox": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "המבורגר",
+   "dishes": [
+    {
+     "name": "המבורגר 180 גרם",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 55,
+     "description": "המבורגר בעשיית יד.",
+     "questions": [
+      {
+       "text": "רטבים לבחירה",
+       "kind": "Text",
+       "isRequired": false
+      }
+     ],
+     "addOnGroups": [
+      {
+       "name": "תוספות להמבורגר"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "אסאדו מפורק",
+       "price": 15,
+       "group": "תוספות להמבורגר",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ביצת עין",
+       "price": 6,
+       "group": "תוספות להמבורגר",
+       "isCheckbox": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "מנות עיקריות",
+   "dishes": [
+    {
+     "name": "טוסט נקניקייה / לחמנייה בנקניקייה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 30
+    },
+    {
+     "name": "קבב / מרגז",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 46,
+     "description": "קבב בבגט או מיקס קבב ומרגז.",
+     "questions": [
+      {
+       "text": "קבב או מיקס קבב ומרגז",
+       "kind": "SingleChoice",
+       "choices": [
+        "קבב",
+        "מיקס קבב ומרגז"
+       ],
+       "isRequired": true
+      }
+     ]
+    },
+    {
+     "name": "שניצלונים וציפס",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 50
+    },
+    {
+     "name": "שניצל",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 43,
+     "description": "שניצל בבגט עם סלטים לבחירה.",
+     "questions": [
+      {
+       "text": "סלטים לבחירה",
+       "kind": "Text",
+       "isRequired": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ארוחות",
+   "dishes": [
+    {
+     "name": "ארוחת המבורגר",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 70,
+     "description": "המבורגר 180 גרם, ציפס ושתיה.",
+     "addOnGroups": [
+      {
+       "name": "בחרו שתיה",
+       "maxUnits": 1
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "קולה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פאנטה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תותית",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תות בננה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מנגו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סודה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים ענבים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תפוזים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אקסל",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "ארוחת קבב / מרגז",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 68,
+     "description": "קבב או מרגז, ציפס ושתיה.",
+     "addOnGroups": [
+      {
+       "name": "בחרו שתיה",
+       "maxUnits": 1
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "קולה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פאנטה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תותית",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תות בננה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מנגו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סודה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים ענבים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תפוזים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אקסל",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "קבב או מיקס קבב ומרגז",
+       "kind": "SingleChoice",
+       "choices": [
+        "קבב",
+        "מיקס קבב ומרגז"
+       ],
+       "isRequired": true
+      }
+     ]
+    },
+    {
+     "name": "ארוחת שניצל",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 58,
+     "description": "שניצל, ציפס ושתיה.",
+     "addOnGroups": [
+      {
+       "name": "בחרו שתיה",
+       "maxUnits": 1
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "קולה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פאנטה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תותית",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תות בננה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מנגו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סודה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים ענבים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תפוזים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אקסל",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "ארוחת טוסט נקניק",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 55,
+     "description": "טוסט נקניק, נשנוש נקניקייה ושתיה.",
+     "addOnGroups": [
+      {
+       "name": "בחרו שתיה",
+       "maxUnits": 1
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "קולה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פאנטה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תותית",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תות בננה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מנגו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סודה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים ענבים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תפוזים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אקסל",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "נקניקים לבחירה (עד 6 סוגים)",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "רטבים לבחירה",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "לשרוף קצת את הטוסט?",
+       "kind": "YesNo",
+       "isRequired": false
+      }
+     ]
+    },
+    {
+     "name": "ארוחת טוסט אסאדו",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 65,
+     "description": "טוסט אסאדו, ציפס ושתיה.",
+     "addOnGroups": [
+      {
+       "name": "בחרו שתיה",
+       "maxUnits": 1
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "קולה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "קולה זירו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "ספרייט",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פאנטה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תותית",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תות בננה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מנגו",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אפרסק",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סודה",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מים ענבים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תפוזים",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "אקסל",
+       "price": 0,
+       "group": "בחרו שתיה",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "רטבים לבחירה",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "לשרוף קצת את הטוסט?",
+       "kind": "YesNo",
+       "isRequired": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "תוספות",
+   "dishes": [
+    {
+     "name": "ציפס",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 18,
+     "isSideDish": true,
+     "unitName": "מנה"
+    },
+    {
+     "name": "טבעות בצל",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 22,
+     "isSideDish": true,
+     "unitName": "מנה"
+    },
+    {
+     "name": "כדורי פירה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 22,
+     "isSideDish": true,
+     "unitName": "מנה"
+    }
+   ]
+  },
+  {
+   "name": "שתיה",
+   "dishes": [
+    {
+     "name": "קולה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "קולה זירו",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "ספרייט",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "פאנטה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "תותית",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "תות בננה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "מנגו",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "אפרסק",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "סודה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "מים",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "מים ענבים",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "תפוזים",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    },
+    {
+     "name": "אקסל",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 10
+    }
+   ]
+  },
+  {
+   "name": "תוספות לשימוש כתוספת בלבד",
+   "dishes": [
+    {
+     "name": "עגבנייה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "בצל",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "אסאדו מפורק",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 15,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "ביצת עין",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 6,
+     "isAddOnOnly": true
+    }
+   ]
+  }
+ ]
+}

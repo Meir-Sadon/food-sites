@@ -1,0 +1,20 @@
+/* The site's colour palette: toasted golden bread and deep chocolate brown on a warm light page (a stand-in until the logo arrives). Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #fbf3e6;
+  --color-surface: #ffffff;
+  --color-text: #2a1a0e;
+  --color-muted: #6b5644;
+  --color-accent: #b4521a;
+  --color-accent-hover: #8f3f12;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #d99a2b;
+  --color-border: #ead9c0;
+  --color-error: #b42318;
+  --color-success: #2f6b3a;
+  --color-soft: #f6e6cc;
+  --color-shadow: #2a1a0e;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(217 154 43 / 0.22);
+  --color-badge-text: #7a4a0c;
+  --gradient-hero: linear-gradient(135deg, #3a210f 0%, #8f3f12 60%, var(--color-gold) 160%);
+}
