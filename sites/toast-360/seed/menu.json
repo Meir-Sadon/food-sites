@@ -13,36 +13,6 @@
      "description": "טוסט עם רטבים לבחירה ו-6 סוגי נקניקים לבחירה.",
      "questions": [
       {
-       "text": "נקניק 1",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 2",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 3",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 4",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 5",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 6",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
        "text": "רטבים לבחירה",
        "kind": "Text",
        "isRequired": false
@@ -55,10 +25,50 @@
      ],
      "addOnGroups": [
       {
+       "name": "נקניקים",
+       "maxUnits": 6
+      },
+      {
        "name": "ירקות"
       }
      ],
      "addOns": [
+      {
+       "dish": "נקניק 1",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 2",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 3",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 4",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 5",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 6",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
       {
        "dish": "עגבנייה",
        "price": 0,
@@ -83,51 +93,6 @@
      "description": "טוסט עם רטבים לבחירה ו-9 סוגי נקניקים לבחירה.",
      "questions": [
       {
-       "text": "נקניק 1",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 2",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 3",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 4",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 5",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 6",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 7",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 8",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 9",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
        "text": "רטבים לבחירה",
        "kind": "Text",
        "isRequired": false
@@ -140,10 +105,68 @@
      ],
      "addOnGroups": [
       {
+       "name": "נקניקים",
+       "maxUnits": 9
+      },
+      {
        "name": "ירקות"
       }
      ],
      "addOns": [
+      {
+       "dish": "נקניק 1",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 2",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 3",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 4",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 5",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 6",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 7",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 8",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 9",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
       {
        "dish": "עגבנייה",
        "price": 0,
@@ -642,11 +665,51 @@
      "description": "טוסט נקניק, נשנוש נקניקייה ושתיה.",
      "addOnGroups": [
       {
+       "name": "נקניקים",
+       "maxUnits": 6
+      },
+      {
        "name": "בחרו שתיה",
        "maxUnits": 1
       }
      ],
      "addOns": [
+      {
+       "dish": "נקניק 1",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 2",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 3",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 4",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 5",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "נקניק 6",
+       "price": 0,
+       "group": "נקניקים",
+       "isCheckbox": true
+      },
       {
        "dish": "קולה",
        "price": 0,
@@ -727,36 +790,6 @@
       }
      ],
      "questions": [
-      {
-       "text": "נקניק 1",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 2",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 3",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 4",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 5",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
-       "text": "נקניק 6",
-       "kind": "Text",
-       "isRequired": false
-      },
       {
        "text": "רטבים לבחירה",
        "kind": "Text",
@@ -1025,6 +1058,87 @@
   {
    "name": "תוספות לשימוש כתוספת בלבד",
    "dishes": [
+    {
+     "name": "נקניק 1",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "נקניק 2",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "נקניק 3",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "נקניק 4",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "נקניק 5",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "נקניק 6",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "נקניק 7",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "נקניק 8",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "נקניק 9",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
     {
      "name": "עגבנייה",
      "sellBy": "Units",
