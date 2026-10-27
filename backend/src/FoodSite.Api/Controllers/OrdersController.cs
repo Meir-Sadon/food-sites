@@ -131,13 +131,19 @@ public class OrdersController(
             .Distinct().ToList();
         var dishes = await db.Dishes
             .Include(d => d.Category).Include(d => d.Options).Include(d => d.Questions).Include(d => d.AddOns).ThenInclude(a => a.Group)
+            .Include(d => d.AvailabilityRules)
+            .Include(d => d.MainDish).ThenInclude(m => m!.AvailabilityRules)
             .Include(d => d.MainDish).ThenInclude(m => m!.Options)
             .Include(d => d.MainDish).ThenInclude(m => m!.Questions)
             .Include(d => d.MainDish).ThenInclude(m => m!.AddOns).ThenInclude(a => a.Group)
             .AsSplitQuery()
             .Where(d => ids.Contains(d.Id))
             .ToDictionaryAsync(d => d.Id, ct);
-        var items = OrderBuilder.Build(input.Items, dishes, errors);
+        // The slot the client picked (the day itself when it has no hours), which decides what is sold.
+        var pickedSlot = hour is { } picked && openDate is not null
+            ? openDate.Hours.FirstOrDefault(h => h.From == picked && (h.Date ?? input.SupplyDate) == supplyDate)
+            : null;
+        var items = OrderBuilder.Build(input.Items, dishes, errors, openDate is null ? null : DishAvailability.Of(supplyDate, pickedSlot));
         var minimumApplies = input.FulfillmentMethod == FulfillmentMethod.Delivery || settings.MinimumOrderAppliesToPickup;
         // An order under the minimum is only sent when the client agreed to be charged the minimum.
         var minimumTopUp = 0m;

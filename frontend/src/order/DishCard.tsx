@@ -13,7 +13,7 @@ import { formatMoney, optionPriceText, priceText, unitLabel } from './format'
 import { Highlighted } from './Highlight'
 import { ImageCarousel } from './ImageCarousel'
 import { ImageViewer } from './ImageViewer'
-import { ItemBadges } from './ItemBadges'
+import { AvailabilityNote, ItemBadges } from './ItemBadges'
 import {
   addOnLabelled,
   addOnLink,
@@ -91,6 +91,7 @@ function DishDetails({ dish, nameId, variant, date }: { dish: MenuDish; nameId: 
           {t('order.allergens')}: {dish.allergenInfo}
         </p>
       )}
+      <AvailabilityNote dish={dish} />
     </>
   )
 }
@@ -409,6 +410,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
               <p className="dish__price">{priceText(dish, t)}</p>
               {dish.description && <p className="dish__description">{dish.description}</p>}
               {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+              <AvailabilityNote dish={dish} />
               {remaining !== null && remaining > 0 && (
                 <p className="muted">{t('order.remaining', { amount: `${number.format(remaining)}${unitName ? ` ${unitName}` : ''}` })}</p>
               )}
@@ -474,6 +476,7 @@ function DishGroupTile(props: GroupProps) {
             <div className="tile-dialog__info">
               {dish.description && <p className="dish__description">{dish.description}</p>}
               {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
+              <AvailabilityNote dish={dish} />
             </div>
           </div>
           <InTileDialog.Provider value>

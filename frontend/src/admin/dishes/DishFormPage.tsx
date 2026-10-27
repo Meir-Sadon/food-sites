@@ -7,10 +7,12 @@ import {
   categoriesApi,
   DIETARY_TAGS,
   dishesApi,
+  supplyDaysApi,
   type Category,
   type DietaryTag,
   type ChoiceMode,
   type Dish,
+  type SupplyDay,
   type DishInput,
   type SellBy,
 } from '../../api/catalog'
@@ -24,6 +26,8 @@ import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { useFeature } from '../../site/useSite'
 import { AddOnsSection } from './AddOnsSection'
 import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
+import { AvailabilitySection } from './AvailabilitySection'
+import { availabilityForm, availabilityInput, type AvailabilityForm } from './availabilityForm'
 import { QuestionsSection } from './QuestionsSection'
 import { questionsForm, questionsInput, type QuestionForm } from './questionForm'
 
@@ -68,6 +72,7 @@ interface DishForm {
   groups: GroupForm[]
   addOns: AddOnForm[]
   questions: QuestionForm[]
+  availability: AvailabilityForm
 }
 
 let nextKey = 1
@@ -86,6 +91,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       groups: [],
       addOns: [],
       questions: [],
+      availability: availabilityForm([]),
       name: '',
       categoryId: String(categories[0]?.id ?? ''),
       description: '',
@@ -138,6 +144,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     parentDishIds: dish.parentDishIds,
     ...addOnsForm(dish),
     questions: questionsForm(dish.questions),
+    availability: availabilityForm(dish.availability),
   }
 }
 
@@ -235,6 +242,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
     dietaryTags: form.dietaryTags,
     dietaryTagsSingle: form.dietaryTags.length > 1 && form.dietaryTagsSingle,
     questions: questionsInput(form.questions),
+    availability: availabilityInput(form.availability),
   }
 }
 
@@ -253,6 +261,8 @@ export function DishFormPage() {
 
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [allDishes, setAllDishes] = useState<Dish[] | null>(null)
+  /** The working days and shifts the availability block offers; empty when they could not be loaded. */
+  const [supplyDays, setSupplyDays] = useState<SupplyDay[]>([])
   const [dish, setDish] = useState<Dish | null>(null)
   const [form, setForm] = useState<DishForm | null>(null)
   const [failed, setFailed] = useState(false)
@@ -265,8 +275,9 @@ export function DishFormPage() {
   const [affected, setAffected] = useState<number | null>(null)
 
   useEffect(() => {
-    Promise.all([categoriesApi.get(), dishesApi.getAll()])
-      .then(([c, all]) => {
+    Promise.all([categoriesApi.get(), dishesApi.getAll(), supplyDaysApi.get().catch(() => [] as SupplyDay[])])
+      .then(([c, all, days]) => {
+        setSupplyDays(days)
         const current = dishId === null ? null : (all.find((d) => d.id === dishId) ?? null)
         if (dishId !== null && !current) throw new Error('not found')
         setCategories(c)
@@ -820,6 +831,10 @@ export function DishFormPage() {
 
         <FormBlock title={t('admin.dishes.blocks.questions')} about={t('admin.dishes.blocks.questionsAbout')} invalid={invalid('questions')}>
         <QuestionsSection questions={form.questions} inherited={inheritedQuestions} errors={errors} onChange={(questions) => set({ questions })} />
+        </FormBlock>
+
+        <FormBlock title={t('admin.dishes.blocks.sellingTimes')} about={t('admin.dishes.blocks.sellingTimesAbout')} invalid={invalid('availability')}>
+          <AvailabilitySection value={form.availability} supplyDays={supplyDays} errors={errors} onChange={(availability) => set({ availability })} />
         </FormBlock>
 
         <div className="row form-actions">

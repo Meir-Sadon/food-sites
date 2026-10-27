@@ -28,8 +28,14 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
             : Default(day));
     }
 
+    public record AffectedDishDto(int Id, string Name);
+
+    /// <summary>
+    /// Saves the days. When the hours of a weekday change and a dish is sold in specific hours of that weekday, nothing is
+    /// saved and the dishes come back with the code dishAvailabilityAffected; sending the same days with Confirmed saves them.
+    /// </summary>
     [HttpPut]
-    public async Task<ActionResult<IEnumerable<SupplyDayDto>>> Update(List<SupplyDayDto> days)
+    public async Task<ActionResult<IEnumerable<SupplyDayDto>>> Update(List<SupplyDayDto> days, bool confirmed = false)
     {
         var errors = new Errors();
         if (days.Count != 7 || days.Select(d => d.Weekday).Distinct().Count() != 7)
@@ -48,6 +54,17 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
             return Invalid(errors);
 
         var saved = await db.SupplyDays.Include(d => d.Hours).ToDictionaryAsync(d => d.Weekday);
+        if (!confirmed)
+        {
+            // A weekday whose hours are not what they were: dishes sold in specific hours of it may no longer fit.
+            var changed = days.Where(d => !HoursOf(d.Hours).SequenceEqual(saved.TryGetValue(d.Weekday, out var old)
+                ? HoursOf(old.Hours.Select(h => new HoursDto(h.From, h.To))) : [])).Select(d => d.Weekday).ToList();
+            var affected = changed.Count == 0 ? [] : await db.Dishes.AsNoTracking()
+                .Where(d => !d.IsHidden && d.AvailabilityRules.Any(r => r.From != null && changed.Contains(r.Weekday)))
+                .OrderBy(d => d.Name).Select(d => new AffectedDishDto(d.Id, d.Name)).ToListAsync();
+            if (affected.Count > 0)
+                return Conflict(new { code = "dishAvailabilityAffected", dishes = affected });
+        }
         foreach (var day in days)
         {
             if (!saved.TryGetValue(day.Weekday, out var entity))
@@ -63,6 +80,9 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
         await db.SaveChangesAsync();
         return Ok(await Get());
     }
+
+    private static List<(TimeOnly, TimeOnly)> HoursOf(IEnumerable<HoursDto>? hours) =>
+        (hours ?? []).OrderBy(h => h.From).Select(h => (h.From, h.To)).ToList();
 
     // Until set, ordering for a day closes at 20:00 the evening before.
     private static SupplyDayDto Default(DayOfWeek day) =>

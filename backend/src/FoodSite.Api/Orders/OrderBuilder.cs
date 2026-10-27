@@ -34,10 +34,11 @@ public static class OrderBuilder
     public const int MaxUnits = 99;
 
     /// <param name="dishes">
-    /// Dishes with Options, Questions, AddOns (with their Group) and MainDish (with its Options, Questions and AddOns) loaded, by id.
+    /// Dishes with Options, Questions, AddOns (with their Group), AvailabilityRules and MainDish (with its Options, Questions, AddOns and AvailabilityRules) loaded, by id.
     /// </param>
+    /// <param name="when">The day and hour the order is for; a dish (or add-on) not sold then is refused. Null skips the check.</param>
     public static List<OrderItem> Build(
-        IReadOnlyList<OrderLineInput>? lines, IReadOnlyDictionary<int, Dish> dishes, Errors errors)
+        IReadOnlyList<OrderLineInput>? lines, IReadOnlyDictionary<int, Dish> dishes, Errors errors, DishAvailability.When? when = null)
     {
         var items = new List<OrderItem>();
         if (lines is null || lines.Count == 0)
@@ -57,7 +58,8 @@ public static class OrderBuilder
             var path = $"items[{i}]";
             var dish = dishes.GetValueOrDefault(line.DishId);
             if (dish is null || dish.IsHidden || dish.IsSoldOut || dish.IsAddOnOnly || dish.Category is { IsHidden: true }
-                || dish.MainDish is { IsHidden: true } or { IsSoldOut: true })
+                || dish.MainDish is { IsHidden: true } or { IsSoldOut: true }
+                || (when is { } at && !DishAvailability.IsAvailable(dish, at)))
             {
                 errors.Add(path, "dishUnavailable");
                 continue;
@@ -76,7 +78,7 @@ public static class OrderBuilder
                 item.Note = NoteOf(line.Note, $"{path}.note", errors);
                 item.Answers = AnswersOf(questions, line.Answers, answersRequired, path, errors);
                 items.Add(item);
-                foreach (var child in AddOnsOf(links, line.AddOns ?? [], path, DishRules.LimitFactor(dish, item.Quantity), dishes, errors))
+                foreach (var child in AddOnsOf(links, line.AddOns ?? [], path, DishRules.LimitFactor(dish, item.Quantity), dishes, errors, when))
                     Attach(item, child, items);
                 continue;
             }
@@ -90,7 +92,7 @@ public static class OrderBuilder
             // Units with the same add-ons share one order line, so a plain order stays one line.
             var perUnit = unitInputs
                 .Select((unit, u) => (
-                    children: AddOnsOf(links, unit.AddOns ?? [], $"{path}.addOnUnits[{u}]", 1, dishes, errors),
+                    children: AddOnsOf(links, unit.AddOns ?? [], $"{path}.addOnUnits[{u}]", 1, dishes, errors, when),
                     note: NoteOf(unit.Note, $"{path}.addOnUnits[{u}].note", errors),
                     answers: AnswersOf(questions, unit.Answers, answersRequired, $"{path}.addOnUnits[{u}]", errors)))
                 .ToList();
@@ -218,7 +220,7 @@ public static class OrderBuilder
     /// </summary>
     private static List<OrderItem> AddOnsOf(
         IReadOnlyList<DishAddOn> links, IReadOnlyList<AddOnInput> addOns, string path, decimal factor,
-        IReadOnlyDictionary<int, Dish> dishes, Errors errors)
+        IReadOnlyDictionary<int, Dish> dishes, Errors errors, DishAvailability.When? when = null)
     {
         var children = new List<OrderItem>();
         var seen = new HashSet<(int, int)>();
@@ -230,7 +232,8 @@ public static class OrderBuilder
             var addOnPath = $"{path}.addOns[{j}]";
             var addOnDish = dishes.GetValueOrDefault(addOn.DishId);
             var link = links.FirstOrDefault(a => a.AddOnDishId == addOn.DishId && a.Slot == addOn.Slot);
-            if (addOnDish is null || addOnDish.IsHidden || addOnDish.IsSoldOut || link is null || !seen.Add((addOn.DishId, addOn.Slot)))
+            if (addOnDish is null || addOnDish.IsHidden || addOnDish.IsSoldOut || link is null || !seen.Add((addOn.DishId, addOn.Slot))
+                || (when is { } at && !DishAvailability.IsAvailable(addOnDish, at)))
             {
                 errors.Add(addOnPath, "addOnUnavailable");
                 continue;

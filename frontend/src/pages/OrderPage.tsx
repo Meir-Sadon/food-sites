@@ -35,6 +35,7 @@ import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
+import { availableMenu, pruneUnavailable, type When } from '../order/availability'
 import { formatMoney, formatSlot, formatSupplyDate, parseSlotId, slotId, slotsFor } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
 import { MinimumDialog } from '../order/MinimumDialog'
@@ -81,6 +82,23 @@ const CONTACT_FIELDS = ['name', 'phone', 'city', 'street', 'housenumber', 'apart
 
 const slotKey = (date: string, hour: string) => `${date} ${hour}`
 
+/**
+ * The day and hour the order is for, as the form below resolves them: the picked date (or the first one offered) and the
+ * picked hour when the date still offers it. Null while there is no date to order for.
+ */
+function pickedWhen(
+  menu: Menu, site: { deliveryEnabled: boolean; pickupEnabled: boolean }, state: Pick<OrderState, 'fulfillment' | 'supplyDate' | 'deliveryHour'>,
+): When | null {
+  const fulfillment =
+    state.fulfillment === 'Delivery' && !site.deliveryEnabled ? 'Pickup' : state.fulfillment === 'Pickup' && !site.pickupEnabled ? 'Delivery' : state.fulfillment
+  const delivery = fulfillment === 'Delivery'
+  const dates = menu.supplyDates.filter((d) => !d.hours?.length || slotsFor(d.hours, delivery).length > 0)
+  const date = dates.find((d) => d.date === state.supplyDate) ?? dates[0]
+  if (!date) return null
+  const hours = slotsFor(date.hours, delivery)
+  return { date: date.date, slot: hours.find((h) => slotId(h) === state.deliveryHour) ?? null, daySlots: hours }
+}
+
 export function OrderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -92,7 +110,7 @@ export function OrderPage() {
   const defaultCity = site?.serviceCities[0]
   const errorMessage = useErrorMessage()
   const toast = useToast()
-  const [menu, setMenu] = useState<Menu | null>(null)
+  const [fullMenu, setMenu] = useState<Menu | null>(null)
   const [failed, setFailed] = useState(false)
 
   const [state, setState] = useState<OrderState>(emptyOrder)
@@ -142,6 +160,25 @@ export function OrderPage() {
   const stepsRef = useRef<HTMLElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const addressRef = useRef<HTMLFieldSetElement>(null)
+
+  // Dishes sold only at set times are on the menu only when the chosen day and hour are among them; the order loses the others.
+  const when = useMemo(
+    () => (fullMenu && site ? pickedWhen(fullMenu, site, { fulfillment: state.fulfillment, supplyDate: state.supplyDate, deliveryHour: state.deliveryHour }) : null),
+    [fullMenu, site, state.fulfillment, state.supplyDate, state.deliveryHour],
+  )
+  const menu = useMemo(() => (fullMenu && when ? availableMenu(fullMenu, when) : fullMenu), [fullMenu, when])
+  const [removedNotice, setRemovedNotice] = useState<{ dishes: string[]; addOns: string[] } | null>(null)
+  // Adjusting state during render: what the menu no longer has leaves the order at once, and the client is told why.
+  if (fullMenu && menu && menu !== fullMenu) {
+    const pruned = pruneUnavailable(state.selections, dishMap(menu), dishMap(fullMenu))
+    if (pruned.removed.length > 0 || pruned.removedAddOns.length > 0) {
+      setState((current) => ({ ...current, selections: pruned.selections }))
+      setRemovedNotice((current) => ({
+        dishes: [...new Set([...(current?.dishes ?? []), ...pruned.removed])],
+        addOns: [...new Set([...(current?.addOns ?? []), ...pruned.removedAddOns])],
+      }))
+    }
+  }
 
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const itemsTotal = orderTotal(state.selections, dishes)
@@ -753,6 +790,15 @@ export function OrderPage() {
         </header>
       )}
       <div className="order-main">
+        {removedNotice && (
+          <div className="notice notice--warning" role="status">
+            {removedNotice.dishes.length > 0 && <p>{t('order.availabilityRemoved', { count: removedNotice.dishes.length, names: removedNotice.dishes.join(', ') })}</p>}
+            {removedNotice.addOns.length > 0 && <p>{t('order.availabilityAddOnsRemoved', { names: removedNotice.addOns.join(', ') })}</p>}
+            <button type="button" className="button-quiet" onClick={() => setRemovedNotice(null)}>
+              {t('order.dismiss')}
+            </button>
+          </div>
+        )}
         {atAddress && (
           <section className="order-form stack order-address-stage" aria-labelledby="order-address-title">
             <h2 id="order-address-title">{t('order.addressFirst.title')}</h2>
