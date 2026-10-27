@@ -1,0 +1,30 @@
+{
+  "id": "toast-360",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אשקלון",
+  "emoji": "🥪",
+  "whatsApp": {
+    "orderConfirmationTemplate": "toast_360_order_confirmation",
+    "newOrderTemplate": "toast_360_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true
+  },
+  "settings": {
+    "contactName": "בתאל",
+    "contactPhone": "054-297-4770",
+    "contactEmail": "btlsbg8@gmail.com",
+    "contactAddress": "הרצל 15, אשקלון",
+    "contactOpeningHours": "א׳–ה׳ 11:00–02:00. סגור בשישי ובשבת, פתוחים במוצאי שבת 45 דקות אחרי צאת השבת",
+    "deliveryAreaText": "משלוחים באשקלון. מחוץ לאשקלון בתוספת תשלום, בתיאום טלפוני",
+    "deliveryFeeText": "משלוח באשקלון 25 ₪",
+    "kashrutText": "כשר בהשגחת הבד״ץ"
+  },
+  "seed": [
+    "seed/menu.json"
+  ]
+}

@@ -76,6 +76,12 @@ public static class DatabaseInitializer
                     OptionsTitle = dish.OptionsTitle,
                     ShowOptionDifference = dish.ShowOptionDifference,
                     DietaryTags = Sites.DietaryTags.Clean(dish.DietaryTags),
+                    AvailabilityRules = (dish.Availability ?? []).Select(a => new Entities.DishAvailabilityRule
+                    {
+                        Weekday = a.Weekday,
+                        From = a.From,
+                        To = a.To,
+                    }).ToList(),
                     Options = (dish.Options ?? []).Select(o => new Entities.DishOption
                     {
                         Label = o.Label,
