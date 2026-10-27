@@ -13,7 +13,32 @@
      "description": "טוסט עם רטבים לבחירה ו-6 סוגי נקניקים לבחירה.",
      "questions": [
       {
-       "text": "נקניקים לבחירה (עד 6 סוגים)",
+       "text": "נקניק 1",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 2",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 3",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 4",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 5",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 6",
        "kind": "Text",
        "isRequired": false
       },
@@ -58,7 +83,47 @@
      "description": "טוסט עם רטבים לבחירה ו-9 סוגי נקניקים לבחירה.",
      "questions": [
       {
-       "text": "נקניקים לבחירה (עד 9 סוגים)",
+       "text": "נקניק 1",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 2",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 3",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 4",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 5",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 6",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 7",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 8",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 9",
        "kind": "Text",
        "isRequired": false
       },
@@ -627,7 +692,32 @@
      ],
      "questions": [
       {
-       "text": "נקניקים לבחירה (עד 6 סוגים)",
+       "text": "נקניק 1",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 2",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 3",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 4",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 5",
+       "kind": "Text",
+       "isRequired": false
+      },
+      {
+       "text": "נקניק 6",
        "kind": "Text",
        "isRequired": false
       },
