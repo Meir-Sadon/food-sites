@@ -13,20 +13,23 @@
      "description": "טוסט עם רטבים לבחירה ו-6 סוגי נקניקים לבחירה.",
      "questions": [
       {
-       "text": "רטבים לבחירה",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
        "text": "לשרוף קצת את הטוסט?",
-       "kind": "YesNo",
-       "isRequired": false
+       "kind": "SingleChoice",
+       "choices": [
+        "לא",
+        "כן"
+       ],
+       "isRequired": true
       }
      ],
+     "adjustmentOptional": false,
      "addOnGroups": [
       {
        "name": "נקניקים",
        "maxUnits": 6
+      },
+      {
+       "name": "רטבים"
       },
       {
        "name": "ירקות"
@@ -34,39 +37,105 @@
      ],
      "addOns": [
       {
-       "dish": "נקניק 1",
+       "dish": "נקניק גחלים",
        "price": 0,
        "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק דבש",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק איטלקי (דמוי אווז)",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק סלמי",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק קורנביף",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק מפולפל",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "רוטב שום",
+       "price": 0,
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 2",
+       "dish": "רוטב צילי מתוק",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 3",
+       "dish": "רוטב צילי חריף",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 4",
+       "dish": "רוטב פסטו",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 5",
+       "dish": "רוטב צימיצורי",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 6",
+       "dish": "רוטב ברביקיו",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב ריבת בצל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב שזיפים",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב מיונז",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חרדל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חריף",
+       "price": 0,
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
@@ -93,20 +162,23 @@
      "description": "טוסט עם רטבים לבחירה ו-9 סוגי נקניקים לבחירה.",
      "questions": [
       {
-       "text": "רטבים לבחירה",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
        "text": "לשרוף קצת את הטוסט?",
-       "kind": "YesNo",
-       "isRequired": false
+       "kind": "SingleChoice",
+       "choices": [
+        "לא",
+        "כן"
+       ],
+       "isRequired": true
       }
      ],
+     "adjustmentOptional": false,
      "addOnGroups": [
       {
        "name": "נקניקים",
        "maxUnits": 9
+      },
+      {
+       "name": "רטבים"
       },
       {
        "name": "ירקות"
@@ -114,57 +186,105 @@
      ],
      "addOns": [
       {
-       "dish": "נקניק 1",
+       "dish": "נקניק גחלים",
        "price": 0,
        "group": "נקניקים",
+       "maxQuantity": 9
+      },
+      {
+       "dish": "נקניק דבש",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 9
+      },
+      {
+       "dish": "נקניק איטלקי (דמוי אווז)",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 9
+      },
+      {
+       "dish": "נקניק סלמי",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 9
+      },
+      {
+       "dish": "נקניק קורנביף",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 9
+      },
+      {
+       "dish": "נקניק מפולפל",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 9
+      },
+      {
+       "dish": "רוטב שום",
+       "price": 0,
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 2",
+       "dish": "רוטב צילי מתוק",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 3",
+       "dish": "רוטב צילי חריף",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 4",
+       "dish": "רוטב פסטו",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 5",
+       "dish": "רוטב צימיצורי",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 6",
+       "dish": "רוטב ברביקיו",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 7",
+       "dish": "רוטב ריבת בצל",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 8",
+       "dish": "רוטב שזיפים",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 9",
+       "dish": "רוטב מיונז",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חרדל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חריף",
+       "price": 0,
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
@@ -191,22 +311,91 @@
      "description": "טוסט עם רטבים לבחירה ואסאדו מפורק.",
      "questions": [
       {
-       "text": "רטבים לבחירה",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
        "text": "לשרוף קצת את הטוסט?",
-       "kind": "YesNo",
-       "isRequired": false
+       "kind": "SingleChoice",
+       "choices": [
+        "לא",
+        "כן"
+       ],
+       "isRequired": true
       }
      ],
+     "adjustmentOptional": false,
      "addOnGroups": [
+      {
+       "name": "רטבים"
+      },
       {
        "name": "ירקות"
       }
      ],
      "addOns": [
+      {
+       "dish": "רוטב שום",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב צילי מתוק",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב צילי חריף",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב פסטו",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב צימיצורי",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב ברביקיו",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב ריבת בצל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב שזיפים",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב מיונז",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חרדל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חריף",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
       {
        "dish": "עגבנייה",
        "price": 0,
@@ -234,13 +423,6 @@
      "amountStep": 1,
      "unitPrice": 55,
      "description": "המבורגר בעשיית יד.",
-     "questions": [
-      {
-       "text": "רטבים לבחירה",
-       "kind": "Text",
-       "isRequired": false
-      }
-     ],
      "addOnGroups": [
       {
        "name": "תוספות להמבורגר"
@@ -310,11 +492,71 @@
      "amountStep": 1,
      "unitPrice": 43,
      "description": "שניצל בבגט עם סלטים לבחירה.",
-     "questions": [
+     "addOnGroups": [
       {
-       "text": "סלטים לבחירה",
-       "kind": "Text",
-       "isRequired": false
+       "name": "סלטים"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "סלט כרוב סגול",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט כרוב לבן",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט פלפל מטוגן",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט בצל סגול",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט עגבנייה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט חסה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
       }
      ]
     },
@@ -669,45 +911,114 @@
        "maxUnits": 6
       },
       {
+       "name": "רטבים"
+      },
+      {
        "name": "בחרו שתיה",
        "maxUnits": 1
       }
      ],
      "addOns": [
       {
-       "dish": "נקניק 1",
+       "dish": "נקניק גחלים",
        "price": 0,
        "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק דבש",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק איטלקי (דמוי אווז)",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק סלמי",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק קורנביף",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "נקניק מפולפל",
+       "price": 0,
+       "group": "נקניקים",
+       "maxQuantity": 6
+      },
+      {
+       "dish": "רוטב שום",
+       "price": 0,
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 2",
+       "dish": "רוטב צילי מתוק",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 3",
+       "dish": "רוטב צילי חריף",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 4",
+       "dish": "רוטב פסטו",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 5",
+       "dish": "רוטב צימיצורי",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
-       "dish": "נקניק 6",
+       "dish": "רוטב ברביקיו",
        "price": 0,
-       "group": "נקניקים",
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב ריבת בצל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב שזיפים",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב מיונז",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חרדל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חריף",
+       "price": 0,
+       "group": "רטבים",
        "isCheckbox": true
       },
       {
@@ -789,16 +1100,16 @@
        "isCheckbox": true
       }
      ],
+     "adjustmentOptional": false,
      "questions": [
       {
-       "text": "רטבים לבחירה",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
        "text": "לשרוף קצת את הטוסט?",
-       "kind": "YesNo",
-       "isRequired": false
+       "kind": "SingleChoice",
+       "choices": [
+        "לא",
+        "כן"
+       ],
+       "isRequired": true
       }
      ]
     },
@@ -812,11 +1123,80 @@
      "description": "טוסט אסאדו, ציפס ושתיה.",
      "addOnGroups": [
       {
+       "name": "רטבים"
+      },
+      {
        "name": "בחרו שתיה",
        "maxUnits": 1
       }
      ],
      "addOns": [
+      {
+       "dish": "רוטב שום",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב צילי מתוק",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב צילי חריף",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב פסטו",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב צימיצורי",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב ברביקיו",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב ריבת בצל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב שזיפים",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב מיונז",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חרדל",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "רוטב חריף",
+       "price": 0,
+       "group": "רטבים",
+       "isCheckbox": true
+      },
       {
        "dish": "קולה",
        "price": 0,
@@ -896,16 +1276,16 @@
        "isCheckbox": true
       }
      ],
+     "adjustmentOptional": false,
      "questions": [
       {
-       "text": "רטבים לבחירה",
-       "kind": "Text",
-       "isRequired": false
-      },
-      {
        "text": "לשרוף קצת את הטוסט?",
-       "kind": "YesNo",
-       "isRequired": false
+       "kind": "SingleChoice",
+       "choices": [
+        "לא",
+        "כן"
+       ],
+       "isRequired": true
       }
      ]
     }
@@ -1059,7 +1439,7 @@
    "name": "תוספות לשימוש כתוספת בלבד",
    "dishes": [
     {
-     "name": "נקניק 1",
+     "name": "נקניק גחלים",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,
@@ -1068,7 +1448,7 @@
      "isAddOnOnly": true
     },
     {
-     "name": "נקניק 2",
+     "name": "נקניק דבש",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,
@@ -1077,7 +1457,7 @@
      "isAddOnOnly": true
     },
     {
-     "name": "נקניק 3",
+     "name": "נקניק איטלקי (דמוי אווז)",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,
@@ -1086,7 +1466,7 @@
      "isAddOnOnly": true
     },
     {
-     "name": "נקניק 4",
+     "name": "נקניק סלמי",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,
@@ -1095,7 +1475,7 @@
      "isAddOnOnly": true
     },
     {
-     "name": "נקניק 5",
+     "name": "נקניק קורנביף",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,
@@ -1104,7 +1484,7 @@
      "isAddOnOnly": true
     },
     {
-     "name": "נקניק 6",
+     "name": "נקניק מפולפל",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,
@@ -1113,7 +1493,7 @@
      "isAddOnOnly": true
     },
     {
-     "name": "נקניק 7",
+     "name": "רוטב שום",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,
@@ -1122,7 +1502,7 @@
      "isAddOnOnly": true
     },
     {
-     "name": "נקניק 8",
+     "name": "רוטב צילי מתוק",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,
@@ -1131,7 +1511,169 @@
      "isAddOnOnly": true
     },
     {
-     "name": "נקניק 9",
+     "name": "רוטב צילי חריף",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב פסטו",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב צימיצורי",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב ברביקיו",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב ריבת בצל",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב שזיפים",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב מיונז",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב חרדל",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "רוטב חריף",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט כרוב סגול",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט כרוב לבן",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט פלפל מטוגן",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט חומוס",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט טחינה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט סלט ירקות",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט מלפפון חמוץ",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט בצל סגול",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט עגבנייה",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 0,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט חסה",
      "sellBy": "Units",
      "minAmount": 1,
      "maxAmount": 10,

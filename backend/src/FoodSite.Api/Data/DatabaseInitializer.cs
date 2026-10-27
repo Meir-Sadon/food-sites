@@ -73,6 +73,7 @@ public static class DatabaseInitializer
                     SellBy = dish.SellBy,
                     ChoiceMode = dish.Options is { Count: > 0 } ? Entities.ChoiceMode.Fixed : Entities.ChoiceMode.Free,
                     IsAddOnOnly = dish.IsAddOnOnly,
+                    AdjustmentOptional = dish.AdjustmentOptional,
                     OptionsTitle = dish.OptionsTitle,
                     ShowOptionDifference = dish.ShowOptionDifference,
                     DietaryTags = Sites.DietaryTags.Clean(dish.DietaryTags),

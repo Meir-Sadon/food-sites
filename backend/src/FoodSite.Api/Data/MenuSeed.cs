@@ -37,7 +37,8 @@ public record MenuSeed(IReadOnlyList<MenuSeed.SeedCategory> Categories)
         string? OptionsTitle = null,
         bool ShowOptionDifference = false,
         IReadOnlyList<string>? DietaryTags = null,
-        IReadOnlyList<SeedAvailability>? Availability = null);
+        IReadOnlyList<SeedAvailability>? Availability = null,
+        bool AdjustmentOptional = true);
 
     /// <summary>One time the dish is sold (see <c>DishAvailabilityRule</c>): a weekday, with <c>From</c> and <c>To</c> as "HH:mm:ss" (a To of 00:00:00 is midnight), or both left out for the whole day. A dish with none is sold whenever the business works.</summary>
     public record SeedAvailability(DayOfWeek Weekday, TimeOnly? From = null, TimeOnly? To = null);
