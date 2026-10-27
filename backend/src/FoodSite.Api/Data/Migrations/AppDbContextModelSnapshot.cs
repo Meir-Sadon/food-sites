@@ -348,6 +348,33 @@ namespace FoodSite.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DishAvailabilityRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DishId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly?>("From")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("To")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("Weekday")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DishId");
+
+                    b.ToTable("DishAvailabilityRules");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DishGroup", b =>
                 {
                     b.Property<int>("Id")
@@ -1695,6 +1722,17 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("ParentDish");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DishAvailabilityRule", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
+                        .WithMany("AvailabilityRules")
+                        .HasForeignKey("DishId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dish");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DishGroupDish", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
@@ -1966,6 +2004,8 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("AddOnOf");
 
                     b.Navigation("AddOns");
+
+                    b.Navigation("AvailabilityRules");
 
                     b.Navigation("Images");
 

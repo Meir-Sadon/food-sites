@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { Dish, DishInput } from '../../api/catalog'
-import { category, dish } from '../../test/catalogData'
+import { category, dish, supplyDays } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
 
@@ -296,6 +296,8 @@ describe('Dish form', () => {
       addOnGroups: [],
       addOns: [],
       questions: [],
+      // Sold whenever the business works until days are ticked.
+      availability: [],
     })
   })
 
@@ -336,6 +338,72 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).adjustmentOptional).toBe(true)
+  })
+
+  describe('selling days and hours', () => {
+    const shifts = () =>
+      supplyDays().map((d) => (d.weekday === 'Thursday' ? { ...d, enabled: true, hours: [{ from: '07:00:00', to: '13:00:00' }, { from: '16:00:00', to: '20:00:00' }] } : d))
+    const open = () =>
+      fakeApi({
+        ...base,
+        'GET /api/admin/supply-days': shifts,
+        'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }),
+      })
+
+    it('sells a ticked day the whole day, until specific hours are asked for', async () => {
+      const api = open()
+      renderAt('/admin/dishes/1')
+      const user = userEvent.setup()
+
+      await screen.findByRole('heading', { name: /עריכת מנה/ })
+      await user.click(screen.getByText('ימים ושעות מכירה', { selector: '.form-block__title' }))
+      const times = screen.getByRole('group', { name: 'ימים ושעות מכירה' })
+      await user.click(within(times).getByRole('checkbox', { name: 'חמישי' }))
+      expect(within(times).getByText('כל היום')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+      await screen.findByText('נשמר.')
+      expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).availability).toEqual([{ weekday: 'Thursday', from: null, to: null }])
+    })
+
+    it('offers the shifts of the day with their hours, each one tick away, and sends the ticked ones', async () => {
+      const api = open()
+      renderAt('/admin/dishes/1')
+      const user = userEvent.setup()
+
+      await screen.findByRole('heading', { name: /עריכת מנה/ })
+      await user.click(screen.getByText('ימים ושעות מכירה', { selector: '.form-block__title' }))
+      await user.click(screen.getByRole('checkbox', { name: 'חמישי' }))
+      await user.click(screen.getByRole('button', { name: 'הגדרת שעות ספציפיות ביום חמישי' }))
+
+      // Each shift is there with its own hours, unticked; tick the morning one and narrow it to 08:00 to 12:00.
+      expect(screen.getByLabelText('שעת התחלה של טווח 1 ביום חמישי')).toHaveValue('07:00')
+      expect(screen.getByLabelText('שעת סיום של טווח 2 ביום חמישי')).toHaveValue('20:00')
+      expect(screen.getByLabelText('טווח 2 ביום חמישי פעיל')).not.toBeChecked()
+      await user.click(screen.getByLabelText('טווח 1 ביום חמישי פעיל'))
+      fireEvent.change(screen.getByLabelText('שעת התחלה של טווח 1 ביום חמישי'), { target: { value: '08:00' } })
+      fireEvent.change(screen.getByLabelText('שעת סיום של טווח 1 ביום חמישי'), { target: { value: '12:00' } })
+      await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+      await screen.findByText('נשמר.')
+      expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).availability).toEqual([
+        { weekday: 'Thursday', from: '08:00:00', to: '12:00:00' },
+      ])
+    })
+
+    it('shows the saved hours and sends nothing for a day left unticked', async () => {
+      fakeApi({
+        ...base,
+        'GET /api/admin/supply-days': shifts,
+        'GET /api/admin/dishes': () => [{ ...chicken, availability: [{ weekday: 'Thursday', from: '16:00:00', to: '20:00:00' }] }, eggplant, leg, removed],
+      })
+      renderAt('/admin/dishes/1')
+
+      await screen.findByRole('heading', { name: /עריכת מנה/ })
+      expect(screen.getByRole('checkbox', { name: 'חמישי' })).toBeChecked()
+      expect(screen.getByLabelText('שעת התחלה של טווח 1 ביום חמישי')).toHaveValue('16:00')
+      expect(screen.getByRole('checkbox', { name: 'שישי' })).not.toBeChecked()
+    })
   })
 
   it('saves a per-supply-date limit on a dish', async () => {

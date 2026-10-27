@@ -113,6 +113,12 @@ public class Dish
     /// <summary>Named groups of this dish's add-ons, each with a limit on how many units the client picks from it.</summary>
     public List<AddOnGroup> AddOnGroups { get; set; } = [];
 
+    /// <summary>
+    /// When the dish is sold, apart from the business's working days and hours. Empty means whenever the business works. A
+    /// variant is sold only when its main dish is too.
+    /// </summary>
+    public List<DishAvailabilityRule> AvailabilityRules { get; set; } = [];
+
     /// <summary>Questions the client answers when ordering this dish, in the admin's order.</summary>
     public List<DishQuestion> Questions { get; set; } = [];
 

@@ -91,7 +91,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<string>? DietaryTags = null,
         bool OnSale = false,
         bool IsNew = false,
-        decimal? Limit = null);
+        decimal? Limit = null,
+        IReadOnlyList<AvailabilityRuleDto>? Availability = null);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
     /// <summary>DefaultAnswer is the answer already picked for the client (a choice, or yes / no), if the admin set one.</summary>
@@ -179,6 +180,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
 
         var dishes = await db.Dishes.AsNoTracking()
             .Include(d => d.Options).Include(d => d.Images).Include(d => d.Questions).Include(d => d.AddOns).ThenInclude(a => a.Group)
+            .Include(d => d.AvailabilityRules)
             .AsSplitQuery()
             .Where(d => !d.IsHidden)
             .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Id)
@@ -223,7 +225,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                     .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
                 (d.MainDish ?? d).AdjustmentOptional,
                 p.OptionsTitle, p.ShowOptionDifference, d.DietaryTags,
-                d.OnSale, ItemBadges.IsNew(badges, d.CreatedAt, now), LimitOf(d, settings.PortionsPerSupplyDate));
+                d.OnSale, ItemBadges.IsNew(badges, d.CreatedAt, now), LimitOf(d, settings.PortionsPerSupplyDate),
+                d.AvailabilityRules.Count > 0 ? DishAvailability.ToDtos(d.AvailabilityRules) : null);
         }).ToList();
 
         // Groups list only dishes ordered on their own that are on the menu, in menu order; an empty group is left out.

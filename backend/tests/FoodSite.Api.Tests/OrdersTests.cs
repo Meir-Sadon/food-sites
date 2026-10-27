@@ -85,6 +85,49 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
 
     private Task<HttpResponseMessage> Place(object order) => _client.PostAsJsonAsync("/api/orders", order, TestFiles.Json);
 
+    // ---------- Availability ----------
+
+    [Fact]
+    public async Task A_dish_sold_only_on_other_days_is_refused_and_one_sold_that_day_is_taken()
+    {
+        var first = (await Menu()).SupplyDates[0].Date;
+        var other = (DayOfWeek)(((int)first.DayOfWeek + 1) % 7);
+        var categoryId = (await Menu()).Categories[0].Id;
+        DishDto Create(string name, DayOfWeek day) => CreateDish(new DishInput(
+            name, categoryId, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
+            [new OptionInput(null, "יחידה", 1, 10, true)], [], Availability: [new AvailabilityRuleDto(day)])).Result;
+        var later = Create("מנה למחר", other);
+        var today = Create("מנה להיום", first.DayOfWeek);
+
+        var menu = await Menu();
+        Assert.Equal(other, menu.Dishes.Single(d => d.Id == later.Id).Availability!.Single().Weekday);
+        Assert.Null(menu.Dishes.Single(d => d.Id == _meat).Availability);
+
+        object Order(int dishId) => ValidOrder(o => o["items"] = new object[]
+            { new { dishId, optionId = (int?)null, quantity = 1m, addOns = Array.Empty<object>() } }).Result;
+        Assert.Equal(HttpStatusCode.OK, (await Place(Order(today.Id))).StatusCode);
+        await (await Place(Order(later.Id))).AssertInvalid("items[0]", "dishUnavailable");
+    }
+
+    [Fact]
+    public async Task Changing_the_hours_of_a_day_asks_first_when_a_dish_is_sold_in_specific_hours_of_it()
+    {
+        var categoryId = (await Menu()).Categories[0].Id;
+        var dish = await CreateDish(new DishInput(
+            "מנת בוקר", categoryId, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
+            [new OptionInput(null, "יחידה", 1, 10, true)], [],
+            Availability: [new AvailabilityRuleDto(DayOfWeek.Thursday, new TimeOnly(8, 0), new TimeOnly(12, 0))]));
+        var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();
+        days[4] = days[4] with { Hours = [new HoursDto(new TimeOnly(7, 0), new TimeOnly(13, 0))] };
+
+        var asked = await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json);
+        Assert.Equal(HttpStatusCode.Conflict, asked.StatusCode);
+        Assert.Contains("dishAvailabilityAffected", await asked.Content.ReadAsStringAsync());
+        Assert.Contains(dish.Name, await asked.Content.ReadAsStringAsync());
+
+        (await _admin.PutAsJsonAsync("/api/admin/supply-days?confirmed=true", days, TestFiles.Json)).EnsureSuccessStatusCode();
+    }
+
     // ---------- Menu ----------
 
     [Fact]

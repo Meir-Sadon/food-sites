@@ -5,6 +5,16 @@ export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 export type Direction = 'Up' | 'Down'
 
+/**
+ * One time a dish is sold: a weekday, the whole day (`from` and `to` null) or one range of hours in it ("HH:mm:ss"; a `to` of
+ * 00:00 means midnight). A dish with no rules is sold whenever the business works.
+ */
+export interface AvailabilityRule {
+  weekday: Weekday
+  from: string | null
+  to: string | null
+}
+
 export interface Settings {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -198,6 +208,8 @@ export interface Dish {
   addOns: AddOnLink[]
   /** Questions the client answers when ordering the dish, in order. */
   questions: DishQuestion[]
+  /** When the dish is sold; empty means whenever the business works. */
+  availability?: AvailabilityRule[]
   /** The client may order without adjusting each unit or answering its questions (a variant follows its main dish). */
   adjustmentOptional: boolean
 }
@@ -285,6 +297,8 @@ export interface DishInput {
     isRequired: boolean
     defaultAnswer: string | null
   }[]
+  /** The whole list of the times the dish is sold (empty: whenever the business works); left out, it stays as it is. */
+  availability?: AvailabilityRule[]
   /** On a new dish: give it the images of this dish (it is a copy of it). */
   copyImagesFrom?: number
   adjustmentOptional?: boolean
@@ -321,7 +335,9 @@ export const settingsApi = {
 
 export const supplyDaysApi = {
   get: () => apiJson<SupplyDay[]>(`${admin}/supply-days`),
-  save: (days: SupplyDay[]) => apiJson<SupplyDay[]>(`${admin}/supply-days`, send('PUT', days)),
+  /** Without `confirmed`, a change to the hours of a weekday that dishes are sold in specific hours of comes back as a 409 (`dishAvailabilityAffected`, with `dishes`). */
+  save: (days: SupplyDay[], confirmed = false) =>
+    apiJson<SupplyDay[]>(`${admin}/supply-days${confirmed ? '?confirmed=true' : ''}`, send('PUT', days)),
 }
 
 export type ShabbatEveMode = 'none' | 'closed' | 'fixed' | 'before'
