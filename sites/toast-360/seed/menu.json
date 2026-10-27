@@ -294,6 +294,42 @@
        "isRequired": false
       }
      ]
+    },
+    {
+     "name": "צולנט",
+     "sellBy": "Units",
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "unitPrice": 28,
+     "description": "צולנט חם, נמכר ביום חמישי בלבד משעה 17:00 עד 02:00 בלילה של יום שישי.",
+     "options": [
+      {
+       "label": "רבע קילו",
+       "price": 28,
+       "isDefault": true,
+       "amount": 0.25
+      },
+      {
+       "label": "חצי קילו",
+       "price": 40,
+       "isDefault": false,
+       "amount": 0.5
+      }
+     ],
+     "optionsTitle": "בחרו גודל",
+     "availability": [
+      {
+       "weekday": "Thursday",
+       "from": "17:00:00",
+       "to": "00:00:00"
+      },
+      {
+       "weekday": "Friday",
+       "from": "00:00:00",
+       "to": "02:00:00"
+      }
+     ]
     }
    ]
   },
