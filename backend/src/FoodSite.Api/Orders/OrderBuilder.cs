@@ -37,9 +37,12 @@ public static class OrderBuilder
     /// Dishes with Options, Questions, AddOns (with their Group), AvailabilityRules and MainDish (with its Options, Questions, AddOns and AvailabilityRules) loaded, by id.
     /// </param>
     /// <param name="when">The day and hour the order is for; a dish (or add-on) not sold then is refused. Null skips the check.</param>
+    /// <param name="prices">The client's price lists; null prices everything at the regular prices.</param>
     public static List<OrderItem> Build(
-        IReadOnlyList<OrderLineInput>? lines, IReadOnlyDictionary<int, Dish> dishes, Errors errors, DishAvailability.When? when = null)
+        IReadOnlyList<OrderLineInput>? lines, IReadOnlyDictionary<int, Dish> dishes, Errors errors, DishAvailability.When? when = null,
+        PriceBook? prices = null)
     {
+        prices ??= PriceBook.Regular;
         var items = new List<OrderItem>();
         if (lines is null || lines.Count == 0)
         {
@@ -65,7 +68,7 @@ public static class OrderBuilder
                 continue;
             }
 
-            var item = Line(dish, line.OptionId, line.Quantity, path, errors, dish.IsYesNo, price: null);
+            var item = Line(dish, line.OptionId, line.Quantity, path, errors, dish.IsYesNo, price: null, prices);
             if (item is null)
                 continue;
 
@@ -78,7 +81,7 @@ public static class OrderBuilder
                 item.Note = NoteOf(line.Note, $"{path}.note", errors);
                 item.Answers = AnswersOf(questions, line.Answers, answersRequired, path, errors);
                 items.Add(item);
-                foreach (var child in AddOnsOf(links, line.AddOns ?? [], path, DishRules.LimitFactor(dish, item.Quantity), dishes, errors, when))
+                foreach (var child in AddOnsOf(links, line.AddOns ?? [], path, DishRules.LimitFactor(dish, item.Quantity), dishes, errors, when, prices))
                     Attach(item, child, items);
                 continue;
             }
@@ -92,7 +95,7 @@ public static class OrderBuilder
             // Units with the same add-ons share one order line, so a plain order stays one line.
             var perUnit = unitInputs
                 .Select((unit, u) => (
-                    children: AddOnsOf(links, unit.AddOns ?? [], $"{path}.addOnUnits[{u}]", 1, dishes, errors, when),
+                    children: AddOnsOf(links, unit.AddOns ?? [], $"{path}.addOnUnits[{u}]", 1, dishes, errors, when, prices),
                     note: NoteOf(unit.Note, $"{path}.addOnUnits[{u}].note", errors),
                     answers: AnswersOf(questions, unit.Answers, answersRequired, $"{path}.addOnUnits[{u}]", errors)))
                 .ToList();
@@ -211,6 +214,7 @@ public static class OrderBuilder
         Quantity = quantity,
         UnitPrice = source.UnitPrice,
         LineTotal = decimal.Round(source.UnitPrice * quantity, 2),
+        PriceListName = source.PriceListName,
     };
 
     /// <summary>
@@ -220,7 +224,7 @@ public static class OrderBuilder
     /// </summary>
     private static List<OrderItem> AddOnsOf(
         IReadOnlyList<DishAddOn> links, IReadOnlyList<AddOnInput> addOns, string path, decimal factor,
-        IReadOnlyDictionary<int, Dish> dishes, Errors errors, DishAvailability.When? when = null)
+        IReadOnlyDictionary<int, Dish> dishes, Errors errors, DishAvailability.When? when = null, PriceBook? prices = null)
     {
         var children = new List<OrderItem>();
         var seen = new HashSet<(int, int)>();
@@ -240,7 +244,7 @@ public static class OrderBuilder
             }
 
             var child = Line(addOnDish, addOn.OptionId, addOn.Quantity, addOnPath, errors,
-                DishRules.IsCheckbox(link, addOnDish), link.Price);
+                DishRules.IsCheckbox(link, addOnDish), link.Price, prices ?? PriceBook.Regular);
             if (child is null)
                 continue;
             child.DishName = DishRules.AddOnName(link, addOnDish);
@@ -309,13 +313,17 @@ public static class OrderBuilder
         Quantity = quantity,
         UnitPrice = unitPrice,
         LineTotal = decimal.Round(unitPrice * quantity, 2),
+        // Units above a limit cost the over-limit price, which no list changes.
+        PriceListName = nameSuffix == "" ? source.PriceListName : null,
     };
 
     public static decimal Total(IEnumerable<OrderItem> items) => items.Sum(i => i.LineTotal);
 
     /// <param name="yesNo">Ordered or not, never in an amount: the client's amount and option are replaced by the defaults.</param>
     /// <param name="price">An add-on's price per unit under its parent: only the default option is offered, at this price.</param>
-    private static OrderItem? Line(Dish dish, int? optionId, decimal quantity, string path, Errors errors, bool yesNo, decimal? price)
+    /// <param name="prices">The client's price lists, for a line without such a price.</param>
+    private static OrderItem? Line(
+        Dish dish, int? optionId, decimal quantity, string path, Errors errors, bool yesNo, decimal? price, PriceBook prices)
     {
         var pricing = DishRules.Pricing(dish);
         if (pricing.ChoiceMode == ChoiceMode.Free)
@@ -323,7 +331,7 @@ public static class OrderBuilder
             if (yesNo && pricing.MinAmount is { } least)
                 quantity = least;
             if (pricing.MinAmount is not { } min || pricing.MaxAmount is not { } max
-                || pricing.AmountStep is not { } step || pricing.UnitPrice is not { } unitPrice
+                || pricing.AmountStep is not { } step || prices.UnitPrice(pricing) is not { } unitPrice
                 || quantity < min || quantity > max || (quantity - min) % step != 0)
             {
                 errors.Add($"{path}.quantity", "quantityInvalid");
@@ -338,6 +346,7 @@ public static class OrderBuilder
                 Quantity = quantity,
                 UnitPrice = price ?? unitPrice,
                 LineTotal = decimal.Round((price ?? unitPrice) * quantity, 2),
+                PriceListName = price is null ? prices.ListNameFor(pricing, null) : null,
             };
         }
 
@@ -364,8 +373,9 @@ public static class OrderBuilder
             DishName = dish.Name,
             OptionLabel = option.Label,
             Quantity = quantity,
-            UnitPrice = price ?? option.Price,
-            LineTotal = decimal.Round((price ?? option.Price) * quantity, 2),
+            UnitPrice = price ?? prices.OptionPrice(pricing, option),
+            LineTotal = decimal.Round((price ?? prices.OptionPrice(pricing, option)) * quantity, 2),
+            PriceListName = price is null ? prices.ListNameFor(pricing, option) : null,
         };
     }
 }

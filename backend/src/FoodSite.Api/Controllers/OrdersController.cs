@@ -28,6 +28,7 @@ public class OrdersController(
     MarketingNotifier marketing,
     IOptions<SiteOptions> site,
     DeliveryQuoter deliveryQuoter,
+    FeatureFlags features,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
@@ -143,7 +144,8 @@ public class OrdersController(
         var pickedSlot = hour is { } picked && openDate is not null
             ? openDate.Hours.FirstOrDefault(h => h.From == picked && (h.Date ?? input.SupplyDate) == supplyDate)
             : null;
-        var items = OrderBuilder.Build(input.Items, dishes, errors, openDate is null ? null : DishAvailability.Of(supplyDate, pickedSlot));
+        var prices = await SessionPricesAsync(db, features, clock, ct);
+        var items = OrderBuilder.Build(input.Items, dishes, errors, openDate is null ? null : DishAvailability.Of(supplyDate, pickedSlot), prices);
         var minimumApplies = input.FulfillmentMethod == FulfillmentMethod.Delivery || settings.MinimumOrderAppliesToPickup;
         // An order under the minimum is only sent when the client agreed to be charged the minimum.
         var minimumTopUp = 0m;

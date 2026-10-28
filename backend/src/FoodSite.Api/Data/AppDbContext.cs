@@ -29,6 +29,9 @@ public class AppDbContext(
     public DbSet<SocialLink> SocialLinks => Set<SocialLink>();
     public DbSet<PopupSlot> PopupSlots => Set<PopupSlot>();
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
+    public DbSet<PriceList> PriceLists => Set<PriceList>();
+    public DbSet<PriceListDish> PriceListDishes => Set<PriceListDish>();
+    public DbSet<PriceListPhone> PriceListPhones => Set<PriceListPhone>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<DishAvailabilityRule> DishAvailabilityRules => Set<DishAvailabilityRule>();
     public DbSet<User> Users => Set<User>();
@@ -216,6 +219,29 @@ public class AppDbContext(
             e.HasOne(x => x.Dish).WithMany().HasForeignKey(x => x.DishId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        model.Entity<PriceList>(e =>
+        {
+            e.Property(l => l.Name).HasMaxLength(PriceList.NameMaxLength);
+            e.HasOne(l => l.BaseList).WithMany().HasForeignKey(l => l.BaseListId).OnDelete(DeleteBehavior.Restrict);
+            // One default list per site.
+            e.HasIndex(l => l.IsDefault).IsUnique().HasFilter("\"IsDefault\"");
+        });
+
+        model.Entity<PriceListDish>(e =>
+        {
+            e.HasIndex(x => new { x.PriceListId, x.DishId }).IsUnique();
+            e.HasOne(x => x.PriceList).WithMany(l => l.Dishes).HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Dish).WithMany().HasForeignKey(x => x.DishId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<PriceListPhone>(e =>
+        {
+            e.HasKey(x => new { x.PriceListId, x.Phone });
+            e.Property(x => x.Phone).HasMaxLength(20);
+            e.HasIndex(x => x.Phone);
+            e.HasOne(x => x.PriceList).WithMany(l => l.Phones).HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         model.Entity<AddOnGroup>(e =>
         {
             e.Property(g => g.Name).HasMaxLength(AddOnGroup.NameMaxLength);
@@ -310,6 +336,7 @@ public class AppDbContext(
         model.Entity<OrderItem>(e =>
         {
             e.Property(i => i.Quantity).HasPrecision(10, 3);
+            e.Property(i => i.PriceListName).HasMaxLength(PriceList.NameMaxLength);
             e.HasOne(i => i.Order).WithMany(o => o.Items)
                 .HasForeignKey(i => i.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);

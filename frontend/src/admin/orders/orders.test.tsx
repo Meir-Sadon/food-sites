@@ -362,6 +362,14 @@ describe('Admin Reports', () => {
       expect(screen.getByText(/בשעה 09:00/)).toBeInTheDocument()
     })
 
+    it('names the price list a line was priced from', async () => {
+      const listed = { ...detailed, items: detailed.items.map((i) => (i.id === 1 ? { ...i, priceListName: 'לקוחות קבועים' } : i)) }
+      fakeApi({ ...adminSession, 'GET /api/admin/orders/7': () => ({ body: listed }) })
+      renderAt('/admin/orders/7')
+      const basket = await screen.findByRole('region', { name: 'הזמנה כפי שהלקוח רואה בסל' })
+      expect(within(basket).getByText('מחירון: לקוחות קבועים')).toBeInTheDocument()
+    })
+
     it('shares the preparation report on WhatsApp: what to prepare, then the other details', async () => {
       fakeApi({ ...adminSession, 'GET /api/admin/orders/7': () => ({ body: detailed }) })
       renderAt('/admin/orders/7')

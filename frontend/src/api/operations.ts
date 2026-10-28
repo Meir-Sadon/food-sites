@@ -36,6 +36,8 @@ export interface AdminOrderItem {
   lineTotal: number
   /** The dish's first picture, else its main dish's. */
   imageUrl?: string | null
+  /** The price list the line was priced from (feature priceLists); absent for regular prices. */
+  priceListName?: string | null
 }
 
 export interface AdminOrder {

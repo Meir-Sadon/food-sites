@@ -1,0 +1,61 @@
+namespace FoodSite.Api.Data.Entities;
+
+/// <summary>
+/// A price list (feature <c>priceLists</c>): prices for the dishes that apply to the clients it is assigned to, each
+/// dish within its own dates. The default list (<see cref="IsDefault"/>) is the dishes' regular prices themselves and
+/// has no rows of its own; every other list copied its prices from a base list (the default one, or a list without a
+/// base of its own) when it was made or its base changed.
+/// </summary>
+public class PriceList
+{
+    public const int NameMaxLength = 60;
+
+    public int Id { get; set; }
+
+    /// <summary>Null for the default list, whose name is the site's text.</summary>
+    public string? Name { get; set; }
+
+    public bool IsDefault { get; set; }
+
+    /// <summary>The list this one copied its prices from; null means the default list (and is the default list's own).</summary>
+    public int? BaseListId { get; set; }
+    public PriceList? BaseList { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public List<PriceListDish> Dishes { get; set; } = [];
+    public List<PriceListPhone> Phones { get; set; } = [];
+}
+
+/// <summary>
+/// A dish's price in a list: <see cref="Price"/> is what the list's clients pay for the dish's main price (its default
+/// option, or its price per unit or kilo). When it is below <see cref="BasePrice"/> the order page shows the base price
+/// struck through. The row applies from <see cref="From"/> to <see cref="To"/> (dates in the site's time zone, both
+/// included, either open); outside them the dish is priced as if the list did not have it.
+/// </summary>
+public class PriceListDish
+{
+    public int Id { get; set; }
+
+    public int PriceListId { get; set; }
+    public PriceList? PriceList { get; set; }
+
+    public int DishId { get; set; }
+    public Dish? Dish { get; set; }
+
+    public decimal BasePrice { get; set; }
+    public decimal Price { get; set; }
+    public DateOnly? From { get; set; }
+    public DateOnly? To { get; set; }
+
+    public bool IsActiveOn(DateOnly day) => (From is null || From <= day) && (To is null || To >= day);
+}
+
+/// <summary>A client's phone (local form, see <c>PhoneNumber.Normalize</c>) the list is assigned to.</summary>
+public class PriceListPhone
+{
+    public int PriceListId { get; set; }
+    public PriceList? PriceList { get; set; }
+
+    public required string Phone { get; set; }
+}

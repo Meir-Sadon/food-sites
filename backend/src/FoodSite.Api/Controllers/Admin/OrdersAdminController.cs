@@ -21,7 +21,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     public record ItemDto(
         int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, string? Note = null,
-        IReadOnlyList<AnswerDto>? Answers = null, string? ImageUrl = null);
+        IReadOnlyList<AnswerDto>? Answers = null, string? ImageUrl = null, string? PriceListName = null);
 
     /// <summary>A dish question and the client's answer, as shown.</summary>
     public record AnswerDto(string Question, string Answer);
@@ -350,7 +350,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.Items.OrderBy(i => i.Id)
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.Note,
                 (i.Answers ?? []).Select(a => new AnswerDto(a.Question, a.Answer)).ToList(),
-                pictures.GetValueOrDefault(i.DishId)))
+                pictures.GetValueOrDefault(i.DishId), i.PriceListName))
             .ToList(),
         o.DeliveryHour,
         overbooked.Contains(o.Id),

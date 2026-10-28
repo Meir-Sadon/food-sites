@@ -929,6 +929,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int?>("ParentItemId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("PriceListName")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
                     b.Property<decimal>("Quantity")
                         .HasPrecision(10, 3)
                         .HasColumnType("numeric(10,3)");
@@ -1013,6 +1017,92 @@ namespace FoodSite.Api.Data.Migrations
                     b.HasKey("Slot");
 
                     b.ToTable("Popups", (string)null);
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BaseListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BaseListId");
+
+                    b.HasIndex("IsDefault")
+                        .IsUnique()
+                        .HasFilter("\"IsDefault\"");
+
+                    b.ToTable("PriceLists");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDish", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BasePrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int>("DishId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("From")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int>("PriceListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("To")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DishId");
+
+                    b.HasIndex("PriceListId", "DishId")
+                        .IsUnique();
+
+                    b.ToTable("PriceListDishes");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListPhone", b =>
+                {
+                    b.Property<int>("PriceListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("PriceListId", "Phone");
+
+                    b.HasIndex("Phone");
+
+                    b.ToTable("PriceListPhones");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Recommendation", b =>
@@ -1936,6 +2026,46 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("ParentItem");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceList", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.PriceList", "BaseList")
+                        .WithMany()
+                        .HasForeignKey("BaseListId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("BaseList");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDish", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
+                        .WithMany()
+                        .HasForeignKey("DishId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodSite.Api.Data.Entities.PriceList", "PriceList")
+                        .WithMany("Dishes")
+                        .HasForeignKey("PriceListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dish");
+
+                    b.Navigation("PriceList");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListPhone", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.PriceList", "PriceList")
+                        .WithMany("Phones")
+                        .HasForeignKey("PriceListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PriceList");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Recommendation", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.User", "User")
@@ -2038,6 +2168,13 @@ namespace FoodSite.Api.Data.Migrations
             modelBuilder.Entity("FoodSite.Api.Data.Entities.OrderItem", b =>
                 {
                     b.Navigation("AddOnItems");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceList", b =>
+                {
+                    b.Navigation("Dishes");
+
+                    b.Navigation("Phones");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Review", b =>
