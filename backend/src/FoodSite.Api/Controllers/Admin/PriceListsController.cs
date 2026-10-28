@@ -166,9 +166,12 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
                 errors.Add($"dishes[{i}].dishId", "notFound");
                 continue;
             }
-            if (row.Price <= 0 || row.Price > MaxPrice)
+            // A list may price a dish at zero. The default list holds the dish's own prices, so there a zero is
+            // refused only when it would change one, as the dish form refuses a free option.
+            var regular = PriceBook.RegularMainPrice(dish);
+            if (row.Price < 0 || row.Price > MaxPrice || (list.IsDefault && row.Price == 0 && regular != 0))
                 errors.Add($"dishes[{i}].price", "positive");
-            if (!list.IsDefault && (row.BasePrice <= 0 || row.BasePrice > MaxPrice))
+            if (!list.IsDefault && (row.BasePrice < 0 || row.BasePrice > MaxPrice))
                 errors.Add($"dishes[{i}].basePrice", "positive");
             if (!list.IsDefault && row.From is { } from && row.To is { } to && to < from)
                 errors.Add($"dishes[{i}].to", "toBeforeFrom");
@@ -182,9 +185,9 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
                     errors.Add($"{path}.key", "notFound");
                     continue;
                 }
-                // An option costs something; an add-on's price, or one above a limit, may be zero, as in the dish form.
-                bool Bad(decimal value) => value >= MaxPrice || (sub.Kind == PriceBook.SubKinds.Option ? value <= 0 : value < 0);
-                if (Bad(subsSent[j].Price))
+                // Any price may be zero in a list; in the default list an option keeps a price unless it already had none.
+                bool Bad(decimal value) => value >= MaxPrice || value < 0;
+                if (Bad(subsSent[j].Price) || (list.IsDefault && sub.Kind == PriceBook.SubKinds.Option && subsSent[j].Price == 0 && sub.RegularPrice != 0))
                     errors.Add($"{path}.price", "invalid");
                 if (!list.IsDefault && Bad(subsSent[j].BasePrice))
                     errors.Add($"{path}.basePrice", "invalid");
