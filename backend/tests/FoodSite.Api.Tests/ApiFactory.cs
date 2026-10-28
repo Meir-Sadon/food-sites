@@ -50,6 +50,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["Site:Features:recommendations"] = "true",
             ["Site:Features:favorites"] = "true",
             ["Site:Features:reviews"] = "true",
+            ["Site:Features:priceLists"] = "true",
             // Changes are mailed (to the capturing mailer) as soon as the next poll sees them.
             ["Mail:ChangeQuietSeconds"] = "0",
             ["Mail:PollSeconds"] = "1",

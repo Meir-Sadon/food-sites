@@ -203,6 +203,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var settings = await db.Settings.AsNoTracking().SingleAsync();
         var badges = ItemBadges.Of(settings);
         var now = clock.NowLocal();
+        var prices = await SessionPricesAsync(db, features, clock);
 
         var menuDishes = shown.Select(d =>
         {
@@ -212,8 +213,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 .ToList();
             return new MenuDishDto(
                 d.Id, d.Name, d.CategoryId, d.Description, d.AllergenInfo, p.SellBy, p.ChoiceMode,
-                p.MinAmount, p.MaxAmount, p.AmountStep, p.UnitPrice, d.IsAddOnOnly, d.IsSoldOut || d.MainDish is { IsSoldOut: true },
-                p.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
+                p.MinAmount, p.MaxAmount, p.AmountStep, prices.UnitPrice(p), d.IsAddOnOnly, d.IsSoldOut || d.MainDish is { IsSoldOut: true },
+                p.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, prices.OptionPrice(p, o), o.IsDefault)).ToList(),
                 d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
                 links.Select(a => a.AddOnDishId).Distinct().ToList(),
                 remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, p.UnitName,
@@ -228,7 +229,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 p.OptionsTitle, p.ShowOptionDifference, d.DietaryTags,
                 d.OnSale, ItemBadges.IsNew(badges, d.CreatedAt, now), LimitOf(d, settings.PortionsPerSupplyDate),
                 d.AvailabilityRules.Count > 0 ? DishAvailability.ToDtos(d.AvailabilityRules) : null,
-                p.PriceBeforeDiscount);
+                prices.PriceBeforeDiscount(p));
         }).ToList();
 
         // Groups list only dishes ordered on their own that are on the menu, in menu order; an empty group is left out.

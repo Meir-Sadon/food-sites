@@ -33,7 +33,7 @@ public sealed class FeatureFlagsTests(PostgresFixture postgres)
     public async Task The_site_lists_the_features_its_site_json_turns_on()
     {
         await using var factory = FavoritesOff();
-        Assert.Equal([Features.Recommendations, Features.Reviews], await EnabledAsync(factory));
+        Assert.Equal([Features.Recommendations, Features.Reviews, Features.PriceLists], await EnabledAsync(factory));
     }
 
     [Fact]
@@ -44,6 +44,7 @@ public sealed class FeatureFlagsTests(PostgresFixture postgres)
             ["Site:Features:recommendations"] = null,
             ["Site:Features:favorites"] = null,
             ["Site:Features:reviews"] = null,
+            ["Site:Features:priceLists"] = null,
         });
         Assert.Empty(await EnabledAsync(factory));
     }
@@ -80,7 +81,7 @@ public sealed class FeatureFlagsTests(PostgresFixture postgres)
             await db.SaveChangesAsync();
         }
 
-        Assert.Equal([Features.Favorites, Features.Reviews], await EnabledAsync(factory));
+        Assert.Equal([Features.Favorites, Features.Reviews, Features.PriceLists], await EnabledAsync(factory));
         var client = await RegisterAsync(factory);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/account/favorites")).StatusCode);
         var recommendation = await client.PostAsJsonAsync("/api/account/recommendations", new { text = "טעים" });

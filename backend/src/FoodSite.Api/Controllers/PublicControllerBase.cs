@@ -1,7 +1,11 @@
 using FoodSite.Api.Auth;
 using FoodSite.Api.Controllers.Admin;
+using FoodSite.Api.Data;
+using FoodSite.Api.Orders;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FoodSite.Api.Controllers;
 
@@ -24,5 +28,17 @@ public abstract class PublicControllerBase : ControllerBase
     {
         var result = await HttpContext.AuthenticateAsync(UserTokenService.Scheme);
         return result.Succeeded && int.TryParse(result.Principal?.FindFirst("sub")?.Value, out var id) ? id : null;
+    }
+
+    /// <summary>
+    /// The logged-in client's price lists for today, while the site has them on; a guest (or the phone typed into an
+    /// order) never gets them, so only the session's own account decides.
+    /// </summary>
+    protected async Task<PriceBook> SessionPricesAsync(AppDbContext db, FeatureFlags features, SiteClock clock, CancellationToken ct = default)
+    {
+        if (!await features.IsEnabledAsync(Features.PriceLists, ct) || await SessionUserIdAsync() is not { } userId)
+            return PriceBook.Regular;
+        var phone = await db.Users.AsNoTracking().Where(u => u.Id == userId).Select(u => u.Phone).FirstOrDefaultAsync(ct);
+        return await PriceBook.ForPhoneAsync(db, phone, clock.Today(), ct);
     }
 }
