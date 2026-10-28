@@ -263,10 +263,29 @@ describe('Order page for a logged-in client', () => {
     await user.click(await screen.findByRole('button', { name: 'ההזמנה האחרונה' }))
 
     expect(screen.getByText('ההזמנה מולאה במחירים הנוכחיים.')).toBeInTheDocument()
+    // Every price is as it was, so there is nothing to warn about.
+    expect(screen.queryByText(/השתנו? מאז ההזמנה הקודמת/)).not.toBeInTheDocument()
     const card = screen.getByRole('article', { name: 'עוף בתנור' })
     expect(within(card).getByRole('radio', { name: /חצי/ })).toBeChecked()
     // 2 × 40 plus 3 × 12
     expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪116/)).toBeInTheDocument()
+  })
+
+  it('warns which dishes cost something else now when filling from the last order', async () => {
+    const older = {
+      ...pastOrder,
+      items: pastOrder.items.map((i) => (i.dishId === 1 ? { ...i, unitPrice: 35, lineTotal: 70 } : { ...i, unitPrice: 10, lineTotal: 30 })),
+    }
+    const { user } = open('/', { ...loggedIn, 'GET /api/account/orders': () => [older] })
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+
+    await user.click(await screen.findByRole('button', { name: 'ההזמנה האחרונה' }))
+
+    const notice = screen.getByText('המחירים של עוף בתנור, ירך השתנו מאז ההזמנה הקודמת. ההזמנה מחושבת לפי המחירים הנוכחיים.')
+    // Priced as today: 2 × 40 plus 3 × 12.
+    expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪116/)).toBeInTheDocument()
+    await user.click(within(notice.closest('.notice') as HTMLElement).getByRole('button', { name: 'הבנתי' }))
+    expect(screen.queryByText(/השתנו מאז ההזמנה הקודמת/)).not.toBeInTheDocument()
   })
 
   it('scrolls to the submit button after a quick fill', async () => {
@@ -399,6 +418,17 @@ describe('Profile', () => {
     await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
     expect(await screen.findByText('ההזמנה מולאה מהזמנה קודמת, במחירים הנוכחיים.')).toBeInTheDocument()
     expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪116/)).toBeInTheDocument()
+    expect(screen.queryByText(/מאז ההזמנה הקודמת/)).not.toBeInTheDocument()
+  })
+
+  it('reorders a past order whose price changed, with a warning on the order page', async () => {
+    const older = { ...pastOrder, items: pastOrder.items.map((i) => (i.dishId === 1 ? { ...i, unitPrice: 45, lineTotal: 90 } : i)) }
+    const { user } = open('/profile', { ...loggedIn, 'GET /api/account/orders': () => [older] })
+    const order = await screen.findByRole('article', { name: 'הזמנה #5' })
+
+    await user.click(within(order).getByRole('button', { name: 'הזמנה חוזרת' }))
+
+    expect(await screen.findByText('המחיר של עוף בתנור השתנה מאז ההזמנה הקודמת. ההזמנה מחושבת לפי המחיר הנוכחי.')).toBeInTheDocument()
   })
 
   it('saves a past order as a named favorite and removes favorites', async () => {

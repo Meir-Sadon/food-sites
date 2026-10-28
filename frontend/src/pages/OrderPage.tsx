@@ -168,6 +168,8 @@ export function OrderPage() {
   )
   const menu = useMemo(() => (fullMenu && when ? availableMenu(fullMenu, when) : fullMenu), [fullMenu, when])
   const [removedNotice, setRemovedNotice] = useState<{ dishes: string[]; addOns: string[] } | null>(null)
+  // Dishes of a past order filled into this one whose price changed since.
+  const [repricedNotice, setRepricedNotice] = useState<string[] | null>(null)
   // Adjusting state during render: what the menu no longer has leaves the order at once, and the client is told why.
   if (fullMenu && menu && menu !== fullMenu) {
     const pruned = pruneUnavailable(state.selections, dishMap(menu), dishMap(fullMenu))
@@ -211,7 +213,9 @@ export function OrderPage() {
   useRegisterCart(totals.main + totals.side + totals.drinks, total, () => setCartOpen(true), !!menu)
   useReportOrderSignals(itemsTotal, count > 0, sources)
   // Set when the profile page's "Reorder" put a past order in the draft.
-  const filledSkipped = (location.state as { filled?: { skipped: number } } | null)?.filled?.skipped
+  const filled = (location.state as { filled?: { skipped: number; repriced?: string[] } } | null)?.filled
+  const filledSkipped = filled?.skipped
+  const filledRepriced = filled?.repriced
 
   // A logged-in client's details are prefilled once the menu (and any draft) is in, and the login
   // already confirmed their phone. Adjusting state during render is React's way to derive it from props.
@@ -269,8 +273,10 @@ export function OrderPage() {
           setState({ ...draft, selections })
           // A draft the profile page filled from a past order counts as filled from the last order, not as a restored one.
           if (Object.keys(selections).length > 0) setSources([filledSkipped !== undefined ? 'last' : 'draft'])
-          if (filledSkipped !== undefined)
+          if (filledSkipped !== undefined) {
             toast(filledSkipped > 0 ? t('order.filledSkipped', { count: filledSkipped }) : t('order.filled'))
+            setRepricedNotice(filledRepriced?.length ? filledRepriced : null)
+          }
           else toast(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
         }
         setMenu(loaded)
@@ -279,7 +285,7 @@ export function OrderPage() {
     return () => {
       active = false
     }
-  }, [t, toast, filledSkipped])
+  }, [t, toast, filledSkipped, filledRepriced])
 
   // Ask about saving when leaving by the top bar, and warn when closing the tab.
   useRegisterLeaveGuard((to, proceed) => {
@@ -492,9 +498,10 @@ export function OrderPage() {
     }))
   }
 
-  function applyQuickFill({ selections, skipped }: Restored, source: Exclude<OrderSource, 'draft'>) {
+  function applyQuickFill({ selections, skipped, repriced }: Restored, source: Exclude<OrderSource, 'draft'>) {
     trackUsage('OrderStarted')
     setState((current) => ({ ...current, selections }))
+    setRepricedNotice(repriced?.length ? repriced : null)
     setSources([source])
     toast(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
     setErrors({})
@@ -795,6 +802,14 @@ export function OrderPage() {
             {removedNotice.dishes.length > 0 && <p>{t('order.availabilityRemoved', { count: removedNotice.dishes.length, names: removedNotice.dishes.join(', ') })}</p>}
             {removedNotice.addOns.length > 0 && <p>{t('order.availabilityAddOnsRemoved', { names: removedNotice.addOns.join(', ') })}</p>}
             <button type="button" className="button-quiet" onClick={() => setRemovedNotice(null)}>
+              {t('order.dismiss')}
+            </button>
+          </div>
+        )}
+        {repricedNotice && (
+          <div className="notice notice--warning" role="status">
+            <p>{t('order.repriced', { count: repricedNotice.length, names: repricedNotice.join(', ') })}</p>
+            <button type="button" className="button-quiet" onClick={() => setRepricedNotice(null)}>
               {t('order.dismiss')}
             </button>
           </div>

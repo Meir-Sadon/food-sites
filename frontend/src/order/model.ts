@@ -588,6 +588,8 @@ export interface Restored {
   selections: Record<number, Selection>
   /** Dishes or options from the saved order that no longer exist or are sold out. */
   skipped: number
+  /** From a past order: the names of the dishes (or add-ons) that cost something else now than they did then. */
+  repriced?: string[]
 }
 
 /**
@@ -752,7 +754,36 @@ export function selectionsFromHistory(order: HistoryOrder, menu: Menu): Restored
           quantity: addOn.quantity,
         })),
     }))
-  return restoreSelections(selectionsFromLines(lines, dishes), menu)
+  return { ...restoreSelections(selectionsFromLines(lines, dishes), menu), repriced: repricedItems(order, dishes) }
+}
+
+/**
+ * The dishes of a past order whose price changed since: each line is compared with what the same dish and option cost
+ * now (an add-on at its price under the dish, a line above a limit at the over-limit price). Lines whose dish or
+ * option is gone are left to the skipped count.
+ */
+function repricedItems(order: HistoryOrder, dishes: Map<number, MenuDish>): string[] {
+  const byId = new Map(order.items.map((i) => [i.id, i]))
+  const names = new Set<string>()
+  for (const item of order.items) {
+    const dish = dishes.get(item.dishId)
+    if (!dish || dish.isSoldOut) continue
+    const optionId = dish.choiceMode === 'Fixed' ? (dish.options.find((o) => o.label === item.optionLabel)?.id ?? null) : null
+    if (dish.choiceMode === 'Fixed' && optionId === null) continue
+    let now: number[]
+    if (item.parentItemId === null) now = [unitPrice(dish, optionId)]
+    else {
+      const parent = dishes.get(byId.get(item.parentItemId)?.dishId ?? -1)
+      if (!parent) continue
+      const link = addOnLink(parent, addOnKeyOfItem(parent, item.dishId, item.dishName))
+      const group = link.groupId === null ? undefined : parent.addOnGroups?.find((g) => g.id === link.groupId)
+      now = item.dishName.endsWith(OVER_LIMIT_SUFFIX)
+        ? [link.overLimitPrice, group?.overLimitPrice].filter((p): p is number => p != null)
+        : [addOnUnitPrice(link, dish, optionId)]
+    }
+    if (!now.some((price) => round2(price) === round2(item.unitPrice))) names.add(dish.name)
+  }
+  return [...names]
 }
 
 /** A favorite as a saved selection, with whatever has vanished from the menu skipped. */
