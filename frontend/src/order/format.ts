@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next'
 import type { HourSlot, MenuDish } from '../api/site'
-import { defaultOption } from './model'
+import { defaultOption, unitPrice } from './model'
 
 const money = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 2 })
 
@@ -15,6 +15,12 @@ export function priceText(dish: MenuDish, t: TFunction): string {
   }
   const option = defaultOption(dish)
   return option ? t('order.priceFrom', { price: money.format(option.price), label: option.label }) : ''
+}
+
+/** The admin's price before a discount, shown struck through next to the dish's price; null unless it is above that price. */
+export function priceBeforeDiscount(dish: MenuDish): number | null {
+  const before = dish.priceBeforeDiscount ?? null
+  return before !== null && before > unitPrice(dish, null) ? before : null
 }
 
 /** "יום שישי, 09/10/2026" for "2026-10-09". Parsed as a local date so time zones cannot shift it. */

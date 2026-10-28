@@ -9,7 +9,7 @@ import { trackMarketing } from '../tracking/marketing'
 import { useTranslation } from 'react-i18next'
 import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
-import { formatMoney, optionPriceText, priceText, unitLabel } from './format'
+import { formatMoney, optionPriceText, priceBeforeDiscount, priceText, unitLabel } from './format'
 import { Highlighted } from './Highlight'
 import { ImageCarousel } from './ImageCarousel'
 import { ImageViewer } from './ImageViewer'
@@ -77,6 +77,25 @@ function RemainingNote({ dish, remaining }: { dish: MenuDish; remaining: number 
 }
 
 /** The name, description, price and allergens of a dish (or of a variant, one heading level down). */
+/** The price on a dish card, after the admin's price before a discount struck through when there is one. */
+function DishPrice({ dish }: { dish: MenuDish }) {
+  const { t } = useTranslation()
+  const before = priceBeforeDiscount(dish)
+  return (
+    <p className="dish__price">
+      {before !== null && (
+        <>
+          <del className="dish__price-before">
+            <span className="visually-hidden">{t('order.priceBeforeDiscount')} </span>
+            {formatMoney(before)}
+          </del>{' '}
+        </>
+      )}
+      {priceText(dish, t)}
+    </p>
+  )
+}
+
 function DishDetails({ dish, nameId, variant, date }: { dish: MenuDish; nameId: string; variant?: boolean; date?: string }) {
   const { t } = useTranslation()
   const Heading = variant ? 'h4' : 'h3'
@@ -85,7 +104,7 @@ function DishDetails({ dish, nameId, variant, date }: { dish: MenuDish; nameId: 
       <ItemBadges dish={dish} date={date} />
       <Heading id={nameId}><Highlighted text={dish.name} /></Heading>
       {dish.description && <p className="dish__description"><Highlighted text={dish.description} /></p>}
-      <p className="dish__price">{priceText(dish, t)}</p>
+      <DishPrice dish={dish} />
       {dish.allergenInfo && (
         <p className="muted">
           {t('order.allergens')}: {dish.allergenInfo}
@@ -399,7 +418,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
       </TileMedia>
       <div className="tile__body">
         <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
-        <p className="dish__price">{priceText(dish, t)}</p>
+        <DishPrice dish={dish} />
         {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
       </div>
       {open && (
@@ -407,7 +426,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
           <div className="tile-dialog__head">
             <DialogPicture images={dish.images} name={dish.name} onZoom={() => setZoom(true)} />
             <div className="tile-dialog__info">
-              <p className="dish__price">{priceText(dish, t)}</p>
+              <DishPrice dish={dish} />
               {dish.description && <p className="dish__description">{dish.description}</p>}
               {dish.allergenInfo && <p className="dish__allergens">{t('order.allergens')}: {dish.allergenInfo}</p>}
               <AvailabilityNote dish={dish} />

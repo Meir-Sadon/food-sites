@@ -946,6 +946,16 @@ describe('Order page', () => {
     expect(within(dishCard('אורז')).queryByText('מבצע')).not.toBeInTheDocument()
   })
 
+  it('shows the price before a discount struck through only when it is above the price', async () => {
+    const sale = menuDish(1, 'עוף בתנור', 1, { priceBeforeDiscount: 999 })
+    const same = menuDish(2, 'אורז', 2, { priceBeforeDiscount: 1 })
+    await openOrderPage({ 'GET /api/menu': () => menu({ dishes: [sale, same] }) })
+
+    const struck = dishCard('עוף בתנור').querySelector('del')
+    expect(struck).toHaveTextContent('מחיר לפני הנחה: ₪999')
+    expect(dishCard('אורז').querySelector('del')).toBeNull()
+  })
+
   it('shows no almost-out mark while that badge is off or plenty is left', async () => {
     const dates = menu().supplyDates.map((d) => d.date)
     const dish = (remaining: number) => menuDish(1, 'עוף בתנור', 1, { limit: 10, remaining: { [dates[0]]: remaining } })

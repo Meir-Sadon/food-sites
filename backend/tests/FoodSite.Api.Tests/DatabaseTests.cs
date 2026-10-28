@@ -37,6 +37,7 @@ public sealed class DatabaseTests : IDisposable
             "UsageEvents", "UsageDays", "UsageDevices",
             "DriverRoutes", "DriverRouteStops",
             "AuditEntries", "Feedback", "DishGroups", "DishGroupDishes", "DeliveryZones", "SocialLinks", "SupplyDayHours", "GuestDetails", "UserAddresses", "Popups",
+            "DishAvailabilityRules",
         ];
         Assert.Equal(expected.Order(), tables.Order());
     }

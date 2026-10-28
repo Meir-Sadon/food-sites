@@ -282,6 +282,7 @@ describe('Dish form', () => {
       openByDefault: false,
       isSideDish: false,
       onSale: false,
+      priceBeforeDiscount: null,
       maxPerSupplyDate: null,
       options: [
         { id: null, label: 'קטן', amount: 1, price: 5, isDefault: false },
@@ -325,6 +326,30 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).onSale).toBe(true)
+  })
+
+  it('saves a price before a discount and shows the error when it is not above the price', async () => {
+    const api = fakeApi({
+      ...base,
+      'PUT /api/admin/dishes/1': (_, body) =>
+        (body as DishInput).priceBeforeDiscount === 10
+          ? invalid({ PriceBeforeDiscount: ['notAbovePrice'] })
+          : { ...chicken, ...(body as object) },
+    })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    const field = screen.getByLabelText('מחיר לפני הנחה')
+    await user.type(field, '10')
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+    expect(await screen.findByText('המחיר לפני הנחה צריך להיות גבוה ממחיר המנה.')).toBeInTheDocument()
+
+    await user.clear(field)
+    await user.type(field, '120')
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1').at(-1)!.body as DishInput).priceBeforeDiscount).toBe(120)
   })
 
   it('saves a dish whose adjustment is optional', async () => {

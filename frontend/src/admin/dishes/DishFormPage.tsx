@@ -61,6 +61,7 @@ interface DishForm {
   openByDefault: boolean
   isSideDish: boolean
   onSale: boolean
+  priceBeforeDiscount: string
   maxPerSupplyDate: string
   options: OptionForm[]
   parentDishIds: number[]
@@ -112,6 +113,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       openByDefault: false,
       isSideDish: false,
       onSale: false,
+      priceBeforeDiscount: '',
       maxPerSupplyDate: '',
       options: [emptyOption(true)],
       parentDishIds: [],
@@ -137,6 +139,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     openByDefault: dish.openByDefault,
     isSideDish: dish.isSideDish,
     onSale: dish.onSale ?? false,
+    priceBeforeDiscount: str(dish.priceBeforeDiscount ?? null),
     maxPerSupplyDate: str(dish.maxPerSupplyDate),
     options: dish.options.length
       ? dish.options.map((o) => ({ key: nextKey++, id: o.id, label: o.label, amount: String(o.amount), price: String(o.price), isDefault: o.isDefault }))
@@ -234,6 +237,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
     openByDefault: form.openByDefault,
     isSideDish: form.isSideDish,
     onSale: form.onSale,
+    priceBeforeDiscount: num(form.priceBeforeDiscount),
     maxPerSupplyDate: num(form.maxPerSupplyDate),
     options: fixed
       ? form.options.map((o) => ({ id: o.id, label: o.label, amount: num(o.amount) ?? 0, price: num(o.price) ?? 0, isDefault: o.isDefault }))
@@ -516,7 +520,7 @@ export function DishFormPage() {
         <FormBlock
           title={t('admin.dishes.blocks.price')}
           about={t('admin.dishes.blocks.priceAbout')}
-          invalid={invalid('useMainDishPrice', 'sellBy', 'choiceMode', 'options', 'optionsTitle', 'unitName', 'minAmount', 'maxAmount', 'amountStep', 'unitPrice')}
+          invalid={invalid('useMainDishPrice', 'sellBy', 'choiceMode', 'options', 'optionsTitle', 'unitName', 'minAmount', 'maxAmount', 'amountStep', 'unitPrice', 'priceBeforeDiscount')}
         >
         {isVariant && (
           <label className="checkbox">
@@ -676,6 +680,23 @@ export function DishFormPage() {
             </fieldset>
           </>
         )}
+        <span className="field field--narrow">
+          <span className="with-info">
+            <label htmlFor="dish-priceBeforeDiscount">{t('admin.dishes.priceBeforeDiscount')}</label>
+            <Info text={t('admin.dishes.priceBeforeDiscountHint')} about={t('admin.dishes.priceBeforeDiscount')} />
+          </span>
+          <input
+            id="dish-priceBeforeDiscount"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="any"
+            value={form.priceBeforeDiscount}
+            onChange={(e) => set({ priceBeforeDiscount: e.target.value })}
+            {...err('priceBeforeDiscount')}
+          />
+          {fieldError('priceBeforeDiscount')}
+        </span>
         </>
         )}
         </FormBlock>

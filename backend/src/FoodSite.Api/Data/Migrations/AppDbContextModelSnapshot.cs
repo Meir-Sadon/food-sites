@@ -261,6 +261,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<decimal?>("PriceBeforeDiscount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<string>("SellBy")
                         .IsRequired()
                         .HasColumnType("text");
