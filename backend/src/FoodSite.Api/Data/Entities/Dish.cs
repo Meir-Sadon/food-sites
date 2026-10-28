@@ -61,6 +61,13 @@ public class Dish
     /// <summary>The order page marks the dish as on sale.</summary>
     public bool OnSale { get; set; }
 
+    /// <summary>
+    /// The price before a discount, shown struck through next to the dish's price on the order page (its default
+    /// option's price, or its price per unit or kilo). Display only: orders are always priced from the real prices.
+    /// Null shows no earlier price; a variant priced like its main dish shows its main dish's.
+    /// </summary>
+    public decimal? PriceBeforeDiscount { get; set; }
+
     /// <summary>When the dish was added; the "new" badge counts from it. Dishes that existed before the badge carry an old date.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
