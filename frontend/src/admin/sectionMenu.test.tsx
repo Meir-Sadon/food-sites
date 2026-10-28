@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { popup, settings } from '../test/catalogData'
 import { adminSession, fakeApi } from '../test/fakeApi'
 import { renderAt } from '../test/render'
+import { sections } from './sections'
 
 function open(path = '/admin/appearance') {
   let saved = settings()
@@ -57,10 +58,16 @@ describe('Settings side menu', () => {
     await waitFor(() => expect(within(menu).queryByText('נשמר.')).not.toBeInTheDocument(), { timeout: 4000 })
   })
 
-  it('gives the entry pop-up and the social and tracking settings tabs of their own', async () => {
+  it('gives the entry pop-up its own tab', async () => {
     open('/admin/popup')
     expect(await screen.findByRole('heading', { level: 1, name: 'פופ-אפ בכניסה לאתר' })).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'מעקב שיווקי' })).not.toBeInTheDocument()
+  })
+
+  it('lists social and tracking under site settings, not display', () => {
+    const keys = (section: string) => sections.find((s) => s.key === section)!.tabs.map((t) => t.to)
+    expect(keys('site')).toContain('/admin/social')
+    expect(keys('display')).not.toContain('/admin/social')
   })
 
   it('keeps marketing tracking and social links on one tab', async () => {
