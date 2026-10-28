@@ -3,11 +3,13 @@ import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../../api/client'
 import { categoriesApi, type Category } from '../../api/catalog'
-import { priceListsApi, type PriceList, type PriceListDish } from '../../api/priceLists'
-import { FieldError, Info, Loading, Status } from '../ui'
+import { linkedLists, priceListsApi, type PriceList, type PriceListDish } from '../../api/priceLists'
+import { Info, Loading, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useFormErrorMessage } from '../hooks'
 import { useDirty, useUnsavedChanges } from '../unsaved'
 import { PriceListForm, useListName } from './PriceListsPage'
+import { LinkedListsQuestion, PriceRowFields } from './priceRow'
+import { inputOf, pricesChanged, rowOf, type Row } from './priceRowModel'
 
 interface Loaded {
   lists: PriceList[]
@@ -75,6 +77,7 @@ export function PriceListPage() {
           <DishesForm
             key={`${list.id}-${list.baseListId}`}
             list={list}
+            lists={data.lists}
             dishes={data.dishes}
             categories={data.categories}
             onSaved={(dishes) => setData((current) => current && { ...current, dishes })}
@@ -135,70 +138,50 @@ function PhonesForm({ list, onSaved }: { list: PriceList; onSaved: (list: PriceL
   )
 }
 
-interface Row {
-  dishId: number
-  basePrice: string
-  price: string
-  from: string
-  to: string
-}
-
-const rowOf = (d: PriceListDish): Row => ({
-  dishId: d.dishId,
-  basePrice: String(d.basePrice),
-  price: String(d.price),
-  from: d.from ?? '',
-  to: d.to ?? '',
-})
-
-/** Every dish's prices in the list, category by category. In the default list only the regular price is edited. */
+/** Every dish's prices in the list, category by category. In the default list only the regular prices are edited. */
 function DishesForm({
   list,
+  lists,
   dishes,
   categories,
   onSaved,
 }: {
   list: PriceList
+  lists: PriceList[]
   dishes: PriceListDish[]
   categories: Category[]
   onSaved: (dishes: PriceListDish[]) => void
 }) {
   const { t } = useTranslation()
+  const nameOf = useListName()
   const formError = useFormErrorMessage()
   const [rows, setRows] = useState(() => dishes.map(rowOf))
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [asking, setAsking] = useState(false)
   const { dirty, markSaved } = useDirty(rows)
-  useUnsavedChanges(dirty, save)
+  useUnsavedChanges(dirty, () => save(false))
+  const linked = linkedLists(list, lists)
 
-  function set(index: number, patch: Partial<Row>) {
+  function set(index: number, row: Row) {
     setSaved(false)
-    setRows((current) =>
-      current.map((row, i) => {
-        if (i !== index) return row
-        // Changing the base price of a dish whose price followed it moves the price too, so it is no discount.
-        const follows = patch.basePrice !== undefined && row.price === row.basePrice
-        return { ...row, ...patch, ...(follows && { price: patch.basePrice }) }
-      }),
-    )
+    setRows((current) => current.map((r, i) => (i === index ? row : r)))
   }
 
-  async function save() {
+  function submit() {
+    const changed = rows.some((row, i) => pricesChanged(row, rowOf(dishes[i])))
+    if (linked.length > 0 && changed) setAsking(true)
+    else void save(false)
+  }
+
+  async function save(updateLinked: boolean) {
+    setAsking(false)
     setErrors({})
     setError(null)
     setSaved(false)
     try {
-      const result = await priceListsApi.saveDishes(
-        list.id,
-        rows.map((r) => ({
-          dishId: r.dishId,
-          basePrice: Number(list.isDefault ? r.price : r.basePrice),
-          price: Number(r.price),
-          from: list.isDefault ? null : r.from || null,
-          to: list.isDefault ? null : r.to || null,
-        })),
-      )
+      const result = await priceListsApi.saveDishes(list.id, rows.map((r) => inputOf(r, list.isDefault)), updateLinked)
       const next = result.map(rowOf)
       setRows(next)
       markSaved(next)
@@ -227,44 +210,19 @@ function DishesForm({
         <fieldset key={category.id} className="stack">
           <legend>{category.name}</legend>
           <ul className="price-list-dishes">
-            {indexes.map((i) => {
-              const dish = dishes[i]
-              const row = rows[i]
-              const field = (name: string) => `dishes[${i}].${name}`
-              const discount = !list.isDefault && Number(row.price) < Number(row.basePrice)
-              return (
-                <li key={dish.dishId} className="price-list-dish">
-                  <span className="price-list-dish__head">
-                    {dish.imageUrl ? <img src={dish.imageUrl} alt="" className="price-list-dish__image" /> : <span className="price-list-dish__image" />}
-                    <strong>{dish.name}</strong>
-                    {discount && <span className="price-list-dish__tag">{t('admin.priceLists.discount')}</span>}
-                    {!dish.inList && <span className="muted">{t('admin.priceLists.notSaved')}</span>}
-                  </span>
-                  <span className="row row--end">
-                    {!list.isDefault && (
-                      <PriceField id={`pl-${dish.dishId}-base`} label={t('admin.priceLists.basePrice')} value={row.basePrice}
-                        onChange={(basePrice) => set(i, { basePrice })} errors={errors} field={field('basePrice')} />
-                    )}
-                    <PriceField id={`pl-${dish.dishId}-price`} label={t(list.isDefault ? 'admin.priceLists.regularPrice' : 'admin.priceLists.listPrice')}
-                      value={row.price} onChange={(price) => set(i, { price })} errors={errors} field={field('price')} />
-                    {!list.isDefault && (
-                      <>
-                        <span className="field field--narrow">
-                          <label htmlFor={`pl-${dish.dishId}-from`}>{t('admin.priceLists.from')}</label>
-                          <input id={`pl-${dish.dishId}-from`} type="date" value={row.from} onChange={(e) => set(i, { from: e.target.value })} />
-                        </span>
-                        <span className="field field--narrow">
-                          <label htmlFor={`pl-${dish.dishId}-to`}>{t('admin.priceLists.to')}</label>
-                          <input id={`pl-${dish.dishId}-to`} type="date" value={row.to} onChange={(e) => set(i, { to: e.target.value })}
-                            aria-describedby={`pl-${dish.dishId}-to-error`} />
-                          <FieldError errors={errors} field={field('to')} id={`pl-${dish.dishId}-to-error`} />
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </li>
-              )
-            })}
+            {indexes.map((i) => (
+              <PriceRowFields
+                key={dishes[i].dishId}
+                list={list}
+                dish={dishes[i]}
+                row={rows[i]}
+                onChange={(row) => set(i, row)}
+                errors={errors}
+                field={`dishes[${i}]`}
+                idPrefix={`pl-${dishes[i].dishId}`}
+                heading={{ title: dishes[i].name, imageUrl: dishes[i].imageUrl, showImage: true }}
+              />
+            ))}
           </ul>
         </fieldset>
       ))}
@@ -272,29 +230,14 @@ function DishesForm({
       {saved && <Status message={t('admin.saved')} />}
       {dishes.length > 0 && (
         <span className="row">
-          <button type="button" onClick={() => void save()}>
+          <button type="button" onClick={submit}>
             {t('admin.priceLists.saveDishes')}
           </button>
         </span>
       )}
+      {asking && (
+        <LinkedListsQuestion names={linked.map(nameOf)} onAnswer={(updateLinked) => void save(updateLinked)} onCancel={() => setAsking(false)} />
+      )}
     </section>
-  )
-}
-
-function PriceField({ id, label, value, onChange, errors, field }: {
-  id: string
-  label: string
-  value: string
-  onChange: (value: string) => void
-  errors: FieldErrors
-  field: string
-}) {
-  return (
-    <span className="field field--narrow">
-      <label htmlFor={id}>{label}</label>
-      <input id={id} type="number" inputMode="decimal" min="0" step="any" value={value} onChange={(e) => onChange(e.target.value)}
-        aria-describedby={`${id}-error`} />
-      <FieldError errors={errors} field={field} id={`${id}-error`} />
-    </span>
   )
 }

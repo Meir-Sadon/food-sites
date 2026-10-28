@@ -48,7 +48,24 @@ public class PriceListDish
     public DateOnly? From { get; set; }
     public DateOnly? To { get; set; }
 
+    /// <summary>
+    /// The dish's other prices in the list (its other options, add-on prices and prices above a limit), by
+    /// <see cref="Orders.PriceBook"/> key, in the row's dates too. A price the list has no entry for stays regular.
+    /// Null on rows saved before sub-prices existed.
+    /// </summary>
+    public List<PriceListSubPrice>? SubPrices { get; set; } = [];
+
     public bool IsActiveOn(DateOnly day) => (From is null || From <= day) && (To is null || To >= day);
+}
+
+/// <summary>One of a list row's other prices: <see cref="Key"/> names it (see <see cref="Orders.PriceBook"/>).</summary>
+public class PriceListSubPrice
+{
+    public const int KeyMaxLength = 40;
+
+    public required string Key { get; set; }
+    public decimal BasePrice { get; set; }
+    public decimal Price { get; set; }
 }
 
 /// <summary>A client's phone (local form, see <c>PhoneNumber.Normalize</c>) the list is assigned to.</summary>

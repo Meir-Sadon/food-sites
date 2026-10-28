@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { PriceList, PriceListDish } from '../../api/priceLists'
 import { site as siteConfig } from '../../site/config'
+import { category, dish as catalogDish } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
 
@@ -22,6 +23,7 @@ const dish = (dishId: number, name: string, patch: Partial<PriceListDish> = {}):
   from: null,
   to: null,
   inList: true,
+  subPrices: [],
   ...patch,
 })
 
@@ -105,8 +107,8 @@ describe('price lists', () => {
     await waitFor(() => expect(api.sent('PUT', '/api/admin/price-lists/2/dishes')).toHaveLength(1))
     expect(api.sent('PUT', '/api/admin/price-lists/2/dishes')[0].body).toEqual({
       dishes: [
-        { dishId: 10, basePrice: 80, price: 65, from: null, to: '2026-11-30' },
-        { dishId: 11, basePrice: 50, price: 45, from: null, to: null },
+        { dishId: 10, basePrice: 80, price: 65, from: null, to: '2026-11-30', subPrices: [] },
+        { dishId: 11, basePrice: 50, price: 45, from: null, to: null, subPrices: [] },
       ],
     })
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
@@ -144,11 +146,73 @@ describe('price lists', () => {
     await user.clear(price)
     await user.type(price, '75')
     await user.click(screen.getByRole('button', { name: 'שמירת המחירים' }))
+    // "לקוחות קבועים" is based on the default list, so the admin is asked about it.
+    const question = await screen.findByRole('dialog', { name: 'לעדכן גם מחירונים מקושרים?' })
+    expect(within(question).getByText(/המחירים שכאן: לקוחות קבועים\./)).toBeInTheDocument()
+    await user.click(within(question).getByRole('button', { name: 'לא, רק כאן' }))
     await waitFor(() =>
       expect(api.sent('PUT', '/api/admin/price-lists/1/dishes')[0].body).toEqual({
-        dishes: [{ dishId: 10, basePrice: 75, price: 75, from: null, to: null }],
+        dishes: [{ dishId: 10, basePrice: 75, price: 75, from: null, to: null, subPrices: [] }],
       }),
     )
+  })
+
+  it('edits a dish’s other prices behind its sub-prices button, and can update the linked lists', async () => {
+    const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [] }
+    const withSubs = dish(10, 'קוסקוס', {
+      basePrice: 50,
+      price: 50,
+      subPrices: [
+        { key: 'o:7', kind: 'option', name: 'גדול', regularPrice: 80, basePrice: 80, price: 80, inList: true },
+        { key: 'a:12:0', kind: 'addOn', name: 'ירך', regularPrice: 8, basePrice: 8, price: 8, inList: true },
+      ],
+    })
+    const api = fakeApi({
+      ...withLists,
+      ...categories,
+      'GET /api/admin/price-lists': () => [defaultList, vip, family],
+      'GET /api/admin/price-lists/2/dishes': () => [withSubs],
+      'PUT /api/admin/price-lists/2/dishes.*': () => [withSubs],
+    })
+    const user = userEvent.setup()
+    renderAt('/admin/price-lists/2')
+
+    const toggle = await screen.findByRole('button', { name: 'תתי מחירים (2)' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await user.click(toggle)
+    const big = screen.getByLabelText('מחיר מחירון (₪) · אפשרות: גדול')
+    await user.clear(big)
+    await user.type(big, '70')
+    expect(screen.getByLabelText('מחיר מחירון (₪) · תוספת: ירך')).toHaveValue(8)
+    await user.click(screen.getByRole('button', { name: 'שמירת המחירים' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'כן, לעדכן גם בהם' }))
+
+    await waitFor(() => expect(api.calls.filter((c) => c.method === 'PUT')).toHaveLength(1))
+    const put = api.calls.find((c) => c.method === 'PUT')!
+    expect(put.path).toBe('/api/admin/price-lists/2/dishes?updateLinked=true')
+    expect(put.body).toEqual({
+      dishes: [{
+        dishId: 10, basePrice: 50, price: 50, from: null, to: null,
+        subPrices: [{ key: 'o:7', basePrice: 80, price: 70 }, { key: 'a:12:0', basePrice: 8, price: 8 }],
+      }],
+    })
+  })
+
+  it('does not ask about linked lists when only the dates changed', async () => {
+    const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [] }
+    const api = fakeApi({
+      ...withLists,
+      ...categories,
+      'GET /api/admin/price-lists': () => [defaultList, vip, family],
+      'GET /api/admin/price-lists/2/dishes': () => [dish(10, 'עוף בתנור')],
+      'PUT /api/admin/price-lists/2/dishes.*': () => [dish(10, 'עוף בתנור', { to: '2026-11-30' })],
+    })
+    const user = userEvent.setup()
+    renderAt('/admin/price-lists/2')
+    await user.type(await screen.findByLabelText('עד תאריך'), '2026-11-30')
+    await user.click(screen.getByRole('button', { name: 'שמירת המחירים' }))
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/price-lists/2/dishes')).toHaveLength(1))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('saves the phones and names a bad one', async () => {
@@ -176,5 +240,59 @@ describe('price lists', () => {
     await user.type(phones, '+972501234567')
     await user.click(screen.getByRole('button', { name: 'שמירת הטלפונים' }))
     await waitFor(() => expect(phones).toHaveValue('0501234567'))
+  })
+
+  describe('the dish’s window', () => {
+    const chicken = catalogDish(10, 'עוף בתנור', 5, {
+      options: [{ id: 11, label: 'שלם', amount: 1, price: 70, isDefault: true }],
+    })
+    const dishRoutes = {
+      ...withLists,
+      'GET /api/admin/categories': () => [category(5, 'עופות', 1)],
+      'GET /api/admin/dishes': () => [chicken],
+    }
+
+    it('is not in the dish form when the site has no price lists', async () => {
+      siteConfig.features = features
+      fakeApi(dishRoutes)
+      renderAt('/admin/dishes/10')
+      await screen.findByRole('heading', { name: /עריכת מנה/ })
+      expect(screen.queryByRole('button', { name: 'מחירונים' })).not.toBeInTheDocument()
+    })
+
+    it('shows a row per list, the regular prices read only, and saves the lists that changed', async () => {
+      const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [] }
+      const api = fakeApi({
+        ...dishRoutes,
+        'GET /api/admin/price-lists/dishes/10': () => [
+          { list: defaultList, dish: dish(10, 'עוף בתנור') },
+          { list: vip, dish: dish(10, 'עוף בתנור', { price: 60 }) },
+          { list: family, dish: dish(10, 'עוף בתנור', { basePrice: 60, price: 60 }) },
+        ],
+        'PUT /api/admin/price-lists/2/dishes.*': () => [dish(10, 'עוף בתנור', { price: 55 })],
+      })
+      const user = userEvent.setup()
+      renderAt('/admin/dishes/10')
+
+      await user.click(await screen.findByRole('button', { name: 'מחירונים' }))
+      const window = await screen.findByRole('dialog', { name: 'מחירונים: עוף בתנור' })
+      expect(within(window).getByText('מחיר רגיל: ₪70')).toBeInTheDocument()
+      expect(within(window).getAllByLabelText('מחיר מחירון (₪)')).toHaveLength(2)
+
+      const vipPrice = within(window).getByLabelText('מחיר מחירון (₪)', { selector: '#dpl-2-price' })
+      await user.clear(vipPrice)
+      await user.type(vipPrice, '55')
+      await user.click(within(window).getByRole('button', { name: 'שמירת המחירונים' }))
+      // "משפחה" is based on "לקוחות קבועים".
+      const question = await screen.findByRole('dialog', { name: 'לעדכן גם מחירונים מקושרים?' })
+      expect(within(question).getByText(/המחירים שכאן: משפחה\./)).toBeInTheDocument()
+      await user.click(within(question).getByRole('button', { name: 'כן, לעדכן גם בהם' }))
+
+      await waitFor(() => expect(api.calls.filter((c) => c.method === 'PUT')).toHaveLength(1))
+      const put = api.calls.find((c) => c.method === 'PUT')!
+      expect(put.path).toBe('/api/admin/price-lists/2/dishes?updateLinked=true')
+      expect(put.body).toEqual({ dishes: [{ dishId: 10, basePrice: 70, price: 55, from: null, to: null, subPrices: [] }] })
+      expect(await within(window).findByText('נשמר.')).toBeInTheDocument()
+    })
   })
 })

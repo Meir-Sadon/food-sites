@@ -27,6 +27,28 @@ export interface PriceListDish {
   from: string | null
   to: string | null
   inList: boolean
+  /** The dish's other prices: its other options, add-on prices and prices above a limit. */
+  subPrices: SubPrice[]
+}
+
+export type SubPriceKind = 'option' | 'addOn' | 'addOnOverLimit' | 'groupOverLimit'
+
+/** One of a dish's other prices in a list; `inList` is false when the list has no price of its own for it yet. */
+export interface SubPrice {
+  key: string
+  kind: SubPriceKind
+  /** The option's label, the add-on's name, or the group's name. */
+  name: string
+  regularPrice: number
+  basePrice: number
+  price: number
+  inList: boolean
+}
+
+export interface SubPriceInput {
+  key: string
+  basePrice: number
+  price: number
 }
 
 export interface PriceListDishInput {
@@ -35,7 +57,19 @@ export interface PriceListDishInput {
   price: number
   from: string | null
   to: string | null
+  /** Left out keeps the saved ones. */
+  subPrices?: SubPriceInput[]
 }
+
+/** A dish in one list, for the dish's own price lists window. */
+export interface ListDish {
+  list: PriceList
+  dish: PriceListDish
+}
+
+/** The lists whose prices were copied from `list`: the ones it is the base of. */
+export const linkedLists = (list: PriceList, lists: PriceList[]) =>
+  lists.filter((l) => !l.isDefault && (list.isDefault ? l.baseListId === null : l.baseListId === list.id))
 
 export const priceListsApi = {
   getAll: () => apiJson<PriceList[]>(base),
@@ -44,7 +78,9 @@ export const priceListsApi = {
     apiJson<PriceList>(`${base}/${id}`, send('PUT', { name, baseListId })),
   remove: (id: number) => apiJson<void>(`${base}/${id}`, send('DELETE')),
   dishes: (id: number) => apiJson<PriceListDish[]>(`${base}/${id}/dishes`),
-  saveDishes: (id: number, dishes: PriceListDishInput[]) =>
-    apiJson<PriceListDish[]>(`${base}/${id}/dishes`, send('PUT', { dishes })),
+  /** With `updateLinked`, a changed price also becomes the base price in the lists based on this one. */
+  saveDishes: (id: number, dishes: PriceListDishInput[], updateLinked = false) =>
+    apiJson<PriceListDish[]>(`${base}/${id}/dishes${updateLinked ? '?updateLinked=true' : ''}`, send('PUT', { dishes })),
+  dish: (dishId: number) => apiJson<ListDish[]>(`${base}/dishes/${dishId}`),
   savePhones: (id: number, phones: string[]) => apiJson<PriceList>(`${base}/${id}/phones`, send('PUT', { phones })),
 }

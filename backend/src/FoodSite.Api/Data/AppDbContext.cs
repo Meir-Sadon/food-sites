@@ -232,6 +232,7 @@ public class AppDbContext(
             e.HasIndex(x => new { x.PriceListId, x.DishId }).IsUnique();
             e.HasOne(x => x.PriceList).WithMany(l => l.Dishes).HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Dish).WithMany().HasForeignKey(x => x.DishId).OnDelete(DeleteBehavior.Cascade);
+            e.OwnsMany(x => x.SubPrices, sub => sub.ToJson());
         });
 
         model.Entity<PriceListPhone>(e =>

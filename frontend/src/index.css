@@ -4903,3 +4903,19 @@ label {
   background: var(--color-accent);
   color: var(--color-accent-contrast);
 }
+
+/* A dish's other prices in a list, opened under its row. */
+.price-list-subs {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+  border-inline-start: 3px solid var(--color-soft);
+}
+
+.price-list-subs__name {
+  flex: 1 1 10rem;
+  align-self: center;
+  font-weight: 600;
+}
