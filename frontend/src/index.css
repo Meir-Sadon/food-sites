@@ -1097,6 +1097,11 @@ label {
   font-weight: 700;
 }
 
+.dish__price-before {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
 .dish__choice {
   display: flex;
   flex-direction: column;

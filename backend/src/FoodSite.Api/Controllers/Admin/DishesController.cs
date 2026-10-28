@@ -56,7 +56,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         IReadOnlyList<string>? DietaryTags = null,
         bool DietaryTagsSingle = false,
         bool OnSale = false,
-        IReadOnlyList<AvailabilityRuleDto>? Availability = null);
+        IReadOnlyList<AvailabilityRuleDto>? Availability = null,
+        decimal? PriceBeforeDiscount = null);
 
     public record QuestionDto(
         int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
@@ -109,6 +110,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     /// order page as what it adds to the default option's price; both only matter for fixed options.
     /// DietaryTags, when sent, is the whole list of the dish's special-diet marks (ids in <c>DietaryTags.All</c>); left out, they stay. DietaryTagsSingle (sent with them) lets the client pick only one.
     /// Availability, when sent, is the whole list of the times the dish is sold (a weekday, with From and To null for the whole day); empty means whenever the business works, left out they stay.
+    /// PriceBeforeDiscount, when set, is shown struck through next to the dish's price on the order page and must be above
+    /// that price (the default option's, or the price per unit); null shows none. A variant priced like its main dish has none.
     /// CopyImagesFrom, on a new dish only, gives it the images of that dish (a copy of it); the picture files are shared.
     /// </summary>
     public record DishInput(
@@ -143,7 +146,8 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         List<string>? DietaryTags = null,
         bool DietaryTagsSingle = false,
         bool? OnSale = null,
-        List<AvailabilityRuleDto>? Availability = null);
+        List<AvailabilityRuleDto>? Availability = null,
+        decimal? PriceBeforeDiscount = null);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -389,6 +393,12 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         else if (ownPrice && input.ChoiceMode == ChoiceMode.Free)
             ValidateFreeChoice(input, errors);
 
+        if (ownPrice && input.PriceBeforeDiscount is { } before)
+        {
+            if (before <= 0 || before > MaxAddOnPrice) errors.Add(nameof(input.PriceBeforeDiscount), "invalid");
+            else if (MainPrice(input) is { } price && before <= price) errors.Add(nameof(input.PriceBeforeDiscount), "notAbovePrice");
+        }
+
         if (input.MaxPerSupplyDate is <= 0) errors.Add(nameof(input.MaxPerSupplyDate), "positive");
         else if (input.MaxPerSupplyDate is { } limit && limit >= 10_000_000) errors.Add(nameof(input.MaxPerSupplyDate), "invalid");
         else if (input.SellBy == SellBy.Units && input.MaxPerSupplyDate is { } units && units % 1 != 0)
@@ -537,6 +547,11 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         _ => false,
     };
 
+    /// <summary>The price the order page shows on the dish card: the default option's (the only one's), or the price per unit.</summary>
+    private static decimal? MainPrice(DishInput input) => input.ChoiceMode == ChoiceMode.Free
+        ? input.UnitPrice
+        : (input.Options ?? []) is { Count: > 0 } options ? (options.Count == 1 ? options[0] : options.FirstOrDefault(o => o.IsDefault))?.Price : null;
+
     private static void ValidateOptions(DishInput input, Dish dish, Errors errors)
     {
         var options = input.Options ?? [];
@@ -623,6 +638,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         if (input.OnSale is { } onSale)
             dish.OnSale = onSale;
         dish.MaxPerSupplyDate = input.MaxPerSupplyDate;
+        dish.PriceBeforeDiscount = main is not null && input.UseMainDishPrice ? null : input.PriceBeforeDiscount;
         dish.OpenByDefault = input.OpenByDefault;
         dish.IsSideDish = input.IsSideDish;
 
@@ -788,5 +804,6 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.DietaryTags,
         d.DietaryTagsSingle,
         d.OnSale,
-        DishAvailability.ToDtos(d.AvailabilityRules));
+        DishAvailability.ToDtos(d.AvailabilityRules),
+        d.PriceBeforeDiscount);
 }

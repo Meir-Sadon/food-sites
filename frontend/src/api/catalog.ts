@@ -184,6 +184,8 @@ export interface Dish {
   isSideDish: boolean
   /** Marked on the order page as on sale. */
   onSale: boolean
+  /** Shown struck through next to the price on the order page; null for none. */
+  priceBeforeDiscount?: number | null
   /** Most that can be ordered per supply date (units, or kilos), or null for no limit. */
   maxPerSupplyDate: number | null
   isHidden: boolean
@@ -266,6 +268,8 @@ export interface DishInput {
   isSideDish: boolean
   /** Marked as on sale; left out, the mark stays as it is. */
   onSale?: boolean
+  /** Shown struck through next to the price on the order page; must be above that price. Null for none. */
+  priceBeforeDiscount?: number | null
   maxPerSupplyDate: number | null
   options: { id: number | null; label: string; amount: number; price: number; isDefault: boolean }[]
   parentDishIds: number[]

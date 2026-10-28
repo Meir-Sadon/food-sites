@@ -92,7 +92,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         bool OnSale = false,
         bool IsNew = false,
         decimal? Limit = null,
-        IReadOnlyList<AvailabilityRuleDto>? Availability = null);
+        IReadOnlyList<AvailabilityRuleDto>? Availability = null,
+        decimal? PriceBeforeDiscount = null);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
     /// <summary>DefaultAnswer is the answer already picked for the client (a choice, or yes / no), if the admin set one.</summary>
@@ -226,7 +227,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 (d.MainDish ?? d).AdjustmentOptional,
                 p.OptionsTitle, p.ShowOptionDifference, d.DietaryTags,
                 d.OnSale, ItemBadges.IsNew(badges, d.CreatedAt, now), LimitOf(d, settings.PortionsPerSupplyDate),
-                d.AvailabilityRules.Count > 0 ? DishAvailability.ToDtos(d.AvailabilityRules) : null);
+                d.AvailabilityRules.Count > 0 ? DishAvailability.ToDtos(d.AvailabilityRules) : null,
+                p.PriceBeforeDiscount);
         }).ToList();
 
         // Groups list only dishes ordered on their own that are on the menu, in menu order; an empty group is left out.

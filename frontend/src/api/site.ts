@@ -212,6 +212,8 @@ export interface MenuDish {
   dietaryTags?: string[]
   /** The admin marked the dish as on sale. */
   onSale?: boolean
+  /** The price before a discount, shown struck through next to the dish's price when it is above it. */
+  priceBeforeDiscount?: number | null
   /** Created within the period the admin set for the "new" badge (always false while that badge is off). */
   isNew?: boolean
   /** The most that can be ordered per date (its own limit or the site's portion limit), the base of the "almost out" percentage. */
