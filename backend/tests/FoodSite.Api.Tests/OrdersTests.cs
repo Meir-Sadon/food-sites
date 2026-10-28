@@ -85,6 +85,49 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
 
     private Task<HttpResponseMessage> Place(object order) => _client.PostAsJsonAsync("/api/orders", order, TestFiles.Json);
 
+    // ---------- Availability ----------
+
+    [Fact]
+    public async Task A_dish_sold_only_on_other_days_is_refused_and_one_sold_that_day_is_taken()
+    {
+        var first = (await Menu()).SupplyDates[0].Date;
+        var other = (DayOfWeek)(((int)first.DayOfWeek + 1) % 7);
+        var categoryId = (await Menu()).Categories[0].Id;
+        DishDto Create(string name, DayOfWeek day) => CreateDish(new DishInput(
+            name, categoryId, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
+            [new OptionInput(null, "יחידה", 1, 10, true)], [], Availability: [new AvailabilityRuleDto(day)])).Result;
+        var later = Create("מנה למחר", other);
+        var today = Create("מנה להיום", first.DayOfWeek);
+
+        var menu = await Menu();
+        Assert.Equal(other, menu.Dishes.Single(d => d.Id == later.Id).Availability!.Single().Weekday);
+        Assert.Null(menu.Dishes.Single(d => d.Id == _meat).Availability);
+
+        object Order(int dishId) => ValidOrder(o => o["items"] = new object[]
+            { new { dishId, optionId = (int?)null, quantity = 1m, addOns = Array.Empty<object>() } }).Result;
+        Assert.Equal(HttpStatusCode.OK, (await Place(Order(today.Id))).StatusCode);
+        await (await Place(Order(later.Id))).AssertInvalid("items[0]", "dishUnavailable");
+    }
+
+    [Fact]
+    public async Task Changing_the_hours_of_a_day_asks_first_when_a_dish_is_sold_in_specific_hours_of_it()
+    {
+        var categoryId = (await Menu()).Categories[0].Id;
+        var dish = await CreateDish(new DishInput(
+            "מנת בוקר", categoryId, null, null, SellBy.Units, ChoiceMode.Fixed, null, null, null, null, false, false,
+            [new OptionInput(null, "יחידה", 1, 10, true)], [],
+            Availability: [new AvailabilityRuleDto(DayOfWeek.Thursday, new TimeOnly(8, 0), new TimeOnly(12, 0))]));
+        var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();
+        days[4] = days[4] with { Hours = [new HoursDto(new TimeOnly(7, 0), new TimeOnly(13, 0))] };
+
+        var asked = await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json);
+        Assert.Equal(HttpStatusCode.Conflict, asked.StatusCode);
+        Assert.Contains("dishAvailabilityAffected", await asked.Content.ReadAsStringAsync());
+        Assert.Contains(dish.Name, await asked.Content.ReadAsStringAsync());
+
+        (await _admin.PutAsJsonAsync("/api/admin/supply-days?confirmed=true", days, TestFiles.Json)).EnsureSuccessStatusCode();
+    }
+
     // ---------- Menu ----------
 
     [Fact]
@@ -421,6 +464,32 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         await missing.AssertInvalid("Street", "required");
     }
 
+    [Theory]
+    [InlineData("city", null)]
+    [InlineData("city", "")]
+    [InlineData("city", "   ")]
+    [InlineData("street", null)]
+    [InlineData("street", "")]
+    [InlineData("street", "   ")]
+    [InlineData("houseNumber", null)]
+    [InlineData("houseNumber", "")]
+    [InlineData("houseNumber", "   ")]
+    public async Task A_delivery_without_a_whole_address_is_refused_so_no_fee_is_ever_left_out(string field, string? value)
+    {
+        var response = await Place(await ValidOrder(o => o[field] = value));
+        await response.AssertInvalid(char.ToUpperInvariant(field[0]) + field[1..], "required");
+        Assert.Empty(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
+    }
+
+    [Fact]
+    public async Task A_delivery_sent_directly_with_no_address_fields_at_all_is_refused()
+    {
+        var response = await Place(await ValidOrder(o => { o.Remove("city"); o.Remove("street"); o.Remove("houseNumber"); o.Remove("apartment"); }));
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("required", body);
+    }
+
     [Fact]
     public async Task An_order_below_the_minimum_is_rejected_and_one_at_it_passes()
     {
@@ -436,6 +505,29 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
 
         await SetMinimum(311m);
         Assert.Equal(HttpStatusCode.OK, (await Place(await ValidOrder())).StatusCode);
+    }
+
+    [Fact]
+    public async Task An_order_below_the_minimum_is_sent_at_the_minimum_when_the_client_agrees()
+    {
+        (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+            kashrutText = (string?)null, paymentPhone = (string?)null, minimumOrderAmount = 400m,
+        })).EnsureSuccessStatusCode();
+
+        var confirmation = await (await Place(await ValidOrder(o => o["acceptMinimumTopUp"] = true))).Read<ConfirmationDto>();
+        Assert.Equal(400m + confirmation.DeliveryFee, confirmation.Total);
+        Assert.Equal(400m, confirmation.Items.Sum(i => i.LineTotal) + confirmation.MinimumTopUp);
+
+        // Agreeing changes nothing for an order that already reaches the minimum.
+        (await _admin.PutAsJsonAsync("/api/admin/settings", new
+        {
+            deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+            kashrutText = (string?)null, paymentPhone = (string?)null, minimumOrderAmount = 311m,
+        })).EnsureSuccessStatusCode();
+        var plain = await (await Place(await ValidOrder(o => o["acceptMinimumTopUp"] = true))).Read<ConfirmationDto>();
+        Assert.Equal(0m, plain.MinimumTopUp);
     }
 
     [Fact]
@@ -605,7 +697,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     private async Task SetHours(TimeOnly from, TimeOnly to, int? ordersPerHour)
     {
         var days = Enum.GetValues<DayOfWeek>().Select(d =>
-            new SupplyDayDto(d, true, (DayOfWeek)(((int)d + 6) % 7), new TimeOnly(0, 0), from, to));
+            new SupplyDayDto(d, true, (DayOfWeek)(((int)d + 6) % 7), new TimeOnly(0, 0), [new(from, to)]));
         (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).EnsureSuccessStatusCode();
         var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
         (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHour = ordersPerHour })).EnsureSuccessStatusCode();
@@ -671,10 +763,10 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal([third.Id], orders.Where(o => o.HourFull).Select(o => o.Id));
 
         // A cancelled order frees its place: the third now fits, and the hour is full again with two.
-        (await _admin.PutAsJsonAsync($"/api/admin/orders/{second.Id}/status", new StatusInput(OrderStatus.Cancelled), TestFiles.Json)).EnsureSuccessStatusCode();
+        (await _admin.PutAsJsonAsync($"/api/admin/orders/{second.Id}/status", new StatusInput(OrderStatus.Cancelled, "test"), TestFiles.Json)).EnsureSuccessStatusCode();
         Assert.DoesNotContain(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>(), o => o.HourFull);
         Assert.True(await HourFull(date, "08:00"));
-        (await _admin.PutAsJsonAsync($"/api/admin/orders/{third.Id}/status", new StatusInput(OrderStatus.Cancelled), TestFiles.Json)).EnsureSuccessStatusCode();
+        (await _admin.PutAsJsonAsync($"/api/admin/orders/{third.Id}/status", new StatusInput(OrderStatus.Cancelled, "test"), TestFiles.Json)).EnsureSuccessStatusCode();
         Assert.False(await HourFull(date, "08:00"));
     }
 

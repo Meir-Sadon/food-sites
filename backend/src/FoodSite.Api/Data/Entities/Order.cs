@@ -3,6 +3,7 @@ namespace FoodSite.Api.Data.Entities;
 public class Order
 {
     public const int DeliveryNoteMaxLength = 300;
+    public const int CancelReasonMaxLength = 300;
 
     public int Id { get; set; }
 
@@ -40,6 +41,12 @@ public class Order
     public bool NeedsReview { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.New;
 
+    /// <summary>Why the admin cancelled the order; required to cancel, empty while the order is not cancelled.</summary>
+    public string? CancelReason { get; set; }
+
+    /// <summary>When the admin cancelled the order; empty while it is not cancelled.</summary>
+    public DateTimeOffset? CancelledAt { get; set; }
+
     /// <summary>What the driver reported at the door, through the driver's link; empty until a report.</summary>
     public DeliveryOutcome? DeliveryOutcome { get; set; }
     public DateTimeOffset? DeliveryReportedAt { get; set; }
@@ -60,7 +67,10 @@ public class Order
     /// <summary>The name of the zone the fee came from, as it was then.</summary>
     public string? DeliveryZoneName { get; set; }
 
-    /// <summary>The order's total to pay, the delivery fee included.</summary>
+    /// <summary>What was added to the dishes so the order reached the site's minimum, when the client agreed to be charged it (part of <see cref="Total"/>). Zero when none.</summary>
+    public decimal MinimumTopUp { get; set; }
+
+    /// <summary>The order's total to pay, the delivery fee and any minimum top-up included.</summary>
     public decimal Total { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 

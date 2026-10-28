@@ -1,9 +1,19 @@
 import { apiJson, send } from './client'
-import type { ColorSet, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, InactiveAfter, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 export type Direction = 'Up' | 'Down'
+
+/**
+ * One time a dish is sold: a weekday, the whole day (`from` and `to` null) or one range of hours in it ("HH:mm:ss"; a `to` of
+ * 00:00 means midnight). A dish with no rules is sold whenever the business works.
+ */
+export interface AvailabilityRule {
+  weekday: Weekday
+  from: string | null
+  to: string | null
+}
 
 export interface Settings {
   backgroundImageUrl: string | null
@@ -33,6 +43,14 @@ export interface Settings {
   serviceCities: string
   /** How many orders can be supplied in one hour; null means no limit. */
   ordersPerHour: number | null
+  /** The length of one slot the client picks, in minutes: 15, 30 or 60. */
+  slotMinutes: number
+  /** Slots start on round marks of the slot length (a range opening at 20:07 starts at 20:30). */
+  alignSlots: boolean
+  /** Minutes before a slot's start that a delivery for it can no longer be ordered; 0 means none. */
+  deliveryLeadMinutes: number
+  /** The same for pickup. */
+  pickupLeadMinutes: number
   /** How many portions (dishes sold by units, not sides or add-ons) can be ordered per supply date, across all dishes; null means no limit. */
   portionsPerSupplyDate: number | null
   /** The look the client site shows. */
@@ -67,9 +85,11 @@ export interface Settings {
   tracking: TrackingIds
   /** The "new" and "almost out" badges; saved by `settingsApi.saveBadges`, never by `save`. */
   badges: ItemBadges
+  /** After this long without an order a client counts as inactive (the pop-ups' conditions use it); saved by `settingsApi.saveInactiveAfter`, never by `save`. */
+  inactiveAfter: InactiveAfter
 }
 /** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking' | 'badges'> &
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking' | 'badges' | 'inactiveAfter'> &
   Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'>>
 
 /** Saved on its own (`settingsApi.saveTracking`); a missing id keeps that tool, an empty one turns it off. */
@@ -77,6 +97,9 @@ export type TrackingInput = Partial<Omit<TrackingIds, 'metaServerEvents'>> & {
   /** Write-only: the Meta Conversions API access token; an empty text removes it. */
   metaAccessToken?: string
 }
+
+/** Saved on its own (`settingsApi.saveInactiveAfter`); a missing field keeps its value. */
+export type InactiveAfterInput = Partial<InactiveAfter>
 
 /** Saved on its own (`settingsApi.saveBadges`); a missing field keeps its value. */
 export type BadgesInput = Partial<ItemBadges>
@@ -87,9 +110,13 @@ export interface SupplyDay {
   cutoffDay: Weekday
   /** "HH:mm:ss" */
   cutoffTime: string
-  /** The day's supply hours, "HH:mm:ss"; both null when the client picks no hour. */
-  deliveryFrom: string | null
-  deliveryTo: string | null
+  /** The day's working hours, "HH:mm:ss", one entry per range; empty when the client picks no hour. An end of 00:00 means midnight. */
+  hours: SupplyHours[]
+}
+
+export interface SupplyHours {
+  from: string
+  to: string
 }
 
 export interface ClosedDate {
@@ -157,6 +184,8 @@ export interface Dish {
   isSideDish: boolean
   /** Marked on the order page as on sale. */
   onSale: boolean
+  /** Shown struck through next to the price on the order page; null for none. */
+  priceBeforeDiscount?: number | null
   /** Most that can be ordered per supply date (units, or kilos), or null for no limit. */
   maxPerSupplyDate: number | null
   isHidden: boolean
@@ -181,6 +210,8 @@ export interface Dish {
   addOns: AddOnLink[]
   /** Questions the client answers when ordering the dish, in order. */
   questions: DishQuestion[]
+  /** When the dish is sold; empty means whenever the business works. */
+  availability?: AvailabilityRule[]
   /** The client may order without adjusting each unit or answering its questions (a variant follows its main dish). */
   adjustmentOptional: boolean
 }
@@ -200,6 +231,8 @@ export interface AddOnGroup {
   id: number
   name: string
   maxUnits: number | null
+  /** Price per unit above maxUnits; null means the limit is firm. */
+  overLimitPrice: number | null
 }
 
 export interface AddOnLink {
@@ -209,6 +242,12 @@ export interface AddOnLink {
   price: number | null
   maxQuantity: number | null
   isCheckbox: boolean
+  /** 0 for the first offer of the add-on under the dish; 1, 2... when it is offered again. */
+  slot: number
+  label: string | null
+  showImage: boolean
+  isDefault: boolean
+  overLimitPrice: number | null
 }
 
 export interface DishInput {
@@ -229,6 +268,8 @@ export interface DishInput {
   isSideDish: boolean
   /** Marked as on sale; left out, the mark stays as it is. */
   onSale?: boolean
+  /** Shown struck through next to the price on the order page; must be above that price. Null for none. */
+  priceBeforeDiscount?: number | null
   maxPerSupplyDate: number | null
   options: { id: number | null; label: string; amount: number; price: number; isDefault: boolean }[]
   parentDishIds: number[]
@@ -236,9 +277,20 @@ export interface DishInput {
   useMainDishPrice?: boolean
   isYesNo?: boolean
   /** Sent together with addOns; `group` in an add-on is an index into this list. */
-  addOnGroups?: { id: number | null; name: string; maxUnits: number | null }[]
+  addOnGroups?: { id: number | null; name: string; maxUnits: number | null; overLimitPrice?: number | null }[]
   /** The whole list of this dish's add-ons; left out, they stay as they are. */
-  addOns?: { dishId: number; group: number | null; price: number | null; maxQuantity: number | null; isCheckbox: boolean }[]
+  addOns?: {
+    dishId: number
+    group: number | null
+    price: number | null
+    maxQuantity: number | null
+    isCheckbox: boolean
+    slot?: number
+    label?: string | null
+    showImage?: boolean
+    isDefault?: boolean
+    overLimitPrice?: number | null
+  }[]
   /** The whole list of the dish's questions; left out, they stay as they are. */
   questions?: {
     id: number | null
@@ -249,6 +301,8 @@ export interface DishInput {
     isRequired: boolean
     defaultAnswer: string | null
   }[]
+  /** The whole list of the times the dish is sold (empty: whenever the business works); left out, it stays as it is. */
+  availability?: AvailabilityRule[]
   /** On a new dish: give it the images of this dish (it is a copy of it). */
   copyImagesFrom?: number
   adjustmentOptional?: boolean
@@ -277,6 +331,7 @@ export const settingsApi = {
   get: () => apiJson<Settings>(`${admin}/settings`),
   save: (input: SettingsInput) => apiJson<Settings>(`${admin}/settings`, send('PUT', input)),
   saveBadges: (input: BadgesInput) => apiJson<Settings>(`${admin}/settings/badges`, send('PUT', input)),
+  saveInactiveAfter: (input: InactiveAfterInput) => apiJson<Settings>(`${admin}/settings/inactive-after`, send('PUT', input)),
   saveTracking: (input: TrackingInput) => apiJson<Settings>(`${admin}/settings/tracking`, send('PUT', input)),
   uploadBackground: (file: File) => apiJson<Settings>(`${admin}/settings/background`, { ...upload(file), method: 'PUT' }),
   removeBackground: () => apiJson<Settings>(`${admin}/settings/background`, send('DELETE')),
@@ -284,7 +339,42 @@ export const settingsApi = {
 
 export const supplyDaysApi = {
   get: () => apiJson<SupplyDay[]>(`${admin}/supply-days`),
-  save: (days: SupplyDay[]) => apiJson<SupplyDay[]>(`${admin}/supply-days`, send('PUT', days)),
+  /** Without `confirmed`, a change to the hours of a weekday that dishes are sold in specific hours of comes back as a 409 (`dishAvailabilityAffected`, with `dishes`). */
+  save: (days: SupplyDay[], confirmed = false) =>
+    apiJson<SupplyDay[]>(`${admin}/supply-days${confirmed ? '?confirmed=true' : ''}`, send('PUT', days)),
+}
+
+export type ShabbatEveMode = 'none' | 'closed' | 'fixed' | 'before'
+export type ShabbatStartMode = 'none' | 'closed' | 'fixed' | 'after'
+
+/** One side of a rule: `time` ("HH:mm") for a fixed time, `hours` (whole or half) before candle lighting / after Shabbat ends. */
+export interface ShabbatSide<Mode> {
+  mode: Mode
+  time: string | null
+  hours: number
+}
+
+export interface ShabbatKindRules {
+  eve: ShabbatSide<ShabbatEveMode>
+  start: ShabbatSide<ShabbatStartMode>
+}
+
+export interface ShabbatRules {
+  city: string | null
+  shabbat: ShabbatKindRules
+  holiday: ShabbatKindRules
+}
+
+export interface ShabbatRulesResponse {
+  rules: ShabbatRules
+  cities: { id: string; name: string }[]
+  /** The coming Shabbat in the chosen city; null without a city. */
+  preview: { eve: string; candleLighting: string; shabbatEnds: string } | null
+}
+
+export const shabbatRulesApi = {
+  get: () => apiJson<ShabbatRulesResponse>(`${admin}/shabbat-rules`),
+  save: (rules: ShabbatRules) => apiJson<ShabbatRulesResponse>(`${admin}/shabbat-rules`, send('PUT', rules)),
 }
 
 export const closedDatesApi = {

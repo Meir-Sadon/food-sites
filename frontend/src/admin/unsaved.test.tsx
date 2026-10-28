@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { popup, settings, supplyDays } from '../test/catalogData'
+import { popup, settings, shabbatRules, supplyDays } from '../test/catalogData'
 import { adminSession, fakeApi } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 import { openSection } from '../test/sections'
@@ -13,9 +13,10 @@ function open() {
     'GET /api/admin/settings': () => saved,
     'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
     'GET /api/admin/supply-days': () => supplyDays(),
+    'GET /api/admin/shabbat-rules': () => shabbatRules(),
     'GET /api/admin/closed-dates': () => [],
     'GET /api/admin/categories': () => [],
-    'GET /api/admin/popup': () => ({ body: popup() }),
+    'GET /api/admin/popups': () => ({ body: [popup({ slot: 1 }), popup({ slot: 2 }), popup({ slot: 3 })] }),
   })
   renderAt('/admin/appearance')
   return { api, user: userEvent.setup() }

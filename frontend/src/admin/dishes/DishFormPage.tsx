@@ -7,10 +7,12 @@ import {
   categoriesApi,
   DIETARY_TAGS,
   dishesApi,
+  supplyDaysApi,
   type Category,
   type DietaryTag,
   type ChoiceMode,
   type Dish,
+  type SupplyDay,
   type DishInput,
   type SellBy,
 } from '../../api/catalog'
@@ -22,8 +24,11 @@ import { DishImagesSection } from './DishImagesSection'
 import { useToast } from '../../components/toast'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { useFeature } from '../../site/useSite'
+import { DishPriceListsButton } from '../price-lists/DishPriceLists'
 import { AddOnsSection } from './AddOnsSection'
 import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
+import { AvailabilitySection } from './AvailabilitySection'
+import { availabilityForm, availabilityInput, type AvailabilityForm } from './availabilityForm'
 import { QuestionsSection } from './QuestionsSection'
 import { questionsForm, questionsInput, type QuestionForm } from './questionForm'
 
@@ -57,6 +62,7 @@ interface DishForm {
   openByDefault: boolean
   isSideDish: boolean
   onSale: boolean
+  priceBeforeDiscount: string
   maxPerSupplyDate: string
   options: OptionForm[]
   parentDishIds: number[]
@@ -68,6 +74,7 @@ interface DishForm {
   groups: GroupForm[]
   addOns: AddOnForm[]
   questions: QuestionForm[]
+  availability: AvailabilityForm
 }
 
 let nextKey = 1
@@ -86,6 +93,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       groups: [],
       addOns: [],
       questions: [],
+      availability: availabilityForm([]),
       name: '',
       categoryId: String(categories[0]?.id ?? ''),
       description: '',
@@ -106,6 +114,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
       openByDefault: false,
       isSideDish: false,
       onSale: false,
+      priceBeforeDiscount: '',
       maxPerSupplyDate: '',
       options: [emptyOption(true)],
       parentDishIds: [],
@@ -131,6 +140,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     openByDefault: dish.openByDefault,
     isSideDish: dish.isSideDish,
     onSale: dish.onSale ?? false,
+    priceBeforeDiscount: str(dish.priceBeforeDiscount ?? null),
     maxPerSupplyDate: str(dish.maxPerSupplyDate),
     options: dish.options.length
       ? dish.options.map((o) => ({ key: nextKey++, id: o.id, label: o.label, amount: String(o.amount), price: String(o.price), isDefault: o.isDefault }))
@@ -138,6 +148,7 @@ function toForm(dish: Dish | null, categories: Category[], main: Dish | null = n
     parentDishIds: dish.parentDishIds,
     ...addOnsForm(dish),
     questions: questionsForm(dish.questions),
+    availability: availabilityForm(dish.availability),
   }
 }
 
@@ -158,7 +169,7 @@ function copyForm(source: Dish, categories: Category[], name: string): DishForm 
 }
 
 function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice' | 'isYesNo' | 'adjustmentOptional' | 'groups' | 'addOns'> {
-  const groups = dish.addOnGroups.map((g) => ({ key: formKey(), id: g.id, name: g.name, maxUnits: str(g.maxUnits) }))
+  const groups = dish.addOnGroups.map((g) => ({ key: formKey(), id: g.id, name: g.name, maxUnits: str(g.maxUnits), overLimitPrice: str(g.overLimitPrice) }))
   return {
     mainDishId: dish.mainDishId === null ? '' : String(dish.mainDishId),
     useMainDishPrice: dish.useMainDishPrice,
@@ -172,6 +183,11 @@ function addOnsForm(dish: Dish): Pick<DishForm, 'mainDishId' | 'useMainDishPrice
       price: str(a.price),
       maxQuantity: str(a.maxQuantity),
       isCheckbox: a.isCheckbox,
+      slot: a.slot,
+      label: a.label ?? '',
+      showImage: a.showImage,
+      isDefault: a.isDefault,
+      overLimitPrice: str(a.overLimitPrice),
     })),
   }
 }
@@ -181,7 +197,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
   const fixed = form.choiceMode === 'Fixed'
   const own = advanced
     ? {
-        addOnGroups: form.groups.map((g) => ({ id: g.id, name: g.name, maxUnits: num(g.maxUnits) })),
+        addOnGroups: form.groups.map((g) => ({ id: g.id, name: g.name, maxUnits: num(g.maxUnits), overLimitPrice: num(g.maxUnits) === null ? null : num(g.overLimitPrice) })),
         addOns: form.isAddOnOnly
           ? []
           : form.addOns.map((a) => ({
@@ -190,6 +206,11 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
               price: num(a.price),
               maxQuantity: a.isCheckbox ? null : num(a.maxQuantity),
               isCheckbox: a.isCheckbox,
+              slot: a.slot,
+              label: form.addOns.filter((o) => o.dishId === a.dishId).length > 1 ? a.label.trim() : null,
+              showImage: a.showImage,
+              isDefault: a.isDefault,
+              overLimitPrice: a.isCheckbox || num(a.maxQuantity) === null ? null : num(a.overLimitPrice),
             })),
       }
     : {}
@@ -217,6 +238,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
     openByDefault: form.openByDefault,
     isSideDish: form.isSideDish,
     onSale: form.onSale,
+    priceBeforeDiscount: num(form.priceBeforeDiscount),
     maxPerSupplyDate: num(form.maxPerSupplyDate),
     options: fixed
       ? form.options.map((o) => ({ id: o.id, label: o.label, amount: num(o.amount) ?? 0, price: num(o.price) ?? 0, isDefault: o.isDefault }))
@@ -225,6 +247,7 @@ function toInput(form: DishForm, advanced: boolean): DishInput {
     dietaryTags: form.dietaryTags,
     dietaryTagsSingle: form.dietaryTags.length > 1 && form.dietaryTagsSingle,
     questions: questionsInput(form.questions),
+    availability: availabilityInput(form.availability),
   }
 }
 
@@ -237,12 +260,15 @@ export function DishFormPage() {
   const toast = useToast()
   const { saved, flash } = useSavedFlash()
   const advanced = useFeature('advancedDishes')
+  const priceLists = useFeature('priceLists')
   const [search] = useSearchParams()
   const mainParam = search.get('main')
   const copyParam = dishId === null ? search.get('copy') : null
 
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [allDishes, setAllDishes] = useState<Dish[] | null>(null)
+  /** The working days and shifts the availability block offers; empty when they could not be loaded. */
+  const [supplyDays, setSupplyDays] = useState<SupplyDay[]>([])
   const [dish, setDish] = useState<Dish | null>(null)
   const [form, setForm] = useState<DishForm | null>(null)
   const [failed, setFailed] = useState(false)
@@ -255,8 +281,9 @@ export function DishFormPage() {
   const [affected, setAffected] = useState<number | null>(null)
 
   useEffect(() => {
-    Promise.all([categoriesApi.get(), dishesApi.getAll()])
-      .then(([c, all]) => {
+    Promise.all([categoriesApi.get(), dishesApi.getAll(), supplyDaysApi.get().catch(() => [] as SupplyDay[])])
+      .then(([c, all, days]) => {
+        setSupplyDays(days)
         const current = dishId === null ? null : (all.find((d) => d.id === dishId) ?? null)
         if (dishId !== null && !current) throw new Error('not found')
         setCategories(c)
@@ -495,7 +522,7 @@ export function DishFormPage() {
         <FormBlock
           title={t('admin.dishes.blocks.price')}
           about={t('admin.dishes.blocks.priceAbout')}
-          invalid={invalid('useMainDishPrice', 'sellBy', 'choiceMode', 'options', 'optionsTitle', 'unitName', 'minAmount', 'maxAmount', 'amountStep', 'unitPrice')}
+          invalid={invalid('useMainDishPrice', 'sellBy', 'choiceMode', 'options', 'optionsTitle', 'unitName', 'minAmount', 'maxAmount', 'amountStep', 'unitPrice', 'priceBeforeDiscount')}
         >
         {isVariant && (
           <label className="checkbox">
@@ -655,6 +682,24 @@ export function DishFormPage() {
             </fieldset>
           </>
         )}
+        <span className="field field--narrow">
+          <span className="with-info">
+            <label htmlFor="dish-priceBeforeDiscount">{t('admin.dishes.priceBeforeDiscount')}</label>
+            <Info text={t('admin.dishes.priceBeforeDiscountHint')} about={t('admin.dishes.priceBeforeDiscount')} />
+          </span>
+          <input
+            id="dish-priceBeforeDiscount"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="any"
+            value={form.priceBeforeDiscount}
+            onChange={(e) => set({ priceBeforeDiscount: e.target.value })}
+            {...err('priceBeforeDiscount')}
+          />
+          {fieldError('priceBeforeDiscount')}
+        </span>
+        {priceLists && dishId !== null && dish && <DishPriceListsButton dishId={dishId} dishName={dish.name} />}
         </>
         )}
         </FormBlock>
@@ -810,6 +855,10 @@ export function DishFormPage() {
 
         <FormBlock title={t('admin.dishes.blocks.questions')} about={t('admin.dishes.blocks.questionsAbout')} invalid={invalid('questions')}>
         <QuestionsSection questions={form.questions} inherited={inheritedQuestions} errors={errors} onChange={(questions) => set({ questions })} />
+        </FormBlock>
+
+        <FormBlock title={t('admin.dishes.blocks.sellingTimes')} about={t('admin.dishes.blocks.sellingTimesAbout')} invalid={invalid('availability')}>
+          <AvailabilitySection value={form.availability} supplyDays={supplyDays} errors={errors} onChange={(availability) => set({ availability })} />
         </FormBlock>
 
         <div className="row form-actions">

@@ -1,7 +1,9 @@
 import { isTransfer } from './payment'
 import { TransferPay } from './TransferPay'
 import { useTranslation } from 'react-i18next'
+import type { Profile, RememberInput } from '../api/account'
 import type { Confirmation } from '../api/site'
+import { RememberDetails } from './RememberDetails'
 import { Modal } from '../components/Modal'
 import { DeliveryFeeNote } from './DeliveryFeeNote'
 import { formatMoney, formatSupplyDate, formatTime } from './format'
@@ -11,11 +13,14 @@ const number = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 3 })
 interface Props {
   confirmation: Confirmation
   contactPhone: string | null
+  /** What the client could keep for next time; left out when there is nothing new to keep. */
+  remember?: RememberInput
+  onRemembered?: (profile: Profile) => void
   onClose: () => void
 }
 
 /** Shown after the order is saved: the summary of what was ordered. */
-export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
+export function SuccessDialog({ confirmation, contactPhone, remember, onRemembered, onClose }: Props) {
   const { t } = useTranslation()
   // Each dish with allergens once, with what the business wrote about it.
   const allergens = [...new Map(confirmation.items.filter((i) => i.allergenInfo).map((i) => [i.dishName, i.allergenInfo as string])).entries()]
@@ -50,6 +55,11 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           </ul>
         </div>
       )}
+      {!!confirmation.minimumTopUp && (
+        <p className="summary__total">
+          {t('order.minimumTopUp')}: <strong className="numeric">{formatMoney(confirmation.minimumTopUp)}</strong>
+        </p>
+      )}
       {(!!confirmation.deliveryFee || !!confirmation.deliveryDiscount) && (
         <p className="summary__total">
           {t('order.deliveryFee')}:{' '}
@@ -80,6 +90,7 @@ export function SuccessDialog({ confirmation, contactPhone, onClose }: Props) {
           {t('order.success.needsReview')}
         </p>
       )}
+      {remember && <RememberDetails details={remember} onSaved={(profile) => onRemembered?.(profile)} />}
       {contactPhone && (
         <p className="muted">
           {t('order.callToChange')} <span dir="ltr">{contactPhone}</span>

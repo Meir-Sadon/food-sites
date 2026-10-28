@@ -2,9 +2,12 @@ import { Navigate, Route, Routes } from 'react-router'
 import { AdminLayout } from './admin/AdminLayout'
 import { AdminLoginPage } from './admin/AdminLoginPage'
 import { AuditPage } from './admin/audit/AuditPage'
+import { ClientsPage } from './admin/clients/ClientsPage'
 import { RequireAdmin } from './admin/RequireAdmin'
 import { CategoriesPage } from './admin/categories/CategoriesPage'
 import { DishGroupsPage } from './admin/dish-groups/DishGroupsPage'
+import { PriceListPage } from './admin/price-lists/PriceListPage'
+import { PriceListsPage } from './admin/price-lists/PriceListsPage'
 import { ContactsPage } from './admin/contacts/ContactsPage'
 import { DishFormPage } from './admin/dishes/DishFormPage'
 import { DishesPage } from './admin/dishes/DishesPage'
@@ -27,6 +30,7 @@ import { ToastProvider } from './components/ToastProvider'
 import { DriverPage, DriverStops } from './driver/DriverPage'
 import { DriverStopPage } from './driver/DriverStopPage'
 import { AboutPage } from './pages/AboutPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 import { AccessibilityStatementPage } from './pages/AccessibilityStatementPage'
 import { LoginPage } from './pages/LoginPage'
 import { OrderPage } from './pages/OrderPage'
@@ -61,6 +65,7 @@ export function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="accessibility" element={<AccessibilityStatementPage />} />
+          <Route path="privacy" element={<PrivacyPage />} />
         </Route>
 
         {/* The driver's page behind the link from the driver's report: the link is its only key. */}
@@ -86,6 +91,22 @@ export function App() {
           <Route path="social" element={<SocialPage />} />
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="dish-groups" element={<DishGroupsPage />} />
+          <Route
+            path="price-lists"
+            element={
+              <RequireFeature feature="priceLists" to="/admin/dishes">
+                <PriceListsPage />
+              </RequireFeature>
+            }
+          />
+          <Route
+            path="price-lists/:id"
+            element={
+              <RequireFeature feature="priceLists" to="/admin/dishes">
+                <PriceListPage />
+              </RequireFeature>
+            }
+          />
           <Route path="dishes" element={<DishesPage />} />
           <Route path="dishes/new" element={<DishFormPage key="new" />} />
           <Route path="dishes/:id" element={<DishFormPage key="edit" />} />
@@ -97,6 +118,7 @@ export function App() {
           <Route path="usage" element={<UsagePage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="audit" element={<AuditPage />} />
+          <Route path="clients" element={<ClientsPage />} />
           <Route path="feedback" element={<FeedbackPage />} />
           <Route
             path="reviews"

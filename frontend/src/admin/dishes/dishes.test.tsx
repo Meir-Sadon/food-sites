@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { Dish, DishInput } from '../../api/catalog'
-import { category, dish } from '../../test/catalogData'
+import { category, dish, supplyDays } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
 
@@ -282,6 +282,7 @@ describe('Dish form', () => {
       openByDefault: false,
       isSideDish: false,
       onSale: false,
+      priceBeforeDiscount: null,
       maxPerSupplyDate: null,
       options: [
         { id: null, label: 'קטן', amount: 1, price: 5, isDefault: false },
@@ -296,6 +297,8 @@ describe('Dish form', () => {
       addOnGroups: [],
       addOns: [],
       questions: [],
+      // Sold whenever the business works until days are ticked.
+      availability: [],
     })
   })
 
@@ -325,6 +328,30 @@ describe('Dish form', () => {
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).onSale).toBe(true)
   })
 
+  it('saves a price before a discount and shows the error when it is not above the price', async () => {
+    const api = fakeApi({
+      ...base,
+      'PUT /api/admin/dishes/1': (_, body) =>
+        (body as DishInput).priceBeforeDiscount === 10
+          ? invalid({ PriceBeforeDiscount: ['notAbovePrice'] })
+          : { ...chicken, ...(body as object) },
+    })
+    renderAt('/admin/dishes/1')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: /עריכת מנה/ })
+    const field = screen.getByLabelText('מחיר לפני הנחה')
+    await user.type(field, '10')
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+    expect(await screen.findByText('המחיר לפני הנחה צריך להיות גבוה ממחיר המנה.')).toBeInTheDocument()
+
+    await user.clear(field)
+    await user.type(field, '120')
+    await user.click(screen.getByRole('button', { name: 'שמירה' }))
+    await screen.findByText('נשמר.')
+    expect((api.sent('PUT', '/api/admin/dishes/1').at(-1)!.body as DishInput).priceBeforeDiscount).toBe(120)
+  })
+
   it('saves a dish whose adjustment is optional', async () => {
     const api = fakeApi({ ...base, 'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }) })
     renderAt('/admin/dishes/1')
@@ -336,6 +363,72 @@ describe('Dish form', () => {
 
     await screen.findByText('נשמר.')
     expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).adjustmentOptional).toBe(true)
+  })
+
+  describe('selling days and hours', () => {
+    const shifts = () =>
+      supplyDays().map((d) => (d.weekday === 'Thursday' ? { ...d, enabled: true, hours: [{ from: '07:00:00', to: '13:00:00' }, { from: '16:00:00', to: '20:00:00' }] } : d))
+    const open = () =>
+      fakeApi({
+        ...base,
+        'GET /api/admin/supply-days': shifts,
+        'PUT /api/admin/dishes/1': (_, body) => ({ ...chicken, ...(body as object) }),
+      })
+
+    it('sells a ticked day the whole day, until specific hours are asked for', async () => {
+      const api = open()
+      renderAt('/admin/dishes/1')
+      const user = userEvent.setup()
+
+      await screen.findByRole('heading', { name: /עריכת מנה/ })
+      await user.click(screen.getByText('ימים ושעות מכירה', { selector: '.form-block__title' }))
+      const times = screen.getByRole('group', { name: 'ימים ושעות מכירה' })
+      await user.click(within(times).getByRole('checkbox', { name: 'חמישי' }))
+      expect(within(times).getByText('כל היום')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+      await screen.findByText('נשמר.')
+      expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).availability).toEqual([{ weekday: 'Thursday', from: null, to: null }])
+    })
+
+    it('offers the shifts of the day with their hours, each one tick away, and sends the ticked ones', async () => {
+      const api = open()
+      renderAt('/admin/dishes/1')
+      const user = userEvent.setup()
+
+      await screen.findByRole('heading', { name: /עריכת מנה/ })
+      await user.click(screen.getByText('ימים ושעות מכירה', { selector: '.form-block__title' }))
+      await user.click(screen.getByRole('checkbox', { name: 'חמישי' }))
+      await user.click(screen.getByRole('button', { name: 'הגדרת שעות ספציפיות ביום חמישי' }))
+
+      // Each shift is there with its own hours, unticked; tick the morning one and narrow it to 08:00 to 12:00.
+      expect(screen.getByLabelText('שעת התחלה של טווח 1 ביום חמישי')).toHaveValue('07:00')
+      expect(screen.getByLabelText('שעת סיום של טווח 2 ביום חמישי')).toHaveValue('20:00')
+      expect(screen.getByLabelText('טווח 2 ביום חמישי פעיל')).not.toBeChecked()
+      await user.click(screen.getByLabelText('טווח 1 ביום חמישי פעיל'))
+      fireEvent.change(screen.getByLabelText('שעת התחלה של טווח 1 ביום חמישי'), { target: { value: '08:00' } })
+      fireEvent.change(screen.getByLabelText('שעת סיום של טווח 1 ביום חמישי'), { target: { value: '12:00' } })
+      await user.click(screen.getByRole('button', { name: 'שמירה' }))
+
+      await screen.findByText('נשמר.')
+      expect((api.sent('PUT', '/api/admin/dishes/1')[0].body as DishInput).availability).toEqual([
+        { weekday: 'Thursday', from: '08:00:00', to: '12:00:00' },
+      ])
+    })
+
+    it('shows the saved hours and sends nothing for a day left unticked', async () => {
+      fakeApi({
+        ...base,
+        'GET /api/admin/supply-days': shifts,
+        'GET /api/admin/dishes': () => [{ ...chicken, availability: [{ weekday: 'Thursday', from: '16:00:00', to: '20:00:00' }] }, eggplant, leg, removed],
+      })
+      renderAt('/admin/dishes/1')
+
+      await screen.findByRole('heading', { name: /עריכת מנה/ })
+      expect(screen.getByRole('checkbox', { name: 'חמישי' })).toBeChecked()
+      expect(screen.getByLabelText('שעת התחלה של טווח 1 ביום חמישי')).toHaveValue('16:00')
+      expect(screen.getByRole('checkbox', { name: 'שישי' })).not.toBeChecked()
+    })
   })
 
   it('saves a per-supply-date limit on a dish', async () => {
@@ -643,7 +736,7 @@ describe('Dish form', () => {
 
 describe('Variant form', () => {
   it('lists the add-ons it gets from its main dish', async () => {
-    const main = dish(1, 'כריך', 1, { addOns: [{ dishId: 3, groupId: null, price: null, maxQuantity: null, isCheckbox: true }], addOnDishIds: [3] })
+    const main = dish(1, 'כריך', 1, { addOns: [{ dishId: 3, groupId: null, price: null, maxQuantity: null, isCheckbox: true, slot: 0, label: null, showImage: false, isDefault: false, overLimitPrice: null }], addOnDishIds: [3] })
     const side = dish(3, 'סלט', 1, { isAddOnOnly: true })
     const variant = dish(2, 'כריך שניצל', 1, { mainDishId: 1, useMainDishPrice: true, options: [] })
     fakeApi({ ...base, 'GET /api/admin/dishes': () => [main, variant, side] })

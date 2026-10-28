@@ -124,13 +124,8 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Registering_requires_name_and_address_and_checks_optional_fields()
+    public async Task Registering_needs_only_the_phone_and_checks_what_is_sent()
     {
-        var missing = await _guest.PostAsJsonAsync(
-            "/api/account/register", Profile(Phone, i => { i["fullName"] = " "; i["street"] = null; }), TestFiles.Json);
-        await missing.AssertInvalid("fullName", "required");
-        await missing.AssertInvalid("street", "required");
-
         var badEmail = await _guest.PostAsJsonAsync(
             "/api/account/register", Profile(Phone, i => i["email"] = "not-an-email"), TestFiles.Json);
         await badEmail.AssertInvalid("email", "email");
@@ -139,11 +134,16 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
             "/api/account/register", Profile(Phone, i => i["birthday"] = "2999-01-01"), TestFiles.Json);
         await future.AssertInvalid("birthday", "invalid");
 
-        var optionalOnly = await _guest.PostAsJsonAsync(
-            "/api/account/register",
-            Profile(Phone, i => { i["email"] = null; i["birthday"] = null; i["ethnicBackground"] = null; }),
-            TestFiles.Json);
-        Assert.True(optionalOnly.IsSuccessStatusCode);
+        // An address that was started has to be whole.
+        var partial = await _guest.PostAsJsonAsync(
+            "/api/account/register", Profile(Phone, i => i["street"] = null), TestFiles.Json);
+        await partial.AssertInvalid("street", "required");
+
+        var phoneOnly = await _guest.PostAsJsonAsync("/api/account/register", new { phone = Phone }, TestFiles.Json);
+        Assert.True(phoneOnly.IsSuccessStatusCode);
+        var me = await (await WithSession(phoneOnly).GetAsync("/api/account/me")).Read<ProfileDto>();
+        Assert.Equal("", me.FullName);
+        Assert.Empty(me.Addresses);
     }
 
     [Fact]
@@ -167,12 +167,157 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Login_of_an_unregistered_phone_says_so()
+    public async Task Login_of_a_new_phone_makes_the_account_with_nothing_else()
     {
         var response = await _guest.PostAsJsonAsync("/api/account/login", new { phone = OtherPhone });
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Contains("notRegistered", await response.Content.ReadAsStringAsync());
+        response.EnsureSuccessStatusCode();
+        var login = await response.Read<LoginDto>();
+        Assert.True(login.IsNew);
+        Assert.Equal(OtherPhone, login.Profile.Phone);
+        Assert.Equal("", login.Profile.FullName);
+        Assert.Empty(login.Profile.Addresses);
+
+        var client = WithSession(response);
+        Assert.Equal(OtherPhone, (await (await client.GetAsync("/api/account/me")).Read<ProfileDto>()).Phone);
+
+        var again = await (await _guest.PostAsJsonAsync("/api/account/login", new { phone = OtherPhone })).Read<LoginDto>();
+        Assert.False(again.IsNew);
+        Assert.Equal(login.Profile.Id, again.Profile.Id);
+    }
+
+    [Fact]
+    public async Task Login_with_a_bad_phone_is_invalid()
+    {
+        var response = await _guest.PostAsJsonAsync("/api/account/login", new { phone = "12" });
+
+        await response.AssertInvalid("phone", "phone");
+    }
+
+    // ---------- Addresses ----------
+
+    private static object Address(string street, string? label = null, bool makeDefault = false) =>
+        new { label, city = "חיפה", street, houseNumber = "3", apartment = "", makeDefault };
+
+    [Fact]
+    public async Task The_first_address_is_the_default_and_mirrors_into_the_profile()
+    {
+        var client = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone }));
+
+        var profile = await (await client.PostAsJsonAsync("/api/account/addresses", Address("הרצל", "בית"))).Read<ProfileDto>();
+
+        var home = Assert.Single(profile.Addresses);
+        Assert.True(home.IsDefault);
+        Assert.Equal("בית", home.Label);
+        Assert.Equal("הרצל 3, חיפה", profile.Address);
+        Assert.Equal("הרצל", profile.Street);
+    }
+
+    [Fact]
+    public async Task Several_addresses_one_default_that_can_change_and_be_deleted()
+    {
+        var client = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone }));
+        await client.PostAsJsonAsync("/api/account/addresses", Address("הרצל", "בית"));
+        var two = await (await client.PostAsJsonAsync("/api/account/addresses", Address("ויצמן", "עבודה"))).Read<ProfileDto>();
+        Assert.Equal(["הרצל", "ויצמן"], two.Addresses.Select(a => a.Street));
+        Assert.Equal([true, false], two.Addresses.Select(a => a.IsDefault));
+
+        var work = two.Addresses[1];
+        var switched = await (await client.PutAsync($"/api/account/addresses/{work.Id}/default", null)).Read<ProfileDto>();
+        Assert.Equal("ויצמן", switched.Addresses[0].Street);
+        Assert.Equal("ויצמן", switched.Street);
+        Assert.Single(switched.Addresses, a => a.IsDefault);
+
+        var edited = await (await client.PutAsJsonAsync($"/api/account/addresses/{work.Id}", Address("ויצמן", "משרד"))).Read<ProfileDto>();
+        Assert.Equal("משרד", edited.Addresses[0].Label);
+
+        // Deleting the default hands the role to the one left.
+        var left = await (await client.DeleteAsync($"/api/account/addresses/{work.Id}")).Read<ProfileDto>();
+        var remaining = Assert.Single(left.Addresses);
+        Assert.True(remaining.IsDefault);
+        Assert.Equal("הרצל", left.Street);
+
+        var none = await (await client.DeleteAsync($"/api/account/addresses/{remaining.Id}")).Read<ProfileDto>();
+        Assert.Empty(none.Addresses);
+        Assert.Equal("", none.Address);
+    }
+
+    [Fact]
+    public async Task An_address_needs_its_parts_is_not_repeated_and_belongs_to_its_owner()
+    {
+        var client = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone }));
+        var bad = await client.PostAsJsonAsync("/api/account/addresses", new { city = "חיפה", street = "", houseNumber = "1" });
+        await bad.AssertInvalid("street", "required");
+
+        var first = await (await client.PostAsJsonAsync("/api/account/addresses", Address("הרצל"))).Read<ProfileDto>();
+        var repeat = await client.PostAsJsonAsync("/api/account/addresses", Address("הרצל"));
+        await repeat.AssertInvalid("street", "duplicate");
+
+        var other = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = OtherPhone }));
+        Assert.Equal(HttpStatusCode.NotFound, (await other.DeleteAsync($"/api/account/addresses/{first.Addresses[0].Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _guest.GetAsync("/api/account/addresses")).StatusCode);
+    }
+
+    // ---------- Keeping details after an order ----------
+
+    private static object Remember(int orderId, string phone = Phone) =>
+        new { orderId, phone, name = "דנה כהן", city = "חיפה", street = "הרצל", houseNumber = "7", apartment = "2" };
+
+    private async Task<int> PlaceOrderAsync(HttpClient client, string phone = Phone) => (await OrderAsync(client, phone)).Id;
+
+    [Fact]
+    public async Task A_logged_in_client_keeps_name_and_address_after_an_order()
+    {
+        var client = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone }));
+        var orderId = await PlaceOrderAsync(client);
+
+        var saved = await (await client.PostAsJsonAsync("/api/account/remember", Remember(orderId))).Read<RememberDto>();
+
+        Assert.True(saved.Saved);
+        Assert.Equal("דנה כהן", saved.Profile!.FullName);
+        var address = Assert.Single(saved.Profile.Addresses);
+        Assert.Equal("הרצל 7, דירה 2, חיפה", address.Address);
+        Assert.True(address.IsDefault);
+
+        // Asking again with the same address adds nothing.
+        var again = await (await client.PostAsJsonAsync("/api/account/remember", Remember(orderId))).Read<RememberDto>();
+        Assert.Single(again.Profile!.Addresses);
+    }
+
+    [Fact]
+    public async Task A_guest_is_remembered_by_phone_and_the_account_made_later_starts_from_it()
+    {
+        var orderId = await PlaceOrderAsync(_guest);
+
+        var saved = await (await _guest.PostAsJsonAsync("/api/account/remember", Remember(orderId))).Read<RememberDto>();
+        Assert.True(saved.Saved);
+        Assert.Null(saved.Profile);
+
+        var login = await (await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone })).Read<LoginDto>();
+        Assert.True(login.IsNew);
+        Assert.Equal("דנה כהן", login.Profile.FullName);
+        var address = Assert.Single(login.Profile.Addresses);
+        Assert.Equal("הרצל 7, דירה 2, חיפה", address.Address);
+        Assert.True(address.IsDefault);
+        await using var db = _factory.CreateDbContext();
+        Assert.Equal(0, await db.GuestDetails.CountAsync());
+    }
+
+    [Fact]
+    public async Task Remember_needs_a_recent_order_of_the_same_phone_and_does_not_write_to_someone_elses_account()
+    {
+        var orderId = await PlaceOrderAsync(_guest);
+
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await _guest.PostAsJsonAsync("/api/account/remember", Remember(orderId, OtherPhone))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await _guest.PostAsJsonAsync("/api/account/remember", Remember(orderId + 100))).StatusCode);
+
+        // The phone has an account, but this caller is not logged in as it: nothing is kept.
+        await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone });
+        var anonymous = _factory.CreateApiClient();
+        var result = await (await anonymous.PostAsJsonAsync("/api/account/remember", Remember(orderId))).Read<RememberDto>();
+        Assert.False(result.Saved);
     }
 
     [Fact]

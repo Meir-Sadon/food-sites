@@ -45,6 +45,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<decimal?>("OverLimitPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DishId");
@@ -257,6 +261,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<decimal?>("PriceBeforeDiscount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<string>("SellBy")
                         .IsRequired()
                         .HasColumnType("text");
@@ -295,6 +303,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int>("AddOnDishId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Slot")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
@@ -304,6 +315,13 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("IsCheckbox")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<bool>("LinkedFromAddOn")
                         .HasColumnType("boolean");
 
@@ -311,11 +329,18 @@ namespace FoodSite.Api.Data.Migrations
                         .HasPrecision(10, 3)
                         .HasColumnType("numeric(10,3)");
 
+                    b.Property<decimal?>("OverLimitPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<decimal?>("Price")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
-                    b.HasKey("ParentDishId", "AddOnDishId");
+                    b.Property<bool>("ShowImage")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("ParentDishId", "AddOnDishId", "Slot");
 
                     b.HasIndex("AddOnDishId");
 
@@ -325,6 +350,33 @@ namespace FoodSite.Api.Data.Migrations
                         {
                             t.HasCheckConstraint("CK_DishAddOns_NotSelf", "\"ParentDishId\" <> \"AddOnDishId\"");
                         });
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DishAvailabilityRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DishId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly?>("From")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("To")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("Weekday")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DishId");
+
+                    b.ToTable("DishAvailabilityRules");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DishGroup", b =>
@@ -604,6 +656,49 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("Feedback", (string)null);
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.GuestDetails", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Apartment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("HouseNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("SavedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.ToTable("GuestDetails");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.LoginCode", b =>
                 {
                     b.Property<int>("Id")
@@ -702,6 +797,13 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -741,6 +843,10 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<bool>("IsPaid")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal>("MinimumTopUp")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -823,6 +929,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int?>("ParentItemId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("PriceListName")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
                     b.Property<decimal>("Quantity")
                         .HasPrecision(10, 3)
                         .HasColumnType("numeric(10,3)");
@@ -840,6 +950,176 @@ namespace FoodSite.Api.Data.Migrations
                     b.HasIndex("ParentItemId");
 
                     b.ToTable("OrderItems");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PopupSlot", b =>
+                {
+                    b.Property<int>("Slot")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Activity")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)");
+
+                    b.Property<string>("ButtonText")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ButtonUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("DelaySeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Frequency")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImagePublicId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Login")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("MaxTotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("MinTotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("OrderSource")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("OrderTotal")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Size")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Trigger")
+                        .HasColumnType("text");
+
+                    b.HasKey("Slot");
+
+                    b.ToTable("Popups", (string)null);
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BaseListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("ForMidOrder")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ForNoOrders")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<int?>("NewClientsAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NewClientsUnit")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal?>("OpenOrderAbove")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BaseListId");
+
+                    b.HasIndex("IsDefault")
+                        .IsUnique()
+                        .HasFilter("\"IsDefault\"");
+
+                    b.ToTable("PriceLists");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDish", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BasePrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int>("DishId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("From")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int>("PriceListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("To")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DishId");
+
+                    b.HasIndex("PriceListId", "DishId")
+                        .IsUnique();
+
+                    b.ToTable("PriceListDishes");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListPhone", b =>
+                {
+                    b.Property<int>("PriceListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("PriceListId", "Phone");
+
+                    b.HasIndex("Phone");
+
+                    b.ToTable("PriceListPhones");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Recommendation", b =>
@@ -949,6 +1229,27 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("ReviewImages");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SavedCart", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(50000)
+                        .HasColumnType("character varying(50000)");
+
+                    b.Property<int>("ItemCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("SavedCarts");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Settings", b =>
                 {
                     b.Property<int>("Id")
@@ -975,11 +1276,20 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("AdminPasswordHash")
                         .HasColumnType("text");
 
-                    b.Property<bool>("BadgeLowStockEnabled")
+                    b.Property<bool>("AlignSlots")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("BackgroundImagePublicId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BackgroundImageUrl")
+                        .HasColumnType("text");
 
                     b.Property<int?>("BadgeLowStockAmount")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("BadgeLowStockEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("BadgeLowStockMode")
                         .HasColumnType("text");
@@ -991,12 +1301,6 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("BadgeNewUnit")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BackgroundImagePublicId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BackgroundImageUrl")
                         .HasColumnType("text");
 
                     b.Property<bool>("BitEnabled")
@@ -1048,6 +1352,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("DeliveryFeeText")
                         .HasColumnType("text");
 
+                    b.Property<int>("DeliveryLeadMinutes")
+                        .HasColumnType("integer");
+
                     b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
 
@@ -1065,6 +1372,12 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("GoogleTagManagerId")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("InactiveAfterAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("InactiveAfterUnit")
                         .HasColumnType("text");
 
                     b.Property<string>("KashrutText")
@@ -1126,6 +1439,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("PickupEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("PickupLeadMinutes")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PopupBody")
                         .HasColumnType("text");
 
@@ -1165,6 +1481,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");
 
+                    b.Property<string>("ShabbatRules")
+                        .HasColumnType("text");
+
                     b.Property<string>("ShadowStrength")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -1175,6 +1494,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("SiteStyle")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int>("SlotMinutes")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Spacing")
                         .HasMaxLength(20)
@@ -1196,16 +1518,20 @@ namespace FoodSite.Api.Data.Migrations
                         {
                             Id = 1,
                             AddressFirst = false,
+                            AlignSlots = false,
                             BadgeLowStockEnabled = false,
                             BadgeNewEnabled = false,
                             BitEnabled = false,
                             DeliveryEnabled = true,
+                            DeliveryLeadMinutes = 0,
                             MinimumOrderAppliesToPickup = true,
                             OwnerChangeMails = false,
                             PayBoxEnabled = false,
                             PickupEnabled = true,
+                            PickupLeadMinutes = 0,
                             PopupEnabled = false,
-                            SiteDefaultsApplied = false
+                            SiteDefaultsApplied = false,
+                            SlotMinutes = 60
                         });
                 });
 
@@ -1271,6 +1597,30 @@ namespace FoodSite.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("SupplyDays");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SupplyDayHours", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<TimeOnly>("From")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("SupplyDayId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("To")
+                        .HasColumnType("time without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplyDayId");
+
+                    b.ToTable("SupplyDayHours");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.UsageDay", b =>
@@ -1374,6 +1724,9 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("GoogleSub")
+                        .HasColumnType("text");
+
                     b.Property<string>("HouseNumber")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1388,10 +1741,62 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GoogleSub")
+                        .IsUnique()
+                        .HasFilter("\"GoogleSub\" IS NOT NULL");
+
                     b.HasIndex("Phone")
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.UserAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Apartment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("HouseNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserAddresses");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.AddOnGroup", b =>
@@ -1447,6 +1852,17 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("Group");
 
                     b.Navigation("ParentDish");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.DishAvailabilityRule", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
+                        .WithMany("AvailabilityRules")
+                        .HasForeignKey("DishId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dish");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.DishGroupDish", b =>
@@ -1648,6 +2064,76 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("ParentItem");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceList", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.PriceList", "BaseList")
+                        .WithMany()
+                        .HasForeignKey("BaseListId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("BaseList");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDish", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
+                        .WithMany()
+                        .HasForeignKey("DishId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodSite.Api.Data.Entities.PriceList", "PriceList")
+                        .WithMany("Dishes")
+                        .HasForeignKey("PriceListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsMany("FoodSite.Api.Data.Entities.PriceListSubPrice", "SubPrices", b1 =>
+                        {
+                            b1.Property<int>("PriceListDishId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<decimal>("BasePrice")
+                                .HasPrecision(10, 2);
+
+                            b1.Property<string>("Key")
+                                .IsRequired();
+
+                            b1.Property<decimal>("Price")
+                                .HasPrecision(10, 2);
+
+                            b1.HasKey("PriceListDishId", "__synthesizedOrdinal");
+
+                            b1.ToTable("PriceListDishes");
+
+                            b1
+                                .ToJson("SubPrices")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PriceListDishId");
+                        });
+
+                    b.Navigation("Dish");
+
+                    b.Navigation("PriceList");
+
+                    b.Navigation("SubPrices");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListPhone", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.PriceList", "PriceList")
+                        .WithMany("Phones")
+                        .HasForeignKey("PriceListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PriceList");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Recommendation", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.User", "User")
@@ -1681,6 +2167,39 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SavedCart", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("FoodSite.Api.Data.Entities.SavedCart", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SupplyDayHours", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.SupplyDay", "SupplyDay")
+                        .WithMany("Hours")
+                        .HasForeignKey("SupplyDayId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SupplyDay");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.UserAddress", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.User", "User")
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.AddOnGroup", b =>
                 {
                     b.Navigation("AddOns");
@@ -1698,6 +2217,8 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("AddOnOf");
 
                     b.Navigation("AddOns");
+
+                    b.Navigation("AvailabilityRules");
 
                     b.Navigation("Images");
 
@@ -1728,13 +2249,27 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("AddOnItems");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceList", b =>
+                {
+                    b.Navigation("Dishes");
+
+                    b.Navigation("Phones");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Review", b =>
                 {
                     b.Navigation("Images");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SupplyDay", b =>
+                {
+                    b.Navigation("Hours");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.User", b =>
                 {
+                    b.Navigation("Addresses");
+
                     b.Navigation("FavoriteOrders");
 
                     b.Navigation("Orders");

@@ -9,6 +9,7 @@ import { useAccount } from '../account/useAccount'
 import { useFeature, useSiteSettled } from '../site/useSite'
 import { loadDraft, saveDraft } from '../order/draft'
 import { emptyOrder, selectionsFromHistory } from '../order/model'
+import { AddressesSection } from '../profile/AddressesSection'
 import { DetailsSection } from '../profile/DetailsSection'
 import { FavoritesSection, RecommendationsSection } from '../profile/FavoritesSection'
 import { HistorySection } from '../profile/HistorySection'
@@ -61,10 +62,10 @@ function ProfileContent({ user, onSaved }: { user: Profile; onSaved: (profile: P
   /** Puts the past order in the order page as it is today: gone dishes skipped, current prices. */
   async function reorder(order: HistoryOrder) {
     const menu = await siteApi.menu()
-    const { selections, skipped } = selectionsFromHistory(order, menu)
+    const { selections, skipped, repriced } = selectionsFromHistory(order, menu)
     if (Object.keys(selections).length === 0) throw new Error('empty')
     saveDraft({ ...(loadDraft() ?? emptyOrder()), selections })
-    navigate('/', { state: { filled: { skipped } } })
+    navigate('/', { state: { filled: { skipped, repriced } } })
   }
 
   async function saveFavorite(order: HistoryOrder, name: string) {
@@ -80,6 +81,7 @@ function ProfileContent({ user, onSaved }: { user: Profile; onSaved: (profile: P
   return (
     <>
       <DetailsSection user={user} onSaved={onSaved} />
+      <AddressesSection user={user} onSaved={onSaved} />
       {orders.data ? (
         <HistorySection orders={orders.data} onReorder={reorder} onSaveFavorite={favoritesOn ? saveFavorite : undefined} />
       ) : (

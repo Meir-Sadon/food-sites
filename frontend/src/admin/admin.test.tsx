@@ -1,13 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { settings, supplyDays } from '../test/catalogData'
+import { settings, shabbatRules, supplyDays } from '../test/catalogData'
 import { adminSession, fakeApi, masterSession } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 
 const settingsRoutes = {
   'GET /api/admin/settings': () => settings(),
   'GET /api/admin/supply-days': () => supplyDays(),
+  'GET /api/admin/shabbat-rules': () => shabbatRules(),
   'GET /api/admin/closed-dates': () => [],
 }
 
@@ -146,7 +147,7 @@ describe('admin layout', () => {
     renderAt('/admin/orders/route?date=2026-10-14')
 
     const pages = await screen.findByRole('navigation', { name: 'דוחות' })
-    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual(['הזמנות', 'סטטיסטיקה', 'שימוש באתר', 'יומן שינויים'])
+    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual(['הזמנות', 'סטטיסטיקה', 'שימוש באתר', 'לקוחות רשומים', 'יומן שינויים'])
   })
 
   it('shows when the master admin is logged in', async () => {

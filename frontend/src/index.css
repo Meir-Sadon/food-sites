@@ -220,20 +220,22 @@ textarea {
   background: var(--color-surface);
 }
 
+/* Buttons are light: the site's button colour as the border and the text, on a faint tint of it. */
 button {
+  --btn-main: var(--btn-bg, var(--color-accent));
   font: inherit;
   font-weight: 600;
   padding: 0.625rem 1.25rem;
-  border: 0;
+  border: var(--line-width, 1px) solid var(--btn-main);
   border-radius: var(--radius);
   transition: background-color 0.15s, box-shadow 0.15s;
-  background: var(--btn-bg, var(--color-accent));
-  color: var(--btn-text, var(--color-accent-contrast));
+  background: color-mix(in srgb, var(--btn-main) 8%, var(--color-surface));
+  color: var(--btn-main);
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  background: var(--btn-bg-hover, var(--color-accent-hover));
+  background: color-mix(in srgb, var(--btn-main) 18%, var(--color-surface));
 }
 
 .button-quiet:hover:not(:disabled),
@@ -366,6 +368,37 @@ button:disabled {
 .account-section h2 {
   margin: 0;
   font-size: 1.125rem;
+}
+
+.address-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.address-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-block-end: 0.75rem;
+  border-block-end: 1px solid var(--color-border);
+}
+
+.address-list__item:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.address-list__item p {
+  margin: 0;
+}
+
+.remember-details h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
 }
 
 .admin-section summary {
@@ -559,6 +592,30 @@ label {
   background: var(--color-error);
 }
 
+/* A dish sold only at set times: a clock, with the times in its tooltip and spelled out under the dish's details. */
+.item-badge--availability {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-soft);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  cursor: help;
+}
+
+.dish__availability {
+  margin: 0.375rem 0;
+  font-size: 0.875rem;
+}
+
+.dish__availability p {
+  margin: 0;
+}
+
+.dish__availability ul {
+  margin: 0.125rem 0 0;
+  padding-inline-start: 1.25rem;
+}
+
 .numeric {
   font-variant-numeric: tabular-nums;
 }
@@ -593,7 +650,16 @@ label {
 }
 
 .button-danger {
-  background: var(--color-error);
+  --btn-main: var(--color-error);
+}
+
+/* A hint that warns (an order under the minimum): yellow, like the notices. */
+.hint--warning {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-gold);
+  border-radius: calc(0.375rem * var(--corner-scale));
+  background: #fff7e6;
+  color: #6b4a0b;
 }
 
 .button-file input {
@@ -687,6 +753,26 @@ label {
 
 .supply-day .checkbox {
   min-inline-size: 6rem;
+}
+
+/* The days a dish is sold in (the dish form's "selling days and hours" block). */
+.availability__days {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.availability__day {
+  padding: 0.375rem 0.5rem;
+  border-radius: calc(0.375rem * var(--corner-scale));
+}
+
+.availability__ranges {
+  margin-block-start: 0.375rem;
+  padding-inline-start: 1.5rem;
 }
 
 .background-preview {
@@ -1011,6 +1097,11 @@ label {
   font-weight: 700;
 }
 
+.dish__price-before {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
 .dish__choice {
   display: flex;
   flex-direction: column;
@@ -1111,6 +1202,22 @@ label {
 .addon__sum {
   min-inline-size: 4.5rem;
   text-align: end;
+}
+
+/* An add-on shown with its picture while the client adjusts the dish. */
+.addon__image {
+  inline-size: 3rem;
+  block-size: 3rem;
+  margin-inline-end: 0.5rem;
+  object-fit: cover;
+  vertical-align: middle;
+  border-radius: calc(0.5rem * var(--corner-scale, 1));
+}
+
+/* What the add-on costs above its limit, under its name. */
+.addon__over {
+  display: block;
+  font-size: 0.85em;
 }
 
 .addons + .addons {
@@ -3813,6 +3920,20 @@ label {
   font-size: 1.125rem;
 }
 
+/* The delivery part of the total, small under it, so the fee is not read before a dish is chosen. */
+.cart-sheet__delivery,
+.total-bar__delivery {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: inherit;
+}
+
+.total-bar__sum {
+  display: flex;
+  flex-direction: column;
+}
+
 @media (max-width: 29.99rem) {
   /* On a narrow screen the basket button keeps the number and drops the total, so the other icons stay in view. */
   .top-bar__cart {
@@ -4569,4 +4690,232 @@ label {
 
 .list__row--removed .muted {
   text-decoration: line-through;
+}
+
+.supply-hours {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.shabbat-kind { display: flex; flex-direction: column; gap: 0.6rem; }
+.shabbat-side { align-items: flex-end; }
+
+/* The counts in the total bar are a button: they open the prompt that jumps to finishing the order. */
+.total-bar__summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent-contrast) 55%, transparent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-accent-contrast) 10%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  text-align: start;
+  cursor: pointer;
+}
+
+.total-bar__summary-lines {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The hint that the whole row is a button, with no arrow. */
+.total-bar__summary-cue {
+  font-size: 0.8rem;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  opacity: 0.85;
+}
+
+.total-bar__summary:hover,
+.total-bar__summary:focus-visible {
+  background: color-mix(in srgb, var(--color-accent-contrast) 22%, transparent);
+}
+
+/* What is missing from the order, settled right above the send button. */
+.fix-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.fix-panel h3,
+.fix-panel h4 {
+  margin: 0;
+}
+
+.fix-panel__block,
+.fix-panel__closest,
+.fix-panel__pick {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.fix-panel__hours {
+  display: grid;
+  gap: 1rem;
+}
+
+.fix-panel__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.fix-panel__ok {
+  margin: 0;
+  font-weight: 700;
+}
+
+@media (min-width: 40rem) {
+  .fix-panel__hours {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  .fix-panel__closest {
+    padding-inline-end: 1rem;
+    border-inline-end: 1px solid var(--color-border);
+  }
+}
+
+.google-login {
+  align-items: center;
+  margin-top: 1rem;
+}
+
+/* The floating dialog for what the order still lacks: a finished subject slides right, the next one comes in from the left. */
+.complete-dialog__viewport {
+  overflow: hidden;
+}
+
+.complete-dialog__track {
+  display: flex;
+  direction: rtl;
+  transform: translateX(calc(var(--step, 0) * 100%));
+  transition: transform 0.35s ease;
+}
+
+.complete-dialog__slide {
+  display: flex;
+  flex: 0 0 100%;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-inline-size: 0;
+  padding: 0.25rem;
+}
+
+.complete-dialog__slide[inert] {
+  visibility: hidden;
+  transition: visibility 0s 0.35s;
+}
+
+.complete-dialog__slide h3 {
+  margin: 0;
+}
+
+.complete-dialog__choices {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.complete-dialog__choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  inline-size: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+.complete-dialog__pick,
+.complete-dialog__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.complete-dialog__fee {
+  margin: 0;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .complete-dialog__track {
+    transition: none;
+  }
+}
+
+/* Admin price lists: one card per dish with its prices and dates. */
+.price-list-dishes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.price-list-dish {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: var(--line-width, 1px) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.price-list-dish__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.price-list-dish__image {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: calc(var(--radius) * 0.5);
+  object-fit: cover;
+  background: var(--color-soft);
+  flex: none;
+}
+
+.price-list-dish__tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+/* A dish's other prices in a list, opened under its row. */
+.price-list-subs {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+  border-inline-start: 3px solid var(--color-soft);
+}
+
+.price-list-subs__name {
+  flex: 1 1 10rem;
+  align-self: center;
+  font-weight: 600;
 }

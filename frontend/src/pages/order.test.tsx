@@ -192,17 +192,80 @@ describe('Order page', () => {
     expect(screen.getByText('התשלום יבוצע במעמד מסירת המשלוח')).toBeInTheDocument()
   })
 
-  it('blocks sending an order below the admin minimum and says how much is missing', async () => {
-    const { user } = await openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }) })
-    await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
-    await confirmNoAdjustments(user)
+  describe('an order under the minimum', () => {
+    const underMinimum = () => openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }), 'POST /api/orders': () => confirmation })
 
-    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeDisabled()
-    expect(screen.getByText(/המינימום להזמנה הוא ₪100\. חסרים עוד ₪30\./)).toBeInTheDocument()
+    it('keeps the send button pressable, with a warning sign and a yellow note under it', async () => {
+      const { user } = await openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }) })
+      await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+      await confirmNoAdjustments(user)
 
-    await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה: עוף בתנור/ }))
-    await confirmNoAdjustments(user)
-    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
+      const send = screen.getByRole('button', { name: /שליחת ההזמנה/ })
+      expect(send).toBeEnabled()
+      expect(send).toHaveTextContent('⚠️')
+      expect(screen.getByText(/המינימום להזמנה הוא ₪100\. חסרים עוד ₪30\./)).toHaveClass('hint--warning')
+
+      await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה: עוף בתנור/ }))
+      await confirmNoAdjustments(user)
+      expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).not.toHaveTextContent('⚠️')
+      expect(screen.queryByText(/המינימום להזמנה הוא/)).not.toBeInTheDocument()
+    })
+
+    it('asks first, and sends nothing when the client cancels', async () => {
+      const { api, user } = await underMinimum()
+      await fillAndSubmit(user)
+
+      const dialog = await screen.findByRole('dialog', { name: 'ההזמנה נמוכה ממינימום ההזמנה' })
+      expect(within(dialog).getByText(/נשארו ₪30 על מנת להגיע למינימום הזמנה/)).toBeInTheDocument()
+      expect(within(dialog).getByText(/ההזמנה תחויב בסכום מינימום ההזמנה, ₪100/)).toBeInTheDocument()
+      await user.click(within(dialog).getByRole('button', { name: 'ביטול' }))
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+    })
+
+    it('sends the order with the top-up agreed when the client goes on anyway', async () => {
+      const { api, user } = await underMinimum()
+      await fillAndSubmit(user)
+
+      const dialog = await screen.findByRole('dialog', { name: 'ההזמנה נמוכה ממינימום ההזמנה' })
+      await user.click(within(dialog).getByRole('button', { name: /לשגר ולשלם ₪100/ }))
+
+      expect(await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })).toBeInTheDocument()
+      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ acceptMinimumTopUp: true })
+    })
+
+    it('asks after the missing details are settled in the completion dialog', async () => {
+      const { api, user } = await underMinimum()
+      await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
+      await confirmNoAdjustments(user)
+      await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+
+      const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
+      await user.type(within(panel).getByLabelText('שם מלא'), 'דנה')
+      await user.type(within(panel).getByLabelText('טלפון'), '050-123-4567')
+      await user.click(within(panel).getByRole('button', { name: 'המשך' }))
+      await user.click(within(panel).getByRole('button', { name: /הגדרה ידנית/ }))
+      await user.type(within(panel).getByLabelText('רחוב'), 'הרצל')
+      await user.type(within(panel).getByLabelText('מספר בית'), '1')
+      await user.click(within(panel).getAllByRole('button', { name: /^המשך/ }).at(-1)!)
+      await user.click(await within(panel).findByRole('button', { name: 'שליחת ההזמנה' }))
+
+      expect(await screen.findByRole('dialog', { name: 'ההזמנה נמוכה ממינימום ההזמנה' })).toBeInTheDocument()
+      expect(screen.queryByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })).not.toBeInTheDocument()
+      expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+    })
+
+    it('takes the client back to the dishes to add one', async () => {
+      const { api, user } = await underMinimum()
+      await fillAndSubmit(user)
+
+      const dialog = await screen.findByRole('dialog', { name: 'ההזמנה נמוכה ממינימום ההזמנה' })
+      await user.click(within(dialog).getByRole('button', { name: 'להוסיף מנה' }))
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+    })
   })
 
   it('lets a pickup order below the minimum through when the minimum is for deliveries only', async () => {
@@ -211,7 +274,7 @@ describe('Order page', () => {
     })
     await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
     await confirmNoAdjustments(user)
-    expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeDisabled()
+    expect(screen.getByText(/המינימום להזמנה הוא/)).toBeInTheDocument()
 
     await user.click(screen.getByRole('radio', { name: 'איסוף עצמי' }))
     expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).toBeEnabled()
@@ -294,8 +357,16 @@ describe('Order page', () => {
 
     await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
 
-    expect(await screen.findByLabelText('טלפון')).toHaveAccessibleDescription(/מספר הטלפון לא תקין\./)
+    // The phone is asked for again right above the send button.
+    const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
+    expect(within(panel).getByLabelText('טלפון')).toHaveValue('12')
     expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+
+    await user.clear(within(panel).getByLabelText('טלפון'))
+    await user.type(within(panel).getByLabelText('טלפון'), '050-123-4567')
+    await user.click(within(panel).getByRole('button', { name: 'המשך' }))
+    await user.click(await within(panel).findByRole('button', { name: 'שליחת ההזמנה' }))
+    await vi.waitFor(() => expect(api.sent('POST', '/api/orders')).toHaveLength(1))
   })
 
   describe('supply hours', () => {
@@ -320,8 +391,14 @@ describe('Order page', () => {
       expect([...hour.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['בחרו שעה', '08:00 עד 09:00', '09:00 עד 09:30'])
 
       await fillAndSubmit(user)
-      expect(hour).toHaveAccessibleDescription(/שדה חובה/)
+      const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
       expect(api.sent('POST', '/api/orders')).toHaveLength(0)
+
+      // "The closest possible" picks the first hour of the first date.
+      await user.click(within(panel).getByRole('button', { name: /^הכי קרוב שאפשר/ }))
+      expect(hour).toHaveValue('08:00:00')
+      expect(await within(panel).findByRole('heading', { name: 'הכול מוכן' })).toBeInTheDocument()
+      await user.click(within(panel).getByRole('button', { name: 'חזרה להזמנה' }))
 
       // A date without hours asks for none.
       await user.selectOptions(screen.getByLabelText('יום אספקה'), '2026-10-16')
@@ -348,6 +425,41 @@ describe('Order page', () => {
       const dialog = await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
       expect(within(dialog).getByText(/בשעה 08:00/)).toBeInTheDocument()
       expect(within(dialog).getByText(/ניצור איתכם קשר כדי לתאם שעה אחרת/)).toBeInTheDocument()
+    })
+  })
+
+  describe('hours after midnight and lead times', () => {
+    const shift = () =>
+      menu({
+        supplyDates: [
+          {
+            date: '2026-10-08',
+            cutoff: '2026-10-07T20:00:00',
+            hours: [
+              { from: '23:00:00', to: '00:00:00', deliveryOk: false, pickupOk: true },
+              { from: '00:00:00', to: '01:00:00', date: '2026-10-09', deliveryOk: true, pickupOk: true },
+            ],
+          },
+        ],
+      })
+
+    it('lists the hours of the next day after the day\'s own, with its day and date, and sends that date', async () => {
+      const { api, user } = await openOrderPage({ 'GET /api/menu': shift, 'POST /api/orders': () => confirmation })
+      const hour = screen.getByLabelText('שעת אספקה מועדפת')
+      expect([...hour.querySelectorAll('option')].map((o) => o.textContent)).toEqual([
+        'בחרו שעה',
+        expect.stringContaining('00:00 עד 01:00 (יום שישי'),
+      ])
+      await user.selectOptions(hour, '2026-10-09T00:00:00')
+      await fillAndSubmit(user)
+      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ deliveryHour: '00:00:00', deliveryHourDate: '2026-10-09' })
+    })
+
+    it('hides hours the lead time blocks for the chosen way of receiving the order', async () => {
+      const { user } = await openOrderPage({ 'GET /api/menu': shift })
+      await user.click(screen.getByRole('radio', { name: /איסוף עצמי/ }))
+      const hour = screen.getByLabelText('שעת אספקה מועדפת')
+      expect([...hour.querySelectorAll('option')]).toHaveLength(3)
     })
   })
 
@@ -832,6 +944,16 @@ describe('Order page', () => {
     ])
     expect(within(dishCard('אורז')).getByText('כמעט אזל')).toBeInTheDocument()
     expect(within(dishCard('אורז')).queryByText('מבצע')).not.toBeInTheDocument()
+  })
+
+  it('shows the price before a discount struck through only when it is above the price', async () => {
+    const sale = menuDish(1, 'עוף בתנור', 1, { priceBeforeDiscount: 999 })
+    const same = menuDish(2, 'אורז', 2, { priceBeforeDiscount: 1 })
+    await openOrderPage({ 'GET /api/menu': () => menu({ dishes: [sale, same] }) })
+
+    const struck = dishCard('עוף בתנור').querySelector('del')
+    expect(struck).toHaveTextContent('מחיר לפני הנחה: ₪999')
+    expect(dishCard('אורז').querySelector('del')).toBeNull()
   })
 
   it('shows no almost-out mark while that badge is off or plenty is left', async () => {

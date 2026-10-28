@@ -12,7 +12,7 @@ namespace FoodSite.Api.Controllers;
 
 /// <summary>What the client site shows: site info, contact details, the enabled features, the menu and the open supply dates.</summary>
 [Route("api")]
-public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features, IOptions<SiteOptions> site) : PublicControllerBase
+public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features, IOptions<SiteOptions> site, IOptions<Auth.GoogleOptions> google) : PublicControllerBase
 {
     public record ContactDto(string? Name, string? Phone, string? Address, string? Email, string? OpeningHours);
 
@@ -53,7 +53,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<SocialLinkDto>? SocialLinks = null,
         Tracking.Ids? Tracking = null,
         ItemBadges.Effective? Badges = null,
-        EntryPopup.Dto? Popup = null);
+        IReadOnlyList<EntryPopup.Dto>? Popups = null,
+        ClientActivity.Period? InactiveAfter = null,
+        string? GoogleClientId = null);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -89,7 +91,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         IReadOnlyList<string>? DietaryTags = null,
         bool OnSale = false,
         bool IsNew = false,
-        decimal? Limit = null);
+        decimal? Limit = null,
+        IReadOnlyList<AvailabilityRuleDto>? Availability = null,
+        decimal? PriceBeforeDiscount = null);
 
     /// <summary>A question the client answers when ordering the dish (a variant's main dish's first, then its own).</summary>
     /// <summary>DefaultAnswer is the answer already picked for the client (a choice, or yes / no), if the admin set one.</summary>
@@ -101,10 +105,12 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     /// How an add-on is offered under this dish (the same order as AddOnDishIds). Price, when set, is its price per unit
     /// here, in its default option only; MaxQuantity caps it under one ordered line; a check box is added or not.
     /// </summary>
-    public record MenuAddOnDto(int DishId, int? GroupId, decimal? Price, decimal? MaxQuantity, bool IsCheckbox);
+    public record MenuAddOnDto(
+        int DishId, int? GroupId, decimal? Price, decimal? MaxQuantity, bool IsCheckbox,
+        int Slot = 0, string? Label = null, bool ShowImage = false, bool IsDefault = false, decimal? OverLimitPrice = null);
 
     /// <summary>A heading over some of the dish's add-ons, and the most units the client can pick from them together.</summary>
-    public record MenuAddOnGroupDto(int Id, string Name, int? MaxUnits);
+    public record MenuAddOnGroupDto(int Id, string Name, int? MaxUnits, decimal? OverLimitPrice = null);
 
     public record MenuCategoryDto(int Id, string Name);
 
@@ -160,7 +166,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 .Select(l => new SocialLinkDto(l.Kind, l.Label, l.Url)).ToList(),
             Sites.Tracking.Of(s),
             ItemBadges.Of(s),
-            EntryPopup.ForClient(s));
+            EntryPopup.ForClient(await db.PopupSlots.AsNoTracking().ToListAsync()),
+            ClientActivity.Of(s),
+            google.Value.IsConfigured ? google.Value.ClientId!.Trim() : null);
     }
 
     [HttpGet("menu")]
@@ -173,6 +181,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
 
         var dishes = await db.Dishes.AsNoTracking()
             .Include(d => d.Options).Include(d => d.Images).Include(d => d.Questions).Include(d => d.AddOns).ThenInclude(a => a.Group)
+            .Include(d => d.AvailabilityRules)
             .AsSplitQuery()
             .Where(d => !d.IsHidden)
             .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Id)
@@ -194,29 +203,33 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var settings = await db.Settings.AsNoTracking().SingleAsync();
         var badges = ItemBadges.Of(settings);
         var now = clock.NowLocal();
+        var prices = await SessionPricesAsync(db, features, clock);
 
         var menuDishes = shown.Select(d =>
         {
             var p = DishRules.Pricing(d);
             var links = DishRules.AddOnLinks(d).Where(a => shownIds.Contains(a.AddOnDishId))
-                .OrderBy(a => a.Group?.DisplayOrder ?? int.MaxValue).ThenBy(a => a.DisplayOrder).ThenBy(a => dishPosition[a.AddOnDishId])
+                .OrderBy(a => a.Group?.DisplayOrder ?? int.MaxValue).ThenBy(a => a.DisplayOrder).ThenBy(a => dishPosition[a.AddOnDishId]).ThenBy(a => a.Slot)
                 .ToList();
             return new MenuDishDto(
                 d.Id, d.Name, d.CategoryId, d.Description, d.AllergenInfo, p.SellBy, p.ChoiceMode,
-                p.MinAmount, p.MaxAmount, p.AmountStep, p.UnitPrice, d.IsAddOnOnly, d.IsSoldOut || d.MainDish is { IsSoldOut: true },
-                p.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
+                p.MinAmount, p.MaxAmount, p.AmountStep, prices.UnitPrice(p), d.IsAddOnOnly, d.IsSoldOut || d.MainDish is { IsSoldOut: true },
+                p.Options.OrderBy(o => o.Id).Select(o => new MenuOptionDto(o.Id, o.Label, o.Amount, prices.OptionPrice(p, o), o.IsDefault)).ToList(),
                 d.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
-                links.Select(a => a.AddOnDishId).ToList(),
+                links.Select(a => a.AddOnDishId).Distinct().ToList(),
                 remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, p.UnitName,
                 d.MainDishId, d.IsYesNo,
-                links.Select(a => new MenuAddOnDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
+                links.Select(a => new MenuAddOnDto(
+                    a.AddOnDishId, a.GroupId, prices.AddOnPrice(a), a.MaxQuantity, a.IsCheckbox, a.Slot, a.Label, a.ShowImage, a.IsDefault, prices.AddOnOverLimitPrice(a))).ToList(),
                 links.Where(a => a.Group is not null).Select(a => a.Group!).DistinctBy(g => g.Id)
-                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
+                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits, prices.GroupOverLimitPrice(g))).ToList(),
                 DishRules.Questions(d)
                     .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
                 (d.MainDish ?? d).AdjustmentOptional,
                 p.OptionsTitle, p.ShowOptionDifference, d.DietaryTags,
-                d.OnSale, ItemBadges.IsNew(badges, d.CreatedAt, now), LimitOf(d, settings.PortionsPerSupplyDate));
+                d.OnSale, ItemBadges.IsNew(badges, d.CreatedAt, now), LimitOf(d, settings.PortionsPerSupplyDate),
+                d.AvailabilityRules.Count > 0 ? DishAvailability.ToDtos(d.AvailabilityRules) : null,
+                prices.PriceBeforeDiscount(p));
         }).ToList();
 
         // Groups list only dishes ordered on their own that are on the menu, in menu order; an empty group is left out.
@@ -298,8 +311,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
 
     private async Task<IReadOnlyList<SupplyCalendar.OpenDate>> OpenDatesAsync()
     {
-        var days = await db.SupplyDays.AsNoTracking().ToListAsync();
+        var days = await db.SupplyDays.AsNoTracking().Include(d => d.Hours).ToListAsync();
         var closed = await db.ClosedDates.AsNoTracking().Select(c => c.Date).ToListAsync();
-        return SupplyCalendar.OpenDates(clock.NowLocal(), days, closed);
+        var timing = SlotTiming.Of(await db.Settings.AsNoTracking().SingleAsync());
+        return SupplyCalendar.OpenDates(clock.NowLocal(), days, closed, schedule: await ShabbatSchedule.LoadAsync(db, clock), timing: timing);
     }
 }

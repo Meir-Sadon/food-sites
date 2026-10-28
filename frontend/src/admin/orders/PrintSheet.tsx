@@ -95,6 +95,11 @@ function PrintedOrder({ order }: { order: AdminOrder }) {
           ))}
         </tbody>
       </table>
+      {!!order.minimumTopUp && (
+        <p className="print-order__fee">
+          {t('order.minimumTopUp')}: <strong className="numeric">{formatMoney(order.minimumTopUp)}</strong>
+        </p>
+      )}
       {(!!order.deliveryFee || !!order.deliveryDiscount) && (
         <p className="print-order__fee">
           {t('order.deliveryFee')}

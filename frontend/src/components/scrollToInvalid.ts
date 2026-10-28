@@ -44,6 +44,11 @@ function reveal(element: HTMLElement) {
   }
 }
 
+/** A page that settles a problem right where the client is (not by moving to a field) tells the submit watch to leave the screen alone. */
+export function holdScroll() {
+  shownAt = performance.now()
+}
+
 /** Brings an element to the middle of the screen and gives it the focus, without the focus scrolling again. */
 export function bringIntoView(element: HTMLElement) {
   shownAt = performance.now()

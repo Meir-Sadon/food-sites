@@ -222,13 +222,21 @@ describe('Admin Orders', () => {
     const user = userEvent.setup()
     const card = await screen.findByRole('article', { name: 'הזמנה #7' })
 
-    await user.click(within(card).getByRole('button', { name: 'ביטול הזמנה' }))
+    await user.click(within(card).getByRole('button', { name: /ביטול הזמנה/ }))
     expect(api.sent('PUT', '/status')).toHaveLength(0)
     await user.click(within(card).getByRole('button', { name: 'כן, לבטל' }))
 
-    await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/status')[0].body).toEqual({ status: 'Cancelled' }))
+    // The reason is required: nothing is sent without it.
+    expect(api.sent('PUT', '/status')).toHaveLength(0)
+    await user.type(within(card).getByLabelText('סיבת הביטול'), 'הלקוח התקשר')
+    await user.click(within(card).getByRole('button', { name: 'כן, לבטל' }))
+
+    await waitFor(() =>
+      expect(api.sent('PUT', '/api/admin/orders/7/status')[0].body).toEqual({ status: 'Cancelled', cancelReason: 'הלקוח התקשר' }),
+    )
     expect(within(card).getByLabelText('סטטוס')).toHaveValue('Cancelled')
-    expect(within(card).queryByRole('button', { name: 'ביטול הזמנה' })).not.toBeInTheDocument()
+    expect(within(card).getByText(/הלקוח התקשר/)).toBeInTheDocument()
+    expect(within(card).queryByRole('button', { name: /ביטול הזמנה/ })).not.toBeInTheDocument()
   })
 
   it('shows the cooking summary of a day', async () => {
@@ -352,6 +360,14 @@ describe('Admin Reports', () => {
       expect(within(basket).getByText(/\+ 3 × ירך \(יחידה\)/)).toBeInTheDocument()
       expect(within(basket).getByText('₪176')).toBeInTheDocument()
       expect(screen.getByText(/בשעה 09:00/)).toBeInTheDocument()
+    })
+
+    it('names the price list a line was priced from', async () => {
+      const listed = { ...detailed, items: detailed.items.map((i) => (i.id === 1 ? { ...i, priceListName: 'לקוחות קבועים' } : i)) }
+      fakeApi({ ...adminSession, 'GET /api/admin/orders/7': () => ({ body: listed }) })
+      renderAt('/admin/orders/7')
+      const basket = await screen.findByRole('region', { name: 'הזמנה כפי שהלקוח רואה בסל' })
+      expect(within(basket).getByText('מחירון: לקוחות קבועים')).toBeInTheDocument()
     })
 
     it('shares the preparation report on WhatsApp: what to prepare, then the other details', async () => {

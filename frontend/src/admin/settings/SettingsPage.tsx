@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { ClosedDatesSection } from './ClosedDatesSection'
 import { ConsoleTokenSection } from './ConsoleTokenSection'
 import { GeneralSection } from './GeneralSection'
+import { InactiveAfterSection } from './InactiveAfterSection'
 import { PasswordSection } from './PasswordSection'
+import { ShabbatRulesSection } from './ShabbatRulesSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
 import { DeliveryZonesSection } from '../delivery/DeliveryZonesSection'
 import type { DeliveryPricing } from '../../api/site'
@@ -21,10 +23,16 @@ export function SettingsPage() {
         <SupplyDaysSection />
       </SectionSlot>
       <SectionSlot>
+        <ShabbatRulesSection />
+      </SectionSlot>
+      <SectionSlot>
         <ClosedDatesSection />
       </SectionSlot>
       <SectionSlot>
         <GeneralSection onPricing={setPricing} />
+      </SectionSlot>
+      <SectionSlot>
+        <InactiveAfterSection />
       </SectionSlot>
       {pricing === 'zones' && (
         <SectionSlot>

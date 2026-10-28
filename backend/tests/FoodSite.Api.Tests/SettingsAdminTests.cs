@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using FoodSite.Api.Controllers.Admin;
+using FoodSite.Api.Sites;
 using Microsoft.EntityFrameworkCore;
 using static FoodSite.Api.Controllers.Admin.ClosedDatesController;
 using static FoodSite.Api.Controllers.Admin.SettingsController;
@@ -494,18 +496,19 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
 
         Assert.Equal(Enum.GetValues<DayOfWeek>(), days.Select(d => d.Weekday));
         Assert.All(days, d => Assert.False(d.Enabled));
-        Assert.Equal(new SupplyDayDto(DayOfWeek.Friday, false, DayOfWeek.Thursday, new TimeOnly(20, 0)), days[5]);
+        Assert.Equal((DayOfWeek.Friday, false, DayOfWeek.Thursday, new TimeOnly(20, 0)), (days[5].Weekday, days[5].Enabled, days[5].CutoffDay, days[5].CutoffTime));
+        Assert.All(days, d => Assert.Empty(d.Hours!));
     }
 
     [Fact]
     public async Task Supply_days_save_cutoffs()
     {
         var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();
-        days[5] = new SupplyDayDto(DayOfWeek.Friday, true, DayOfWeek.Wednesday, new TimeOnly(20, 0));
+        days[5] = new SupplyDayDto(DayOfWeek.Friday, true, DayOfWeek.Wednesday, new TimeOnly(20, 0), []);
         days[3] = days[3] with { Enabled = true };
 
         var saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
-        Assert.Equal(days, saved);
+        Assert.Equal(days.Select(d => (d.Weekday, d.Enabled, d.CutoffDay, d.CutoffTime)), saved.Select(d => (d.Weekday, d.Enabled, d.CutoffDay, d.CutoffTime)));
 
         days[5] = days[5] with { Enabled = false };
         saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
@@ -514,19 +517,55 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task Supply_days_save_hours_that_are_both_set_and_in_order()
+    public async Task Supply_days_save_working_hours_as_separate_ranges()
     {
         var days = await (await _admin.GetAsync("/api/admin/supply-days")).Read<List<SupplyDayDto>>();
-        days[5] = days[5] with { Enabled = true, DeliveryFrom = new TimeOnly(8, 0), DeliveryTo = new TimeOnly(18, 0) };
+        // A split day: the early hour after midnight, and 11:00 until midnight (00:00 ends the day).
+        days[5] = days[5] with
+        {
+            Enabled = true,
+            Hours = [new(new TimeOnly(11, 0), new TimeOnly(0, 0)), new(new TimeOnly(0, 0), new TimeOnly(1, 0))],
+        };
         var saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
-        Assert.Equal((new TimeOnly(8, 0), new TimeOnly(18, 0)), (saved[5].DeliveryFrom, saved[5].DeliveryTo));
+        Assert.Equal(
+            [(new TimeOnly(0, 0), new TimeOnly(1, 0)), (new TimeOnly(11, 0), new TimeOnly(0, 0))],
+            saved[5].Hours!.Select(h => (h.From, h.To)));
 
-        var halfSet = days.ToList();
-        halfSet[5] = days[5] with { DeliveryTo = null };
-        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", halfSet, TestFiles.Json)).AssertInvalid("days[5].deliveryTo", "deliveryHoursInvalid");
         var backwards = days.ToList();
-        backwards[5] = days[5] with { DeliveryFrom = new TimeOnly(18, 0), DeliveryTo = new TimeOnly(8, 0) };
-        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", backwards, TestFiles.Json)).AssertInvalid("days[5].deliveryTo", "deliveryHoursInvalid");
+        backwards[5] = days[5] with { Hours = [new(new TimeOnly(18, 0), new TimeOnly(8, 0))] };
+        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", backwards, TestFiles.Json)).AssertInvalid("days[5].hours", "deliveryHoursInvalid");
+        var overlapping = days.ToList();
+        overlapping[5] = days[5] with { Hours = [new(new TimeOnly(9, 0), new TimeOnly(13, 0)), new(new TimeOnly(12, 0), new TimeOnly(15, 0))] };
+        await (await _admin.PutAsJsonAsync("/api/admin/supply-days", overlapping, TestFiles.Json)).AssertInvalid("days[5].hours", "deliveryHoursOverlap");
+
+        // Saving none clears the day's hours.
+        days[5] = days[5] with { Hours = [] };
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/supply-days", days, TestFiles.Json)).Read<List<SupplyDayDto>>();
+        Assert.Empty(saved[5].Hours!);
+    }
+
+    [Fact]
+    public async Task Shabbat_rules_are_saved_checked_and_previewed()
+    {
+        var empty = await (await _admin.GetAsync("/api/admin/shabbat-rules")).Read<ShabbatRulesController.RulesDto>();
+        Assert.Null(empty.Rules.City);
+        Assert.Null(empty.Preview);
+        Assert.Contains(empty.Cities, c => c.Id == "gedera");
+
+        var rules = ShabbatRules.Empty with
+        {
+            City = "gedera",
+            Shabbat = new(new(ShabbatRules.Before, null, 2.5m), new(ShabbatRules.After, null, 0.5m)),
+            Holiday = new(new(ShabbatRules.Fixed, "13:00"), new(ShabbatRules.Closed)),
+        };
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/shabbat-rules", rules, TestFiles.Json)).Read<ShabbatRulesController.RulesDto>();
+        Assert.Equal(2.5m, saved.Rules.Shabbat.Eve.Hours);
+        Assert.NotNull(saved.Preview);
+
+        var withoutCity = rules with { City = null };
+        await (await _admin.PutAsJsonAsync("/api/admin/shabbat-rules", withoutCity, TestFiles.Json)).AssertInvalid("city", "required");
+        var thirds = rules with { Shabbat = new(new(ShabbatRules.Before, null, 1.3m), new()) };
+        await (await _admin.PutAsJsonAsync("/api/admin/shabbat-rules", thirds, TestFiles.Json)).AssertInvalid("shabbat.eve.hours", "invalid");
     }
 
     [Fact]

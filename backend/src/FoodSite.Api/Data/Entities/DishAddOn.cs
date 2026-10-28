@@ -9,6 +9,30 @@ public class DishAddOn
     public int AddOnDishId { get; set; }
     public Dish? AddOnDish { get; set; }
 
+    public const int MaxSlots = 10;
+    public const int LabelMaxLength = 30;
+
+    /// <summary>
+    /// 0 for the first time the add-on is offered under the parent; 1, 2... when it is offered again (e.g. a sauce inside
+    /// the burger and a sauce outside), each with its own <see cref="Label"/> and settings.
+    /// </summary>
+    public int Slot { get; set; }
+
+    /// <summary>Tells the offers of the same add-on apart ("inside", "outside"); required when it is offered more than once.</summary>
+    public string? Label { get; set; }
+
+    /// <summary>The add-on's picture is shown next to its name while the client adjusts the dish.</summary>
+    public bool ShowImage { get; set; }
+
+    /// <summary>Picked for every ordered unit until the client takes it off (one amount, or ticked for a check box).</summary>
+    public bool IsDefault { get; set; }
+
+    /// <summary>
+    /// Price per unit for the units above <see cref="MaxQuantity"/> (per ordered unit of the parent); null means the
+    /// limit is firm. Needs a MaxQuantity.
+    /// </summary>
+    public decimal? OverLimitPrice { get; set; }
+
     /// <summary>Where the add-on sits among the parent's add-ons; links made from the add-on's side are 0.</summary>
     public int DisplayOrder { get; set; }
 

@@ -73,9 +73,16 @@ public static class DatabaseInitializer
                     SellBy = dish.SellBy,
                     ChoiceMode = dish.Options is { Count: > 0 } ? Entities.ChoiceMode.Fixed : Entities.ChoiceMode.Free,
                     IsAddOnOnly = dish.IsAddOnOnly,
+                    AdjustmentOptional = dish.AdjustmentOptional,
                     OptionsTitle = dish.OptionsTitle,
                     ShowOptionDifference = dish.ShowOptionDifference,
                     DietaryTags = Sites.DietaryTags.Clean(dish.DietaryTags),
+                    AvailabilityRules = (dish.Availability ?? []).Select(a => new Entities.DishAvailabilityRule
+                    {
+                        Weekday = a.Weekday,
+                        From = a.From,
+                        To = a.To,
+                    }).ToList(),
                     Options = (dish.Options ?? []).Select(o => new Entities.DishOption
                     {
                         Label = o.Label,
@@ -152,6 +159,7 @@ public static class DatabaseInitializer
                         Price = addOn.Price,
                         MaxQuantity = addOn.MaxQuantity,
                         IsCheckbox = addOn.IsCheckbox,
+                        IsDefault = addOn.IsDefault,
                     });
                 }
             }

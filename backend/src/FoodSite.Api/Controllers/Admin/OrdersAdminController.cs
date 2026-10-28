@@ -16,11 +16,12 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     public const int AddressMaxLength = 300;
     public const int NotesMaxLength = 500;
     public const int PaymentCommentMaxLength = 200;
+    public const int CancelReasonMaxLength = Order.CancelReasonMaxLength;
     public const decimal MaxQuantity = 999;
 
     public record ItemDto(
         int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, string? Note = null,
-        IReadOnlyList<AnswerDto>? Answers = null, string? ImageUrl = null);
+        IReadOnlyList<AnswerDto>? Answers = null, string? ImageUrl = null, string? PriceListName = null);
 
     /// <summary>A dish question and the client's answer, as shown.</summary>
     public record AnswerDto(string Question, string Answer);
@@ -49,12 +50,16 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         DeliveryReportDto? Delivery = null,
         decimal DeliveryFee = 0m,
         string? DeliveryZoneName = null,
-        decimal DeliveryDiscount = 0m);
+        decimal DeliveryDiscount = 0m,
+        string? CancelReason = null,
+        DateTimeOffset? CancelledAt = null,
+        decimal MinimumTopUp = 0m);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
 
-    public record StatusInput(OrderStatus Status);
+    /// <param name="CancelReason">Required when cancelling (the business pays no sales commission on a cancelled order); ignored otherwise.</param>
+    public record StatusInput(OrderStatus Status, string? CancelReason = null);
 
     /// <summary>Marking an order paid takes how it was paid (Unknown is only for old orders) and an optional comment.</summary>
     public record PaidInput(bool IsPaid, PaidWith? PaidWith = null, string? PaymentComment = null);
@@ -172,6 +177,22 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         var order = await db.Orders.FindAsync(id);
         if (order is null)
             return NotFound();
+        if (input.Status == OrderStatus.Cancelled)
+        {
+            // A cancelled order carries no sales commission, so cancelling always says why.
+            var errors = new Errors();
+            errors.Text(nameof(input.CancelReason), input.CancelReason, CancelReasonMaxLength, required: true);
+            if (errors.Any)
+                return Invalid(errors);
+            if (order.Status != OrderStatus.Cancelled)
+                order.CancelledAt = DateTimeOffset.UtcNow;
+            order.CancelReason = input.CancelReason!.Trim();
+        }
+        else
+        {
+            order.CancelReason = null;
+            order.CancelledAt = null;
+        }
         order.Status = input.Status;
         await db.SaveChangesAsync();
         return NoContent();
@@ -261,6 +282,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         if (errors.Any)
             return Invalid(errors);
 
+        // The dishes plus the top-up as the order stood: the least it is billed for.
+        var billedBefore = order.MinimumTopUp > 0 ? order.Items.Sum(i => i.LineTotal) + order.MinimumTopUp : 0m;
         order.Name = input.Name!.Trim();
         order.Phone = phone!;
         order.Address = Clean(input.Address) ?? "";
@@ -286,7 +309,10 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             order.DeliveryDiscount = 0m;
             order.DeliveryZoneName = null;
         }
-        order.Total = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal) + order.DeliveryFee;
+        // A client who agreed to the minimum still pays at least what the dishes plus the top-up came to, until the dishes pass it.
+        var dishesTotal = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal);
+        order.MinimumTopUp = Math.Max(0m, billedBefore - dishesTotal);
+        order.Total = dishesTotal + order.MinimumTopUp + order.DeliveryFee;
 
         // An account holds the orders of its own phone: a changed phone follows the matching account, or none.
         order.UserId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync();
@@ -324,7 +350,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.Items.OrderBy(i => i.Id)
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.Note,
                 (i.Answers ?? []).Select(a => new AnswerDto(a.Question, a.Answer)).ToList(),
-                pictures.GetValueOrDefault(i.DishId)))
+                pictures.GetValueOrDefault(i.DishId), i.PriceListName))
             .ToList(),
         o.DeliveryHour,
         overbooked.Contains(o.Id),
@@ -332,7 +358,10 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         DeliveryReport(o),
         o.DeliveryFee,
         o.DeliveryZoneName,
-        o.DeliveryDiscount);
+        o.DeliveryDiscount,
+        o.CancelReason,
+        o.CancelledAt,
+        o.MinimumTopUp);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

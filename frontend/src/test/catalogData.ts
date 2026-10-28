@@ -1,4 +1,4 @@
-import type { Category, Dish, Settings, SupplyDay } from '../api/catalog'
+import type { Category, Dish, Settings, ShabbatRulesResponse, SupplyDay } from '../api/catalog'
 import type { Popup } from '../api/popup'
 import type { Menu, MenuDish, Site } from '../api/site'
 import { weekdays } from '../api/catalog'
@@ -23,6 +23,10 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   addressFirst: false,
   serviceCities: 'אשקלון',
   ordersPerHour: null,
+  slotMinutes: 60,
+  alignSlots: false,
+  deliveryLeadMinutes: 0,
+  pickupLeadMinutes: 0,
   portionsPerSupplyDate: null,
   style: 'classic',
   orderTotalPosition: 'bottom',
@@ -38,6 +42,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   spacing: 'standard',
   tileGroups: 'framed',
   deliveryPricing: 'simple',
+  inactiveAfter: { amount: 3, unit: 'month' },
   badges: { newEnabled: false, newAmount: 1, newUnit: 'week', lowStockEnabled: false, lowStockMode: 'percent', lowStockAmount: 20 },
   tracking: { metaPixelId: '', googleAnalyticsId: '', googleTagManagerId: '', tikTokPixelId: '', googleAdsId: '', googleAdsPurchaseLabel: '', metaServerEvents: false },
   ...patch,
@@ -49,8 +54,7 @@ export const supplyDays = (): SupplyDay[] =>
     enabled: weekday === 'Friday',
     cutoffDay: weekdays[(i + 6) % 7],
     cutoffTime: '20:00:00',
-    deliveryFrom: null,
-    deliveryTo: null,
+    hours: [],
   }))
 
 export const category = (id: number, name: string, dishCount = 0): Category => ({ id, name, displayOrder: id, dishCount })
@@ -212,6 +216,7 @@ export const groupedMenu = (): Menu => ({
 
 /** The entry pop-up as the admin sees it: off, with nothing filled in. */
 export const popup = (overrides: Partial<Popup> = {}): Popup => ({
+  slot: 1,
   enabled: false,
   size: 'medium',
   frequency: 'always',
@@ -222,5 +227,25 @@ export const popup = (overrides: Partial<Popup> = {}): Popup => ({
   imageUrl: null,
   buttonText: null,
   buttonUrl: null,
+  login: null,
+  activity: null,
+  orderSource: null,
+  orderTotal: false,
+  minTotal: null,
+  maxTotal: null,
   ...overrides,
+})
+
+export const shabbatRules = (patch: Partial<ShabbatRulesResponse> = {}): ShabbatRulesResponse => ({
+  rules: {
+    city: null,
+    shabbat: { eve: { mode: 'none', time: null, hours: 0 }, start: { mode: 'none', time: null, hours: 0 } },
+    holiday: { eve: { mode: 'none', time: null, hours: 0 }, start: { mode: 'none', time: null, hours: 0 } },
+  },
+  cities: [
+    { id: 'gedera', name: 'גדרה' },
+    { id: 'haifa', name: 'חיפה' },
+  ],
+  preview: null,
+  ...patch,
 })

@@ -1,0 +1,32 @@
+{
+  "id": "ron-burger",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "גדרה",
+  "emoji": "🍔",
+  "whatsApp": {
+    "orderConfirmationTemplate": "ron_burger_order_confirmation",
+    "newOrderTemplate": "ron_burger_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true
+  },
+  "settings": {
+    "contactName": "רון",
+    "contactPhone": "055-556-8125",
+    "contactEmail": "Barby3539@gmail.com",
+    "contactOpeningHours": "א׳–ה׳ ושבת עד 01:00, ו׳ עד 15:00. משלוחים בלבד",
+    "deliveryAreaText": "משלוחים לגדרה ועד 15 ק״מ ממנה",
+    "deliveryFeeText": "משלוח בגדרה 15 ₪, עד 15 ק״מ מגדרה 20 ₪",
+    "kashrutText": "כשר בהשגחת הרבנות, כל המוצרים בד״ץ",
+    "style": "tiles",
+    "orderFlow": "continue",
+    "palette": "sunset"
+  },
+  "seed": [
+    "seed/menu.json"
+  ]
+}

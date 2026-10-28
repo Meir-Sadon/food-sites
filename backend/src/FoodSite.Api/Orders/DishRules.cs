@@ -22,6 +22,7 @@ public static class DishRules
         if (dish.MainDish is not { } main)
             return own;
         var ownIds = own.Select(a => a.AddOnDishId).ToHashSet();
+        // The dish's own offers of an add-on replace all of the main dish's offers of it.
         return main.AddOns.Where(a => !ownIds.Contains(a.AddOnDishId) && a.AddOnDishId != dish.Id)
             .OrderBy(a => a.Group?.DisplayOrder ?? int.MaxValue).ThenBy(a => a.DisplayOrder)
             .Concat(own).ToList();
@@ -48,6 +49,10 @@ public static class DishRules
             });
         return questions;
     }
+
+    /// <summary>The add-on's name on an order line: its label tells apart the times it is offered under one dish.</summary>
+    public static string AddOnName(DishAddOn link, Dish addOn) =>
+        string.IsNullOrWhiteSpace(link.Label) ? addOn.Name : $"{addOn.Name} ({link.Label.Trim()})";
 
     /// <summary>The add-on is added or not, never in an amount: a check box under this parent, or a yes or no dish.</summary>
     public static bool IsCheckbox(DishAddOn link, Dish addOn) => link.IsCheckbox || addOn.IsYesNo;

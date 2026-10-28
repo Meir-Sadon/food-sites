@@ -26,7 +26,13 @@ public static class Features
     /// </summary>
     public const string AdvancedDishes = "advancedDishes";
 
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes];
+    /// <summary>
+    /// Price lists: the admin Price lists tab, lists assigned to clients by phone, and the order page and orders priced
+    /// from them for a logged-in client. Off, nothing about them shows and every price is the regular one.
+    /// </summary>
+    public const string PriceLists = "priceLists";
+
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }

@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ChoiceMode, SellBy } from './catalog'
+import type { AvailabilityRule, ChoiceMode, SellBy } from './catalog'
 import type { Popup } from './popup'
 import type { SocialLink } from './social'
 
@@ -12,7 +12,7 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes'
+export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
 export type SiteStyle = 'classic' | 'street' | 'tiles'
@@ -80,6 +80,14 @@ export interface TrackingIds {
   metaServerEvents: boolean
 }
 
+/** After how long without an order a client is inactive (FoodSite.Api `ClientActivity`). */
+export const INACTIVE_UNITS = ['week', 'month'] as const
+export type InactiveUnit = (typeof INACTIVE_UNITS)[number]
+export interface InactiveAfter {
+  amount: number
+  unit: InactiveUnit
+}
+
 export interface Site {
   backgroundImageUrl: string | null
   deliveryEnabled: boolean
@@ -133,12 +141,16 @@ export interface Site {
   deliveryPricing: DeliveryPricing
   /** The buttons on the About page: Facebook, Instagram, TikTok, then the custom links. Empty: none. */
   socialLinks: SocialLink[]
+  /** The site's Google OAuth client id; missing while "Sign in with Google" is not set up, and the button stays hidden. */
+  googleClientId?: string | null
   /** Which marketing tools to load. */
   tracking?: TrackingIds
   /** Which item badges ("new", "almost out") are on, and when they apply. */
   badges?: ItemBadges
-  /** The window shown when the site opens; missing while it is off. */
-  popup?: Popup | null
+  /** The pop-ups that are on and have something to say, in slot order; the page shows those whose conditions the visitor meets. */
+  popups?: Popup[]
+  /** After this long without an order a client counts as inactive. */
+  inactiveAfter?: InactiveAfter
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
@@ -200,10 +212,14 @@ export interface MenuDish {
   dietaryTags?: string[]
   /** The admin marked the dish as on sale. */
   onSale?: boolean
+  /** The price before a discount, shown struck through next to the dish's price when it is above it. */
+  priceBeforeDiscount?: number | null
   /** Created within the period the admin set for the "new" badge (always false while that badge is off). */
   isNew?: boolean
   /** The most that can be ordered per date (its own limit or the site's portion limit), the base of the "almost out" percentage. */
   limit?: number | null
+  /** The times the dish is sold; absent means whenever the business works. A variant is sold only when its main dish is too. */
+  availability?: AvailabilityRule[] | null
 }
 
 /** The "new" and "almost out" badges (FoodSite.Api `ItemBadges`): the admin's settings. */
@@ -254,11 +270,23 @@ export interface MenuAddOn {
   maxQuantity: number | null
   /** Added or not, never in an amount. */
   isCheckbox: boolean
+  /** Which offer of the add-on under the dish: 0, or 1, 2... when the dish offers the same add-on again. */
+  slot?: number
+  /** Tells the offers of the same add-on apart ("בפנים", "בחוץ"). */
+  label?: string | null
+  /** Its picture is shown while the client adjusts the dish. */
+  showImage?: boolean
+  /** Picked for every unit until the client takes it off. */
+  isDefault?: boolean
+  /** Price per unit above maxQuantity (per ordered unit); null means maxQuantity is firm. */
+  overLimitPrice?: number | null
 }
 
 export interface MenuAddOnGroup {
   id: number
   name: string
+  /** Price per unit above maxUnits; null means the limit is firm. */
+  overLimitPrice?: number | null
   /** Units picked from the group together (a check box or a weight counts one); null for no limit. */
   maxUnits: number | null
 }
@@ -272,6 +300,11 @@ export interface MenuCategory {
 export interface HourSlot {
   from: string
   to: string
+  /** Only on a slot of the next day that continues the day's hours past midnight ("yyyy-MM-dd"). */
+  date?: string | null
+  /** Whether the lead time still allows a delivery / a pickup in this slot; absent means yes. */
+  deliveryOk?: boolean
+  pickupOk?: boolean
 }
 
 export interface SupplyDate {
@@ -302,13 +335,21 @@ export type Fulfillment = 'Delivery' | 'Pickup'
 /** `Transfer` is the older combined Bit / PayBox choice; new orders use `Bit` or `PayBox`. */
 export type Payment = 'OnDelivery' | 'Transfer' | 'Bit' | 'PayBox'
 
+/** An add-on of an ordered unit; slot says which offer of it under the dish (left out for the first). */
+export interface AddOnLineInput {
+  dishId: number
+  optionId: number | null
+  quantity: number
+  slot?: number
+}
+
 export interface OrderLineInput {
   dishId: number
   optionId: number | null
   quantity: number
-  addOns: { dishId: number; optionId: number | null; quantity: number }[]
+  addOns: AddOnLineInput[]
   /** One entry per ordered unit, each with its own add-ons; sent instead of addOns for a dish ordered in several units. */
-  addOnUnits?: { addOns: { dishId: number; optionId: number | null; quantity: number }[]; note?: string; answers?: AnswerInput[] }[]
+  addOnUnits?: { addOns: AddOnLineInput[]; note?: string; answers?: AnswerInput[] }[]
   /** A name or remark for the line (for a dish not sold by units; units carry their own). */
   note?: string
   /** Answers to the dish's questions (for a dish not sold by units; units carry their own). */
@@ -329,8 +370,12 @@ export interface OrderInput {
   items: OrderLineInput[]
   /** The start of the picked hour ("HH:mm:ss"); required when the date has hours. */
   deliveryHour: string | null
+  /** The date of the picked slot when it is on the day after the supply date ("yyyy-MM-dd"). */
+  deliveryHourDate?: string | null
   /** Only when the server reports orders to Meta. */
   marketing?: { fbp?: string; fbc?: string; sourceUrl?: string }
+  /** The client agreed to be charged the site's minimum for an order under it. */
+  acceptMinimumTopUp?: boolean
 }
 
 export interface Confirmation {
@@ -361,6 +406,8 @@ export interface Confirmation {
   deliveryFee?: number
   /** What the large-order discount took off the delivery fee (0 for none; the fee is then already reduced). */
   deliveryDiscount?: number
+  /** What was added so the order reached the minimum (already inside `total`; 0 for none). */
+  minimumTopUp?: number
 }
 
 /** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */

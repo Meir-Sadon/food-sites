@@ -36,6 +36,8 @@ export interface AdminOrderItem {
   lineTotal: number
   /** The dish's first picture, else its main dish's. */
   imageUrl?: string | null
+  /** The price list the line was priced from (feature priceLists); absent for regular prices. */
+  priceListName?: string | null
 }
 
 export interface AdminOrder {
@@ -53,6 +55,9 @@ export interface AdminOrder {
   paidWith: PaidWith | null
   paymentComment: string | null
   status: OrderStatus
+  /** Why the admin cancelled the order; null for an order cancelled before a reason was required. */
+  cancelReason?: string | null
+  cancelledAt?: string | null
   total: number
   createdAt: string
   isGuest: boolean
@@ -71,6 +76,8 @@ export interface AdminOrder {
   deliveryFee?: number
   /** What the large-order discount took off the delivery fee; the fee is already reduced. */
   deliveryDiscount?: number
+  /** What was added so the order reached the site's minimum (already inside `total`); 0 for none. */
+  minimumTopUp?: number
   deliveryZoneName?: string | null
 }
 
@@ -148,6 +155,8 @@ export const ordersAdminApi = {
   get: (id: number) => apiJson<AdminOrder>(`${orders}/${id}`),
   summary: (date: string) => apiJson<CookingSummary>(`${orders}/summary?date=${date}`),
   setStatus: (id: number, status: OrderStatus) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status })),
+  /** Cancelling needs a reason (the business pays no sales commission on a cancelled order). */
+  cancel: (id: number, cancelReason: string) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status: 'Cancelled', cancelReason })),
   approve: (id: number) => apiJson<void>(`${orders}/${id}/approve`, send('PUT')),
   setPaid: (id: number, input: PaidInput) => apiJson<void>(`${orders}/${id}/paid`, send('PUT', input)),
   update: (id: number, input: AdminOrderInput) => apiJson<AdminOrder>(`${orders}/${id}`, send('PUT', input)),

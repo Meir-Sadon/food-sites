@@ -8,31 +8,40 @@ import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
 import { MapLinks } from '../components/MapLinks'
 import { AddressFields } from '../account/AddressFields'
-import { addressOf, formatAddress, hasAddress, isServiceCity, noAddress } from '../account/addressParts'
+import { addressOf, formatAddress, hasAddress, isServiceCity, noAddress, sameAddress, type AddressParts } from '../account/addressParts'
+import type { RememberInput } from '../api/account'
+import { SavedAddressPicker } from '../order/SavedAddressPicker'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
 import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
-import { bringIntoView } from '../components/scrollToInvalid'
+import { bringIntoView, holdScroll } from '../components/scrollToInvalid'
+import { Modal } from '../components/Modal'
 import { useFeature, useOrderLayout, useSite, useSiteFailed } from '../site/useSite'
 import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DishSearch } from '../order/DishSearch'
 import { SearchQueryContext } from '../order/searchQuery'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
+import { CompleteDialog } from '../order/CompleteDialog'
+import { anyMissing, type Missing } from '../order/missing'
 import { CartSheet } from '../order/CartSheet'
 import { OPEN_DISH_DIALOG } from '../order/DishCard'
 import { useRegisterCart } from '../components/cartNav'
 import { OrderSummary } from '../order/OrderSummary'
 import { deliveryDiscount } from '../order/deliveryDiscount'
-import { useDeliveryQuote, type SeededQuote } from '../order/useDeliveryQuote'
+import { addressKeyOf, useDeliveryQuote, type SeededQuote } from '../order/useDeliveryQuote'
 import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
-import { formatMoney, formatSlot, formatSupplyDate } from '../order/format'
+import { useServerCart } from '../order/serverCart'
+import { availableMenu, pruneUnavailable, type When } from '../order/availability'
+import { formatMoney, formatSlot, formatSupplyDate, parseSlotId, slotId, slotsFor } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
+import { MinimumDialog } from '../order/MinimumDialog'
 import { QuickFill } from '../order/QuickFill'
+import { useReportOrderSignals, type OrderSource } from '../order/orderSignals'
 import { ReviewsCarousel } from '../order/ReviewsCarousel'
 import {
   DRINKS_CATEGORY_NAME,
@@ -74,28 +83,51 @@ const CONTACT_FIELDS = ['name', 'phone', 'city', 'street', 'housenumber', 'apart
 
 const slotKey = (date: string, hour: string) => `${date} ${hour}`
 
+/**
+ * The day and hour the order is for, as the form below resolves them: the picked date (or the first one offered) and the
+ * picked hour when the date still offers it. Null while there is no date to order for.
+ */
+function pickedWhen(
+  menu: Menu, site: { deliveryEnabled: boolean; pickupEnabled: boolean }, state: Pick<OrderState, 'fulfillment' | 'supplyDate' | 'deliveryHour'>,
+): When | null {
+  const fulfillment =
+    state.fulfillment === 'Delivery' && !site.deliveryEnabled ? 'Pickup' : state.fulfillment === 'Pickup' && !site.pickupEnabled ? 'Delivery' : state.fulfillment
+  const delivery = fulfillment === 'Delivery'
+  const dates = menu.supplyDates.filter((d) => !d.hours?.length || slotsFor(d.hours, delivery).length > 0)
+  const date = dates.find((d) => d.date === state.supplyDate) ?? dates[0]
+  if (!date) return null
+  const hours = slotsFor(date.hours, delivery)
+  return { date: date.date, slot: hours.find((h) => slotId(h) === state.deliveryHour) ?? null, daySlots: hours }
+}
+
 export function OrderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useAccount()
+  const { user, setUser } = useAccount()
   const site = useSite()
   const siteFailed = useSiteFailed()
   const reviewsOn = useFeature('reviews')
+  const priceListsOn = useFeature('priceLists')
   const defaultCity = site?.serviceCities[0]
   const errorMessage = useErrorMessage()
   const toast = useToast()
-  const [menu, setMenu] = useState<Menu | null>(null)
+  const [fullMenu, setMenu] = useState<Menu | null>(null)
   const [failed, setFailed] = useState(false)
 
   const [state, setState] = useState<OrderState>(emptyOrder)
   const submitRef = useRef<HTMLButtonElement>(null)
   // Bumped by a quick fill: once the filled order renders, the page scrolls to the submit button.
   const [quickFills, setQuickFills] = useState(0)
+  // How the order got its dishes besides the client's own choosing; the entry pop-ups' conditions read it.
+  const [sources, setSources] = useState<readonly OrderSource[]>([])
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [minimumAsked, setMinimumAsked] = useState(false)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
+  // What the client could keep for next time, asked about on the confirmation.
+  const [remember, setRemember] = useState<RememberInput | null>(null)
   const [leaveTo, setLeaveTo] = useState<{
     to: string
     proceed?: () => void | Promise<void>
@@ -118,6 +150,10 @@ export function OrderPage() {
   // Bumped on every press of a "to details and payment" button: the page then scrolls to the address and payment.
   const [detailsMoves, setDetailsMoves] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
+  // The total bar's counts open a short prompt offering to jump to finishing the order.
+  const [finishOpen, setFinishOpen] = useState(false)
+  // What was missing when the client pressed send: it is settled in a panel above the button, not by going to each field.
+  const [fix, setFix] = useState<Missing | null>(null)
   // The shown step: a category's position, or the number of categories for the contact and payment details.
   const [step, setStep] = useState(0)
   const [query, setQuery] = useState('')
@@ -127,6 +163,27 @@ export function OrderPage() {
   const formRef = useRef<HTMLFormElement>(null)
   const addressRef = useRef<HTMLFieldSetElement>(null)
 
+  // Dishes sold only at set times are on the menu only when the chosen day and hour are among them; the order loses the others.
+  const when = useMemo(
+    () => (fullMenu && site ? pickedWhen(fullMenu, site, { fulfillment: state.fulfillment, supplyDate: state.supplyDate, deliveryHour: state.deliveryHour }) : null),
+    [fullMenu, site, state.fulfillment, state.supplyDate, state.deliveryHour],
+  )
+  const menu = useMemo(() => (fullMenu && when ? availableMenu(fullMenu, when) : fullMenu), [fullMenu, when])
+  const [removedNotice, setRemovedNotice] = useState<{ dishes: string[]; addOns: string[] } | null>(null)
+  // Dishes of a past order filled into this one whose price changed since.
+  const [repricedNotice, setRepricedNotice] = useState<string[] | null>(null)
+  // Adjusting state during render: what the menu no longer has leaves the order at once, and the client is told why.
+  if (fullMenu && menu && menu !== fullMenu) {
+    const pruned = pruneUnavailable(state.selections, dishMap(menu), dishMap(fullMenu))
+    if (pruned.removed.length > 0 || pruned.removedAddOns.length > 0) {
+      setState((current) => ({ ...current, selections: pruned.selections }))
+      setRemovedNotice((current) => ({
+        dishes: [...new Set([...(current?.dishes ?? []), ...pruned.removed])],
+        addOns: [...new Set([...(current?.addOns ?? []), ...pruned.removedAddOns])],
+      }))
+    }
+  }
+
   const dishes = useMemo(() => (menu ? dishMap(menu) : new Map<number, MenuDish>()), [menu])
   const itemsTotal = orderTotal(state.selections, dishes)
   // The advanced delivery setting: the server works out the fee from the address, so nothing is charged until it is typed.
@@ -135,7 +192,9 @@ export function OrderPage() {
   // The address "find my location" filled in, with the fee it brought; and a bump on every press of "calculate".
   const [located, setLocated] = useState<SeededQuote | null>(null)
   const [calculations, setCalculations] = useState(0)
-  const quote = useDeliveryQuote(zonesOn && delivering, state.city, state.street, state.houseNumber, located, calculations)
+  // The address the client typed by hand: only that one waits for the typing to stop before the fee is asked for.
+  const [typedKey, setTypedKey] = useState<string | null>(null)
+  const quote = useDeliveryQuote(zonesOn && delivering, state.city, state.street, state.houseNumber, located, calculations, typedKey)
   const quoted = quote.state === 'ready' ? quote.quote : null
   // The regular setting: the fixed fee is added for a service city; elsewhere the business phones about the price.
   const regularFee =
@@ -154,8 +213,30 @@ export function OrderPage() {
   const totals = dishTotals(state.selections, dishes, drinksCategoryIds)
   const dirty = count > 0 && !confirmation
   useRegisterCart(totals.main + totals.side + totals.drinks, total, () => setCartOpen(true), !!menu)
+  useReportOrderSignals(itemsTotal, count > 0, sources)
+  const serverCart = useServerCart({
+    userId: user?.id ?? null,
+    menuLoaded: !!fullMenu,
+    selections: state.selections,
+    count,
+    paused: !!confirmation,
+    onRestore: (saved) => {
+      if (!fullMenu) return
+      const { selections, skipped } = restoreSelections(saved, fullMenu)
+      if (Object.keys(selections).length === 0) return
+      setState((current) => ({ ...current, selections }))
+      setSources(['draft'])
+      toast(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
+    },
+    // A client with dishes in the cart may now get a price list's prices, so the menu shows them.
+    onFirstItem: () => {
+      if (priceListsOn) siteApi.menu().then(setMenu, () => undefined)
+    },
+  })
   // Set when the profile page's "Reorder" put a past order in the draft.
-  const filledSkipped = (location.state as { filled?: { skipped: number } } | null)?.filled?.skipped
+  const filled = (location.state as { filled?: { skipped: number; repriced?: string[] } } | null)?.filled
+  const filledSkipped = filled?.skipped
+  const filledRepriced = filled?.repriced
 
   // A logged-in client's details are prefilled once the menu (and any draft) is in, and the login
   // already confirmed their phone. Adjusting state during render is React's way to derive it from props.
@@ -211,8 +292,12 @@ export function OrderPage() {
         if (draft) {
           const { selections, skipped } = restoreSelections(draft.selections, loaded)
           setState({ ...draft, selections })
-          if (filledSkipped !== undefined)
+          // A draft the profile page filled from a past order counts as filled from the last order, not as a restored one.
+          if (Object.keys(selections).length > 0) setSources([filledSkipped !== undefined ? 'last' : 'draft'])
+          if (filledSkipped !== undefined) {
             toast(filledSkipped > 0 ? t('order.filledSkipped', { count: filledSkipped }) : t('order.filled'))
+            setRepricedNotice(filledRepriced?.length ? filledRepriced : null)
+          }
           else toast(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
         }
         setMenu(loaded)
@@ -221,7 +306,7 @@ export function OrderPage() {
     return () => {
       active = false
     }
-  }, [t, toast, filledSkipped])
+  }, [t, toast, filledSkipped, filledRepriced])
 
   // Ask about saving when leaving by the top bar, and warn when closing the tab.
   useRegisterLeaveGuard((to, proceed) => {
@@ -247,24 +332,37 @@ export function OrderPage() {
     )
 
   // Choices the admin has since switched off fall back to what is still available.
-  const supplyDate = menu.supplyDates.find((d) => d.date === state.supplyDate) ?? menu.supplyDates[0]
   const fulfillment: Fulfillment =
     state.fulfillment === 'Delivery' && !site.deliveryEnabled
       ? 'Pickup'
       : state.fulfillment === 'Pickup' && !site.pickupEnabled
         ? 'Delivery'
         : state.fulfillment
+  // A date whose every hour is too soon for this way of receiving the order (the lead time) is not offered.
+  const supplyDates = menu.supplyDates.filter((d) => !d.hours?.length || slotsFor(d.hours, fulfillment === 'Delivery').length > 0)
+  const supplyDate = supplyDates.find((d) => d.date === state.supplyDate) ?? supplyDates[0]
   const minimum = fulfillment === 'Pickup' && !site.minimumOrderAppliesToPickup ? 0 : (site.minimumOrderAmount ?? 0)
   // The minimum is on the dishes, the delivery fee does not count towards it.
   const belowMinimum = count > 0 && itemsTotal < minimum
   const unadjusted = unadjustedDishes(state.selections, dishes)
   const transfers = transferChoices(site)
   const payment: Payment = availablePayment(state.payment, site)
-  const hours = supplyDate?.hours ?? []
-  // An hour from a draft that the date no longer offers is dropped.
-  const deliveryHour = hours.some((h) => h.from === state.deliveryHour) ? state.deliveryHour : null
-  const hourIsFull = !!supplyDate && !!deliveryHour && fullSlots.includes(slotKey(supplyDate.date, deliveryHour))
+  const hours = slotsFor(supplyDate?.hours, fulfillment === 'Delivery')
+  // An hour from a draft that the date no longer offers is dropped. The value is the slot's start, with its date in front
+  // when it is after midnight (the day after the supply date).
+  const deliveryHour = hours.some((h) => slotId(h) === state.deliveryHour) ? state.deliveryHour : null
+  const pickedSlot = deliveryHour ? parseSlotId(deliveryHour) : null
+  const hourIsFull =
+    !!supplyDate && !!pickedSlot && fullSlots.includes(slotKey(pickedSlot.date ?? supplyDate.date, pickedSlot.hour))
   const normalizedPhone = normalizePhone(state.phone)
+  const missingNow: Missing = {
+    hour: hours.length > 0 && !deliveryHour,
+    name: state.name.trim() === '',
+    phone: !normalizedPhone,
+    city: fulfillment === 'Delivery' && state.city.trim() === '',
+    street: fulfillment === 'Delivery' && state.street.trim() === '',
+    houseNumber: fulfillment === 'Delivery' && state.houseNumber.trim() === '',
+  }
 
   const categories = menu.categories
     .map((category) => ({
@@ -353,18 +451,25 @@ export function OrderPage() {
    * Asks whether a picked hour is already full. A full hour can still be sent: the client only gets a note.
    * Nothing is shown in advance, so the client doesn't learn how busy the other hours are.
    */
-  function checkHour(date: string, hour: string | null) {
-    if (!hour) return
-    const key = slotKey(date, hour)
+  function checkHour(date: string, id: string | null) {
+    if (!id) return
+    const slot = parseSlotId(id)
+    const key = slotKey(slot.date ?? date, slot.hour)
     siteApi
-      .hourAvailability(date, hour)
+      .hourAvailability(slot.date ?? date, slot.hour)
       .then(({ full }) => setFullSlots((current) => (full ? [...current, key] : current.filter((k) => k !== key))))
       .catch(() => undefined)
   }
 
   function changeDate(date: string) {
-    const offered = menu?.supplyDates.find((d) => d.date === date)?.hours ?? []
-    const hour = offered.some((h) => h.from === deliveryHour) ? deliveryHour : null
+    const offered = slotsFor(menu?.supplyDates.find((d) => d.date === date)?.hours, fulfillment === 'Delivery')
+    const hour = offered.some((h) => slotId(h) === deliveryHour) ? deliveryHour : null
+    change({ supplyDate: date, deliveryHour: hour })
+    checkHour(date, hour)
+  }
+
+  /** "The closest possible" or a day and hour confirmed in the panel. */
+  function pickHour(date: string, hour: string) {
     change({ supplyDate: date, deliveryHour: hour })
     checkHour(date, hour)
   }
@@ -387,6 +492,7 @@ export function OrderPage() {
   }
 
   function reset() {
+    setSources([])
     setState((current) => ({
       ...emptyOrder(),
       name: current.name,
@@ -398,6 +504,7 @@ export function OrderPage() {
     }))
     setErrors({})
     setSubmitError(null)
+    setFix(null)
     clearDraft()
     setStep(0)
     setDetailsOpen(false)
@@ -412,9 +519,11 @@ export function OrderPage() {
     }))
   }
 
-  function applyQuickFill({ selections, skipped }: Restored) {
+  function applyQuickFill({ selections, skipped, repriced }: Restored, source: Exclude<OrderSource, 'draft'>) {
     trackUsage('OrderStarted')
     setState((current) => ({ ...current, selections }))
+    setRepricedNotice(repriced?.length ? repriced : null)
+    setSources([source])
     toast(skipped > 0 ? t('order.quick.appliedSkipped', { count: skipped }) : t('order.quick.applied'))
     setErrors({})
     setSubmitError(null)
@@ -426,7 +535,10 @@ export function OrderPage() {
 
   function leave(save: boolean) {
     if (save) saveDraft(state)
-    else clearDraft()
+    else {
+      clearDraft()
+      serverCart.discard()
+    }
     const to = leaveTo
     setLeaveTo(null)
     if (!to) return
@@ -466,8 +578,32 @@ export function OrderPage() {
     } else reveal()
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+  function handleSubmit(event?: FormEvent) {
+    event?.preventDefault()
+    return submit(false)
+  }
+
+  /** `acceptTopUp`: the client agreed to be charged the minimum for an order under it. */
+  /** What to offer to keep after an order: a guest is always asked; a client only for a name or address their account lacks. */
+  function rememberOffer(orderId: number, phone: string): RememberInput | null {
+    const address = fulfillment === 'Delivery' ? addressOf(state) : noAddress()
+    const name = state.name.trim()
+    if (user) {
+      const newAddress = hasAddress(address) && !user.addresses.some((a) => sameAddress(a, address))
+      if (!newAddress && (user.fullName !== '' || name === '')) return null
+    }
+    return { orderId, phone, name, ...address }
+  }
+
+  /** The client picked one of their saved addresses (or "another"): the fee is worked out again for it. */
+  function pickSavedAddress(address: AddressParts) {
+    change(address)
+    setLocated(null)
+    setCalculations((n) => n + 1)
+  }
+
+  async function submit(acceptTopUp: boolean) {
+    setMinimumAsked(false)
     setErrors({})
     setSubmitError(null)
     // The dishes come before the form, so a dish still waiting for the client is the first thing to fix.
@@ -478,17 +614,19 @@ export function OrderPage() {
       showUnfinished([...unadjusted, ...unanswered])
       return
     }
-    if (!normalizedPhone) {
-      setErrors({ phone: ['phone'] })
-      openBlocksWith({ phone: ['phone'] })
-      if (addressFirst) setAddressDone(false)
-      setSubmitError(t('errors.checkFields'))
+    if (!supplyDate) return
+    if (anyMissing(missingNow)) {
+      // The client stays at the send button: what is missing is settled in the panel above it.
+      holdScroll()
+      setFix(missingNow)
       return
     }
-    if (!supplyDate) return
-    if (hours.length > 0 && !deliveryHour) {
-      setErrors({ deliveryhour: ['required'] })
-      setSubmitError(t('errors.checkFields'))
+    setFix(null)
+    if (!normalizedPhone) return
+
+    // An order under the minimum is not blocked: the client is asked whether to add a dish or to pay the minimum.
+    if (belowMinimum && !acceptTopUp) {
+      setMinimumAsked(true)
       return
     }
 
@@ -499,17 +637,21 @@ export function OrderPage() {
         name: state.name.trim(),
         ...(fulfillment === 'Delivery' ? addressOf(state) : noAddress()),
         supplyDate: supplyDate.date,
-        deliveryHour,
+        deliveryHour: pickedSlot?.hour ?? null,
+        ...(pickedSlot?.date ? { deliveryHourDate: pickedSlot.date } : {}),
         fulfillmentMethod: fulfillment,
         paymentMethod: payment,
         notes: state.notes.trim(),
         items: toLines(state.selections, dishes),
         marketing: marketingForOrder(site?.tracking),
+        ...(acceptTopUp ? { acceptMinimumTopUp: true } : {}),
       })
       clearDraft()
+      serverCart.sent()
       trackUsage('OrderSubmitted')
       trackMarketing({ name: 'Purchase', orderId: result.id, value: result.total })
       setConfirmation(result)
+      setRemember(rememberOffer(result.id, normalizedPhone))
     } catch (err) {
       const fieldErrors = fieldErrorsOf(err)
       setErrors(fieldErrors)
@@ -615,10 +757,18 @@ export function OrderPage() {
 
       <PhoneField phone={state.phone} onPhoneChange={(phone) => change({ phone })} errors={errors} />
 
+      {fulfillment === 'Delivery' && !!user?.addresses.length && (
+        <SavedAddressPicker addresses={user.addresses} value={state} onPick={pickSavedAddress} />
+      )}
+
       {fulfillment === 'Delivery' && (
         <AddressFields
           value={state}
-          onChange={change}
+          onChange={(patch) => {
+            const next = { ...state, ...patch }
+            setTypedKey(addressKeyOf(next.city, next.street, next.houseNumber))
+            change(patch)
+          }}
           errors={errors}
           idPrefix="order"
           context="order"
@@ -672,6 +822,23 @@ export function OrderPage() {
         </header>
       )}
       <div className="order-main">
+        {removedNotice && (
+          <div className="notice notice--warning" role="status">
+            {removedNotice.dishes.length > 0 && <p>{t('order.availabilityRemoved', { count: removedNotice.dishes.length, names: removedNotice.dishes.join(', ') })}</p>}
+            {removedNotice.addOns.length > 0 && <p>{t('order.availabilityAddOnsRemoved', { names: removedNotice.addOns.join(', ') })}</p>}
+            <button type="button" className="button-quiet" onClick={() => setRemovedNotice(null)}>
+              {t('order.dismiss')}
+            </button>
+          </div>
+        )}
+        {repricedNotice && (
+          <div className="notice notice--warning" role="status">
+            <p>{t('order.repriced', { count: repricedNotice.length, names: repricedNotice.join(', ') })}</p>
+            <button type="button" className="button-quiet" onClick={() => setRepricedNotice(null)}>
+              {t('order.dismiss')}
+            </button>
+          </div>
+        )}
         {atAddress && (
           <section className="order-form stack order-address-stage" aria-labelledby="order-address-title">
             <h2 id="order-address-title">{t('order.addressFirst.title')}</h2>
@@ -778,7 +945,7 @@ export function OrderPage() {
                       aria-describedby="order-date-hint order-date-error"
                       onChange={(e) => changeDate(e.target.value)}
                     >
-                      {menu.supplyDates.map((d) => (
+                      {supplyDates.map((d) => (
                         <option key={d.date} value={d.date}>
                           {formatSupplyDate(d.date, t)}
                         </option>
@@ -809,7 +976,7 @@ export function OrderPage() {
                     >
                       <option value="">{t('order.chooseHour')}</option>
                       {hours.map((slot) => (
-                        <option key={slot.from} value={slot.from}>
+                        <option key={slotId(slot)} value={slotId(slot)}>
                           {formatSlot(slot, t)}
                         </option>
                       ))}
@@ -936,8 +1103,9 @@ export function OrderPage() {
                   <button
                     ref={submitRef}
                     type="submit"
-                    disabled={submitting || count === 0 || !supplyDate || belowMinimum || (fulfillment === 'Delivery' && noDelivery)}
+                    disabled={submitting || count === 0 || !supplyDate || (fulfillment === 'Delivery' && noDelivery)}
                   >
+                    {belowMinimum && !submitting && <span aria-hidden="true">⚠️ </span>}
                     {submitting ? t('order.submitting') : t('order.submit')}
                   </button>
                   <button type="button" className="button-quiet" onClick={reset}>
@@ -953,7 +1121,7 @@ export function OrderPage() {
                   </p>
                 )}
                 {belowMinimum && (
-                  <p role="status" className="hint">
+                  <p role="status" className="hint hint--warning">
                     {t('order.belowMinimum', {
                       minimum: formatMoney(minimum),
                       missing: formatMoney(round2(minimum - itemsTotal)),
@@ -970,20 +1138,90 @@ export function OrderPage() {
 
       {!atAddress && (
         <div className="total-bar" role="region" aria-label={t('order.totalBar')}>
-          <span className="total-bar__counts">
-            {totals.main > 0 && <span>{t('order.itemCount', { count: totals.main })}</span>}
-            {totals.side > 0 && <span>{t('order.sideDishCount', { count: totals.side })}</span>}
-            {totals.drinks > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
+          {(() => {
+            const counts = (
+              <>
+                {totals.main > 0 && <span>{t('order.itemCount', { count: totals.main })}</span>}
+                {totals.side > 0 && <span>{t('order.sideDishCount', { count: totals.side })}</span>}
+                {totals.drinks > 0 && <span>{t('order.drinksCount', { count: totals.drinks })}</span>}
+              </>
+            )
+            return count > 0 ? (
+              <button type="button" className="total-bar__counts total-bar__summary" aria-haspopup="dialog" onClick={() => setFinishOpen(true)}>
+                <span className="total-bar__summary-lines">{counts}</span>
+                <span className="total-bar__summary-cue">{t('order.finish.cue')}</span>
+              </button>
+            ) : (
+              <span className="total-bar__counts">{counts}</span>
+            )
+          })()}
+          <span className="total-bar__sum" aria-live="polite">
+            <strong className="numeric">
+              {t('order.total')}: {formatMoney(count > 0 ? total : itemsTotal)}
+            </strong>
+            {count > 0 && deliveryFee > 0 && (
+              <small className="total-bar__delivery numeric">{t('order.includesDelivery', { amount: formatMoney(deliveryFee) })}</small>
+            )}
           </span>
-          <strong className="numeric" aria-live="polite">
-            {t('order.total')}: {formatMoney(total)}
-          </strong>
           {(totalPosition === 'side' || (deferred && !detailsOpen)) && (
             <button type="button" className="total-bar__details" onClick={goToDetails}>
               {t('order.toDetails')}
             </button>
           )}
       </div>
+      )}
+
+      {fix && (
+        <CompleteDialog
+          was={fix}
+          now={missingNow}
+          name={state.name}
+          phone={state.phone}
+          city={state.city}
+          street={state.street}
+          houseNumber={state.houseNumber}
+          onChange={change}
+          supplyDates={menu.supplyDates}
+          delivery={fulfillment === 'Delivery'}
+          onPickHour={pickHour}
+          zones={zonesOn}
+          onLocated={(found) => {
+            change({ city: found.city, street: found.street, houseNumber: found.houseNumber })
+            setLocated(found.quote && { city: found.city, street: found.street, houseNumber: found.houseNumber, quote: found.quote })
+          }}
+          onCalculate={() => setCalculations((n) => n + 1)}
+          onPickup={site.pickupEnabled ? () => change({ fulfillment: 'Pickup' }) : undefined}
+          feePending={fulfillment === 'Delivery' && zonesOn && quote.state === 'loading'}
+          blocked={fulfillment === 'Delivery' && noDelivery}
+          feeText={
+            fulfillment === 'Delivery' && (zonesOn ? !!quoted : regularFee > 0)
+              ? `${t('order.deliveryFee')}: ${deliveryFee > 0 ? formatMoney(deliveryFee) : t('order.deliveryDiscount.freePrice')}`
+              : null
+          }
+          submitting={submitting}
+          onSend={() => void handleSubmit()}
+          onClose={() => setFix(null)}
+        />
+      )}
+
+      {finishOpen && (
+        <Modal title={t('order.finish.title')} onClose={() => setFinishOpen(false)}>
+          <p>{t('order.finish.text', { total: formatMoney(total) })}</p>
+          <div className="modal__actions">
+            <button
+              type="button"
+              onClick={() => {
+                setFinishOpen(false)
+                goToDetails()
+              }}
+            >
+              {t('order.finish.jump')}
+            </button>
+            <button type="button" className="button-quiet" onClick={() => setFinishOpen(false)}>
+              {t('order.cart.keepChoosing')}
+            </button>
+          </div>
+        </Modal>
       )}
 
       {cartOpen && (
@@ -1004,13 +1242,29 @@ export function OrderPage() {
         />
       )}
 
+      {minimumAsked && (
+        <MinimumDialog
+          minimum={minimum}
+          missing={round2(minimum - itemsTotal)}
+          onAddDish={() => {
+            setMinimumAsked(false)
+            if (steps) setStep(0)
+            setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
+          }}
+          onSend={() => submit(true)}
+          onCancel={() => setMinimumAsked(false)}
+        />
+      )}
       {leaveTo && <LeaveDialog onSave={() => leave(true)} onDiscard={() => leave(false)} onStay={() => setLeaveTo(null)} />}
       {confirmation && (
         <SuccessDialog
           confirmation={confirmation}
           contactPhone={site.contact.phone}
+          remember={remember ?? undefined}
+          onRemembered={setUser}
           onClose={() => {
             setConfirmation(null)
+            setRemember(null)
             reset()
           }}
         />

@@ -13,7 +13,8 @@ interface Props {
   menu: Menu
   /** The order already has dishes in it: filling would replace them, so the client is asked first. */
   hasOrder: boolean
-  onApply: (restored: Restored) => void
+  /** `last` or `favorite`: which kind of tile the order came from. */
+  onApply: (restored: Restored, source: 'last' | 'favorite') => void
 }
 
 const noFavorites = () => Promise.resolve([])
@@ -27,9 +28,9 @@ export function QuickFill({ menu, hasOrder, onApply }: Props) {
   const favorites = useLoad(favoritesOn ? accountApi.favorites : noFavorites)
   const last = orders.data?.find((o) => o.status !== 'Cancelled')
   const dishNames = useMemo(() => new Map(menu.dishes.map((d) => [d.id, d.name])), [menu])
-  const [pending, setPending] = useState<Restored | null>(null)
+  const [pending, setPending] = useState<{ restored: Restored; source: 'last' | 'favorite' } | null>(null)
 
-  const request = (restored: Restored) => (hasOrder ? setPending(restored) : onApply(restored))
+  const request = (restored: Restored, source: 'last' | 'favorite') => (hasOrder ? setPending({ restored, source }) : onApply(restored, source))
 
   // Nothing to fill from yet (a new client, or still loading): the order page starts with the menu.
   const favoriteList = favoritesOn ? (favorites.data ?? []) : []
@@ -48,7 +49,7 @@ export function QuickFill({ menu, hasOrder, onApply }: Props) {
               title={t('order.quick.last')}
               meta={[formatSupplyDate(last.supplyDate, t), formatMoney(last.total)]}
               dishes={last.items.filter((i) => i.parentItemId === null).map((i) => i.dishName)}
-              onClick={() => request(selectionsFromHistory(last, menu))}
+              onClick={() => request(selectionsFromHistory(last, menu), 'last')}
             />
           </li>
         )}
@@ -58,7 +59,7 @@ export function QuickFill({ menu, hasOrder, onApply }: Props) {
               icon="favorite"
               title={favorite.name}
               dishes={favorite.items.map((i) => dishNames.get(i.dishId)).filter((name): name is string => !!name)}
-              onClick={() => request(selectionsFromFavorite(favorite, menu))}
+              onClick={() => request(selectionsFromFavorite(favorite, menu), 'favorite')}
             />
           </li>
         ))}
@@ -73,7 +74,7 @@ export function QuickFill({ menu, hasOrder, onApply }: Props) {
             <button
               type="button"
               onClick={() => {
-                onApply(pending)
+                onApply(pending.restored, pending.source)
                 setPending(null)
               }}
             >

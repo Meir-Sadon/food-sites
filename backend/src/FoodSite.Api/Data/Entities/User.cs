@@ -12,12 +12,15 @@ public class User
     public string HouseNumber { get; set; } = "";
     public string Apartment { get; set; } = "";
     public string? Email { get; set; }
+    /// <summary>Google's account id ("sub") once the client signed in with Google; the email alone is never the key.</summary>
+    public string? GoogleSub { get; set; }
     public DateOnly? Birthday { get; set; }
     public string? EthnicBackground { get; set; }
 
     /// <summary>When the client registered. Empty for accounts made before it was recorded.</summary>
     public DateTimeOffset? CreatedAt { get; set; }
 
+    public List<UserAddress> Addresses { get; set; } = [];
     public List<Order> Orders { get; set; } = [];
     public List<FavoriteOrder> FavoriteOrders { get; set; } = [];
     public List<Recommendation> Recommendations { get; set; } = [];

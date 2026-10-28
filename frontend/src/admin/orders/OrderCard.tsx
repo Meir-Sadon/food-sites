@@ -6,7 +6,8 @@ import { ordersAdminApi, orderStatuses, type AdminOrder, type OrderStatus } from
 import { formatMoney, formatTime } from '../../order/format'
 import { formatNumber } from '../format'
 import { useErrorMessage } from '../hooks'
-import { ConfirmRemove, Status } from '../ui'
+import { Status } from '../ui'
+import { CancelForm } from './CancelForm'
 import { OrderEditor } from './OrderEditor'
 import { PaidForm } from './PaidForm'
 import { SendMessage } from './SendMessage'
@@ -19,6 +20,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
   const errorMessage = useErrorMessage()
   const [editing, setEditing] = useState(false)
   const [markingPaid, setMarkingPaid] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
   const [messaging, setMessaging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const printer = usePrintOrders()
@@ -35,7 +37,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
     }
   }
 
-  const setStatus = (status: OrderStatus) => apply({ status }, () => ordersAdminApi.setStatus(order.id, status))
+  const setStatus = (status: OrderStatus) => apply({ status, cancelReason: null, cancelledAt: null }, () => ordersAdminApi.setStatus(order.id, status))
   const unpay = () =>
     apply({ isPaid: false, paidWith: null, paymentComment: null }, () => ordersAdminApi.setPaid(order.id, { isPaid: false }))
 
@@ -122,7 +124,8 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
         <span className="field field--narrow">
           <label htmlFor={`status-${order.id}`}>{t('admin.orders.status')}</label>
           <select id={`status-${order.id}`} value={order.status} onChange={(e) => void setStatus(e.target.value as OrderStatus)}>
-            {orderStatuses.map((status) => (
+            {/* Cancelling goes through the cancel form, which asks why; the list only shows an order already cancelled. */}
+            {orderStatuses.filter((status) => status !== 'Cancelled' || cancelled).map((status) => (
               <option key={status} value={status}>
                 {t(`admin.orders.statuses.${status}`)}
               </option>
@@ -160,16 +163,30 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
           <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
         </button>
         {!cancelled && (
-          <ConfirmRemove
-            name={t('admin.orders.orderN', { id: order.id })}
-            label={t('admin.orders.cancelOrder')}
-            question={t('admin.orders.confirmCancel', { id: order.id })}
-            confirmLabel={t('admin.orders.yesCancel')}
-            onConfirm={() => setStatus('Cancelled')}
-          />
+          <button type="button" className="button-quiet" onClick={() => setCancelling(!cancelling)} aria-expanded={cancelling}>
+            {t('admin.orders.cancelOrder')}
+            <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+          </button>
         )}
       </div>
       {error && <Status message={error} error />}
+
+      {cancelling && !cancelled && (
+        <CancelForm
+          order={order}
+          onClose={() => setCancelling(false)}
+          onSaved={(change) => {
+            onChange({ ...order, ...change })
+            setCancelling(false)
+          }}
+        />
+      )}
+
+      {cancelled && order.cancelReason && (
+        <p className="muted">
+          {t('admin.orders.cancelReason')}: {order.cancelReason}
+        </p>
+      )}
 
       {markingPaid && !order.isPaid && (
         <PaidForm

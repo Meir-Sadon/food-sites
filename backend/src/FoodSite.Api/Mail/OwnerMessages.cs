@@ -90,7 +90,7 @@ public static class OwnerMessages
 
         var alerts = new List<string>();
         if (order.NeedsReview)
-            alerts.Add("הכתובת מחוץ לאזור השירות: ההזמנה ממתינה לאישור שלך.");
+            alerts.Add("הכתובת לא אומתה (מחוץ לאזור השירות או שלא נמצאה): חויבו דמי משלוח מינימליים וההזמנה ממתינה לאישור שלך. יש להתקשר ללקוח ולעדכן אם יש תשלום נוסף על המשלוח.");
         if (hourFull)
             alerts.Add("השעה שנבחרה כבר מלאה: כדאי לתאם שעה אחרת עם הלקוח.");
         if (alerts.Count > 0)
@@ -133,6 +133,8 @@ public static class OwnerMessages
                     + (string.IsNullOrEmpty(addOn.OptionLabel) ? "" : $" ({addOn.OptionLabel})")
                     + (addOn.LineTotal > 0 ? $" – ₪{Money(addOn.LineTotal)}" : ""));
         }
+        if (order.MinimumTopUp > 0)
+            dishes.Add($"השלמה למינימום הזמנה – ₪{Money(order.MinimumTopUp)}");
         if (order.DeliveryFee > 0 || order.DeliveryDiscount > 0)
             dishes.Add($"דמי משלוח{(string.IsNullOrEmpty(order.DeliveryZoneName) ? "" : $" ({order.DeliveryZoneName})")} – {OrderMessages.FeeText(order)}");
         sections.Add(new("המנות שהוזמנו", dishes));

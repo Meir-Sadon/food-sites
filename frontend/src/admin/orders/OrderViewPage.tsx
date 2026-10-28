@@ -95,6 +95,7 @@ export function OrderViewPage() {
                     {formatNumber(item.quantity)} × {formatMoney(item.unitPrice)}
                     {item.optionLabel ? ` · ${item.optionLabel}` : ''}
                   </span>
+                  {item.priceListName && <span className="muted cart-row__unit">{t('admin.priceLists.orderLine', { name: item.priceListName })}</span>}
                 </div>
                 <strong className="cart-row__price numeric">{formatMoney(item.lineTotal)}</strong>
               </div>
@@ -111,6 +112,7 @@ export function OrderViewPage() {
                       + {formatNumber(addOn.quantity)} × {addOn.dishName}
                       {addOn.optionLabel ? ` (${addOn.optionLabel})` : ''}
                       {addOn.lineTotal > 0 ? ` · ${formatMoney(addOn.lineTotal)}` : ''}
+                      {addOn.priceListName ? ` · ${t('admin.priceLists.orderLine', { name: addOn.priceListName })}` : ''}
                     </p>
                   ))}
                 </div>
@@ -118,6 +120,11 @@ export function OrderViewPage() {
             </li>
           ))}
         </ul>
+        {!!order.minimumTopUp && (
+          <p className="cart-sheet__total">
+            <span>{t('order.minimumTopUp')}</span> <strong className="numeric">{formatMoney(order.minimumTopUp)}</strong>
+          </p>
+        )}
         {(!!order.deliveryFee || !!order.deliveryDiscount) && (
           <p className="cart-sheet__total">
             <span>

@@ -14,10 +14,13 @@ export class ApiError extends Error {
   readonly code?: string
   /** Validation error codes per field, with lower-case field names. */
   readonly errors: FieldErrors
+  /** The rest of the error body, for the few errors that carry data with their code. */
+  readonly body: Record<string, unknown> | undefined
 
-  constructor(status: number, body?: { code?: string; errors?: FieldErrors } | null) {
+  constructor(status: number, body?: { code?: string; errors?: FieldErrors; [extra: string]: unknown } | null) {
     super(`API request failed with status ${status}`)
     this.status = status
+    this.body = body ?? undefined
     this.code = body?.code
     this.errors = Object.fromEntries(
       Object.entries(body?.errors ?? {}).map(([field, codes]) => [field.toLowerCase(), codes]),

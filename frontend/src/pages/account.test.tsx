@@ -19,7 +19,11 @@ const profile: Profile = {
   email: null,
   birthday: null,
   ethnicBackground: null,
+  addresses: [{ id: 1, label: 'בית', city: 'חיפה', street: 'הרצל', houseNumber: '1', apartment: '', address: 'הרצל 1, חיפה', isDefault: true }],
 }
+
+/** What a phone-only account looks like right after it was made. */
+const fresh: Profile = { ...profile, fullName: '', city: '', street: '', houseNumber: '', address: '', addresses: [] }
 
 const pastOrder: HistoryOrder = {
   id: 5,
@@ -68,10 +72,12 @@ beforeEach(() => {
 
 describe('Login', () => {
   it('logs in an existing client by phone, then opens the order page', async () => {
-    const { api, user } = open('/login', { ...guest, 'POST /api/account/login': () => profile })
+    const { api, user } = open('/login', { ...guest, 'POST /api/account/login': () => ({ profile, isNew: false }) })
     await screen.findByRole('heading', { name: 'התחברות' })
-    expect(screen.getByRole('button', { name: 'הרשמה' })).toBeInTheDocument()
+    // Logging in and registering are the same step: the phone is the only field.
+    expect(screen.queryByRole('button', { name: 'הרשמה' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('רחוב')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('שם מלא')).not.toBeInTheDocument()
 
     await submitPhone(user)
 
@@ -80,106 +86,90 @@ describe('Login', () => {
     expect(screen.getByRole('button', { name: 'התנתקות' })).toBeInTheDocument()
   })
 
-  it('offers to register when the phone has no account', async () => {
+  it('a new phone gets an account at once, then the optional details form that can be skipped', async () => {
     const { api, user } = open('/login', {
       ...guest,
-      'POST /api/account/login': () => ({ status: 404, body: { code: 'notRegistered' } }),
-      'POST /api/account/register': () => profile,
+      'POST /api/account/login': () => ({ profile: fresh, isNew: true }),
     })
     await screen.findByRole('heading', { name: 'התחברות' })
 
     await submitPhone(user)
 
-    await screen.findByRole('heading', { name: 'הרשמה' })
-    expect(screen.getByText(/עוד לא רשום/)).toBeInTheDocument()
-    await user.type(screen.getByLabelText('שם מלא'), 'דנה כהן')
-    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
-    await user.type(screen.getByLabelText('מספר בית'), '1')
-    await user.click(screen.getByRole('button', { name: 'הרשמה' }))
-
-    await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
-    expect(api.sent('POST', '/api/account/register')[0].body).toMatchObject({
-      phone: '0501234567',
-      fullName: 'דנה כהן',
-      city: 'אשקלון',
-      street: 'הרצל',
-      houseNumber: '1',
-    })
-  })
-
-  it('registration starts with the city אשקלון and warns about another city', async () => {
-    const { user } = open('/login', {
-      ...guest,
-      'POST /api/account/login': () => ({ status: 404, body: { code: 'notRegistered' } }),
-    })
-    await screen.findByRole('heading', { name: 'התחברות' })
-    await submitPhone(user)
-    await screen.findByRole('heading', { name: 'הרשמה' })
-
-    const city = screen.getByLabelText('עיר')
-    await vi.waitFor(() => expect(city).toHaveValue('אשקלון'))
-    expect(screen.queryByText(/אנחנו עובדים רק באשקלון/)).not.toBeInTheDocument()
-    await user.clear(city)
-    await user.type(city, 'חיפה')
-    expect(screen.getByText(/אנחנו עובדים רק באשקלון/)).toBeInTheDocument()
-  })
-
-  it('registers from the Register button, with the optional fields marked', async () => {
-    const { api, user } = open('/login', { ...guest, 'POST /api/account/register': () => profile })
-    await screen.findByRole('heading', { name: 'התחברות' })
-
-    await user.click(screen.getByRole('button', { name: 'הרשמה' }))
-
+    await user.click(await screen.findByRole('button', { name: 'כן, אמלא פרטים' }))
+    await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
+    expect(api.sent('POST', '/api/account/register')).toHaveLength(0)
     expect(screen.getByLabelText('אימייל (לא חובה)')).toBeInTheDocument()
     expect(screen.getByLabelText('תאריך לידה (לא חובה)')).toHaveAttribute('type', 'date')
-    expect(screen.getByLabelText('רקע עדתי (לא חובה)')).toBeInTheDocument()
 
-    await user.type(screen.getByLabelText('טלפון'), '0501234567')
-    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
-    await user.type(screen.getByLabelText('מספר בית'), '1')
-    await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
+    await user.click(screen.getByRole('button', { name: 'דילוג' }))
 
     await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
-    // An empty date input is "", which the server cannot read as a date.
-    expect(api.sent('POST', '/api/account/register')[0].body).toMatchObject({ phone: '0501234567', fullName: 'דנה', birthday: null })
+    expect(api.sent('PUT', '/api/account/me')).toHaveLength(0)
   })
 
-  it('says so when the phone already has an account', async () => {
-    const { user } = open('/login', {
+  it('first asks whether to add details, and "not now" goes straight to the order page', async () => {
+    const { api, user } = open('/login', {
       ...guest,
-      'POST /api/account/login': () => ({ status: 404, body: { code: 'notRegistered' } }),
-      'POST /api/account/register': () => ({ status: 409, body: { code: 'phoneTaken' } }),
+      'POST /api/account/login': () => ({ profile: fresh, isNew: true }),
     })
     await screen.findByRole('heading', { name: 'התחברות' })
     await submitPhone(user)
-    await screen.findByRole('heading', { name: 'הרשמה' })
-    await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
-    await user.type(screen.getByLabelText('מספר בית'), '1')
 
-    await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
+    const dialog = await screen.findByRole('dialog', { name: 'החשבון שלכם מוכן' })
+    expect(screen.queryByLabelText('אימייל (לא חובה)')).not.toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'לא עכשיו, להזמנה' }))
 
-    expect(await screen.findByText(/כבר רשום/)).toBeInTheDocument()
+    await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
+    expect(api.sent('PUT', '/api/account/me')).toHaveLength(0)
   })
 
-  it('shows the field messages from the server on registration', async () => {
-    const { user } = open('/login', {
+  it('saves the details of the optional form, and leaves the address out while the street is empty', async () => {
+    const { api, user } = open('/login', {
       ...guest,
-      'POST /api/account/login': () => ({ status: 404, body: { code: 'notRegistered' } }),
-      'POST /api/account/register': () => invalid({ email: ['email'] }),
+      'POST /api/account/login': () => ({ profile: fresh, isNew: true }),
+      'PUT /api/account/me': () => profile,
     })
     await screen.findByRole('heading', { name: 'התחברות' })
     await submitPhone(user)
-    await screen.findByRole('heading', { name: 'הרשמה' })
+    await user.click(await screen.findByRole('button', { name: 'כן, אמלא פרטים' }))
+    await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
+
     await user.type(screen.getByLabelText('שם מלא'), 'דנה')
-    await user.type(screen.getByLabelText('רחוב'), 'הרצל')
-    await user.type(screen.getByLabelText('מספר בית'), '1')
+    await user.click(screen.getByRole('button', { name: 'שמירה והמשך' }))
+
+    await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
+    // The city field starts as the service city; with no street the address is not sent.
+    expect(api.sent('PUT', '/api/account/me')[0].body).toMatchObject({
+      phone: '0501234567', fullName: 'דנה', city: '', street: '', houseNumber: '', birthday: null,
+    })
+  })
+
+  it('shows the field messages from the server on the optional form', async () => {
+    const { user } = open('/login', {
+      ...guest,
+      'POST /api/account/login': () => ({ profile: fresh, isNew: true }),
+      'PUT /api/account/me': () => invalid({ email: ['email'] }),
+    })
+    await screen.findByRole('heading', { name: 'התחברות' })
+    await submitPhone(user)
+    await user.click(await screen.findByRole('button', { name: 'כן, אמלא פרטים' }))
+    await screen.findByRole('heading', { name: 'בואו נכיר אתכם קצת יותר' })
     await user.type(screen.getByLabelText('אימייל (לא חובה)'), 'bad')
 
-    await user.click(screen.getAllByRole('button', { name: 'הרשמה' }).at(-1)!)
+    await user.click(screen.getByRole('button', { name: 'שמירה והמשך' }))
 
     expect(await screen.findByText('כתובת האימייל לא תקינה.')).toBeInTheDocument()
+  })
+
+  it('checks the phone number before sending', async () => {
+    const { api, user } = open('/login', { ...guest })
+    await screen.findByRole('heading', { name: 'התחברות' })
+
+    await user.type(screen.getByLabelText('טלפון'), '12')
+    await user.click(screen.getByRole('button', { name: 'התחברות' }))
+
+    expect(await screen.findByText('יש שדות לתיקון. בדקו את ההודעות בטופס.')).toBeInTheDocument()
+    expect(api.sent('POST', '/api/account/login')).toHaveLength(0)
   })
 
   it('shows who is logged in and lets them log out', async () => {
@@ -273,10 +263,29 @@ describe('Order page for a logged-in client', () => {
     await user.click(await screen.findByRole('button', { name: 'ההזמנה האחרונה' }))
 
     expect(screen.getByText('ההזמנה מולאה במחירים הנוכחיים.')).toBeInTheDocument()
+    // Every price is as it was, so there is nothing to warn about.
+    expect(screen.queryByText(/השתנו? מאז ההזמנה הקודמת/)).not.toBeInTheDocument()
     const card = screen.getByRole('article', { name: 'עוף בתנור' })
     expect(within(card).getByRole('radio', { name: /חצי/ })).toBeChecked()
     // 2 × 40 plus 3 × 12
     expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪116/)).toBeInTheDocument()
+  })
+
+  it('warns which dishes cost something else now when filling from the last order', async () => {
+    const older = {
+      ...pastOrder,
+      items: pastOrder.items.map((i) => (i.dishId === 1 ? { ...i, unitPrice: 35, lineTotal: 70 } : { ...i, unitPrice: 10, lineTotal: 30 })),
+    }
+    const { user } = open('/', { ...loggedIn, 'GET /api/account/orders': () => [older] })
+    await screen.findByRole('heading', { level: 2, name: 'עופות' })
+
+    await user.click(await screen.findByRole('button', { name: 'ההזמנה האחרונה' }))
+
+    const notice = screen.getByText('המחירים של עוף בתנור, ירך השתנו מאז ההזמנה הקודמת. ההזמנה מחושבת לפי המחירים הנוכחיים.')
+    // Priced as today: 2 × 40 plus 3 × 12.
+    expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪116/)).toBeInTheDocument()
+    await user.click(within(notice.closest('.notice') as HTMLElement).getByRole('button', { name: 'הבנתי' }))
+    expect(screen.queryByText(/השתנו מאז ההזמנה הקודמת/)).not.toBeInTheDocument()
   })
 
   it('scrolls to the submit button after a quick fill', async () => {
@@ -409,6 +418,17 @@ describe('Profile', () => {
     await screen.findByRole('heading', { level: 1, name: 'הזמנה' })
     expect(await screen.findByText('ההזמנה מולאה מהזמנה קודמת, במחירים הנוכחיים.')).toBeInTheDocument()
     expect(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByText(/₪116/)).toBeInTheDocument()
+    expect(screen.queryByText(/מאז ההזמנה הקודמת/)).not.toBeInTheDocument()
+  })
+
+  it('reorders a past order whose price changed, with a warning on the order page', async () => {
+    const older = { ...pastOrder, items: pastOrder.items.map((i) => (i.dishId === 1 ? { ...i, unitPrice: 45, lineTotal: 90 } : i)) }
+    const { user } = open('/profile', { ...loggedIn, 'GET /api/account/orders': () => [older] })
+    const order = await screen.findByRole('article', { name: 'הזמנה #5' })
+
+    await user.click(within(order).getByRole('button', { name: 'הזמנה חוזרת' }))
+
+    expect(await screen.findByText('המחיר של עוף בתנור השתנה מאז ההזמנה הקודמת. ההזמנה מחושבת לפי המחיר הנוכחי.')).toBeInTheDocument()
   })
 
   it('saves a past order as a named favorite and removes favorites', async () => {

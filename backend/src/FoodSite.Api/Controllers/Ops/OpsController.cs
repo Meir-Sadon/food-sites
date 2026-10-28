@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace FoodSite.Api.Controllers.Ops;
 
 /// <summary>
-/// The console's view into this site (<c>docs/OPS-API.md</c>): its version, sales, client recommendations, the
+/// The console's view into this site (<c>docs/OPS-API.md</c>): its version, sales, registered clients, client recommendations, the
 /// admin's feedback and its feature flags. Signed in only with the site's console token (<see cref="OpsToken"/>).
 /// Changes made here are audited as <see cref="OpsToken.Actor"/>.
 /// </summary>
@@ -69,6 +69,27 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     public record SummaryDto(
         DateOnly From, DateOnly To, SummaryPeriod Period, int Orders, decimal Sales, IReadOnlyList<PeriodDto> Periods,
         IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus, decimal DeliveryFees);
+
+    public record CancellationItemDto(string DishName, string? OptionLabel, decimal Quantity, decimal LineTotal);
+
+    /// <param name="Reason">Why the admin cancelled; null for an order cancelled before the reason was required.</param>
+    /// <param name="CancelledAt">When it was cancelled; null for an order cancelled before the reason was required.</param>
+    public record CancellationDto(
+        int OrderId, string? Reason, DateTimeOffset? CancelledAt, DateTimeOffset OrderedAt, DateOnly SupplyDate, TimeOnly? DeliveryHour,
+        string ClientName, string Phone, FulfillmentMethod FulfillmentMethod, string? Address, PaymentMethod PaymentMethod, bool IsPaid,
+        decimal Total, decimal DeliveryFee, IReadOnlyList<CancellationItemDto> Items);
+
+    public record CancellationsDto(DateOnly From, DateOnly To, int Orders, decimal Total, IReadOnlyList<CancellationDto> Cancellations);
+
+    /// <param name="Email">Null when the client gave none.</param>
+    /// <param name="CreatedAt">When the client registered; null for accounts made before it was recorded.</param>
+    /// <param name="Orders">The client's orders that were not cancelled.</param>
+    /// <param name="LastOrderAt">When the client last sent an order that was not cancelled; null when none.</param>
+    public record ClientDto(
+        int Id, string FullName, string Phone, string? Email, string City, DateTimeOffset? CreatedAt, int Orders, DateTimeOffset? LastOrderAt);
+
+    /// <param name="Total">Every client account, also when more than <see cref="ListLimit"/>.</param>
+    public record ClientsDto(int Total, IReadOnlyList<ClientDto> Clients);
 
     public record RecommendationDto(int Id, string Text, string? ClientName, DateTimeOffset CreatedAt, bool IsHandled);
 
@@ -150,6 +171,56 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                 new Admin.Errors().Add(nameof(from), "invalidRange").ToDictionary()));
 
         return await usage.BuildAsync(start, end, ct);
+    }
+
+    /// <summary>
+    /// The cancelled orders with the admin's reason and the order's details, by supply date, newest first (at most
+    /// <see cref="ListLimit"/>; <c>orders</c> and <c>total</c> count all of them). Without dates: the last 12 months up to today.
+    /// </summary>
+    [HttpGet("cancellations")]
+    public async Task<ActionResult<CancellationsDto>> Cancellations(DateOnly? from, DateOnly? to, CancellationToken ct)
+    {
+        var end = to ?? clock.Today();
+        var start = from ?? new DateOnly(end.Year, end.Month, 1).AddMonths(-11);
+        if (start > end || end.DayNumber - start.DayNumber >= SummaryMaxDays)
+            return ValidationProblem(new ValidationProblemDetails(
+                new Admin.Errors().Add(nameof(from), "invalidRange").ToDictionary()));
+
+        var cancelled = db.Orders.AsNoTracking()
+            .Where(o => o.Status == OrderStatus.Cancelled && o.SupplyDate >= start && o.SupplyDate <= end);
+        var count = await cancelled.CountAsync(ct);
+        var total = (await cancelled.Select(o => o.Total).ToListAsync(ct)).Sum();
+        var rows = await cancelled
+            .OrderByDescending(o => o.SupplyDate).ThenByDescending(o => o.Id)
+            .Take(ListLimit)
+            .Include(o => o.Items)
+            .ToListAsync(ct);
+        var list = rows.Select(o => new CancellationDto(
+                o.Id, o.CancelReason, o.CancelledAt, o.CreatedAt, o.SupplyDate, o.DeliveryHour, o.Name, o.Phone, o.FulfillmentMethod,
+                o.FulfillmentMethod == FulfillmentMethod.Delivery ? o.Address : null, o.PaymentMethod, o.IsPaid, o.Total, o.DeliveryFee,
+                o.Items.OrderBy(i => i.Id)
+                    .Select(i => new CancellationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.LineTotal)).ToList()))
+            .ToList();
+        return new CancellationsDto(start, end, count, total, list);
+    }
+
+    /// <summary>
+    /// The registered clients with their contact details, so the console can reach them; newest first (at most
+    /// <see cref="ListLimit"/>; <c>total</c> counts all of them), accounts without a registration time last.
+    /// </summary>
+    [HttpGet("clients")]
+    public async Task<ClientsDto> Clients(CancellationToken ct)
+    {
+        var total = await db.Users.CountAsync(ct);
+        var clients = await db.Users.AsNoTracking()
+            .OrderByDescending(u => u.CreatedAt.HasValue).ThenByDescending(u => u.CreatedAt).ThenByDescending(u => u.Id)
+            .Take(ListLimit)
+            .Select(u => new ClientDto(
+                u.Id, u.FullName, u.Phone, u.Email, u.City, u.CreatedAt,
+                u.Orders.Count(o => o.Status != OrderStatus.Cancelled),
+                u.Orders.Where(o => o.Status != OrderStatus.Cancelled).Max(o => (DateTimeOffset?)o.CreatedAt)))
+            .ToListAsync(ct);
+        return new ClientsDto(total, clients);
     }
 
     internal static DateOnly PeriodStart(DateOnly date, SummaryPeriod period) => period switch

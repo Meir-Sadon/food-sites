@@ -1,5 +1,5 @@
 import type { Profile, ProfileInput } from '../api/account'
-import { addressOf, emptyAddress, type AddressParts } from './addressParts'
+import { addressOf, emptyAddress, noAddress, type AddressParts } from './addressParts'
 
 /** The personal details shared by registration and the profile page. The phone has its own field. */
 export interface ProfileForm extends AddressParts {
@@ -36,6 +36,12 @@ export const profileInput = (phone: string, form: ProfileForm): ProfileInput => 
   phone,
   ...form,
   fullName: form.fullName.trim(),
-  ...addressOf(form),
+  ...addressToSend(form),
   birthday: form.birthday || null,
 })
+
+/** The city alone is no address (the field starts as the service city), so it is left out until a street is typed. */
+const addressToSend = (form: AddressParts): AddressParts => {
+  const address = addressOf(form)
+  return address.street === '' && address.houseNumber === '' ? noAddress() : address
+}

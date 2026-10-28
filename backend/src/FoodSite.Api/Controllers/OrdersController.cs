@@ -28,6 +28,7 @@ public class OrdersController(
     MarketingNotifier marketing,
     IOptions<SiteOptions> site,
     DeliveryQuoter deliveryQuoter,
+    FeatureFlags features,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
@@ -46,7 +47,9 @@ public class OrdersController(
         string? Notes,
         List<OrderLineInput>? Items,
         TimeOnly? DeliveryHour = null,
-        MarketingInput? Marketing = null);
+        DateOnly? DeliveryHourDate = null,
+        MarketingInput? Marketing = null,
+        bool AcceptMinimumTopUp = false);
 
     public record ConfirmationItemDto(
         string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null);
@@ -64,7 +67,8 @@ public class OrdersController(
         TimeOnly? DeliveryHour = null,
         bool HourFull = false,
         decimal DeliveryFee = 0m,
-        decimal DeliveryDiscount = 0m);
+        decimal DeliveryDiscount = 0m,
+        decimal MinimumTopUp = 0m);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
@@ -102,19 +106,25 @@ public class OrdersController(
         else if (input.PaymentMethod.IsTransfer() && !TransferAvailable(settings, input.PaymentMethod))
             errors.Add(nameof(input.PaymentMethod), "paymentUnavailable");
 
-        var days = await db.SupplyDays.AsNoTracking().ToListAsync(ct);
+        var days = await db.SupplyDays.AsNoTracking().Include(d => d.Hours).ToListAsync(ct);
         var closed = await db.ClosedDates.AsNoTracking().Select(c => c.Date).ToListAsync(ct);
-        var openDate = SupplyCalendar.Find(input.SupplyDate, clock.NowLocal(), days, closed);
+        var openDate = SupplyCalendar.Find(input.SupplyDate, clock.NowLocal(), days, closed, await ShabbatSchedule.LoadAsync(db, clock, ct), SlotTiming.Of(settings));
         if (openDate is null)
             errors.Add(nameof(input.SupplyDate), "supplyDateUnavailable");
         // A day with supply hours needs one of them; on a day without, any hour sent is dropped.
         var hour = openDate is { Hours.Count: > 0 } ? input.DeliveryHour : null;
+        // A slot after midnight that continues the day's shift belongs to the next date, which is where the order is saved.
+        var supplyDate = input.SupplyDate;
         if (openDate is { Hours.Count: > 0 })
         {
+            var slotDate = input.DeliveryHourDate ?? input.SupplyDate;
+            var delivery = input.FulfillmentMethod == FulfillmentMethod.Delivery;
             if (input.DeliveryHour is null)
                 errors.Add(nameof(input.DeliveryHour), "required");
-            else if (openDate.Hours.All(h => h.From != input.DeliveryHour))
+            else if (!openDate.Hours.Any(h => h.From == input.DeliveryHour && (h.Date ?? input.SupplyDate) == slotDate && (delivery ? h.DeliveryOk : h.PickupOk)))
                 errors.Add(nameof(input.DeliveryHour), "deliveryHourUnavailable");
+            else
+                supplyDate = slotDate;
         }
 
         var ids = (input.Items ?? [])
@@ -122,20 +132,34 @@ public class OrdersController(
             .Distinct().ToList();
         var dishes = await db.Dishes
             .Include(d => d.Category).Include(d => d.Options).Include(d => d.Questions).Include(d => d.AddOns).ThenInclude(a => a.Group)
+            .Include(d => d.AvailabilityRules)
+            .Include(d => d.MainDish).ThenInclude(m => m!.AvailabilityRules)
             .Include(d => d.MainDish).ThenInclude(m => m!.Options)
             .Include(d => d.MainDish).ThenInclude(m => m!.Questions)
             .Include(d => d.MainDish).ThenInclude(m => m!.AddOns).ThenInclude(a => a.Group)
             .AsSplitQuery()
             .Where(d => ids.Contains(d.Id))
             .ToDictionaryAsync(d => d.Id, ct);
-        var items = OrderBuilder.Build(input.Items, dishes, errors);
+        // The slot the client picked (the day itself when it has no hours), which decides what is sold.
+        var pickedSlot = hour is { } picked && openDate is not null
+            ? openDate.Hours.FirstOrDefault(h => h.From == picked && (h.Date ?? input.SupplyDate) == supplyDate)
+            : null;
+        var prices = await SessionPricesAsync(db, features, clock, ct);
+        var items = OrderBuilder.Build(input.Items, dishes, errors, openDate is null ? null : DishAvailability.Of(supplyDate, pickedSlot), prices);
         var minimumApplies = input.FulfillmentMethod == FulfillmentMethod.Delivery || settings.MinimumOrderAppliesToPickup;
+        // An order under the minimum is only sent when the client agreed to be charged the minimum.
+        var minimumTopUp = 0m;
         if (!errors.Any && minimumApplies && settings.MinimumOrderAmount is { } minimum && OrderBuilder.Total(items) < minimum)
-            errors.Add("items", "belowMinimumOrder");
+        {
+            if (input.AcceptMinimumTopUp)
+                minimumTopUp = minimum - OrderBuilder.Total(items);
+            else
+                errors.Add("items", "belowMinimumOrder");
+        }
         if (!errors.Any)
-            await CheckDishLimitsAsync(input.SupplyDate, items, dishes, errors, ct);
+            await CheckDishLimitsAsync(supplyDate, items, dishes, errors, ct);
         if (!errors.Any && settings.PortionsPerSupplyDate is { } portions)
-            await CheckPortionLimitAsync(input.SupplyDate, items, dishes, portions, errors, ct);
+            await CheckPortionLimitAsync(supplyDate, items, dishes, portions, errors, ct);
 
         // The fee comes from the address, worked out here again so a quote the client saw cannot be changed.
         var quote = input.FulfillmentMethod == FulfillmentMethod.Delivery && !errors.Any
@@ -149,7 +173,7 @@ public class OrdersController(
 
         // A full hour is still taken: the client was told the admin may call to move it.
         var hourFull = hour is { } slot && HourCapacity.IsFull(
-            await db.Orders.AsNoTracking().InSlot(input.SupplyDate, slot).CountAsync(ct), settings.OrdersPerHour);
+            await db.Orders.AsNoTracking().InSlot(supplyDate, slot).CountAsync(ct), settings.OrdersPerHour);
 
         // The order is added to that phone's account, if there is one.
         var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);
@@ -157,7 +181,13 @@ public class OrdersController(
         // With zones there is no list of cities: a client who waits for approval waits because the map could not place the address.
         var serviceCities = DeliveryQuoter.Mode(settings) == DeliveryPricing.Zones ? (IReadOnlyList<string>)[] : ServiceArea.Parse(settings.ServiceCities);
         var dishesTotal = OrderBuilder.Total(items);
-        var fee = quote is { Status: DeliveryQuote.Ok } ? quote.Fee : 0m;
+        // An address nobody could price pays the minimum fee, and the order waits while the owner phones about any extra.
+        var fee = quote switch
+        {
+            { Status: DeliveryQuote.Ok } => quote.Fee,
+            { Status: DeliveryQuote.Outside or DeliveryQuote.Unknown } => await deliveryQuoter.MinimumFeeAsync(settings, ct),
+            _ => 0m,
+        };
         var discount = DeliveryDiscount.Amount(settings, dishesTotal, fee);
         var order = new Order
         {
@@ -165,7 +195,7 @@ public class OrdersController(
             Phone = phone!,
             Name = input.Name!.Trim(),
             Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment),
-            SupplyDate = input.SupplyDate,
+            SupplyDate = supplyDate,
             DeliveryHour = hour,
             FulfillmentMethod = input.FulfillmentMethod,
             Notes = Clean(input.Notes),
@@ -180,12 +210,17 @@ public class OrdersController(
             DeliveryFee = fee - discount,
             DeliveryDiscount = discount,
             DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
-            Total = dishesTotal + fee - discount,
+            MinimumTopUp = minimumTopUp,
+            Total = dishesTotal + minimumTopUp + fee - discount,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         foreach (var item in items)
             order.Items.Add(item);
         db.Orders.Add(order);
+        // The order in progress the client kept on the server is now sent.
+        if (await SessionUserIdAsync() is { } sessionUserId
+            && await db.SavedCarts.SingleOrDefaultAsync(c => c.UserId == sessionUserId, ct) is { } cart)
+            db.SavedCarts.Remove(cart);
         await db.SaveChangesAsync(ct);
 
         await NotifyAsync(order, settings.PaymentPhone, settings.OwnerEmail, serviceCities, hourFull, ct);
@@ -202,7 +237,8 @@ public class OrdersController(
             order.DeliveryHour,
             hourFull,
             order.DeliveryFee,
-            order.DeliveryDiscount);
+            order.DeliveryDiscount,
+            order.MinimumTopUp);
     }
 
     /// <summary>A manual payment needs the business's number and that service switched on.</summary>

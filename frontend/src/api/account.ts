@@ -17,6 +17,59 @@ export interface Profile {
   /** "yyyy-MM-dd" */
   birthday: string | null
   ethnicBackground: string | null
+  /** The saved addresses, the default one first. The address fields above are the default one. */
+  addresses: SavedAddress[]
+}
+
+/** One of the client's saved addresses (home, work...). */
+export interface SavedAddress {
+  id: number
+  label: string | null
+  city: string
+  street: string
+  houseNumber: string
+  apartment: string
+  /** The parts joined into one line. */
+  address: string
+  isDefault: boolean
+}
+
+export interface AddressInput {
+  label: string
+  city: string
+  street: string
+  houseNumber: string
+  apartment: string
+  makeDefault: boolean
+}
+
+/** Logging in with a phone that has no account makes one: `isNew` says it just happened. */
+export interface LoginResult {
+  profile: Profile
+  isNew: boolean
+}
+
+/** What the client chose to keep after the order with this id. */
+export interface RememberInput {
+  orderId: number
+  phone: string
+  name: string
+  city: string
+  street: string
+  houseNumber: string
+  apartment: string
+}
+
+/** `saved` without a profile: a guest, remembered by phone until they log in. Not saved: the phone has an account they are not logged in as. */
+export interface Remembered {
+  saved: boolean
+  profile: Profile | null
+}
+
+/** A Google sign-in answers with the profile, or, for a person with no account yet, what Google knows to prefill the form. */
+export interface GoogleLogin {
+  profile: Profile | null
+  registration: { fullName: string | null; email: string | null } | null
 }
 
 export interface ProfileInput {
@@ -84,6 +137,14 @@ export interface MyReview {
   submittedAt: string
 }
 
+/** A cart kept on the server for a logged-in client, so it follows them between devices. `content` is the order's selections as JSON. */
+export interface SavedCart {
+  content: string
+  itemCount: number
+  updatedAt: string
+}
+
+export const MAX_ADDRESSES = 10
 export const MAX_RECOMMENDATION_LENGTH = 1000
 export const MAX_FAVORITE_NAME_LENGTH = 60
 
@@ -91,10 +152,17 @@ const account = '/api/account'
 
 export const accountApi = {
   me: () => apiJson<Profile>(`${account}/me`),
-  login: (phone: string) => apiJson<Profile>(`${account}/login`, send('POST', { phone })),
-  register: (input: ProfileInput) => apiJson<Profile>(`${account}/register`, send('POST', input)),
+  login: (phone: string) => apiJson<LoginResult>(`${account}/login`, send('POST', { phone })),
+  google: (credential: string) => apiJson<GoogleLogin>(`${account}/google`, send('POST', { credential })),
+  googleRegister: (credential: string, profile: ProfileInput) =>
+    apiJson<Profile>(`${account}/google/register`, send('POST', { credential, profile })),
   logout: () => apiJson<void>(`${account}/logout`, send('POST')),
   update: (input: ProfileInput) => apiJson<Profile>(`${account}/me`, send('PUT', input)),
+  addAddress: (input: AddressInput) => apiJson<Profile>(`${account}/addresses`, send('POST', input)),
+  updateAddress: (id: number, input: AddressInput) => apiJson<Profile>(`${account}/addresses/${id}`, send('PUT', input)),
+  makeDefaultAddress: (id: number) => apiJson<Profile>(`${account}/addresses/${id}/default`, send('PUT')),
+  deleteAddress: (id: number) => apiJson<Profile>(`${account}/addresses/${id}`, send('DELETE')),
+  remember: (input: RememberInput) => apiJson<Remembered>(`${account}/remember`, send('POST', input)),
   orders: () => apiJson<HistoryOrder[]>(`${account}/orders`),
   favorites: () => apiJson<Favorite[]>(`${account}/favorites`),
   addFavorite: (name: string, orderId: number) => apiJson<Favorite>(`${account}/favorites`, send('POST', { name, orderId })),
@@ -102,4 +170,9 @@ export const accountApi = {
   recommendations: () => apiJson<Recommendation[]>(`${account}/recommendations`),
   addRecommendation: (text: string) => apiJson<Recommendation>(`${account}/recommendations`, send('POST', { text })),
   reviews: () => apiJson<MyReview[]>(`${account}/reviews`),
+  /** The logged-in client's cart kept on the server; undefined when there is none. */
+  cart: () => apiJson<SavedCart | undefined>(`${account}/cart`),
+  /** A count of 0 removes the saved cart. */
+  saveCart: (content: string, itemCount: number) => apiJson<void>(`${account}/cart`, send('PUT', { content, itemCount })),
+  clearCart: () => apiJson<void>(`${account}/cart`, send('DELETE')),
 }

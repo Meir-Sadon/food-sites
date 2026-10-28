@@ -137,6 +137,27 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Cancelling_needs_a_reason_which_is_kept_and_cleared_when_the_order_is_reopened()
+    {
+        var id = await SeedOrder(Sunday);
+        var url = $"/api/admin/orders/{id}/status";
+
+        await (await _admin.PutAsJsonAsync(url, new { status = "Cancelled" })).AssertInvalid("CancelReason", "required");
+        await (await _admin.PutAsJsonAsync(url, new { status = "Cancelled", cancelReason = "   " })).AssertInvalid("CancelReason", "required");
+        await (await _admin.PutAsJsonAsync(url, new { status = "Cancelled", cancelReason = new string('x', 301) })).AssertInvalid("CancelReason", "tooLong");
+        Assert.Equal(OrderStatus.New, (await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>()).Status);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync(url, new { status = "Cancelled", cancelReason = " הלקוח התקשר " })).StatusCode);
+        var cancelled = await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>();
+        Assert.Equal((OrderStatus.Cancelled, "הלקוח התקשר"), (cancelled.Status, cancelled.CancelReason));
+        Assert.NotNull(cancelled.CancelledAt);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync(url, new { status = "New" })).StatusCode);
+        var reopened = await _admin.GetAsync($"/api/admin/orders/{id}").Read<OrderDto>();
+        Assert.Equal((OrderStatus.New, null, null), (reopened.Status, reopened.CancelReason, reopened.CancelledAt));
+    }
+
+    [Fact]
     public async Task Marking_paid_takes_how_it_was_paid_and_unpaid_clears_it()
     {
         var id = await SeedOrder(Sunday);

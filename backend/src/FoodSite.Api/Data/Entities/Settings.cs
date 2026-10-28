@@ -68,6 +68,18 @@ public class Settings
     /// </summary>
     public int? OrdersPerHour { get; set; }
 
+    /// <summary>Length of one hour slot a client picks, in minutes: 15, 30 or 60 (see <c>SlotTiming</c>).</summary>
+    public int SlotMinutes { get; set; } = 60;
+
+    /// <summary>Slots start on round marks of <see cref="SlotMinutes"/> (a range opening at 20:07 starts at 20:30), instead of at the range's own start.</summary>
+    public bool AlignSlots { get; set; }
+
+    /// <summary>Minutes before the start of a slot after which a delivery can no longer be ordered for it; 0 means none.</summary>
+    public int DeliveryLeadMinutes { get; set; }
+
+    /// <summary>The same for pickup.</summary>
+    public int PickupLeadMinutes { get; set; }
+
     /// <summary>
     /// How many portions can be ordered for one supply date, across all dishes (see <c>DailyPortions</c> for what
     /// counts); null means no limit.
@@ -192,7 +204,8 @@ public class Settings
     /// <summary>A limited dish is "almost out" when what is left is at most this percent or number of units.</summary>
     public int? BadgeLowStockAmount { get; set; }
 
-    // Entry pop-up: a window shown when a client opens the site (see <c>Popup/EntryPopup</c>).
+    // Entry pop-up, legacy: the single pop-up that lived here was copied into <c>PopupSlot</c> 1 by the Popups migration.
+    // Nothing reads these columns any more; a later migration drops them (expand, then contract).
     public bool PopupEnabled { get; set; }
 
     /// <summary>small, medium or large; null means medium.</summary>
@@ -213,4 +226,16 @@ public class Settings
     public string? PopupImagePublicId { get; set; }
     public string? PopupButtonText { get; set; }
     public string? PopupButtonUrl { get; set; }
+
+    /// <summary>
+    /// A client who has not ordered for this many <see cref="InactiveAfterUnit"/> counts as inactive (see <c>Popup/EntryPopup</c>);
+    /// null means the default.
+    /// </summary>
+    public int? InactiveAfterAmount { get; set; }
+
+    /// <summary>week or month; null means the default.</summary>
+    public string? InactiveAfterUnit { get; set; }
+
+    /// <summary>How working hours change around Shabbat and holidays, as JSON (see <c>Sites/ShabbatRules</c>); null means no change.</summary>
+    public string? ShabbatRules { get; set; }
 }

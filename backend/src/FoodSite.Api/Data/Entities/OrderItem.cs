@@ -35,6 +35,9 @@ public class OrderItem
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+
+    /// <summary>The price list the line was priced from (feature <c>priceLists</c>), for the admin; null for regular prices.</summary>
+    public string? PriceListName { get; set; }
 }
 
 /// <summary>A dish question and the client's answer, both as shown (e.g. "כן", "חריף, בינוני", "25/12/2026").</summary>

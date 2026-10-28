@@ -164,12 +164,15 @@ public class OrderBuilderTests
         Assert.True(Has(errors, "items", "emptyOrder"));
     }
 
-    private static DishAddOn Link(Dish parent, Dish addOn, decimal? price = null, decimal? max = null, bool checkbox = false, AddOnGroup? group = null)
+    private static DishAddOn Link(
+        Dish parent, Dish addOn, decimal? price = null, decimal? max = null, bool checkbox = false, AddOnGroup? group = null,
+        int slot = 0, string? label = null, decimal? overPrice = null)
     {
         var link = new DishAddOn
         {
             ParentDish = parent, ParentDishId = parent.Id, AddOnDish = addOn, AddOnDishId = addOn.Id,
             Price = price, MaxQuantity = max, IsCheckbox = checkbox, Group = group, GroupId = group?.Id,
+            Slot = slot, Label = label, OverLimitPrice = overPrice,
         };
         parent.AddOns.Add(link);
         return link;
@@ -203,6 +206,59 @@ public class OrderBuilderTests
         Assert.False(four.Any);
         Assert.True(Has(five, "items[0].addOns[0].quantity", "addOnLimit"));
         Assert.True(Has(perPortion, "items[0].addOns[0].quantity", "addOnLimit"));
+    }
+
+    [Fact]
+    public void The_same_add_on_can_be_offered_twice_under_a_dish_with_a_label_each()
+    {
+        var burger = Fixed(1, "המבורגר", (10, "מנה", 40, true));
+        var sauce = Fixed(2, "רוטב", (20, "כף", 2, true));
+        Link(burger, sauce, label: "בפנים");
+        Link(burger, sauce, slot: 1, label: "בחוץ", max: 1);
+        var menu = Menu(burger, sauce);
+
+        var (items, errors) = Build(menu, new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 1), new AddOnInput(2, null, 1, Slot: 1)]));
+        var (_, tooMany) = Build(menu, new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 2, Slot: 1)]));
+        var (_, twice) = Build(menu, new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 1), new AddOnInput(2, null, 1)]));
+        var (_, unknown) = Build(menu, new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 1, Slot: 2)]));
+
+        Assert.False(errors.Any);
+        Assert.Equal(["המבורגר", "רוטב (בפנים)", "רוטב (בחוץ)"], items.Select(i => i.DishName));
+        Assert.True(Has(tooMany, "items[0].addOns[0].quantity", "addOnLimit"));
+        Assert.True(Has(twice, "items[0].addOns[1]", "addOnUnavailable"));
+        Assert.True(Has(unknown, "items[0].addOns[0]", "addOnUnavailable"));
+    }
+
+    [Fact]
+    public void Units_above_an_add_ons_limit_cost_the_over_limit_price_when_the_admin_set_one()
+    {
+        var plate = Fixed(1, "צלחת", (10, "מנה", 30, true));
+        var pita = Fixed(2, "פיתה", (20, "יח׳", 3, true));
+        Link(plate, pita, max: 5, overPrice: 4);
+
+        var (items, errors) = Build(Menu(plate, pita), new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 7)]));
+        var (atLimit, _) = Build(Menu(plate, pita), new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 5)]));
+
+        Assert.False(errors.Any);
+        Assert.Equal([("פיתה", 5m, 15m), ("פיתה (מעבר למכסה)", 2m, 8m)], items.Skip(1).Select(i => (i.DishName, i.Quantity, i.LineTotal)));
+        Assert.Single(atLimit.Skip(1));
+    }
+
+    [Fact]
+    public void Units_above_a_groups_limit_cost_the_group_over_limit_price()
+    {
+        var plate = Fixed(1, "צלחת", (10, "מנה", 30, true));
+        var group = new AddOnGroup { Id = 5, DishId = 1, Name = "תוספות", MaxUnits = 2, OverLimitPrice = 6 };
+        var a = Fixed(2, "חמוצים", (20, "יח׳", 3, true));
+        var b = Fixed(3, "צ׳יפס", (30, "יח׳", 5, true));
+        Link(plate, a, group: group);
+        Link(plate, b, group: group);
+
+        var (items, errors) = Build(Menu(plate, a, b), new OrderLineInput(1, null, 1, [new AddOnInput(2, null, 1), new AddOnInput(3, null, 3)]));
+
+        Assert.False(errors.Any);
+        Assert.Equal(30m + 3 + 5 + 2 * 6, OrderBuilder.Total(items));
+        Assert.Contains(items, i => i.DishName == "צ׳יפס (מעבר למכסה)" && i.Quantity == 2);
     }
 
     [Fact]

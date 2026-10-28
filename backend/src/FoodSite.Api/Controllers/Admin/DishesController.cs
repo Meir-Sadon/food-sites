@@ -55,7 +55,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         bool ShowOptionDifference = false,
         IReadOnlyList<string>? DietaryTags = null,
         bool DietaryTagsSingle = false,
-        bool OnSale = false);
+        bool OnSale = false,
+        IReadOnlyList<AvailabilityRuleDto>? Availability = null,
+        decimal? PriceBeforeDiscount = null);
 
     public record QuestionDto(
         int Id, string Text, QuestionKind Kind, IReadOnlyList<string> Choices, bool ShowAsDropdown, bool IsRequired,
@@ -69,16 +71,26 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         int? Id, string? Text, QuestionKind Kind, List<string>? Choices, bool ShowAsDropdown, bool IsRequired,
         string? DefaultAnswer = null);
 
-    public record AddOnGroupDto(int Id, string Name, int? MaxUnits);
+    /// <param name="OverLimitPrice">Price per unit above MaxUnits; null means the limit is firm.</param>
+    public record AddOnGroupDto(int Id, string Name, int? MaxUnits, decimal? OverLimitPrice = null);
 
     /// <summary>An add-on offered under this dish, in the admin's order, and how it is offered here.</summary>
-    public record AddOnLinkDto(int DishId, int? GroupId, decimal? Price, decimal? MaxQuantity, bool IsCheckbox);
+    public record AddOnLinkDto(
+        int DishId, int? GroupId, decimal? Price, decimal? MaxQuantity, bool IsCheckbox,
+        int Slot = 0, string? Label = null, bool ShowImage = false, bool IsDefault = false, decimal? OverLimitPrice = null);
 
     /// <summary>A group to keep (with Id) or add (without).</summary>
-    public record AddOnGroupInput(int? Id, string? Name, int? MaxUnits);
+    public record AddOnGroupInput(int? Id, string? Name, int? MaxUnits, decimal? OverLimitPrice = null);
 
-    /// <summary>An add-on offered under this dish; Group is its group's index in AddOnGroups.</summary>
-    public record AddOnLinkInput(int DishId, int? Group, decimal? Price, decimal? MaxQuantity, bool IsCheckbox);
+    /// <summary>
+    /// An add-on offered under this dish; Group is its group's index in AddOnGroups. The same add-on can be offered again
+    /// (Slot 1, 2...) with a Label telling the offers apart. ShowImage shows its picture while the client adjusts the dish,
+    /// IsDefault picks it for every unit until the client takes it off, OverLimitPrice (needs MaxQuantity) is the price
+    /// per unit above MaxQuantity.
+    /// </summary>
+    public record AddOnLinkInput(
+        int DishId, int? Group, decimal? Price, decimal? MaxQuantity, bool IsCheckbox,
+        int Slot = 0, string? Label = null, bool ShowImage = false, bool IsDefault = false, decimal? OverLimitPrice = null);
 
     /// <summary>An option to keep (with Id) or add (without).</summary>
     public record OptionInput(int? Id, string? Label, decimal Amount, decimal Price, bool IsDefault);
@@ -97,6 +109,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
     /// OptionsTitle is the heading over the fixed options ("בחרו גודל"), ShowOptionDifference shows each option on the
     /// order page as what it adds to the default option's price; both only matter for fixed options.
     /// DietaryTags, when sent, is the whole list of the dish's special-diet marks (ids in <c>DietaryTags.All</c>); left out, they stay. DietaryTagsSingle (sent with them) lets the client pick only one.
+    /// Availability, when sent, is the whole list of the times the dish is sold (a weekday, with From and To null for the whole day); empty means whenever the business works, left out they stay.
+    /// PriceBeforeDiscount, when set, is shown struck through next to the dish's price on the order page and must be above
+    /// that price (the default option's, or the price per unit); null shows none. A variant priced like its main dish has none.
     /// CopyImagesFrom, on a new dish only, gives it the images of that dish (a copy of it); the picture files are shared.
     /// </summary>
     public record DishInput(
@@ -130,7 +145,9 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         bool ShowOptionDifference = false,
         List<string>? DietaryTags = null,
         bool DietaryTagsSingle = false,
-        bool? OnSale = null);
+        bool? OnSale = null,
+        List<AvailabilityRuleDto>? Availability = null,
+        decimal? PriceBeforeDiscount = null);
 
     public const decimal MaxAddOnPrice = 100_000;
 
@@ -376,6 +393,12 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         else if (ownPrice && input.ChoiceMode == ChoiceMode.Free)
             ValidateFreeChoice(input, errors);
 
+        if (ownPrice && input.PriceBeforeDiscount is { } before)
+        {
+            if (before <= 0 || before > MaxAddOnPrice) errors.Add(nameof(input.PriceBeforeDiscount), "invalid");
+            else if (MainPrice(input) is { } price && before <= price) errors.Add(nameof(input.PriceBeforeDiscount), "notAbovePrice");
+        }
+
         if (input.MaxPerSupplyDate is <= 0) errors.Add(nameof(input.MaxPerSupplyDate), "positive");
         else if (input.MaxPerSupplyDate is { } limit && limit >= 10_000_000) errors.Add(nameof(input.MaxPerSupplyDate), "invalid");
         else if (input.SellBy == SellBy.Units && input.MaxPerSupplyDate is { } units && units % 1 != 0)
@@ -384,6 +407,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         await ValidateAddOnLinks(input, dish, errors);
         await ValidateOwnAddOns(input, dish, errors);
         ValidateQuestions(input, dish, errors);
+        DishAvailability.Validate(input.Availability, errors);
         if (input.CopyImagesFrom is { } sourceId && !await db.Dishes.AnyAsync(d => d.Id == sourceId))
             errors.Add(nameof(input.CopyImagesFrom), "notFound");
         return errors.Any ? Invalid(errors) : null;
@@ -426,30 +450,56 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
             errors.Text($"addOnGroups[{i}].name", groups[i].Name, AddOnGroup.NameMaxLength, required: true);
             if (groups[i].MaxUnits is < 1 or > OrderBuilder.MaxUnits)
                 errors.Add($"addOnGroups[{i}].maxUnits", "invalid");
+            if (groups[i].OverLimitPrice is { } groupOver)
+            {
+                if (groupOver is < 0 or >= MaxAddOnPrice) errors.Add($"addOnGroups[{i}].overLimitPrice", "invalid");
+                else if (groups[i].MaxUnits is null) errors.Add($"addOnGroups[{i}].overLimitPrice", "overLimitNeedsLimit");
+            }
             if (groups[i].Id is { } id && dish.AddOnGroups.All(g => g.Id != id))
                 errors.Add($"addOnGroups[{i}].id", "notFound");
         }
 
         var ids = input.AddOns.Select(a => a.DishId).ToList();
         var addOnDishes = await db.Dishes.Where(d => ids.Contains(d.Id)).ToDictionaryAsync(d => d.Id);
-        var seen = new HashSet<int>();
+        var seen = new HashSet<(int, int)>();
         for (var i = 0; i < input.AddOns.Count; i++)
         {
             var addOn = input.AddOns[i];
             var path = $"addOns[{i}]";
+            if (addOn.Slot is < 0 or >= DishAddOn.MaxSlots)
+                errors.Add($"{path}.slot", "invalid");
+            errors.Text($"{path}.label", addOn.Label, DishAddOn.LabelMaxLength);
+            // An add-on offered more than once needs a name for each offer.
+            if (input.AddOns.Count(a => a.DishId == addOn.DishId) > 1)
+            {
+                if (string.IsNullOrWhiteSpace(addOn.Label))
+                    errors.Add($"{path}.label", "required");
+                else if (input.AddOns.Take(i).Any(a => a.DishId == addOn.DishId
+                    && string.Equals(a.Label?.Trim(), addOn.Label.Trim(), StringComparison.OrdinalIgnoreCase)))
+                    errors.Add($"{path}.label", "duplicate");
+            }
             // A removed add-on that is already offered here can be kept or taken off, but not newly added.
             if (!addOnDishes.TryGetValue(addOn.DishId, out var addOnDish)
                 || (addOnDish.IsHidden && dish.AddOns.All(a => a.AddOnDishId != addOn.DishId)) || addOn.DishId == dish.Id)
                 errors.Add($"{path}.dishId", "notFound");
-            else if (!seen.Add(addOn.DishId))
+            else if (!seen.Add((addOn.DishId, addOn.Slot)))
                 errors.Add($"{path}.dishId", "duplicate");
             if (addOn.Price is < 0 or >= MaxAddOnPrice)
                 errors.Add($"{path}.price", "invalid");
+            if (addOn.OverLimitPrice is { } over)
+            {
+                if (over is < 0 or >= MaxAddOnPrice) errors.Add($"{path}.overLimitPrice", "invalid");
+                else if (addOn.MaxQuantity is null) errors.Add($"{path}.overLimitPrice", "overLimitNeedsLimit");
+            }
             if (addOn.MaxQuantity is <= 0) errors.Add($"{path}.maxQuantity", "positive");
             else if (addOn.MaxQuantity is > OrderBuilder.MaxUnits) errors.Add($"{path}.maxQuantity", "invalid");
             if (addOn.Group is { } group && (group < 0 || group >= groups.Count))
                 errors.Add($"{path}.group", "notFound");
         }
+        // The add-ons picked by default must fit their group's limit together.
+        for (var g = 0; g < groups.Count; g++)
+            if (groups[g].MaxUnits is { } limit && input.AddOns.Count(a => a.Group == g && a.IsDefault) > limit)
+                errors.Add($"addOnGroups[{g}].maxUnits", "defaultsExceedLimit");
         if (input.IsAddOnOnly && input.AddOns.Count > 0)
             errors.Add(nameof(input.IsAddOnOnly), "hasAddOns");
     }
@@ -496,6 +546,11 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         QuestionKind.SingleChoice or QuestionKind.MultiChoice => choices.Contains(answer),
         _ => false,
     };
+
+    /// <summary>The price the order page shows on the dish card: the default option's (the only one's), or the price per unit.</summary>
+    private static decimal? MainPrice(DishInput input) => input.ChoiceMode == ChoiceMode.Free
+        ? input.UnitPrice
+        : (input.Options ?? []) is { Count: > 0 } options ? (options.Count == 1 ? options[0] : options.FirstOrDefault(o => o.IsDefault))?.Price : null;
 
     private static void ValidateOptions(DishInput input, Dish dish, Errors errors)
     {
@@ -583,6 +638,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         if (input.OnSale is { } onSale)
             dish.OnSale = onSale;
         dish.MaxPerSupplyDate = input.MaxPerSupplyDate;
+        dish.PriceBeforeDiscount = main is not null && input.UseMainDishPrice ? null : input.PriceBeforeDiscount;
         dish.OpenByDefault = input.OpenByDefault;
         dish.IsSideDish = input.IsSideDish;
 
@@ -610,16 +666,18 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
 
         // Only the links ticked on this form are this form's; the ones a parent set up among its own add-ons stay.
         var parentIds = (input.ParentDishIds ?? []).Distinct().ToHashSet();
-        db.DishAddOns.RemoveRange(dish.AddOnOf.Where(a => a.LinkedFromAddOn && !parentIds.Contains(a.ParentDishId)));
-        foreach (var link in dish.AddOnOf.Where(a => parentIds.Contains(a.ParentDishId)))
+        db.DishAddOns.RemoveRange(dish.AddOnOf.Where(a => a.LinkedFromAddOn && a.Slot == 0 && !parentIds.Contains(a.ParentDishId)));
+        foreach (var link in dish.AddOnOf.Where(a => a.Slot == 0 && parentIds.Contains(a.ParentDishId)))
             link.LinkedFromAddOn = true;
-        foreach (var parentId in parentIds.Except(dish.AddOnOf.Select(a => a.ParentDishId)))
+        foreach (var parentId in parentIds.Except(dish.AddOnOf.Where(a => a.Slot == 0).Select(a => a.ParentDishId)))
             dish.AddOnOf.Add(new DishAddOn { ParentDishId = parentId, AddOnDish = dish, LinkedFromAddOn = true });
 
         if (input.AddOns is not null)
             ApplyOwnAddOns(input.AddOnGroups ?? [], input.AddOns, dish);
         if (input.Questions is not null)
             ApplyQuestions(input.Questions, dish);
+        if (input.Availability is not null)
+            DishAvailability.Apply(input.Availability, dish);
     }
 
     // Questions keep their ids when edited, so an order page already open still matches them.
@@ -655,18 +713,23 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
                 dish.AddOnGroups.Add(group = new AddOnGroup { Name = "" });
             group.Name = input.Name!.Trim();
             group.MaxUnits = input.MaxUnits;
+            group.OverLimitPrice = input.MaxUnits is null ? null : input.OverLimitPrice;
             group.DisplayOrder = index;
             return group;
         }).ToList();
 
-        var keepAddOns = addOnInputs.Select(a => a.DishId).ToHashSet();
-        db.DishAddOns.RemoveRange(dish.AddOns.Where(a => !keepAddOns.Contains(a.AddOnDishId)));
+        var keepAddOns = addOnInputs.Select(a => (a.DishId, a.Slot)).ToHashSet();
+        db.DishAddOns.RemoveRange(dish.AddOns.Where(a => !keepAddOns.Contains((a.AddOnDishId, a.Slot))));
         for (var i = 0; i < addOnInputs.Count; i++)
         {
             var input = addOnInputs[i];
-            var link = dish.AddOns.SingleOrDefault(a => a.AddOnDishId == input.DishId);
+            var link = dish.AddOns.SingleOrDefault(a => a.AddOnDishId == input.DishId && a.Slot == input.Slot);
             if (link is null)
-                dish.AddOns.Add(link = new DishAddOn { ParentDish = dish, AddOnDishId = input.DishId });
+                dish.AddOns.Add(link = new DishAddOn { ParentDish = dish, AddOnDishId = input.DishId, Slot = input.Slot });
+            link.Label = Clean(input.Label);
+            link.ShowImage = input.ShowImage;
+            link.IsDefault = input.IsDefault;
+            link.OverLimitPrice = input.MaxQuantity is null ? null : input.OverLimitPrice;
             link.DisplayOrder = i;
             link.Group = input.Group is { } g ? groups[g] : null;
             if (link.Group is null)
@@ -704,6 +767,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         .Include(d => d.AddOnOf)
         .Include(d => d.AddOnGroups)
         .Include(d => d.Questions)
+        .Include(d => d.AvailabilityRules)
         .AsSplitQuery();
 
     private Task<Dish?> LoadOrNull(int id) => WithDetails().SingleOrDefaultAsync(d => d.Id == id);
@@ -720,7 +784,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.Options.OrderBy(o => o.Id).Select(o => new OptionDto(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(),
         d.Images.OrderBy(i => i.DisplayOrder).Select(i => new ImageDto(i.Id, i.Url, i.DisplayOrder)).ToList(),
         d.AddOnOf.Where(a => a.LinkedFromAddOn).Select(a => a.ParentDishId).Order().ToList(),
-        d.AddOns.Select(a => a.AddOnDishId).Order().ToList(),
+        d.AddOns.Select(a => a.AddOnDishId).Distinct().Order().ToList(),
         d.MaxPerSupplyDate,
         d.OpenByDefault,
         d.IsSideDish,
@@ -728,9 +792,10 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.MainDishId,
         d.UseMainDishPrice,
         d.IsYesNo,
-        d.AddOnGroups.OrderBy(g => g.DisplayOrder).Select(g => new AddOnGroupDto(g.Id, g.Name, g.MaxUnits)).ToList(),
-        d.AddOns.OrderBy(a => a.DisplayOrder).ThenBy(a => a.AddOnDishId)
-            .Select(a => new AddOnLinkDto(a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox)).ToList(),
+        d.AddOnGroups.OrderBy(g => g.DisplayOrder).Select(g => new AddOnGroupDto(g.Id, g.Name, g.MaxUnits, g.OverLimitPrice)).ToList(),
+        d.AddOns.OrderBy(a => a.DisplayOrder).ThenBy(a => a.AddOnDishId).ThenBy(a => a.Slot)
+            .Select(a => new AddOnLinkDto(
+                a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox, a.Slot, a.Label, a.ShowImage, a.IsDefault, a.OverLimitPrice)).ToList(),
         d.Questions.OrderBy(q => q.DisplayOrder).ThenBy(q => q.Id)
             .Select(q => new QuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
         d.AdjustmentOptional,
@@ -738,5 +803,7 @@ public class DishesController(AppDbContext db, IImageStore images, SiteClock clo
         d.ShowOptionDifference,
         d.DietaryTags,
         d.DietaryTagsSingle,
-        d.OnSale);
+        d.OnSale,
+        DishAvailability.ToDtos(d.AvailabilityRules),
+        d.PriceBeforeDiscount);
 }

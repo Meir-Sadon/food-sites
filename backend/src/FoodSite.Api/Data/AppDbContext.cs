@@ -16,6 +16,7 @@ public class AppDbContext(
 {
     public DbSet<Settings> Settings => Set<Settings>();
     public DbSet<SupplyDay> SupplyDays => Set<SupplyDay>();
+    public DbSet<SupplyDayHours> SupplyDayHours => Set<SupplyDayHours>();
     public DbSet<ClosedDate> ClosedDates => Set<ClosedDate>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Dish> Dishes => Set<Dish>();
@@ -26,12 +27,20 @@ public class AppDbContext(
     public DbSet<DishGroup> DishGroups => Set<DishGroup>();
     public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
     public DbSet<SocialLink> SocialLinks => Set<SocialLink>();
+    public DbSet<PopupSlot> PopupSlots => Set<PopupSlot>();
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
+    public DbSet<PriceList> PriceLists => Set<PriceList>();
+    public DbSet<PriceListDish> PriceListDishes => Set<PriceListDish>();
+    public DbSet<PriceListPhone> PriceListPhones => Set<PriceListPhone>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
+    public DbSet<DishAvailabilityRule> DishAvailabilityRules => Set<DishAvailabilityRule>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
+    public DbSet<GuestDetails> GuestDetails => Set<GuestDetails>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<FavoriteOrder> FavoriteOrders => Set<FavoriteOrder>();
+    public DbSet<SavedCart> SavedCarts => Set<SavedCart>();
     public DbSet<Recommendation> Recommendations => Set<Recommendation>();
     public DbSet<Feedback> Feedback => Set<Feedback>();
     public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
@@ -131,6 +140,8 @@ public class AppDbContext(
         model.Entity<SupplyDay>(e =>
         {
             e.HasIndex(s => s.Weekday).IsUnique();
+            e.HasMany(s => s.Hours).WithOne(h => h.SupplyDay).HasForeignKey(h => h.SupplyDayId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<ClosedDate>(e =>
@@ -184,6 +195,19 @@ public class AppDbContext(
             e.Property(l => l.Url).HasMaxLength(SocialLink.UrlMaxLength).IsRequired();
         });
 
+        model.Entity<PopupSlot>(e =>
+        {
+            e.ToTable("Popups");
+            e.HasKey(p => p.Slot);
+            e.Property(p => p.Slot).ValueGeneratedNever();
+            e.Property(p => p.Title).HasMaxLength(Popup.EntryPopup.TitleMaxLength);
+            e.Property(p => p.Body).HasMaxLength(Popup.EntryPopup.BodyMaxLength);
+            e.Property(p => p.ButtonText).HasMaxLength(Popup.EntryPopup.ButtonTextMaxLength);
+            e.Property(p => p.ButtonUrl).HasMaxLength(Popup.EntryPopup.ButtonUrlMaxLength);
+            e.Property(p => p.MinTotal).HasPrecision(10, 2);
+            e.Property(p => p.MaxTotal).HasPrecision(10, 2);
+        });
+
         model.Entity<DishGroup>(e =>
         {
             e.Property(g => g.Name).HasMaxLength(DishGroup.NameMaxLength).IsRequired();
@@ -194,6 +218,32 @@ public class AppDbContext(
             e.HasKey(x => new { x.GroupId, x.DishId });
             e.HasOne(x => x.Group).WithMany(g => g.Dishes).HasForeignKey(x => x.GroupId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Dish).WithMany().HasForeignKey(x => x.DishId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<PriceList>(e =>
+        {
+            e.Property(l => l.Name).HasMaxLength(PriceList.NameMaxLength);
+            e.Property(l => l.NewClientsUnit).HasMaxLength(10);
+            e.Property(l => l.OpenOrderAbove).HasPrecision(10, 2);
+            e.HasOne(l => l.BaseList).WithMany().HasForeignKey(l => l.BaseListId).OnDelete(DeleteBehavior.Restrict);
+            // One default list per site.
+            e.HasIndex(l => l.IsDefault).IsUnique().HasFilter("\"IsDefault\"");
+        });
+
+        model.Entity<PriceListDish>(e =>
+        {
+            e.HasIndex(x => new { x.PriceListId, x.DishId }).IsUnique();
+            e.HasOne(x => x.PriceList).WithMany(l => l.Dishes).HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Dish).WithMany().HasForeignKey(x => x.DishId).OnDelete(DeleteBehavior.Cascade);
+            e.OwnsMany(x => x.SubPrices, sub => sub.ToJson());
+        });
+
+        model.Entity<PriceListPhone>(e =>
+        {
+            e.HasKey(x => new { x.PriceListId, x.Phone });
+            e.Property(x => x.Phone).HasMaxLength(20);
+            e.HasIndex(x => x.Phone);
+            e.HasOne(x => x.PriceList).WithMany(l => l.Phones).HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<AddOnGroup>(e =>
@@ -214,6 +264,15 @@ public class AppDbContext(
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        model.Entity<DishAvailabilityRule>(e =>
+        {
+            e.HasOne(r => r.Dish).WithMany(d => d.AvailabilityRules)
+                .HasForeignKey(r => r.DishId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Ignore(r => r.WholeDay);
+            e.Ignore(r => r.End);
+        });
+
         model.Entity<DishImage>(e =>
         {
             e.HasOne(i => i.Dish).WithMany(d => d.Images)
@@ -231,7 +290,7 @@ public class AppDbContext(
 
         model.Entity<DishAddOn>(e =>
         {
-            e.HasKey(a => new { a.ParentDishId, a.AddOnDishId });
+            e.HasKey(a => new { a.ParentDishId, a.AddOnDishId, a.Slot });
             e.HasOne(a => a.ParentDish).WithMany(d => d.AddOns)
                 .HasForeignKey(a => a.ParentDishId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -242,6 +301,8 @@ public class AppDbContext(
                 .HasForeignKey(a => a.GroupId)
                 .OnDelete(DeleteBehavior.SetNull);
             e.Property(a => a.MaxQuantity).HasPrecision(10, 3);
+            e.Property(a => a.OverLimitPrice).HasPrecision(10, 2);
+            e.Property(a => a.Label).HasMaxLength(DishAddOn.LabelMaxLength);
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_DishAddOns_NotSelf", "\"ParentDishId\" <> \"AddOnDishId\""));
         });
@@ -249,12 +310,28 @@ public class AppDbContext(
         model.Entity<User>(e =>
         {
             e.HasIndex(u => u.Phone).IsUnique();
+            e.HasIndex(u => u.GoogleSub).IsUnique().HasFilter("\"GoogleSub\" IS NOT NULL");
+        });
+
+        model.Entity<UserAddress>(e =>
+        {
+            e.Property(a => a.Label).HasMaxLength(UserAddress.LabelMaxLength);
+            e.HasIndex(a => a.UserId);
+            e.HasOne(a => a.User).WithMany(u => u.Addresses)
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<GuestDetails>(e =>
+        {
+            e.HasIndex(g => g.Phone).IsUnique();
         });
 
         model.Entity<Order>(e =>
         {
             e.HasIndex(o => o.SupplyDate);
             e.Property(o => o.DeliveryNote).HasMaxLength(Order.DeliveryNoteMaxLength);
+            e.Property(o => o.CancelReason).HasMaxLength(Order.CancelReasonMaxLength);
             e.HasOne(o => o.User).WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
@@ -263,6 +340,7 @@ public class AppDbContext(
         model.Entity<OrderItem>(e =>
         {
             e.Property(i => i.Quantity).HasPrecision(10, 3);
+            e.Property(i => i.PriceListName).HasMaxLength(PriceList.NameMaxLength);
             e.HasOne(i => i.Order).WithMany(o => o.Items)
                 .HasForeignKey(i => i.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -273,6 +351,13 @@ public class AppDbContext(
                 .HasForeignKey(i => i.ParentItemId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.OwnsMany(i => i.Answers, answers => answers.ToJson());
+        });
+
+        model.Entity<SavedCart>(e =>
+        {
+            e.HasKey(c => c.UserId);
+            e.Property(c => c.Content).HasMaxLength(SavedCart.ContentMaxLength);
+            e.HasOne(c => c.User).WithOne().HasForeignKey<SavedCart>(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<FavoriteOrder>(e =>

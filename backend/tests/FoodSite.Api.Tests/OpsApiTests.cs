@@ -106,6 +106,75 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Cancellations_list_the_reason_and_the_order_details_newest_first()
+    {
+        await using (var db = _factory.CreateDbContext())
+        {
+            var dish = new Dish { Name = "קוסקוס", Category = new Category { Name = "עיקריות" } };
+            db.Dishes.Add(dish);
+            await db.SaveChangesAsync();
+            Order Make(DateOnly date, OrderStatus status, string? reason = null) => new()
+            {
+                Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = date, Total = 80, DeliveryFee = 10, Status = status,
+                CancelReason = reason, CancelledAt = reason is null ? null : DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow,
+                FulfillmentMethod = FulfillmentMethod.Delivery,
+                Items = [new() { DishId = dish.Id, DishName = "קוסקוס", Quantity = 2, UnitPrice = 35, LineTotal = 70 }],
+            };
+            db.Orders.AddRange(
+                Make(new(2030, 1, 6), OrderStatus.Cancelled, "הלקוח התקשר"),
+                Make(new(2030, 2, 3), OrderStatus.Cancelled),
+                Make(new(2030, 2, 4), OrderStatus.New),
+                Make(new(2031, 6, 1), OrderStatus.Cancelled, "מחוץ לטווח"));
+            await db.SaveChangesAsync();
+        }
+        var console = await ConsoleAsync();
+
+        var report = await console.GetAsync("/api/ops/cancellations?from=2030-01-01&to=2030-12-31").Read<CancellationsDto>();
+
+        Assert.Equal((2, 160m), (report.Orders, report.Total));
+        Assert.Equal([new DateOnly(2030, 2, 3), new DateOnly(2030, 1, 6)], report.Cancellations.Select(c => c.SupplyDate));
+        Assert.Null(report.Cancellations[0].Reason);
+        var first = report.Cancellations[1];
+        Assert.Equal(("הלקוח התקשר", "דנה", "אשקלון", 80m), (first.Reason, first.ClientName, first.Address, first.Total));
+        Assert.NotNull(first.CancelledAt);
+        Assert.Equal("קוסקוס", Assert.Single(first.Items).DishName);
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await console.GetAsync("/api/ops/cancellations?from=2030-02-01&to=2030-01-01")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateApiClient().GetAsync("/api/ops/cancellations")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Clients_list_their_contact_details_and_orders_newest_first()
+    {
+        await using (var db = _factory.CreateDbContext())
+        {
+            var older = new User { Phone = "0501111111", FullName = "דנה", Address = "אשקלון", City = "אשקלון", Email = "dana@example.com", CreatedAt = new DateTimeOffset(2030, 1, 1, 9, 0, 0, TimeSpan.Zero) };
+            var newer = new User { Phone = "0502222222", FullName = "יוסי", Address = "", CreatedAt = new DateTimeOffset(2030, 2, 1, 9, 0, 0, TimeSpan.Zero) };
+            var unknown = new User { Phone = "0503333333", FullName = "ותיק", Address = "" };
+            db.Users.AddRange(unknown, older, newer);
+            Order Make(User user, OrderStatus status, int day) => new()
+            {
+                User = user, Phone = user.Phone, Name = user.FullName, Address = "", SupplyDate = new(2030, 3, day), Total = 50,
+                Status = status, CreatedAt = new DateTimeOffset(2030, 3, day, 9, 0, 0, TimeSpan.Zero),
+            };
+            db.Orders.AddRange(Make(older, OrderStatus.Delivered, 1), Make(older, OrderStatus.New, 5), Make(older, OrderStatus.Cancelled, 9));
+            await db.SaveChangesAsync();
+        }
+        var console = await ConsoleAsync();
+
+        var report = await console.GetAsync("/api/ops/clients").Read<ClientsDto>();
+
+        Assert.Equal(3, report.Total);
+        Assert.Equal(["יוסי", "דנה", "ותיק"], report.Clients.Select(c => c.FullName));
+        var dana = report.Clients[1];
+        Assert.Equal(("0501111111", "dana@example.com", "אשקלון", 2), (dana.Phone, dana.Email, dana.City, dana.Orders));
+        Assert.Equal(new DateTimeOffset(2030, 3, 5, 9, 0, 0, TimeSpan.Zero), dana.LastOrderAt);
+        Assert.Equal((null, 0, null), (report.Clients[0].Email, report.Clients[0].Orders, report.Clients[0].LastOrderAt));
+        Assert.Null(report.Clients[2].CreatedAt);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateApiClient().GetAsync("/api/ops/clients")).StatusCode);
+    }
+
+    [Fact]
     public async Task The_summary_counts_every_order_but_cancelled_per_period_and_each_status_on_its_own()
     {
         await using (var db = _factory.CreateDbContext())

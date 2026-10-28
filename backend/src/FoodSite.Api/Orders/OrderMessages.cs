@@ -16,7 +16,7 @@ public static class OrderMessages
         var text = $"{Heading(siteName)}תודה, ההזמנה שלך התקבלה!\n{Details(order)}";
         if (order.NeedsReview)
             text += (serviceCities is { Count: > 0 } ? $"\nאנחנו משלוחים רק ב{ServiceArea.Describe(serviceCities)}." : "\nלא הצלחנו לאתר את הכתובת.")
-                + " ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור. נעדכן בטלפון בכמה יעלו דמי המשלוח.";
+                + " ההזמנה תיבדק על ידי המנהל, אינה הזמנה בטוחה, והכמות לא נשמרת עד לאישור. חויבו דמי משלוח מינימליים, ואם יידרש תשלום נוסף נעדכן אותך בטלפון.";
         if (hourFull)
             text += "\nהשעה שבחרת כבר מלאה: ניצור איתך קשר כדי לתאם שעה אחרת.";
         if (order.PaymentMethod.IsTransfer() && !string.IsNullOrWhiteSpace(paymentPhone))
@@ -37,7 +37,7 @@ public static class OrderMessages
 
     public static string AdminNotification(Order order, string? siteName = null, bool hourFull = false) =>
         $"{Heading(siteName)}הזמנה חדשה #{order.Id}\n{Details(order)}"
-        + (order.NeedsReview ? "\nהכתובת מחוץ לאזור השירות: ההזמנה ממתינה לאישור שלך." : "")
+        + (order.NeedsReview ? "\nהכתובת לא אומתה (מחוץ לאזור השירות או שלא נמצאה): חויבו דמי משלוח מינימליים וההזמנה ממתינה לאישור שלך. יש להתקשר ללקוח ולעדכן אם יש תשלום נוסף על המשלוח." : "")
         + (hourFull ? "\nהשעה שנבחרה כבר מלאה: כדאי לתאם שעה אחרת עם הלקוח." : "");
 
     private static string Heading(string? siteName) =>
@@ -64,6 +64,8 @@ public static class OrderMessages
         }
         if (!string.IsNullOrWhiteSpace(order.Notes))
             lines.Add($"הערות: {order.Notes}");
+        if (order.MinimumTopUp > 0)
+            lines.Add($"השלמה למינימום הזמנה: ₪{Money(order.MinimumTopUp)}");
         if (order.DeliveryFee > 0 || order.DeliveryDiscount > 0)
             lines.Add($"דמי משלוח: {FeeText(order)}");
         lines.Add($"סה״כ: ₪{Money(order.Total)}");

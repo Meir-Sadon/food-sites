@@ -1,0 +1,20 @@
+/* The site's colour palette: the logo's dark wood brown and burnished gold, on a warm light page. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #f7f0e6;
+  --color-surface: #ffffff;
+  --color-text: #2b1a10;
+  --color-muted: #6a5646;
+  --color-accent: #8a5a1c;
+  --color-accent-hover: #6f4713;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #c8963e;
+  --color-border: #e6d8c4;
+  --color-error: #b42318;
+  --color-success: #2f6b3a;
+  --color-soft: #f1e5d3;
+  --color-shadow: #2b1a10;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(200 150 62 / 0.2);
+  --color-badge-text: #6f4713;
+  --gradient-hero: linear-gradient(135deg, #2b1a10 0%, #5a3a18 60%, var(--color-gold) 160%);
+}
