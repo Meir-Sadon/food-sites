@@ -46,6 +46,11 @@ public class AccountController(
 
     public record LoginInput(string? Phone);
 
+    /// <summary>The order page's state as it keeps it, and how many dishes it holds.</summary>
+    public record CartDto(string Content, int ItemCount, DateTimeOffset UpdatedAt);
+
+    public record CartInput(string? Content, int ItemCount);
+
     /// <summary>The client's session profile, and whether this login just made the account (the first time this phone came).</summary>
     public record LoginDto(ProfileDto Profile, bool IsNew);
 
@@ -487,6 +492,57 @@ public class AccountController(
                     i.Id, i.DishId, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal))
                 .ToList()))
             .ToList();
+    }
+
+    // ---------- Order in progress ----------
+
+    /// <summary>The client's order in progress saved on the server, or 204 when there is none.</summary>
+    [HttpGet("cart")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    public async Task<ActionResult<CartDto>> GetCart(CancellationToken ct)
+    {
+        var userId = CurrentUserId();
+        var cart = await db.SavedCarts.AsNoTracking().SingleOrDefaultAsync(c => c.UserId == userId, ct);
+        return cart is null ? NoContent() : new CartDto(cart.Content, cart.ItemCount, cart.UpdatedAt);
+    }
+
+    /// <summary>Keeps the order in progress; an empty one (no dishes) is removed instead.</summary>
+    [HttpPut("cart")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    public async Task<ActionResult> SaveCart(CartInput input, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(input.Content))
+            return Invalid(nameof(input.Content), "required");
+        if (input.Content.Length > SavedCart.ContentMaxLength)
+            return Invalid(nameof(input.Content), "tooLong");
+        var userId = CurrentUserId();
+        var cart = await db.SavedCarts.SingleOrDefaultAsync(c => c.UserId == userId, ct);
+        if (input.ItemCount <= 0)
+        {
+            if (cart is not null)
+                db.SavedCarts.Remove(cart);
+        }
+        else
+        {
+            if (cart is null)
+                db.SavedCarts.Add(cart = new SavedCart { UserId = userId, Content = input.Content });
+            (cart.Content, cart.ItemCount, cart.UpdatedAt) = (input.Content, input.ItemCount, time.GetUtcNow());
+        }
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    [HttpDelete("cart")]
+    [Authorize(AuthenticationSchemes = UserTokenService.Scheme)]
+    public async Task<ActionResult> ClearCart(CancellationToken ct)
+    {
+        var userId = CurrentUserId();
+        if (await db.SavedCarts.SingleOrDefaultAsync(c => c.UserId == userId, ct) is { } cart)
+        {
+            db.SavedCarts.Remove(cart);
+            await db.SaveChangesAsync(ct);
+        }
+        return NoContent();
     }
 
     // ---------- Favorites ----------

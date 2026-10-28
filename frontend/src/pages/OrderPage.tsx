@@ -35,6 +35,7 @@ import { CategoryJumpBar } from '../order/CategoryJumpBar'
 import { categorySectionId, groupSectionId } from '../order/categorySection'
 import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
+import { useServerCart } from '../order/serverCart'
 import { availableMenu, pruneUnavailable, type When } from '../order/availability'
 import { formatMoney, formatSlot, formatSupplyDate, parseSlotId, slotId, slotsFor } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
@@ -107,6 +108,7 @@ export function OrderPage() {
   const site = useSite()
   const siteFailed = useSiteFailed()
   const reviewsOn = useFeature('reviews')
+  const priceListsOn = useFeature('priceLists')
   const defaultCity = site?.serviceCities[0]
   const errorMessage = useErrorMessage()
   const toast = useToast()
@@ -212,6 +214,25 @@ export function OrderPage() {
   const dirty = count > 0 && !confirmation
   useRegisterCart(totals.main + totals.side + totals.drinks, total, () => setCartOpen(true), !!menu)
   useReportOrderSignals(itemsTotal, count > 0, sources)
+  const serverCart = useServerCart({
+    userId: user?.id ?? null,
+    menuLoaded: !!fullMenu,
+    selections: state.selections,
+    count,
+    paused: !!confirmation,
+    onRestore: (saved) => {
+      if (!fullMenu) return
+      const { selections, skipped } = restoreSelections(saved, fullMenu)
+      if (Object.keys(selections).length === 0) return
+      setState((current) => ({ ...current, selections }))
+      setSources(['draft'])
+      toast(skipped > 0 ? t('order.draftRestoredSkipped', { count: skipped }) : t('order.draftRestored'))
+    },
+    // A client with dishes in the cart may now get a price list's prices, so the menu shows them.
+    onFirstItem: () => {
+      if (priceListsOn) siteApi.menu().then(setMenu, () => undefined)
+    },
+  })
   // Set when the profile page's "Reorder" put a past order in the draft.
   const filled = (location.state as { filled?: { skipped: number; repriced?: string[] } } | null)?.filled
   const filledSkipped = filled?.skipped
@@ -514,7 +535,10 @@ export function OrderPage() {
 
   function leave(save: boolean) {
     if (save) saveDraft(state)
-    else clearDraft()
+    else {
+      clearDraft()
+      serverCart.discard()
+    }
     const to = leaveTo
     setLeaveTo(null)
     if (!to) return
@@ -623,6 +647,7 @@ export function OrderPage() {
         ...(acceptTopUp ? { acceptMinimumTopUp: true } : {}),
       })
       clearDraft()
+      serverCart.sent()
       trackUsage('OrderSubmitted')
       trackMarketing({ name: 'Purchase', orderId: result.id, value: result.total })
       setConfirmation(result)

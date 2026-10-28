@@ -151,6 +151,8 @@ public class SiteClock(TimeProvider time, IConfiguration config)
 
     public DateTime NowLocal() => TimeZoneInfo.ConvertTime(time.GetUtcNow(), _zone).DateTime;
 
+    public DateTimeOffset UtcNow() => time.GetUtcNow();
+
     public DateOnly Today() => DateOnly.FromDateTime(NowLocal());
 
     /// <summary>A moment as the business's wall-clock time.</summary>

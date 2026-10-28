@@ -3,8 +3,9 @@ import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../../api/client'
 import { categoriesApi, type Category } from '../../api/catalog'
-import { linkedLists, priceListsApi, type PriceList, type PriceListDish } from '../../api/priceLists'
-import { Info, Loading, Status } from '../ui'
+import { linkedLists, priceListsApi, type PriceList, type PriceListDish, type PriceListStatuses } from '../../api/priceLists'
+import { BADGE_NEW_UNITS, type BadgeNewUnit } from '../../api/site'
+import { FieldError, Info, Loading, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useFormErrorMessage } from '../hooks'
 import { useDirty, useUnsavedChanges } from '../unsaved'
 import { PriceListForm, useListName } from './PriceListsPage'
@@ -17,7 +18,7 @@ interface Loaded {
   categories: Category[]
 }
 
-/** One price list: its name and base, the phones it is for, and its dishes' prices and dates. */
+/** One price list: its name and base, the phones and statuses it is for, and its dishes' prices and dates. */
 export function PriceListPage() {
   const { t } = useTranslation()
   const nameOf = useListName()
@@ -69,6 +70,10 @@ export function PriceListPage() {
                 }}
               />
               <PhonesForm
+                list={list}
+                onSaved={(saved) => setData((current) => current && { ...current, lists: current.lists.map((l) => (l.id === saved.id ? saved : l)) })}
+              />
+              <StatusesForm
                 list={list}
                 onSaved={(saved) => setData((current) => current && { ...current, lists: current.lists.map((l) => (l.id === saved.id ? saved : l)) })}
               />
@@ -132,6 +137,129 @@ function PhonesForm({ list, onSaved }: { list: PriceList; onSaved: (list: PriceL
       <span className="row">
         <button type="button" onClick={() => void save()}>
           {t('admin.priceLists.savePhones')}
+        </button>
+      </span>
+    </section>
+  )
+}
+
+interface StatusFields {
+  newClients: boolean
+  newClientsAmount: string
+  newClientsUnit: BadgeNewUnit
+  noOrders: boolean
+  midOrder: boolean
+  openOrder: boolean
+  openOrderAbove: string
+}
+
+const fieldsOf = (s: PriceListStatuses): StatusFields => ({
+  newClients: s.newClientsAmount !== null,
+  newClientsAmount: String(s.newClientsAmount ?? 1),
+  newClientsUnit: s.newClientsUnit ?? 'week',
+  noOrders: s.noOrders,
+  midOrder: s.midOrder,
+  openOrder: s.openOrderAbove !== null,
+  openOrderAbove: s.openOrderAbove === null ? '' : String(s.openOrderAbove),
+})
+
+const statusesOf = (f: StatusFields): PriceListStatuses => ({
+  newClientsAmount: f.newClients ? Number(f.newClientsAmount) : null,
+  newClientsUnit: f.newClients ? f.newClientsUnit : null,
+  noOrders: f.noOrders,
+  midOrder: f.midOrder,
+  openOrderAbove: f.openOrder ? Number(f.openOrderAbove) : null,
+})
+
+/** The clients the list is for by what they are doing: new on the site, no orders yet, mid-order, an open order above an amount. */
+function StatusesForm({ list, onSaved }: { list: PriceList; onSaved: (list: PriceList) => void }) {
+  const { t } = useTranslation()
+  const formError = useFormErrorMessage()
+  const [fields, setFields] = useState(() => fieldsOf(list.statuses))
+  const [errors, setErrors] = useState<FieldErrors>({})
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+  const { dirty, markSaved } = useDirty(fields)
+  useUnsavedChanges(dirty, save)
+  const set = (patch: Partial<StatusFields>) => {
+    setSaved(false)
+    setFields((current) => ({ ...current, ...patch }))
+  }
+
+  async function save() {
+    setErrors({})
+    setError(null)
+    setSaved(false)
+    try {
+      const result = await priceListsApi.saveStatuses(list.id, statusesOf(fields))
+      const next = fieldsOf(result.statuses)
+      setFields(next)
+      markSaved(next)
+      onSaved(result)
+      setSaved(true)
+      return true
+    } catch (err) {
+      setErrors(fieldErrorsOf(err))
+      setError(formError(err))
+      return false
+    }
+  }
+
+  return (
+    <section className="stack" aria-labelledby="price-list-statuses">
+      <span className="with-info">
+        <h2 id="price-list-statuses">{t('admin.priceLists.statuses')}</h2>
+        <Info text={t('admin.priceLists.statusesHint')} about={t('admin.priceLists.statuses')} />
+      </span>
+      <label className="checkbox">
+        <input type="checkbox" checked={fields.newClients} onChange={(e) => set({ newClients: e.target.checked })} />
+        {t('admin.priceLists.newClients')}
+      </label>
+      {fields.newClients && (
+        <div className="row">
+          <span className="field field--narrow">
+            <label htmlFor="price-list-new-amount">{t('admin.priceLists.newClientsAmount')}</label>
+            <input id="price-list-new-amount" type="number" min={1} max={365} inputMode="numeric" value={fields.newClientsAmount}
+              onChange={(e) => set({ newClientsAmount: e.target.value })} aria-describedby="price-list-new-amount-error" />
+            <FieldError errors={errors} field="newClientsAmount" id="price-list-new-amount-error" />
+          </span>
+          <span className="field field--narrow">
+            <label htmlFor="price-list-new-unit">{t('admin.priceLists.newClientsUnit')}</label>
+            <select id="price-list-new-unit" value={fields.newClientsUnit} onChange={(e) => set({ newClientsUnit: e.target.value as BadgeNewUnit })}>
+              {BADGE_NEW_UNITS.map((unit) => (
+                <option key={unit} value={unit}>
+                  {t(`admin.settings.badges.units.${unit}`)}
+                </option>
+              ))}
+            </select>
+          </span>
+        </div>
+      )}
+      <label className="checkbox">
+        <input type="checkbox" checked={fields.noOrders} onChange={(e) => set({ noOrders: e.target.checked })} />
+        {t('admin.priceLists.noOrders')}
+      </label>
+      <label className="checkbox">
+        <input type="checkbox" checked={fields.midOrder} onChange={(e) => set({ midOrder: e.target.checked })} />
+        {t('admin.priceLists.midOrder')}
+      </label>
+      <label className="checkbox">
+        <input type="checkbox" checked={fields.openOrder} onChange={(e) => set({ openOrder: e.target.checked })} />
+        {t('admin.priceLists.openOrder')}
+      </label>
+      {fields.openOrder && (
+        <span className="field field--narrow">
+          <label htmlFor="price-list-open-above">{t('admin.priceLists.openOrderAbove')}</label>
+          <input id="price-list-open-above" type="number" min={0} step="any" inputMode="decimal" value={fields.openOrderAbove}
+            onChange={(e) => set({ openOrderAbove: e.target.value })} aria-describedby="price-list-open-above-error" />
+          <FieldError errors={errors} field="openOrderAbove" id="price-list-open-above-error" />
+        </span>
+      )}
+      {error && <Status message={error} error />}
+      {saved && <Status message={t('admin.saved')} />}
+      <span className="row">
+        <button type="button" onClick={() => void save()}>
+          {t('admin.priceLists.saveStatuses')}
         </button>
       </span>
     </section>

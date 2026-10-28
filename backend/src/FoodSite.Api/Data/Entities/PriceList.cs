@@ -23,6 +23,25 @@ public class PriceList
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
+    // Clients the list is for by status, besides its phones (any one status is enough; a phone list wins over these).
+
+    /// <summary>Clients who registered within this many <see cref="NewClientsUnit"/>s; null is off.</summary>
+    public int? NewClientsAmount { get; set; }
+
+    /// <summary>day, week or month (<c>Sites.ItemBadges.Units</c>).</summary>
+    public string? NewClientsUnit { get; set; }
+
+    /// <summary>Clients with no order that was not cancelled.</summary>
+    public bool ForNoOrders { get; set; }
+
+    /// <summary>Clients whose order in progress, saved on the server, is not empty (<see cref="SavedCart"/>).</summary>
+    public bool ForMidOrder { get; set; }
+
+    /// <summary>Clients with an order not yet delivered or cancelled whose total is above this; null is off.</summary>
+    public decimal? OpenOrderAbove { get; set; }
+
+    public bool HasStatuses => NewClientsAmount is not null || ForNoOrders || ForMidOrder || OpenOrderAbove is not null;
+
     public List<PriceListDish> Dishes { get; set; } = [];
     public List<PriceListPhone> Phones { get; set; } = [];
 }

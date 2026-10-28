@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { FieldErrors } from '../../api/client'
-import { priceListsApi, type PriceList } from '../../api/priceLists'
+import { hasStatuses, priceListsApi, type PriceList } from '../../api/priceLists'
 import { ConfirmRemove, FieldError, Info, Loading, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
 
@@ -54,7 +54,7 @@ export function PriceListsPage() {
                     <span className="muted">
                       {list.isDefault
                         ? t('admin.priceLists.defaultHint')
-                        : `${t('admin.priceLists.basedOn', { name: nameOf(baseList) })} · ${t('admin.priceLists.phoneCount', { count: list.phones.length })}`}
+                        : `${t('admin.priceLists.basedOn', { name: nameOf(baseList) })} · ${t('admin.priceLists.phoneCount', { count: list.phones.length })}${hasStatuses(list.statuses) ? ` · ${t('admin.priceLists.statusCount')}` : ''}`}
                     </span>
                   </span>
                   <span className="row">

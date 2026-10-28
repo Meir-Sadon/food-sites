@@ -137,6 +137,13 @@ export interface MyReview {
   submittedAt: string
 }
 
+/** A cart kept on the server for a logged-in client, so it follows them between devices. `content` is the order's selections as JSON. */
+export interface SavedCart {
+  content: string
+  itemCount: number
+  updatedAt: string
+}
+
 export const MAX_ADDRESSES = 10
 export const MAX_RECOMMENDATION_LENGTH = 1000
 export const MAX_FAVORITE_NAME_LENGTH = 60
@@ -163,4 +170,9 @@ export const accountApi = {
   recommendations: () => apiJson<Recommendation[]>(`${account}/recommendations`),
   addRecommendation: (text: string) => apiJson<Recommendation>(`${account}/recommendations`, send('POST', { text })),
   reviews: () => apiJson<MyReview[]>(`${account}/reviews`),
+  /** The logged-in client's cart kept on the server; undefined when there is none. */
+  cart: () => apiJson<SavedCart | undefined>(`${account}/cart`),
+  /** A count of 0 removes the saved cart. */
+  saveCart: (content: string, itemCount: number) => apiJson<void>(`${account}/cart`, send('PUT', { content, itemCount })),
+  clearCart: () => apiJson<void>(`${account}/cart`, send('DELETE')),
 }
