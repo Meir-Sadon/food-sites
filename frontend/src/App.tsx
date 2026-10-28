@@ -25,6 +25,7 @@ import { SettingsPage } from './admin/settings/SettingsPage'
 import { UsagePage } from './admin/usage/UsagePage'
 import { ClientLayout } from './components/ClientLayout'
 import { RequireFeature } from './components/RequireFeature'
+import { SiteProvider } from './site/SiteContext'
 import { useScrollToInvalid } from './components/scrollToInvalid'
 import { ToastProvider } from './components/ToastProvider'
 import { DriverPage, DriverStops } from './driver/DriverPage'
@@ -80,7 +81,10 @@ export function App() {
           path="admin"
           element={
             <RequireAdmin>
-              <AdminLayout />
+              {/* The admin's tabs follow the features the server reports, so a flag turned on without a rebuild shows too. */}
+              <SiteProvider>
+                <AdminLayout />
+              </SiteProvider>
             </RequireAdmin>
           }
         >

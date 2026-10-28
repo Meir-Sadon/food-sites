@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { noStatuses, type PriceList, type PriceListDish } from '../../api/priceLists'
 import { site as siteConfig } from '../../site/config'
-import { category, dish as catalogDish } from '../../test/catalogData'
+import { category, dish as catalogDish, site } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
 
@@ -46,6 +46,19 @@ describe('price lists', () => {
     // The page itself sends the admin back to the dishes.
     expect(await screen.findByRole('heading', { level: 1, name: /מנות/ })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'מחירונים' })).not.toBeInTheDocument()
+  })
+
+  it('is a tab when the server turned the feature on, though the build has it off', async () => {
+    siteConfig.features = features
+    fakeApi({
+      ...adminSession,
+      ...categories,
+      'GET /api/site': () => site({ features: ['priceLists'] }),
+      'GET /api/admin/price-lists': () => [defaultList, vip],
+    })
+    renderAt('/admin/price-lists')
+    expect((await screen.findAllByText('לקוחות קבועים'))[0]).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'מחירונים' })).toBeInTheDocument()
   })
 
   it('lists the default list first and adds a list on a chosen base', async () => {
