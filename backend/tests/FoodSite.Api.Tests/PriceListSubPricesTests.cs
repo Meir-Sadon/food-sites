@@ -164,12 +164,21 @@ public sealed class PriceListSubPricesTests(PostgresFixture postgres) : IAsyncLi
         var vip = await CreateList("קבועים");
         var row = await Couscous(vip.Id);
         var input = new PriceListDishInput(row.DishId, 50, 45, null, null,
-            [new SubPriceInput(_big, 80, 0), new SubPriceInput(_addOn, 8, 0), new SubPriceInput("o:9999", 1, 1), new SubPriceInput(_addOnOver, -1, 5)]);
+            [new SubPriceInput(_big, 80, -1), new SubPriceInput(_addOn, 8, 0), new SubPriceInput("o:9999", 1, 1), new SubPriceInput(_addOnOver, -1, 5)]);
         var response = await Save(vip.Id, input);
         await response.AssertInvalid("dishes[0].subPrices[0].price", "invalid");
         await response.AssertInvalid("dishes[0].subPrices[2].key", "notFound");
         await response.AssertInvalid("dishes[0].subPrices[3].basePrice", "invalid");
         Assert.DoesNotContain("subPrices[1]", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task A_list_can_price_an_other_option_at_zero()
+    {
+        var vip = await CreateList("קבועים");
+        var row = await Couscous(vip.Id);
+        var input = new PriceListDishInput(row.DishId, 50, 45, null, null, [new SubPriceInput(_big, 0, 0)]);
+        (await Save(vip.Id, input)).EnsureSuccessStatusCode();
     }
 
     [Fact]
