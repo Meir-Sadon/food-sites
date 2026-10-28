@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { menu } from '../test/catalogData'
-import { selectionsFromFavorite, unitsOf, addOnsOf, dishMap, lineTotal, newSelection, orderTotal, restoreSelections, standaloneDishes, toLines } from './model'
+import { menu, menuDish } from '../test/catalogData'
+import type { HistoryItem, HistoryOrder } from '../api/account'
+import { selectionsFromFavorite, selectionsFromHistory, unitsOf, addOnsOf, dishMap, lineTotal, newSelection, orderTotal, restoreSelections, standaloneDishes, toLines } from './model'
 import { normalizePhone } from './phone'
 
 const data = menu()
@@ -79,4 +80,57 @@ describe('normalizePhone', () => {
   ])('reads %s as %s', (input, expected) => expect(normalizePhone(input)).toBe(expected))
 
   it.each(['', '12345', '050-12a4567', '1501234567'])('rejects %j', (input) => expect(normalizePhone(input)).toBeNull())
+})
+
+describe('selectionsFromHistory repriced', () => {
+  const item = (patch: Partial<HistoryItem> & Pick<HistoryItem, 'id' | 'dishId' | 'dishName' | 'unitPrice'>): HistoryItem => ({
+    parentItemId: null, optionLabel: null, quantity: 1, lineTotal: patch.unitPrice, ...patch,
+  })
+  const order = (items: HistoryItem[]): HistoryOrder => ({
+    id: 1, supplyDate: '2026-10-02', status: 'Delivered', fulfillmentMethod: 'Pickup', paymentMethod: 'OnDelivery',
+    isPaid: true, total: 0, createdAt: '2026-09-30T10:00:00Z', items,
+  })
+
+  it('lists nothing while every line costs what it did', () => {
+    const past = order([
+      item({ id: 1, dishId: 1, dishName: 'עוף בתנור', optionLabel: 'חצי', quantity: 2, unitPrice: 40 }),
+      item({ id: 2, dishId: 3, parentItemId: 1, dishName: 'ירך', optionLabel: 'יחידה', unitPrice: 12 }),
+      item({ id: 3, dishId: 2, dishName: 'בשר טחון', optionLabel: 'ק״ג', quantity: 1.5, unitPrice: 90 }),
+    ])
+    expect(selectionsFromHistory(past, data).repriced).toEqual([])
+  })
+
+  it('names the dishes and add-ons whose price changed, and leaves gone ones to the skipped count', () => {
+    const past = order([
+      item({ id: 1, dishId: 1, dishName: 'עוף בתנור', optionLabel: 'חצי', unitPrice: 38 }),
+      item({ id: 2, dishId: 3, parentItemId: 1, dishName: 'ירך', optionLabel: 'יחידה', unitPrice: 10 }),
+      item({ id: 3, dishId: 2, dishName: 'בשר טחון', optionLabel: 'ק״ג', unitPrice: 95 }),
+      item({ id: 4, dishId: 99, dishName: 'נעלם', unitPrice: 5 }),
+      item({ id: 5, dishId: 1, dishName: 'עוף בתנור', optionLabel: 'רבע', unitPrice: 20 }),
+    ])
+    const restored = selectionsFromHistory(past, data)
+    expect(restored.repriced).toEqual(['עוף בתנור', 'ירך', 'בשר טחון'])
+    expect(restored.skipped).toBe(1)
+  })
+
+  it('compares an add-on at its price under the dish, and units above a limit at the over-limit price', () => {
+    const priced = menu({
+      dishes: [
+        menuDish(1, 'קוסקוס', 1, {
+          options: [{ id: 10, label: 'מנה', amount: 1, price: 50, isDefault: true }],
+          addOnDishIds: [3],
+          addOns: [{ dishId: 3, groupId: null, price: 8, maxQuantity: 2, isCheckbox: false, overLimitPrice: 15 }],
+        }),
+        menuDish(3, 'עוף', 1, { isAddOnOnly: true, options: [{ id: 30, label: 'יחידה', amount: 1, price: 12, isDefault: true }] }),
+      ],
+    })
+    const past = order([
+      item({ id: 1, dishId: 1, dishName: 'קוסקוס', optionLabel: 'מנה', unitPrice: 50 }),
+      item({ id: 2, dishId: 3, parentItemId: 1, dishName: 'עוף', optionLabel: 'יחידה', quantity: 2, unitPrice: 8 }),
+      item({ id: 3, dishId: 3, parentItemId: 1, dishName: 'עוף (מעבר למכסה)', optionLabel: 'יחידה', unitPrice: 15 }),
+    ])
+    expect(selectionsFromHistory(past, priced).repriced).toEqual([])
+    const raised = { ...past, items: past.items.map((i) => (i.id === 3 ? { ...i, unitPrice: 14 } : i)) }
+    expect(selectionsFromHistory(raised, priced).repriced).toEqual(['עוף'])
+  })
 })
