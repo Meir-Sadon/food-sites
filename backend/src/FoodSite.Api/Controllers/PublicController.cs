@@ -220,9 +220,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
                 remaining.GetValueOrDefault(d.Id), d.OpenByDefault, d.IsSideDish, p.UnitName,
                 d.MainDishId, d.IsYesNo,
                 links.Select(a => new MenuAddOnDto(
-                    a.AddOnDishId, a.GroupId, a.Price, a.MaxQuantity, a.IsCheckbox, a.Slot, a.Label, a.ShowImage, a.IsDefault, a.OverLimitPrice)).ToList(),
+                    a.AddOnDishId, a.GroupId, prices.AddOnPrice(a), a.MaxQuantity, a.IsCheckbox, a.Slot, a.Label, a.ShowImage, a.IsDefault, prices.AddOnOverLimitPrice(a))).ToList(),
                 links.Where(a => a.Group is not null).Select(a => a.Group!).DistinctBy(g => g.Id)
-                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits, g.OverLimitPrice)).ToList(),
+                    .Select(g => new MenuAddOnGroupDto(g.Id, g.Name, g.MaxUnits, prices.GroupOverLimitPrice(g))).ToList(),
                 DishRules.Questions(d)
                     .Select(q => new MenuQuestionDto(q.Id, q.Text, q.Kind, q.Choices, q.ShowAsDropdown, q.IsRequired, q.DefaultAnswer)).ToList(),
                 (d.MainDish ?? d).AdjustmentOptional,

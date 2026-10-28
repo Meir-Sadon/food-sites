@@ -24,6 +24,7 @@ import { DishImagesSection } from './DishImagesSection'
 import { useToast } from '../../components/toast'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { useFeature } from '../../site/useSite'
+import { DishPriceListsButton } from '../price-lists/DishPriceLists'
 import { AddOnsSection } from './AddOnsSection'
 import { formKey, type AddOnForm, type GroupForm } from './addOnForm'
 import { AvailabilitySection } from './AvailabilitySection'
@@ -259,6 +260,7 @@ export function DishFormPage() {
   const toast = useToast()
   const { saved, flash } = useSavedFlash()
   const advanced = useFeature('advancedDishes')
+  const priceLists = useFeature('priceLists')
   const [search] = useSearchParams()
   const mainParam = search.get('main')
   const copyParam = dishId === null ? search.get('copy') : null
@@ -697,6 +699,7 @@ export function DishFormPage() {
           />
           {fieldError('priceBeforeDiscount')}
         </span>
+        {priceLists && dishId !== null && dish && <DishPriceListsButton dishId={dishId} dishName={dish.name} />}
         </>
         )}
         </FormBlock>

@@ -2050,9 +2050,39 @@ namespace FoodSite.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsMany("FoodSite.Api.Data.Entities.PriceListSubPrice", "SubPrices", b1 =>
+                        {
+                            b1.Property<int>("PriceListDishId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<decimal>("BasePrice")
+                                .HasPrecision(10, 2);
+
+                            b1.Property<string>("Key")
+                                .IsRequired();
+
+                            b1.Property<decimal>("Price")
+                                .HasPrecision(10, 2);
+
+                            b1.HasKey("PriceListDishId", "__synthesizedOrdinal");
+
+                            b1.ToTable("PriceListDishes");
+
+                            b1
+                                .ToJson("SubPrices")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PriceListDishId");
+                        });
+
                     b.Navigation("Dish");
 
                     b.Navigation("PriceList");
+
+                    b.Navigation("SubPrices");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListPhone", b =>

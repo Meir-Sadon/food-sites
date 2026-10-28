@@ -243,11 +243,14 @@ public static class OrderBuilder
                 continue;
             }
 
+            prices ??= PriceBook.Regular;
             var child = Line(addOnDish, addOn.OptionId, addOn.Quantity, addOnPath, errors,
-                DishRules.IsCheckbox(link, addOnDish), link.Price, prices ?? PriceBook.Regular);
+                DishRules.IsCheckbox(link, addOnDish), prices.AddOnPrice(link), prices);
             if (child is null)
                 continue;
             child.DishName = DishRules.AddOnName(link, addOnDish);
+            if (link.Price is not null)
+                child.PriceListName = prices.ListNameForSub(link.ParentDishId, PriceBook.AddOnKey(link));
 
             // Above the add-on's own limit.
             var over = 0m;
@@ -293,9 +296,11 @@ public static class OrderBuilder
             if (within - groupOver > 0)
                 children.Add(Part(child, within - groupOver, child.UnitPrice, ""));
             if (groupOver > 0)
-                children.Add(Part(child, groupOver, link.Group!.OverLimitPrice!.Value, OverLimitSuffix));
+                children.Add(Part(child, groupOver, prices.GroupOverLimitPrice(link.Group!)!.Value, OverLimitSuffix,
+                    prices.ListNameForSub(link.Group!.DishId, PriceBook.GroupOverLimitKey(link.Group!))));
             if (over > 0)
-                children.Add(Part(child, over, link.OverLimitPrice!.Value, OverLimitSuffix));
+                children.Add(Part(child, over, prices.AddOnOverLimitPrice(link)!.Value, OverLimitSuffix,
+                    prices.ListNameForSub(link.ParentDishId, PriceBook.AddOnOverLimitKey(link))));
         }
         return children;
     }
@@ -304,7 +309,7 @@ public static class OrderBuilder
     public const string OverLimitSuffix = " (מעבר למכסה)";
 
     /// <summary>A part of an add-on line at another amount and price (the units above a limit).</summary>
-    private static OrderItem Part(OrderItem source, decimal quantity, decimal unitPrice, string nameSuffix) => new()
+    private static OrderItem Part(OrderItem source, decimal quantity, decimal unitPrice, string nameSuffix, string? overLimitListName = null) => new()
     {
         Dish = source.Dish,
         DishId = source.DishId,
@@ -313,8 +318,8 @@ public static class OrderBuilder
         Quantity = quantity,
         UnitPrice = unitPrice,
         LineTotal = decimal.Round(unitPrice * quantity, 2),
-        // Units above a limit cost the over-limit price, which no list changes.
-        PriceListName = nameSuffix == "" ? source.PriceListName : null,
+        // Units above a limit cost the over-limit price, which a list may change too.
+        PriceListName = nameSuffix == "" ? source.PriceListName : overLimitListName,
     };
 
     public static decimal Total(IEnumerable<OrderItem> items) => items.Sum(i => i.LineTotal);
