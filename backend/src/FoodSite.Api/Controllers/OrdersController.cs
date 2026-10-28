@@ -217,6 +217,10 @@ public class OrdersController(
         foreach (var item in items)
             order.Items.Add(item);
         db.Orders.Add(order);
+        // The order in progress the client kept on the server is now sent.
+        if (await SessionUserIdAsync() is { } sessionUserId
+            && await db.SavedCarts.SingleOrDefaultAsync(c => c.UserId == sessionUserId, ct) is { } cart)
+            db.SavedCarts.Remove(cart);
         await db.SaveChangesAsync(ct);
 
         await NotifyAsync(order, settings.PaymentPhone, settings.OwnerEmail, serviceCities, hourFull, ct);

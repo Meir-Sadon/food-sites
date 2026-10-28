@@ -124,24 +124,70 @@ public sealed class PriceBook
         return true;
     }
 
-    /// <summary>
-    /// The book for a logged-in client's phone on a day: of the lists assigned to the phone, each dish takes the row with
-    /// the lowest main price among the rows in their dates, with that row's sub-prices. A dish no such list prices keeps
-    /// its regular prices.
-    /// </summary>
-    public static async Task<PriceBook> ForPhoneAsync(AppDbContext db, string? phone, DateOnly today, CancellationToken ct = default)
+    /// <summary>What a client's status is, for the lists assigned by status.</summary>
+    public record ClientStatus(DateTimeOffset? RegisteredAt, bool HasOrders, bool MidOrder, decimal? LargestOpenOrder);
+
+    /// <summary>Whether a list's statuses take in the client (any one is enough).</summary>
+    public static bool Matches(PriceList list, ClientStatus client, DateTimeOffset now)
     {
-        if (string.IsNullOrEmpty(phone))
+        if (list.NewClientsAmount is { } amount && client.RegisteredAt is { } registered
+            && registered >= Since(now, amount, list.NewClientsUnit))
+            return true;
+        if (list.ForNoOrders && !client.HasOrders)
+            return true;
+        if (list.ForMidOrder && client.MidOrder)
+            return true;
+        return list.OpenOrderAbove is { } above && client.LargestOpenOrder > above;
+    }
+
+    private static DateTimeOffset Since(DateTimeOffset now, int amount, string? unit) => unit switch
+    {
+        Sites.ItemBadges.Day => now.AddDays(-amount),
+        Sites.ItemBadges.Month => now.AddMonths(-amount),
+        _ => now.AddDays(-7 * amount),
+    };
+
+    /// <summary>
+    /// The book for a logged-in client on a day. A dish that a list assigned to the client's phone prices (in its dates)
+    /// takes the lowest such price; otherwise the lowest among the lists whose statuses take the client in. Each dish
+    /// brings its winning row's sub-prices. A dish no list prices keeps its regular prices.
+    /// </summary>
+    public static async Task<PriceBook> ForClientAsync(AppDbContext db, int userId, DateTimeOffset now, DateOnly today, CancellationToken ct = default)
+    {
+        var user = await db.Users.AsNoTracking().Where(u => u.Id == userId)
+            .Select(u => new { u.Phone, u.CreatedAt }).FirstOrDefaultAsync(ct);
+        if (user is null)
             return Regular;
-        var rows = await db.PriceListDishes.AsNoTracking().Include(d => d.PriceList)
-            .Where(d => d.PriceList!.Phones.Any(p => p.Phone == phone) && !d.PriceList.IsDefault)
+        var statusLists = await db.PriceLists.AsNoTracking()
+            .Where(l => !l.IsDefault && (l.NewClientsAmount != null || l.ForNoOrders || l.ForMidOrder || l.OpenOrderAbove != null))
             .ToListAsync(ct);
+        var forStatus = new HashSet<int>();
+        if (statusLists.Count > 0)
+        {
+            var status = new ClientStatus(
+                user.CreatedAt,
+                await db.Orders.AnyAsync(o => o.UserId == userId && o.Status != OrderStatus.Cancelled, ct),
+                await db.SavedCarts.AnyAsync(c => c.UserId == userId && c.ItemCount > 0, ct),
+                await db.Orders.Where(o => o.UserId == userId && o.Status != OrderStatus.Cancelled && o.Status != OrderStatus.Delivered)
+                    .MaxAsync(o => (decimal?)o.Total, ct));
+            forStatus = statusLists.Where(l => Matches(l, status, now)).Select(l => l.Id).ToHashSet();
+        }
+
+        var phone = user.Phone;
+        var rows = await db.PriceListDishes.AsNoTracking().Include(d => d.PriceList)
+            .Where(d => !d.PriceList!.IsDefault
+                && ((phone != null && d.PriceList.Phones.Any(p => p.Phone == phone)) || forStatus.Contains(d.PriceListId)))
+            .ToListAsync(ct);
+        var byPhone = phone is null ? [] : (await db.PriceListPhones.AsNoTracking()
+            .Where(p => p.Phone == phone).Select(p => p.PriceListId).ToListAsync(ct)).ToHashSet();
         var byDish = rows
             .Where(r => r.IsActiveOn(today))
             .GroupBy(r => r.DishId)
             .ToDictionary(g => g.Key, g =>
             {
-                var best = g.OrderBy(r => r.Price).ThenBy(r => r.PriceListId).First();
+                // A list for the phone wins over the lists by status.
+                var candidates = g.Any(r => byPhone.Contains(r.PriceListId)) ? g.Where(r => byPhone.Contains(r.PriceListId)) : g;
+                var best = candidates.OrderBy(r => r.Price).ThenBy(r => r.PriceListId).First();
                 return new Entry(best.Price, best.BasePrice, best.PriceList!.Name ?? "",
                     (best.SubPrices ?? []).DistinctBy(s => s.Key).ToDictionary(s => s.Key, s => s.Price));
             });

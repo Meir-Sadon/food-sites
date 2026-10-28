@@ -21,7 +21,13 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     public const int MaxPhones = 1000;
 
     /// <summary>Name is null for the default list. BaseListId null means the default list (and is the default list's own).</summary>
-    public record PriceListDto(int Id, string? Name, bool IsDefault, int? BaseListId, IReadOnlyList<string> Phones);
+    public record PriceListDto(int Id, string? Name, bool IsDefault, int? BaseListId, IReadOnlyList<string> Phones, StatusesDto Statuses);
+
+    /// <summary>
+    /// The clients a list is for by status: registered within NewClientsAmount NewClientsUnits (null is off), with no
+    /// order that was not cancelled, in the middle of an order, or with an open order above OpenOrderAbove (null is off).
+    /// </summary>
+    public record StatusesDto(int? NewClientsAmount, string? NewClientsUnit, bool NoOrders, bool MidOrder, decimal? OpenOrderAbove);
 
     public record PriceListInput(string? Name, int? BaseListId);
 
@@ -258,7 +264,39 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     }
 
     private static PriceListDto ToDto(PriceList l) =>
-        new(l.Id, l.Name, l.IsDefault, l.BaseListId, l.Phones.Select(p => p.Phone).Order().ToList());
+        new(l.Id, l.Name, l.IsDefault, l.BaseListId, l.Phones.Select(p => p.Phone).Order().ToList(),
+            new StatusesDto(l.NewClientsAmount, l.NewClientsAmount is null ? null : l.NewClientsUnit, l.ForNoOrders, l.ForMidOrder, l.OpenOrderAbove));
+
+    /// <summary>The statuses the list is for, besides its phones. A list for the client's phone wins over these.</summary>
+    [HttpPut("{id:int}/statuses")]
+    public async Task<ActionResult<PriceListDto>> SaveStatuses(int id, StatusesDto input)
+    {
+        var list = await db.PriceLists.Include(l => l.Phones).SingleOrDefaultAsync(l => l.Id == id);
+        if (list is null)
+            return NotFound();
+        if (list.IsDefault)
+            return Invalid(nameof(input.NoOrders), "isDefault");
+        var errors = new Errors();
+        if (input.NewClientsAmount is { } amount)
+        {
+            if (amount < 1 || amount > ItemBadges.MaxNewAmount)
+                errors.Add(nameof(input.NewClientsAmount), "invalid");
+            if (input.NewClientsUnit is null || !ItemBadges.Units.Contains(input.NewClientsUnit))
+                errors.Add(nameof(input.NewClientsUnit), "invalid");
+        }
+        if (input.OpenOrderAbove is { } above && (above < 0 || above >= MaxPrice))
+            errors.Add(nameof(input.OpenOrderAbove), "invalid");
+        if (errors.Any)
+            return Invalid(errors);
+
+        list.NewClientsAmount = input.NewClientsAmount;
+        list.NewClientsUnit = input.NewClientsAmount is null ? null : input.NewClientsUnit;
+        list.ForNoOrders = input.NoOrders;
+        list.ForMidOrder = input.MidOrder;
+        list.OpenOrderAbove = input.OpenOrderAbove is { } value ? decimal.Round(value, 2) : null;
+        await db.SaveChangesAsync();
+        return ToDto(list);
+    }
 
     private async Task EnsureDefaultAsync()
     {

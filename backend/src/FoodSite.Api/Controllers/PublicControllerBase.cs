@@ -38,7 +38,6 @@ public abstract class PublicControllerBase : ControllerBase
     {
         if (!await features.IsEnabledAsync(Features.PriceLists, ct) || await SessionUserIdAsync() is not { } userId)
             return PriceBook.Regular;
-        var phone = await db.Users.AsNoTracking().Where(u => u.Id == userId).Select(u => u.Phone).FirstOrDefaultAsync(ct);
-        return await PriceBook.ForPhoneAsync(db, phone, clock.Today(), ct);
+        return await PriceBook.ForClientAsync(db, userId, clock.UtcNow(), clock.Today(), ct);
     }
 }

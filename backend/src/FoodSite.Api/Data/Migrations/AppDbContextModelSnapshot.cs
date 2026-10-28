@@ -1033,12 +1033,29 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("ForMidOrder")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ForNoOrders")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .HasMaxLength(60)
                         .HasColumnType("character varying(60)");
+
+                    b.Property<int?>("NewClientsAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NewClientsUnit")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal?>("OpenOrderAbove")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.HasKey("Id");
 
@@ -1210,6 +1227,27 @@ namespace FoodSite.Api.Data.Migrations
                     b.HasIndex("ReviewId");
 
                     b.ToTable("ReviewImages");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SavedCart", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(50000)
+                        .HasColumnType("character varying(50000)");
+
+                    b.Property<int>("ItemCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("SavedCarts");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Settings", b =>
@@ -2127,6 +2165,17 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.SavedCart", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("FoodSite.Api.Data.Entities.SavedCart", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.SupplyDayHours", b =>

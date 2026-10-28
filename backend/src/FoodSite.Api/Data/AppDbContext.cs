@@ -40,6 +40,7 @@ public class AppDbContext(
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<FavoriteOrder> FavoriteOrders => Set<FavoriteOrder>();
+    public DbSet<SavedCart> SavedCarts => Set<SavedCart>();
     public DbSet<Recommendation> Recommendations => Set<Recommendation>();
     public DbSet<Feedback> Feedback => Set<Feedback>();
     public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
@@ -222,6 +223,8 @@ public class AppDbContext(
         model.Entity<PriceList>(e =>
         {
             e.Property(l => l.Name).HasMaxLength(PriceList.NameMaxLength);
+            e.Property(l => l.NewClientsUnit).HasMaxLength(10);
+            e.Property(l => l.OpenOrderAbove).HasPrecision(10, 2);
             e.HasOne(l => l.BaseList).WithMany().HasForeignKey(l => l.BaseListId).OnDelete(DeleteBehavior.Restrict);
             // One default list per site.
             e.HasIndex(l => l.IsDefault).IsUnique().HasFilter("\"IsDefault\"");
@@ -348,6 +351,13 @@ public class AppDbContext(
                 .HasForeignKey(i => i.ParentItemId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.OwnsMany(i => i.Answers, answers => answers.ToJson());
+        });
+
+        model.Entity<SavedCart>(e =>
+        {
+            e.HasKey(c => c.UserId);
+            e.Property(c => c.Content).HasMaxLength(SavedCart.ContentMaxLength);
+            e.HasOne(c => c.User).WithOne().HasForeignKey<SavedCart>(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<FavoriteOrder>(e =>

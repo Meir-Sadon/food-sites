@@ -1,4 +1,5 @@
 import { apiJson, send } from './client'
+import type { BadgeNewUnit } from './site'
 
 const base = '/api/admin/price-lists'
 
@@ -11,7 +12,22 @@ export interface PriceList {
   baseListId: number | null
   /** The clients' phones the list is for, in their local form. */
   phones: string[]
+  /** The clients the list is for by what they are doing, besides its phones. */
+  statuses: PriceListStatuses
 }
+
+/** Any one is enough: registered within the period, no order that was not cancelled, dishes in the saved cart, an open order above the amount. */
+export interface PriceListStatuses {
+  newClientsAmount: number | null
+  newClientsUnit: BadgeNewUnit | null
+  noOrders: boolean
+  midOrder: boolean
+  openOrderAbove: number | null
+}
+
+export const hasStatuses = (s: PriceListStatuses) => s.newClientsAmount !== null || s.noOrders || s.midOrder || s.openOrderAbove !== null
+
+export const noStatuses: PriceListStatuses = { newClientsAmount: null, newClientsUnit: null, noOrders: false, midOrder: false, openOrderAbove: null }
 
 /** A dish in a list. `inList` is false for a dish added after the list was made, shown at its base list's price until saved. */
 export interface PriceListDish {
@@ -83,4 +99,5 @@ export const priceListsApi = {
     apiJson<PriceListDish[]>(`${base}/${id}/dishes${updateLinked ? '?updateLinked=true' : ''}`, send('PUT', { dishes })),
   dish: (dishId: number) => apiJson<ListDish[]>(`${base}/dishes/${dishId}`),
   savePhones: (id: number, phones: string[]) => apiJson<PriceList>(`${base}/${id}/phones`, send('PUT', { phones })),
+  saveStatuses: (id: number, statuses: PriceListStatuses) => apiJson<PriceList>(`${base}/${id}/statuses`, send('PUT', statuses)),
 }

@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { PriceList, PriceListDish } from '../../api/priceLists'
+import { noStatuses, type PriceList, type PriceListDish } from '../../api/priceLists'
 import { site as siteConfig } from '../../site/config'
 import { category, dish as catalogDish } from '../../test/catalogData'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
@@ -9,8 +9,8 @@ import { renderAt } from '../../test/render'
 
 const withLists = adminSession
 
-const defaultList: PriceList = { id: 1, name: null, isDefault: true, baseListId: null, phones: [] }
-const vip: PriceList = { id: 2, name: 'לקוחות קבועים', isDefault: false, baseListId: null, phones: ['0501234567', '0527654321'] }
+const defaultList: PriceList = { id: 1, name: null, isDefault: true, baseListId: null, phones: [], statuses: noStatuses }
+const vip: PriceList = { id: 2, name: 'לקוחות קבועים', isDefault: false, baseListId: null, phones: ['0501234567', '0527654321'], statuses: noStatuses }
 
 const dish = (dishId: number, name: string, patch: Partial<PriceListDish> = {}): PriceListDish => ({
   dishId,
@@ -52,7 +52,7 @@ describe('price lists', () => {
     const api = fakeApi({
       ...withLists,
       'GET /api/admin/price-lists': () => [defaultList, vip],
-      'POST /api/admin/price-lists': () => ({ id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [] }),
+      'POST /api/admin/price-lists': () => ({ id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [], statuses: noStatuses }),
     })
     const user = userEvent.setup()
     renderAt('/admin/price-lists')
@@ -72,7 +72,7 @@ describe('price lists', () => {
   })
 
   it('offers only lists without a base as a base', async () => {
-    const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [] }
+    const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [], statuses: noStatuses }
     fakeApi({ ...withLists, 'GET /api/admin/price-lists': () => [defaultList, vip, family] })
     renderAt('/admin/price-lists')
     const base = await screen.findByLabelText('מחירון בסיס')
@@ -158,7 +158,7 @@ describe('price lists', () => {
   })
 
   it('edits a dish’s other prices behind its sub-prices button, and can update the linked lists', async () => {
-    const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [] }
+    const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [], statuses: noStatuses }
     const withSubs = dish(10, 'קוסקוס', {
       basePrice: 50,
       price: 50,
@@ -199,7 +199,7 @@ describe('price lists', () => {
   })
 
   it('does not ask about linked lists when only the dates changed', async () => {
-    const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [] }
+    const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [], statuses: noStatuses }
     const api = fakeApi({
       ...withLists,
       ...categories,
@@ -242,6 +242,51 @@ describe('price lists', () => {
     await waitFor(() => expect(phones).toHaveValue('0501234567'))
   })
 
+  it('saves the statuses the list is for, and shows a refused amount', async () => {
+    let reply: unknown = invalid({ newClientsAmount: ['invalid'] })
+    const api = fakeApi({
+      ...withLists,
+      ...categories,
+      'GET /api/admin/price-lists': () => [defaultList, vip],
+      'GET /api/admin/price-lists/2/dishes': () => [],
+      'PUT /api/admin/price-lists/2/statuses': () => reply,
+    })
+    const user = userEvent.setup()
+    renderAt('/admin/price-lists/2')
+
+    await user.click(await screen.findByLabelText('לקוחות חדשים: נרשמו לאתר לאחרונה'))
+    const amount = screen.getByLabelText('נרשמו בתוך')
+    await user.clear(amount)
+    await user.type(amount, '400')
+    await user.selectOptions(screen.getByLabelText('יחידת זמן'), 'day')
+    await user.click(screen.getByLabelText('לקוחות באמצע הזמנה: יש להם מנות בעגלה'))
+    await user.click(screen.getByLabelText('לקוחות עם הזמנה פתוחה (שעוד לא סופקה ולא בוטלה) מעל סכום'))
+    await user.type(screen.getByLabelText('סכום ההזמנה מעל (₪)'), '150')
+    await user.click(screen.getByRole('button', { name: 'שמירת המצבים' }))
+
+    expect(api.sent('PUT', '/api/admin/price-lists/2/statuses')[0].body).toEqual({
+      newClientsAmount: 400, newClientsUnit: 'day', noOrders: false, midOrder: true, openOrderAbove: 150,
+    })
+    expect(await screen.findByText('ערך לא תקין.', { selector: '.field-error' })).toBeInTheDocument()
+
+    const statuses = { newClientsAmount: 30, newClientsUnit: 'day' as const, noOrders: false, midOrder: true, openOrderAbove: 150 }
+    reply = { ...vip, statuses }
+    await user.clear(amount)
+    await user.type(amount, '30')
+    await user.click(screen.getByRole('button', { name: 'שמירת המצבים' }))
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/price-lists/2/statuses')[1].body).toEqual(statuses)
+  })
+
+  it('shows on the lists page which lists are by status', async () => {
+    fakeApi({
+      ...withLists,
+      'GET /api/admin/price-lists': () => [defaultList, { ...vip, statuses: { ...noStatuses, noOrders: true } }],
+    })
+    renderAt('/admin/price-lists')
+    expect(await screen.findByText('טלפונים', { exact: false })).toHaveTextContent('לפי מצב')
+  })
+
   describe('the dish’s window', () => {
     const chicken = catalogDish(10, 'עוף בתנור', 5, {
       options: [{ id: 11, label: 'שלם', amount: 1, price: 70, isDefault: true }],
@@ -261,7 +306,7 @@ describe('price lists', () => {
     })
 
     it('shows a row per list, the regular prices read only, and saves the lists that changed', async () => {
-      const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [] }
+      const family: PriceList = { id: 3, name: 'משפחה', isDefault: false, baseListId: 2, phones: [], statuses: noStatuses }
       const api = fakeApi({
         ...dishRoutes,
         'GET /api/admin/price-lists/dishes/10': () => [
