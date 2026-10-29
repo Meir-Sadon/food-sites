@@ -42,5 +42,11 @@ public class SupplyDayHours
     /// <summary>The end as a time of day, with midnight as 24 hours.</summary>
     public TimeSpan End => To == TimeOnly.MinValue ? TimeSpan.FromDays(1) : To.ToTimeSpan();
 
+    /// <summary>Whether orders for delivery can be placed for this range. At least one of the two is true.</summary>
+    public bool DeliveryAllowed { get; set; } = true;
+
+    /// <summary>Whether orders for pickup can be placed for this range. At least one of the two is true.</summary>
+    public bool PickupAllowed { get; set; } = true;
+
     public bool IsValid => End > From.ToTimeSpan();
 }

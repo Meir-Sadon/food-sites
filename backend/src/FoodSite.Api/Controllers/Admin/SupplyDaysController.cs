@@ -11,7 +11,7 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
     public const int MaxRangesPerDay = 6;
 
     /// <summary>One range of working hours; a To of 00:00 means midnight, the end of the day.</summary>
-    public record HoursDto(TimeOnly From, TimeOnly To);
+    public record HoursDto(TimeOnly From, TimeOnly To, bool Delivery = true, bool Pickup = true);
 
     /// <summary>Hours are the day's working hours: none, or ranges that each end after they start and don't overlap.</summary>
     public record SupplyDayDto(
@@ -24,7 +24,7 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
         var saved = await db.SupplyDays.Include(d => d.Hours).AsNoTracking().ToDictionaryAsync(d => d.Weekday);
         return Enum.GetValues<DayOfWeek>().Select(day => saved.TryGetValue(day, out var s)
             ? new SupplyDayDto(s.Weekday, s.Enabled, s.CutoffDay, s.CutoffTime,
-                s.Hours.OrderBy(h => h.From).Select(h => new HoursDto(h.From, h.To)).ToList())
+                s.Hours.OrderBy(h => h.From).Select(h => new HoursDto(h.From, h.To, h.DeliveryAllowed, h.PickupAllowed)).ToList())
             : Default(day));
     }
 
@@ -45,6 +45,8 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
             if (!Enum.IsDefined(day.Weekday)) errors.Add($"days[{i}].weekday", "invalid");
             if (!Enum.IsDefined(day.CutoffDay)) errors.Add($"days[{i}].cutoffDay", "invalid");
             var ranges = (day.Hours ?? []).Select(h => new SupplyDayHours { From = h.From, To = h.To }).OrderBy(h => h.From).ToList();
+            if ((day.Hours ?? []).Any(h => !h.Delivery && !h.Pickup))
+                errors.Add($"days[{i}].hours", "hoursNeedAMethod");
             if (ranges.Count > MaxRangesPerDay || ranges.Any(h => !h.IsValid))
                 errors.Add($"days[{i}].hours", "deliveryHoursInvalid");
             else if (ranges.Zip(ranges.Skip(1)).Any(p => p.Second.From.ToTimeSpan() < p.First.End))
@@ -75,7 +77,7 @@ public class SupplyDaysController(AppDbContext db) : AdminControllerBase
             // Replace the whole list: the day's ranges are edited as one.
             entity.Hours.Clear();
             foreach (var h in day.Hours ?? [])
-                entity.Hours.Add(new SupplyDayHours { From = h.From, To = h.To });
+                entity.Hours.Add(new SupplyDayHours { From = h.From, To = h.To, DeliveryAllowed = h.Delivery, PickupAllowed = h.Pickup });
         }
         await db.SaveChangesAsync();
         return Ok(await Get());

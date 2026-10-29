@@ -196,6 +196,16 @@ public class SupplyCalendarTests
     }
 
     [Fact]
+    public void A_range_can_allow_only_delivery_or_only_pickup()
+    {
+        var day = Day(DayOfWeek.Thursday, new(10, 0), new(12, 0));
+        day.Hours.Add(new SupplyDayHours { From = new(14, 0), To = new(16, 0), DeliveryAllowed = false });
+        var open = SupplyCalendar.Find(new DateOnly(2026, 10, 8), new DateTime(2026, 10, 7, 8, 0, 0), [day], [])!;
+        Assert.Equal([10, 11], open.Hours.Where(h => h.DeliveryOk).Select(h => h.From.Hour));
+        Assert.Equal([10, 11, 14, 15], open.Hours.Where(h => h.PickupOk).Select(h => h.From.Hour));
+    }
+
+    [Fact]
     public void Lead_time_blocks_slots_that_start_too_soon_apart_for_delivery_and_pickup()
     {
         var day = Day(DayOfWeek.Thursday, new(12, 0), new(16, 0));

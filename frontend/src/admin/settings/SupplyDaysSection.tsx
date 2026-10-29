@@ -124,6 +124,24 @@ export function SupplyDaysSection() {
                             required
                             onChange={(e) => changeRange(day, i, { to: `${e.target.value}:00` })}
                           />
+                          <label className="checkbox">
+                            <input
+                              type="checkbox"
+                              checked={range.delivery}
+                              aria-label={t('admin.settings.rangeDelivery', { day: name, n: i + 1 })}
+                              onChange={(e) => changeRange(day, i, { delivery: e.target.checked, pickup: e.target.checked ? range.pickup : true })}
+                            />
+                            {t('admin.settings.rangeDeliveryShort')}
+                          </label>
+                          <label className="checkbox">
+                            <input
+                              type="checkbox"
+                              checked={range.pickup}
+                              aria-label={t('admin.settings.rangePickup', { day: name, n: i + 1 })}
+                              onChange={(e) => changeRange(day, i, { pickup: e.target.checked, delivery: e.target.checked ? range.delivery : true })}
+                            />
+                            {t('admin.settings.rangePickupShort')}
+                          </label>
                           <button
                             type="button"
                             className="secondary"
@@ -139,7 +157,7 @@ export function SupplyDaysSection() {
                           type="button"
                           className="secondary"
                           aria-label={t('admin.settings.addRangeFor', { day: name })}
-                          onClick={() => change(day.weekday, { hours: [...day.hours, { from: '11:00:00', to: '00:00:00' }] })}
+                          onClick={() => change(day.weekday, { hours: [...day.hours, { from: '11:00:00', to: '00:00:00', delivery: true, pickup: true }] })}
                         >
                           {t('admin.settings.addRange')}
                         </button>
