@@ -1,0 +1,20 @@
+/* The site's colour palette from the menu flyer: warm amber and black on a cream page. Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #fdf8ec;
+  --color-surface: #ffffff;
+  --color-text: #1c1710;
+  --color-muted: #6b5f4d;
+  --color-accent: #1c1710;
+  --color-accent-hover: #3a2f1c;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #f5a623;
+  --color-border: #f0dfb6;
+  --color-error: #b42318;
+  --color-success: #2f6b3a;
+  --color-soft: #fbefcf;
+  --color-shadow: #1c1710;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(245 166 35 / 0.22);
+  --color-badge-text: #7a4a00;
+  --gradient-hero: linear-gradient(135deg, #1c1710 0%, #3a2a0c 55%, var(--color-gold) 170%);
+}
