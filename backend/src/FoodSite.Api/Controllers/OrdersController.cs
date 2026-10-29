@@ -172,8 +172,12 @@ public class OrdersController(
             return Invalid(errors);
 
         // A full hour is still taken: the client was told the admin may call to move it.
-        var hourFull = hour is { } slot && HourCapacity.IsFull(
-            await db.Orders.AsNoTracking().InSlot(supplyDate, slot).CountAsync(ct), settings.OrdersPerHour);
+        var hourFull = false;
+        if (hour is { } slot)
+        {
+            var (deliveries, pickups) = await HourCapacity.CountAsync(db.Orders.AsNoTracking(), supplyDate, slot, ct);
+            hourFull = HourCapacity.IsFull(HourCapacity.LimitsOf(settings), input.FulfillmentMethod, deliveries, pickups);
+        }
 
         // The order is added to that phone's account, if there is one.
         var userId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync(ct);

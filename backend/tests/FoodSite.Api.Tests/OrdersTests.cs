@@ -771,6 +771,41 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Delivery_and_pickup_can_have_limits_of_their_own()
+    {
+        await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHourDelivery = 2, OrdersPerHourPickup = 4 })).Read<SettingsDto>();
+        // The single limit follows as the larger of the two.
+        Assert.Equal(4, saved.OrdersPerHour);
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        async Task<ConfirmationDto> PlaceAt(string method) =>
+            await (await Place(await ValidOrder(o => { o["deliveryHour"] = "08:00"; o["fulfillmentMethod"] = method; }))).Read<ConfirmationDto>();
+        async Task<HourAvailabilityDto> Availability() =>
+            await _client.GetAsync($"/api/hour-availability?date={date}&hour=08:00").Read<HourAvailabilityDto>();
+
+        Assert.False((await PlaceAt("Delivery")).HourFull);
+        Assert.False((await PlaceAt("Delivery")).HourFull);
+        // Two deliveries fill the deliveries, and leave two places for pickups.
+        Assert.Equal((true, false, false), ((await Availability()).DeliveryFull, (await Availability()).PickupFull, (await Availability()).Full));
+        var overDelivery = await PlaceAt("Delivery");
+        Assert.True(overDelivery.HourFull);
+        Assert.False((await PlaceAt("Pickup")).HourFull);
+        Assert.False((await PlaceAt("Pickup")).HourFull);
+        Assert.True((await PlaceAt("Pickup")).HourFull);
+        Assert.True((await Availability()).Full);
+
+        var flagged = (await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>()).Where(o => o.HourFull).ToList();
+        Assert.Equal(2, flagged.Count);
+        Assert.Contains(flagged, o => o.Id == overDelivery.Id);
+
+        // Back to the single limit: separate ones are cleared.
+        var single = await (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerHour = 6, OrdersPerHourDelivery = null, OrdersPerHourPickup = null })).Read<SettingsDto>();
+        Assert.Equal((6, null, null), (single.OrdersPerHour, single.OrdersPerHourDelivery, single.OrdersPerHourPickup));
+        await (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerHourDelivery = -1 })).AssertInvalid("OrdersPerHourDelivery", "invalid");
+    }
+
+    [Fact]
     public async Task Without_a_limit_no_hour_is_ever_full()
     {
         await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);

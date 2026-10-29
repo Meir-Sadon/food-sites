@@ -23,6 +23,8 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   addressFirst: false,
   serviceCities: 'אשקלון',
   ordersPerHour: null,
+  ordersPerHourDelivery: null,
+  ordersPerHourPickup: null,
   slotMinutes: 60,
   alignSlots: false,
   deliveryLeadMinutes: 0,

@@ -292,6 +292,8 @@ describe('General settings', () => {
       addressFirst: false,
       serviceCities: 'אשקלון',
       ordersPerHour: null,
+      ordersPerHourDelivery: null,
+      ordersPerHourPickup: null,
       slotMinutes: 60,
       alignSlots: false,
       deliveryLeadMinutes: 0,
@@ -512,6 +514,42 @@ describe('General settings', () => {
 
     await screen.findByText('נשמר.')
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ordersPerHour: 3 })
+  })
+
+  it('saves separate hourly limits for delivery and pickup, with the main field showing the larger', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    await user.click(within(form).getByRole('button', { name: 'הגדרת מגבלה נפרדת למשלוח ולאיסוף עצמי' }))
+    expect(within(form).getByLabelText('הזמנות בשעה')).toHaveAttribute('readonly')
+    await user.type(within(form).getByLabelText('הזמנות בשעה למשלוח'), '2')
+    await user.type(within(form).getByLabelText('הזמנות בשעה לאיסוף עצמי'), '4')
+    expect(within(form).getByLabelText('הזמנות בשעה')).toHaveValue(4)
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ordersPerHour: 4, ordersPerHourDelivery: 2, ordersPerHourPickup: 4 })
+  })
+
+  it('closing the separate hourly limits clears them and keeps the shown maximum as the single limit', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => ({ ...settings(), ordersPerHour: 4, ordersPerHourDelivery: 2, ordersPerHourPickup: 4 }),
+      'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }),
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    expect(within(form).getByLabelText('הזמנות בשעה למשלוח')).toHaveValue(2)
+    await user.click(within(form).getByRole('button', { name: 'הגדרת מגבלה נפרדת למשלוח ולאיסוף עצמי' }))
+    expect(within(form).queryByLabelText('הזמנות בשעה למשלוח')).not.toBeInTheDocument()
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ ordersPerHour: 4, ordersPerHourDelivery: null, ordersPerHourPickup: null })
   })
 
   it('saves the address first setting and shows "saved" right beside the save button', async () => {
