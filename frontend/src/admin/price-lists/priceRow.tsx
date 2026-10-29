@@ -4,7 +4,10 @@ import type { FieldErrors } from '../../api/client'
 import type { PriceList, PriceListDish } from '../../api/priceLists'
 import { Modal } from '../../components/Modal'
 import { FieldError } from '../ui'
-import { patchRow, patchSub, type Row } from './priceRowModel'
+import { clientPrice, patchRow, patchSub, type Row } from './priceRowModel'
+
+/** Today in Israel, "yyyy-MM-dd", the day the server prices an order by. */
+const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date())
 
 /**
  * One dish's prices in one list: the base price, the list price and the dates, and its other prices behind a
@@ -38,6 +41,13 @@ export function PriceRowFields({
   const discount = !list.isDefault && Number(row.price) < Number(row.basePrice)
   const subDiscounts = !list.isDefault && row.subs.some((s) => Number(s.price) < Number(s.basePrice))
   const subsId = `${idPrefix}-subs`
+  // With a general discount, what a client on the list pays today, since it is not one of the fields.
+  const pays = (basePrice: string, price: string) => {
+    if (list.isDefault || list.discount.percent === null || basePrice === '' || price === '') return null
+    const value = clientPrice(Number(basePrice), Number(price), row, list.discount, today())
+    return value === null ? null : t('admin.priceLists.clientPays', { price: value })
+  }
+  const rowPays = pays(row.basePrice, row.price)
   const subLabel = (key: string) => {
     const sub = dish.subPrices.find((s) => s.key === key)!
     return t(`admin.priceLists.subKinds.${sub.kind}`, { name: sub.name })
@@ -81,6 +91,7 @@ export function PriceRowFields({
               </>
             )}
           </span>
+          {rowPays && <span className="hint">{rowPays}</span>}
           {row.subs.length > 0 && (
             <>
               <span className="row">
@@ -103,6 +114,7 @@ export function PriceRowFields({
                         label={t(list.isDefault ? 'admin.priceLists.regularPrice' : 'admin.priceLists.listPrice')} value={sub.price}
                         onChange={(price) => onChange(patchSub(row, sub.key, { price }))} errors={errors}
                         field={`${field}.subPrices[${j}].price`} describedName={subLabel(sub.key)} />
+                      {pays(sub.basePrice, sub.price) && <span className="hint">{pays(sub.basePrice, sub.price)}</span>}
                     </li>
                   ))}
                   {!list.isDefault && <li className="hint">{t('admin.priceLists.subPricesHint')}</li>}

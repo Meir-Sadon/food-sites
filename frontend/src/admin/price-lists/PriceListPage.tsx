@@ -67,9 +67,10 @@ export function PriceListPage() {
                     selfId={list.id}
                     initialName={list.name ?? ''}
                     initialBaseId={list.baseListId}
+                    initialDiscount={list.discount}
                     submitLabel={t('admin.save')}
-                    onSave={async (name, baseListId) => {
-                      const saved = await priceListsApi.update(list.id, name, baseListId)
+                    onSave={async (name, baseListId, discount) => {
+                      const saved = await priceListsApi.update(list.id, name, baseListId, discount)
                       // A new base copied its prices, so the dishes are loaded again.
                       const dishes = saved.baseListId !== list.baseListId ? await priceListsApi.dishes(list.id) : data.dishes
                       setData((current) => current && { ...current, dishes, lists: current.lists.map((l) => (l.id === saved.id ? saved : l)) })

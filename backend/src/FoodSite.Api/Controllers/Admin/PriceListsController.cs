@@ -21,7 +21,14 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     public const int MaxPhones = 1000;
 
     /// <summary>Name is null for the default list. BaseListId null means the default list (and is the default list's own).</summary>
-    public record PriceListDto(int Id, string? Name, bool IsDefault, int? BaseListId, IReadOnlyList<string> Phones, StatusesDto Statuses);
+    public record PriceListDto(
+        int Id, string? Name, bool IsDefault, int? BaseListId, IReadOnlyList<string> Phones, StatusesDto Statuses, DiscountDto Discount);
+
+    /// <summary>
+    /// A discount on the whole menu: Percent off each base price (null is none), rounded up to a whole shekel, From/To
+    /// its dates (either open), and Rule (a <see cref="DiscountRules"/> value) which wins where a dish has its own discount.
+    /// </summary>
+    public record DiscountDto(decimal? Percent, DateOnly? From, DateOnly? To, string Rule);
 
     /// <summary>
     /// The clients a list is for by status: registered within NewClientsAmount NewClientsUnits (null is off), with no
@@ -29,7 +36,8 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     /// </summary>
     public record StatusesDto(int? NewClientsAmount, string? NewClientsUnit, bool NoOrders, bool MidOrder, decimal? OpenOrderAbove);
 
-    public record PriceListInput(string? Name, int? BaseListId);
+    /// <summary>Discount null keeps the list's general discount.</summary>
+    public record PriceListInput(string? Name, int? BaseListId, DiscountDto? Discount = null);
 
     /// <summary>
     /// A dish in a list: its regular main price, and the list's base price, price and dates. InList is false for a dish
@@ -72,6 +80,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
         if (await Validate(input, null) is { } invalid)
             return invalid;
         var list = new PriceList { Name = input.Name!.Trim(), BaseListId = await NonDefaultBaseAsync(input.BaseListId) };
+        SetDiscount(list, input.Discount);
         db.PriceLists.Add(list);
         await CopyBaseAsync(list);
         await db.SaveChangesAsync();
@@ -91,6 +100,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
             return invalid;
 
         list.Name = input.Name!.Trim();
+        SetDiscount(list, input.Discount);
         var baseId = await NonDefaultBaseAsync(input.BaseListId);
         if (baseId != list.BaseListId)
         {
@@ -268,7 +278,16 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
 
     private static PriceListDto ToDto(PriceList l) =>
         new(l.Id, l.Name, l.IsDefault, l.BaseListId, l.Phones.Select(p => p.Phone).Order().ToList(),
-            new StatusesDto(l.NewClientsAmount, l.NewClientsAmount is null ? null : l.NewClientsUnit, l.ForNoOrders, l.ForMidOrder, l.OpenOrderAbove));
+            new StatusesDto(l.NewClientsAmount, l.NewClientsAmount is null ? null : l.NewClientsUnit, l.ForNoOrders, l.ForMidOrder, l.OpenOrderAbove),
+            new DiscountDto(l.DiscountPercent, l.DiscountFrom, l.DiscountTo, l.DiscountRule));
+
+    private static void SetDiscount(PriceList list, DiscountDto? discount)
+    {
+        if (discount is null)
+            return;
+        list.DiscountPercent = discount.Percent is { } percent ? decimal.Round(percent, 2) : null;
+        (list.DiscountFrom, list.DiscountTo, list.DiscountRule) = (discount.From, discount.To, discount.Rule!);
+    }
 
     /// <summary>The statuses the list is for, besides its phones. A list for the client's phone wins over these.</summary>
     [HttpPut("{id:int}/statuses")]
@@ -317,6 +336,15 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     {
         var errors = new Errors();
         errors.Text(nameof(input.Name), input.Name, PriceList.NameMaxLength, required: true);
+        if (input.Discount is { } discount)
+        {
+            if (discount.Percent is { } percent && (percent <= 0 || percent >= 100))
+                errors.Add("discount.percent", "invalid");
+            if (discount.From is { } from && discount.To is { } to && to < from)
+                errors.Add("discount.to", "toBeforeFrom");
+            if (!DiscountRules.All.Contains(discount.Rule))
+                errors.Add("discount.rule", "invalid");
+        }
         var name = input.Name?.Trim();
         if (!string.IsNullOrEmpty(name) && await db.PriceLists.AnyAsync(l => l.Name == name && l.Id != (list == null ? 0 : list.Id)))
             errors.Add(nameof(input.Name), "duplicate");
@@ -418,14 +446,5 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
         db.ChangeTracker.Clear();
     }
 
-    private async Task<List<Dish>> PricedDishesAsync(bool tracking)
-    {
-        var query = db.Dishes.Include(d => d.Options).Include(d => d.Images).Include(d => d.Category)
-            .Include(d => d.AddOns).ThenInclude(a => a.AddOnDish).Include(d => d.AddOns).ThenInclude(a => a.Group)
-            .Include(d => d.AddOnGroups).AsSplitQuery()
-            .Where(d => !d.IsHidden && !(d.UseMainDishPrice && d.MainDishId != null));
-        var dishes = await (tracking ? query : query.AsNoTracking()).ToListAsync();
-        return dishes.Where(d => PriceBook.RegularMainPrice(d) is not null)
-            .OrderBy(d => d.Category?.DisplayOrder ?? int.MaxValue).ThenBy(d => d.DisplayOrder).ThenBy(d => d.Id).ToList();
-    }
+    private Task<List<Dish>> PricedDishesAsync(bool tracking) => PriceBook.PricedDishesAsync(db, tracking);
 }
