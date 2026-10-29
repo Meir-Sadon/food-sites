@@ -658,6 +658,10 @@
       "addRangeFor": "הוספת טווח שעות ל{{day}}",
       "removeRange": "הסרת טווח {{n}} של {{day}}",
       "hoursTo": "עד",
+      "rangeDelivery": "משלוח ב{{day}}, טווח {{n}}",
+      "rangePickup": "איסוף עצמי ב{{day}}, טווח {{n}}",
+      "rangeDeliveryShort": "משלוח",
+      "rangePickupShort": "איסוף",
       "hoursToFor": "שעת סיום ל{{day}}, טווח {{n}}",
       "shabbat": {
         "title": "שבתות וחגים",
@@ -1471,6 +1475,7 @@
     "supplyDateUnavailable": "יום האספקה שנבחר כבר לא פתוח להזמנה. בחרו תאריך אחר.",
     "deliveryHourUnavailable": "השעה הזאת לא פנויה בתאריך שנבחר. בחרו שעה מהרשימה.",
     "deliveryHoursInvalid": "בכל טווח שעות צריכה להיות שעת התחלה ושעת סיום מאוחרת ממנה (00:00 בסיום היא חצות).",
+    "hoursNeedAMethod": "בכל טווח שעות צריך לאפשר משלוח, איסוף עצמי או שניהם.",
     "deliveryHoursOverlap": "טווחי השעות באותו יום לא יכולים לחפוף.",
     "dishLimitReached": "אין מספיק מהמנה הזו ליום האספקה שנבחר. הקטינו את הכמות או בחרו תאריך אחר.",
     "portionLimitReached": "לא נשארו מספיק מנות ליום האספקה שנבחר. הקטינו את הכמות או בחרו תאריך אחר.",

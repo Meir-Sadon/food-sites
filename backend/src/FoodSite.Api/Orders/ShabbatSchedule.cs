@@ -20,7 +20,7 @@ public class ShabbatSchedule(ShabbatRules.Rules rules, TimeZoneInfo zone)
         return new(ShabbatRules.Read(json), clock.Zone);
     }
 
-    public record HoursRange(TimeSpan From, TimeSpan End);
+    public record HoursRange(TimeSpan From, TimeSpan End, bool DeliveryAllowed = true, bool PickupAllowed = true);
 
     public ShabbatRules.Rules Rules { get; } = rules;
 

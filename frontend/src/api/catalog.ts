@@ -117,6 +117,9 @@ export interface SupplyDay {
 export interface SupplyHours {
   from: string
   to: string
+  /** Whether orders for delivery / pickup can be placed in this range; at least one is true. */
+  delivery: boolean
+  pickup: boolean
 }
 
 export interface ClosedDate {

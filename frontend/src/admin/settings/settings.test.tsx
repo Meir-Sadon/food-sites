@@ -445,10 +445,25 @@ describe('General settings', () => {
     await screen.findByText('נשמר.')
     const sent = api.sent('PUT', '/api/admin/supply-days')[0].body as SupplyDay[]
     expect(sent.find((d) => d.weekday === 'Friday')?.hours).toEqual([
-      { from: '00:00:00', to: '01:00:00' },
-      { from: '11:00:00', to: '00:00:00' },
+      { from: '00:00:00', to: '01:00:00', delivery: true, pickup: true },
+      { from: '11:00:00', to: '00:00:00', delivery: true, pickup: true },
     ])
     expect(sent.find((d) => d.weekday === 'Sunday')?.hours).toEqual([])
+  })
+
+  it('lets a range be limited to pickup only', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/supply-days': (_, body) => body })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const days = await section('ימי ושעות עבודה')
+
+    await user.click(within(days).getByRole('button', { name: 'הוספת טווח שעות לשישי' }))
+    await user.click(within(days).getByLabelText('משלוח בשישי, טווח 1'))
+    await user.click(within(days).getByRole('button', { name: 'שמירה' }))
+
+    await screen.findByText('נשמר.')
+    const sent = api.sent('PUT', '/api/admin/supply-days')[0].body as SupplyDay[]
+    expect(sent.find((d) => d.weekday === 'Friday')?.hours).toEqual([{ from: '11:00:00', to: '00:00:00', delivery: false, pickup: true }])
   })
 
   it('asks before saving new hours of a day that dishes are sold in specific hours of', async () => {
