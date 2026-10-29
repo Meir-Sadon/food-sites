@@ -1,0 +1,192 @@
+{
+  "categories": [
+    {
+      "name": "קובה",
+      "dishes": [
+        {
+          "name": "קובה מטוגנת",
+          "sellBy": "Units",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "description": "קובה ברוגול מטוגנת במילוי בשר טחון",
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/kubbeh-biss/source/orig-fried-trays.png"
+          ]
+        },
+        {
+          "name": "קובה צהובה",
+          "sellBy": "Units",
+          "unitPrice": 18,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "description": "קובה באידוי במעטפת ברוגול, ממולא בשר טחון",
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/kubbeh-biss/source/orig-yellow.png"
+          ]
+        },
+        {
+          "name": "קובה צהובה בפיתה",
+          "sellBy": "Units",
+          "unitPrice": 25,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "description": "מוגש עם חמוצים, עמבה וטחינה",
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/kubbeh-biss/source/orig-cut-sauce.png"
+          ]
+        },
+        {
+          "name": "קובה סלק",
+          "sellBy": "Units",
+          "unitPrice": 50,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "description": "4 יחידות כולל מרק",
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/kubbeh-biss/source/orig-beet-soup.png"
+          ],
+          "unitName": "מנה"
+        }
+      ]
+    },
+    {
+      "name": "תוספות",
+      "dishes": [
+        {
+          "name": "אורז לבן",
+          "sellBy": "Units",
+          "unitPrice": 15,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "isSideDish": true
+        },
+        {
+          "name": "חמוצים (טורשי)",
+          "sellBy": "Units",
+          "unitPrice": 3,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "isSideDish": true
+        },
+        {
+          "name": "עמבה",
+          "sellBy": "Units",
+          "unitPrice": 3,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "isSideDish": true
+        },
+        {
+          "name": "טחינה",
+          "sellBy": "Units",
+          "unitPrice": 3,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "isSideDish": true
+        }
+      ]
+    },
+    {
+      "name": "שתיה",
+      "dishes": [
+        {
+          "name": "פחית קולה 330 מ״ל",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406043/tin-cocaCola-coke.jpg"
+          ]
+        },
+        {
+          "name": "פחית קולה זירו 330 מ״ל",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406044/tin-cocaCola-coke-zero.jpg"
+          ]
+        },
+        {
+          "name": "פחית פאנטה 330 מ״ל",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406054/tin-fanta-orange.jpg"
+          ]
+        },
+        {
+          "name": "ספרייט 330 מ״ל",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406105/tin-sprite.jpg"
+          ]
+        },
+        {
+          "name": "ספרייט זירו 330 מ״ל",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406111/tin-sprite-zero.jpg"
+          ]
+        },
+        {
+          "name": "פחית מיץ פז ענבים 330 מ״ל",
+          "sellBy": "Units",
+          "unitPrice": 10,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1793267508/common/drinks/tin-paz-grapes.jpg"
+          ]
+        },
+        {
+          "name": "מים מינרליים 500 מ״ל",
+          "sellBy": "Units",
+          "unitPrice": 8,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405989/bottle-meyEden-water.jpg"
+          ]
+        },
+        {
+          "name": "פיוז טי אפרסק 500 מ״ל",
+          "sellBy": "Units",
+          "unitPrice": 12,
+          "minAmount": 1,
+          "maxAmount": 20,
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1791405983/bottle-fuzetea-peach.jpg"
+          ]
+        }
+      ]
+    }
+  ]
+}
