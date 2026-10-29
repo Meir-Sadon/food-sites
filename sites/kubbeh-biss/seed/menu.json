@@ -159,7 +159,10 @@
           "unitPrice": 10,
           "minAmount": 1,
           "maxAmount": 20,
-          "amountStep": 1
+          "amountStep": 1,
+          "images": [
+            "https://res.cloudinary.com/zt7wzpn4/image/upload/v1793267508/common/drinks/tin-paz-grapes.jpg"
+          ]
         },
         {
           "name": "מים מינרליים 500 מ״ל",
