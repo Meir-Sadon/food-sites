@@ -68,6 +68,14 @@ public class Settings
     /// </summary>
     public int? OrdersPerHour { get; set; }
 
+    /// <summary>
+    /// Separate limits for one hour slot, for deliveries and for pickups; null means no limit for that way. Setting either
+    /// replaces the single limit, which then holds the most orders the slot takes (see <c>HourCapacity</c>).
+    /// </summary>
+    public int? OrdersPerHourDelivery { get; set; }
+
+    public int? OrdersPerHourPickup { get; set; }
+
     /// <summary>Length of one hour slot a client picks, in minutes: 15, 30 or 60 (see <c>SlotTiming</c>).</summary>
     public int SlotMinutes { get; set; } = 60;
 

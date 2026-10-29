@@ -111,23 +111,32 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             : NotFound();
 
     /// <summary>
-    /// The orders that came after their hour was already full (by the site's orders per hour): the ones the admin
-    /// should call to move. Cancelled orders take no place.
+    /// The orders that came after their hour was already full for their way of receiving (by the site's orders per hour):
+    /// the ones the admin should call to move. Cancelled orders take no place.
     /// </summary>
     private async Task<HashSet<int>> OverbookedAsync(List<DateOnly> dates)
     {
-        var limit = await db.Settings.AsNoTracking().Select(s => s.OrdersPerHour).SingleAsync();
-        if (limit is not { } perHour || dates.Count == 0)
+        var limits = HourCapacity.LimitsOf(await db.Settings.AsNoTracking().SingleAsync());
+        if (limits == new HourLimits(null, null, null) || dates.Count == 0)
             return [];
         var slotted = await db.Orders.AsNoTracking()
             .Where(o => dates.Contains(o.SupplyDate) && o.DeliveryHour != null && o.Status != OrderStatus.Cancelled)
-            .Select(o => new { o.Id, o.SupplyDate, o.DeliveryHour, o.CreatedAt })
+            .Select(o => new { o.Id, o.SupplyDate, o.DeliveryHour, o.CreatedAt, o.FulfillmentMethod })
             .ToListAsync();
-        return slotted
-            .GroupBy(o => (o.SupplyDate, o.DeliveryHour))
-            .SelectMany(slot => slot.OrderBy(o => o.CreatedAt).ThenBy(o => o.Id).Skip(perHour))
-            .Select(o => o.Id)
-            .ToHashSet();
+        var overbooked = new HashSet<int>();
+        foreach (var slot in slotted.GroupBy(o => (o.SupplyDate, o.DeliveryHour)))
+        {
+            int deliveries = 0, pickups = 0;
+            // Every order takes a place, also one that came late, as when the order was placed.
+            foreach (var order in slot.OrderBy(o => o.CreatedAt).ThenBy(o => o.Id))
+            {
+                if (HourCapacity.IsFull(limits, order.FulfillmentMethod, deliveries, pickups))
+                    overbooked.Add(order.Id);
+                if (order.FulfillmentMethod == FulfillmentMethod.Delivery) deliveries++;
+                else pickups++;
+            }
+        }
+        return overbooked;
     }
 
     /// <summary>The total of each dish and option to cook for one supply day. Cancelled orders and orders still waiting for approval are left out.</summary>

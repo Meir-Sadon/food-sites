@@ -30,6 +30,32 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     setError(null)
   }
 
+  // The separate limits are open when either is set, or when the admin opened them to fill in.
+  const [separateOpened, setSeparateOpened] = useState(false)
+  const separateHours = separateOpened || settings?.ordersPerHourDelivery != null || settings?.ordersPerHourPickup != null
+
+  /** The single limit follows the two as the larger of them; with a way left unlimited the hour has no limit. */
+  function changeSeparateHours(patch: Partial<Pick<Settings, 'ordersPerHourDelivery' | 'ordersPerHourPickup'>>) {
+    setData((current) => {
+      if (!current) return current
+      const next = { ...current, ...patch }
+      const { ordersPerHourDelivery: d, ordersPerHourPickup: p } = next
+      return { ...next, ordersPerHour: d && p ? Math.max(d, p) : null }
+    })
+    setError(null)
+  }
+
+  /** Opening starts both limits at the single one; closing clears them and keeps the shown maximum as the single limit. */
+  function toggleSeparateHours() {
+    if (separateHours) {
+      setSeparateOpened(false)
+      change({ ordersPerHourDelivery: null, ordersPerHourPickup: null })
+    } else {
+      setSeparateOpened(true)
+      if (settings?.ordersPerHour) changeSeparateHours({ ordersPerHourDelivery: settings.ordersPerHour, ordersPerHourPickup: settings.ordersPerHour })
+    }
+  }
+
   const { dirty, markSaved } = useDirty(settings)
   useUnsavedChanges(dirty, save)
 
@@ -272,18 +298,58 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
               <label htmlFor="settings-ordersPerHour">{t('admin.settings.ordersPerHour')}</label>
               <Info text={t('admin.settings.ordersPerHourHint')} about={t('admin.settings.ordersPerHour')} />
             </span>
-            <input
-              id="settings-ordersPerHour"
-              type="number"
-              inputMode="numeric"
-              min={0}
-              step={1}
-              dir="ltr"
-              className="input-narrow"
-              value={settings.ordersPerHour ?? ''}
-              aria-describedby="settings-ordersPerHour-error"
-              onChange={(e) => change({ ordersPerHour: e.target.value === '' ? null : Number(e.target.value) })}
-            />
+            <span className="row">
+              <input
+                id="settings-ordersPerHour"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                dir="ltr"
+                className="input-narrow"
+                value={settings.ordersPerHour ?? ''}
+                readOnly={separateHours}
+                aria-describedby="settings-ordersPerHour-error"
+                onChange={(e) => change({ ordersPerHour: e.target.value === '' ? null : Number(e.target.value) })}
+              />
+              <button
+                type="button"
+                className="button-quiet"
+                aria-expanded={separateHours}
+                aria-controls="settings-ordersPerHour-separate"
+                aria-label={t('admin.settings.ordersPerHourSeparate')}
+                title={t('admin.settings.ordersPerHourSeparate')}
+                onClick={toggleSeparateHours}
+              >
+                <span aria-hidden="true">{separateHours ? '▾' : '◂'}</span>
+              </button>
+            </span>
+            {separateHours && (
+              <span id="settings-ordersPerHour-separate" className="stack">
+                <span className="hint">{t('admin.settings.ordersPerHourSeparateHint')}</span>
+                {(['Delivery', 'Pickup'] as const).map((way) => {
+                  const field = `ordersPerHour${way}` as const
+                  return (
+                    <span key={way} className="field">
+                      <label htmlFor={`settings-${field}`}>{t(`admin.settings.ordersPerHour${way}`)}</label>
+                      <input
+                        id={`settings-${field}`}
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        step={1}
+                        dir="ltr"
+                        className="input-narrow"
+                        value={settings[field] ?? ''}
+                        aria-describedby={`settings-${field}-error`}
+                        onChange={(e) => changeSeparateHours({ [field]: e.target.value === '' ? null : Number(e.target.value) })}
+                      />
+                      <FieldError errors={errors} field={field} id={`settings-${field}-error`} />
+                    </span>
+                  )
+                })}
+              </span>
+            )}
             <FieldError errors={errors} field="ordersPerHour" id="settings-ordersPerHour-error" />
           </span>
           <span className="field">
