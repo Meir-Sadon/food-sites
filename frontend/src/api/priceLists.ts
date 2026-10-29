@@ -14,7 +14,24 @@ export interface PriceList {
   phones: string[]
   /** The clients the list is for by what they are doing, besides its phones. */
   statuses: PriceListStatuses
+  discount: PriceListDiscount
 }
+
+/** Which wins where a dish has a discount of its own: the general one, the dish's, the bigger or the smaller discount. */
+export type DiscountRule = 'general' | 'dish' | 'higher' | 'lower'
+
+export const DISCOUNT_RULES: readonly DiscountRule[] = ['general', 'dish', 'higher', 'lower']
+
+/** A discount on the whole menu: `percent` off each base price (null is none), rounded up to a whole shekel, in its dates. */
+export interface PriceListDiscount {
+  percent: number | null
+  /** "yyyy-MM-dd", both included; null leaves that side open. */
+  from: string | null
+  to: string | null
+  rule: DiscountRule
+}
+
+export const noDiscount: PriceListDiscount = { percent: null, from: null, to: null, rule: 'dish' }
 
 /** Any one is enough: registered within the period, no order that was not cancelled, dishes in the saved cart, an open order above the amount. */
 export interface PriceListStatuses {
@@ -90,8 +107,9 @@ export const linkedLists = (list: PriceList, lists: PriceList[]) =>
 export const priceListsApi = {
   getAll: () => apiJson<PriceList[]>(base),
   create: (name: string, baseListId: number | null) => apiJson<PriceList>(base, send('POST', { name, baseListId })),
-  update: (id: number, name: string, baseListId: number | null) =>
-    apiJson<PriceList>(`${base}/${id}`, send('PUT', { name, baseListId })),
+  /** Leaving `discount` out keeps the list's general discount. */
+  update: (id: number, name: string, baseListId: number | null, discount?: PriceListDiscount) =>
+    apiJson<PriceList>(`${base}/${id}`, send('PUT', { name, baseListId, discount })),
   remove: (id: number) => apiJson<void>(`${base}/${id}`, send('DELETE')),
   dishes: (id: number) => apiJson<PriceListDish[]>(`${base}/${id}/dishes`),
   /** With `updateLinked`, a changed price also becomes the base price in the lists based on this one. */

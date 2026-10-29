@@ -147,10 +147,52 @@ public sealed class PriceBook
         _ => now.AddDays(-7 * amount),
     };
 
+    /// <summary>A price less a general discount, rounded up to a whole shekel and never above the price.</summary>
+    public static decimal Discounted(decimal basePrice, decimal percent) =>
+        Math.Min(basePrice, Math.Ceiling(basePrice * (100 - percent) / 100));
+
     /// <summary>
-    /// The book for a logged-in client on a day. A dish that a list assigned to the client's phone prices (in its dates)
-    /// takes the lowest such price; otherwise the lowest among the lists whose statuses take the client in. Each dish
-    /// brings its winning row's sub-prices. A dish no list prices keeps its regular prices.
+    /// What a list charges for one price of a dish: <paramref name="listPrice"/> is the row's own price within its dates
+    /// (null when the list has none then), <paramref name="percent"/> the general discount on that day (null when none).
+    /// A row's price that differs from its base is the dish's own discount; <paramref name="rule"/> says which wins
+    /// when both apply. Null when the list leaves the price alone.
+    /// </summary>
+    public static decimal? ListPrice(decimal basePrice, decimal? listPrice, decimal? percent, string rule)
+    {
+        if (percent is not { } pct)
+            return listPrice;
+        var general = Discounted(basePrice, pct);
+        if (listPrice is not { } own || own == basePrice)
+            return general;
+        return rule switch
+        {
+            DiscountRules.General => general,
+            DiscountRules.Higher => Math.Min(general, own),
+            DiscountRules.Lower => Math.Max(general, own),
+            _ => own,
+        };
+    }
+
+    /// <summary>
+    /// The dishes with prices of their own (not hidden, not a variant priced as its main dish), with what
+    /// <see cref="SubPricesOf"/> and the admin's lists need loaded, in menu order.
+    /// </summary>
+    public static async Task<List<Dish>> PricedDishesAsync(AppDbContext db, bool tracking, CancellationToken ct = default)
+    {
+        var query = db.Dishes.Include(d => d.Options).Include(d => d.Images).Include(d => d.Category)
+            .Include(d => d.AddOns).ThenInclude(a => a.AddOnDish).Include(d => d.AddOns).ThenInclude(a => a.Group)
+            .Include(d => d.AddOnGroups).AsSplitQuery()
+            .Where(d => !d.IsHidden && !(d.UseMainDishPrice && d.MainDishId != null));
+        var dishes = await (tracking ? query : query.AsNoTracking()).ToListAsync(ct);
+        return dishes.Where(d => RegularMainPrice(d) is not null)
+            .OrderBy(d => d.Category?.DisplayOrder ?? int.MaxValue).ThenBy(d => d.DisplayOrder).ThenBy(d => d.Id).ToList();
+    }
+
+    /// <summary>
+    /// The book for a logged-in client on a day. A dish that a list assigned to the client's phone prices takes the
+    /// lowest such price; otherwise the lowest among the lists whose statuses take the client in. A list prices a dish
+    /// through its row within the row's dates, and, while its general discount is on, every priced dish (see
+    /// <see cref="ListPrice"/>). Each dish brings its winning list's sub-prices. A dish no list prices keeps its regular prices.
     /// </summary>
     public static async Task<PriceBook> ForClientAsync(AppDbContext db, int userId, DateTimeOffset now, DateOnly today, CancellationToken ct = default)
     {
@@ -174,23 +216,60 @@ public sealed class PriceBook
         }
 
         var phone = user.Phone;
-        var rows = await db.PriceListDishes.AsNoTracking().Include(d => d.PriceList)
-            .Where(d => !d.PriceList!.IsDefault
-                && ((phone != null && d.PriceList.Phones.Any(p => p.Phone == phone)) || forStatus.Contains(d.PriceListId)))
-            .ToListAsync(ct);
         var byPhone = phone is null ? [] : (await db.PriceListPhones.AsNoTracking()
             .Where(p => p.Phone == phone).Select(p => p.PriceListId).ToListAsync(ct)).ToHashSet();
-        var byDish = rows
-            .Where(r => r.IsActiveOn(today))
-            .GroupBy(r => r.DishId)
-            .ToDictionary(g => g.Key, g =>
+        var lists = await db.PriceLists.AsNoTracking()
+            .Where(l => !l.IsDefault && (byPhone.Contains(l.Id) || forStatus.Contains(l.Id))).ToListAsync(ct);
+        if (lists.Count == 0)
+            return Regular;
+        var ids = lists.Select(l => l.Id).ToList();
+        var rows = (await db.PriceListDishes.AsNoTracking().Where(d => ids.Contains(d.PriceListId)).ToListAsync(ct))
+            .ToLookup(r => r.PriceListId);
+
+        // A general discount reaches dishes the list has no row for, at their base list's prices.
+        var discounted = lists.Where(l => l.DiscountActiveOn(today)).ToList();
+        var dishes = discounted.Count > 0 ? await PricedDishesAsync(db, tracking: false, ct) : [];
+        var baseIds = discounted.Where(l => l.BaseListId is not null).Select(l => l.BaseListId!.Value).Distinct().ToList();
+        var baseRows = (await db.PriceListDishes.AsNoTracking().Where(d => baseIds.Contains(d.PriceListId)).ToListAsync(ct))
+            .ToLookup(r => r.PriceListId);
+
+        var entries = new List<(int ListId, int DishId, Entry Entry)>();
+        foreach (var list in lists)
+        {
+            var name = list.Name ?? "";
+            var own = rows[list.Id].ToDictionary(r => r.DishId);
+            if (!list.DiscountActiveOn(today))
             {
-                // A list for the phone wins over the lists by status.
-                var candidates = g.Any(r => byPhone.Contains(r.PriceListId)) ? g.Where(r => byPhone.Contains(r.PriceListId)) : g;
-                var best = candidates.OrderBy(r => r.Price).ThenBy(r => r.PriceListId).First();
-                return new Entry(best.Price, best.BasePrice, best.PriceList!.Name ?? "",
-                    (best.SubPrices ?? []).DistinctBy(s => s.Key).ToDictionary(s => s.Key, s => s.Price));
-            });
+                entries.AddRange(own.Values.Where(r => r.IsActiveOn(today)).Select(r => (list.Id, r.DishId, new Entry(r.Price, r.BasePrice, name,
+                    (r.SubPrices ?? []).DistinctBy(x => x.Key).ToDictionary(x => x.Key, x => x.Price)))));
+                continue;
+            }
+            var percent = list.DiscountPercent!.Value;
+            var fromBase = list.BaseListId is { } baseId ? baseRows[baseId].ToDictionary(r => r.DishId) : [];
+            foreach (var dish in dishes)
+            {
+                var row = own.GetValueOrDefault(dish.Id);
+                var active = row is not null && row.IsActiveOn(today);
+                var baseRow = fromBase.GetValueOrDefault(dish.Id);
+                var basePrice = row?.BasePrice ?? baseRow?.Price ?? RegularMainPrice(dish)!.Value;
+                var sub = new Dictionary<string, decimal>();
+                foreach (var price in SubPricesOf(dish))
+                {
+                    var saved = row?.SubPrices?.FirstOrDefault(x => x.Key == price.Key);
+                    var subBase = saved?.BasePrice ?? baseRow?.SubPrices?.FirstOrDefault(x => x.Key == price.Key)?.Price ?? price.RegularPrice;
+                    sub[price.Key] = ListPrice(subBase, active ? saved?.Price : null, percent, list.DiscountRule)!.Value;
+                }
+                entries.Add((list.Id, dish.Id, new Entry(ListPrice(basePrice, active ? row!.Price : null, percent, list.DiscountRule)!.Value,
+                    basePrice, name, sub)));
+            }
+        }
+
+        var byDish = entries.GroupBy(e => e.DishId).ToDictionary(g => g.Key, g =>
+        {
+            // A list for the phone wins over the lists by status.
+            var candidates = g.Any(e => byPhone.Contains(e.ListId)) ? g.Where(e => byPhone.Contains(e.ListId)) : g;
+            return candidates.OrderBy(e => e.Entry.Price).ThenBy(e => e.ListId).First().Entry;
+        });
         return byDish.Count == 0 ? Regular : new PriceBook(byDish);
     }
 }
