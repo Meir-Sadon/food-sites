@@ -405,26 +405,64 @@ describe('Order page', () => {
       expect(screen.queryByLabelText('שעת אספקה מועדפת')).not.toBeInTheDocument()
     })
 
-    it('says nothing about a free hour, and notes a full one without blocking the order', async () => {
+    const availability = (full: boolean, deliveryFull = full, pickupFull = full) => ({ full, deliveryFull, pickupFull })
+
+    it('says nothing about a free hour, and asks what to do about a full one without blocking the order', async () => {
       const { api, user } = await openOrderPage({
         'GET /api/menu': withHours,
-        'GET /api/hour-availability\\?date=[\\d-]+&hour=(\\d\\d).*': (match: RegExpMatchArray) => ({ full: match[1] === '08' }),
+        'GET /api/hour-availability\\?date=[\\d-]+&hour=(\\d\\d).*': (match: RegExpMatchArray) => availability(match[1] === '08'),
         'POST /api/orders': () => ({ ...confirmation, deliveryHour: '08:00:00', hourFull: true }),
       })
       const hour = screen.getByLabelText('שעת אספקה מועדפת')
 
       await user.selectOptions(hour, '09:00:00')
       await vi.waitFor(() => expect(api.calls.filter((c) => c.path.includes('hour-availability'))).toHaveLength(1))
-      expect(screen.queryByText(/השעה הזאת כבר מלאה/)).not.toBeInTheDocument()
+      expect(screen.queryByRole('dialog', { name: 'השעה הזאת מלאה' })).not.toBeInTheDocument()
 
       await user.selectOptions(hour, '08:00:00')
-      expect(await screen.findByText(/השעה הזאת כבר מלאה/)).toBeInTheDocument()
+      const full = await screen.findByRole('dialog', { name: 'השעה הזאת מלאה' })
+      // Both ways are full, so there is nothing to switch to.
+      expect(within(full).queryByRole('button', { name: /לעבור ל/ })).not.toBeInTheDocument()
+      await user.click(within(full).getByRole('button', { name: 'לשלוח את ההזמנה כך ולחכות לאישור' }))
+      expect(screen.queryByRole('dialog', { name: 'השעה הזאת מלאה' })).not.toBeInTheDocument()
+      expect(screen.getByText(/השעה הזאת כבר מלאה/)).toBeInTheDocument()
 
       await fillAndSubmit(user)
       expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ deliveryHour: '08:00:00' })
       const dialog = await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })
       expect(within(dialog).getByText(/בשעה 08:00/)).toBeInTheDocument()
       expect(within(dialog).getByText(/ניצור איתכם קשר כדי לתאם שעה אחרת/)).toBeInTheDocument()
+    })
+
+    it('offers to switch to the way of receiving that still has room in a full hour', async () => {
+      await openOrderPage({
+        'GET /api/menu': withHours,
+        'GET /api/hour-availability.*': () => availability(false, true, false),
+      })
+      const user = userEvent.setup()
+      await user.selectOptions(screen.getByLabelText('שעת אספקה מועדפת'), '08:00:00')
+
+      const full = await screen.findByRole('dialog', { name: 'השעה הזאת מלאה' })
+      expect(within(full).getByText('אין עוד מקום למשלוח בשעה 08:00.')).toBeInTheDocument()
+      await user.click(within(full).getByRole('button', { name: 'לעבור לאיסוף עצמי באותה שעה' }))
+
+      expect(screen.queryByRole('dialog', { name: 'השעה הזאת מלאה' })).not.toBeInTheDocument()
+      expect(screen.getByLabelText('איסוף עצמי')).toBeChecked()
+      expect(screen.getByLabelText('שעת אספקה מועדפת')).toHaveValue('08:00:00')
+    })
+
+    it('lets the client pick another hour from the full hour dialog', async () => {
+      await openOrderPage({
+        'GET /api/menu': withHours,
+        'GET /api/hour-availability.*': () => availability(false, true, false),
+      })
+      const user = userEvent.setup()
+      const hour = screen.getByLabelText('שעת אספקה מועדפת')
+      await user.selectOptions(hour, '08:00:00')
+      await user.click(within(await screen.findByRole('dialog', { name: 'השעה הזאת מלאה' })).getByRole('button', { name: 'לבחור שעה אחרת' }))
+
+      expect(hour).toHaveValue('')
+      await vi.waitFor(() => expect(hour).toHaveFocus())
     })
   })
 
