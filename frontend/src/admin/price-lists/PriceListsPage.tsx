@@ -5,6 +5,7 @@ import type { FieldErrors } from '../../api/client'
 import { hasStatuses, priceListsApi, type PriceList } from '../../api/priceLists'
 import { ConfirmRemove, FieldError, Info, Loading, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
+import { useUnsavedChanges } from '../unsaved'
 
 /** The list's name as shown: the default list's comes from the site's texts. */
 export function useListName() {
@@ -122,9 +123,16 @@ export function PriceListForm({
   const isBase = selfId !== undefined && lists.some((l) => l.baseListId === selfId)
   const bases = lists.filter((l) => l.id !== selfId && canBeBase(l) && (!isBase || l.isDefault))
   const baseChanged = selfId !== undefined && (baseId === defaultId ? null : baseId) !== initialBaseId
+  // Editing a list (not making one) asks before leaving with a changed name or base.
+  const [savedName, setSavedName] = useState(initialName)
+  useUnsavedChanges(selfId !== undefined && (name !== savedName || baseChanged), save)
 
-  async function submit(event: FormEvent) {
+  function submit(event: FormEvent) {
     event.preventDefault()
+    void save()
+  }
+
+  async function save() {
     setErrors({})
     setError(null)
     setSaved(false)
@@ -134,11 +142,14 @@ export function PriceListForm({
         setName('')
         setBaseId(defaultId)
       }
+      setSavedName(name)
       setSaved(true)
+      return true
     } catch (err) {
       const fields = fieldErrorsOf(err)
       setErrors(fields)
       if (!fields.name && !fields.baselistid) setError(errorMessage(err))
+      return false
     }
   }
 

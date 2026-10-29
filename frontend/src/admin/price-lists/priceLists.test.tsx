@@ -127,6 +127,41 @@ describe('price lists', () => {
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
   })
 
+  it('shows the list in foldable blocks with a side menu, and saves a category on its own', async () => {
+    const api = fakeApi({
+      ...withLists,
+      'GET /api/admin/categories': () => [
+        { id: 5, name: 'עופות', displayOrder: 0, dishCount: 1 },
+        { id: 6, name: 'בשרים', displayOrder: 1, dishCount: 1 },
+      ],
+      'GET /api/admin/price-lists': () => [defaultList, vip],
+      'GET /api/admin/price-lists/2/dishes': () => [dish(10, 'עוף בתנור'), dish(12, 'קבב', { categoryId: 6 })],
+      'PUT /api/admin/price-lists/2/dishes': (_, body) =>
+        [dish(10, 'עוף בתנור'), dish(12, 'קבב', { ...(body as { dishes: PriceListDish[] }).dishes[0], categoryId: 6 })],
+    })
+    const user = userEvent.setup()
+    renderAt('/admin/price-lists/2')
+
+    const menu = await screen.findByRole('navigation', { name: 'קטגוריות בדף' })
+    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['הגדרות כלליות', 'שיוך לקוחות למחירון', 'עופות', 'בשרים'])
+
+    const meat = screen.getByRole('region', { name: 'בשרים' })
+    await user.clear(within(meat).getByLabelText('מחיר מחירון (₪)'))
+    await user.type(within(meat).getByLabelText('מחיר מחירון (₪)'), '60')
+    expect(within(menu).getByRole('button', { name: 'בשרים' })).toHaveTextContent('*')
+    await user.click(within(meat).getByRole('button', { name: 'שמירת המחירים' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/price-lists/2/dishes')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/price-lists/2/dishes')[0].body).toEqual({
+      dishes: [{ dishId: 12, basePrice: 70, price: 60, from: null, to: null, subPrices: [] }],
+    })
+    expect(await within(meat).findByText('נשמר.')).toBeInTheDocument()
+
+    // A block folds away.
+    await user.click(within(meat).getByRole('button', { name: 'בשרים' }))
+    expect(within(meat).getByLabelText('מחיר מחירון (₪)')).not.toBeVisible()
+  })
+
   it('shows a date error next to the dish', async () => {
     fakeApi({
       ...withLists,

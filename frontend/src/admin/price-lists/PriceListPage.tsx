@@ -5,7 +5,8 @@ import type { FieldErrors } from '../../api/client'
 import { categoriesApi, type Category } from '../../api/catalog'
 import { linkedLists, priceListsApi, type PriceList, type PriceListDish, type PriceListStatuses } from '../../api/priceLists'
 import { BADGE_NEW_UNITS, type BadgeNewUnit } from '../../api/site'
-import { FieldError, Info, Loading, Status } from '../ui'
+import { FieldError, Info, Loading, Section, Status } from '../ui'
+import { SectionGroup, SectionSlot } from '../sectionGroup'
 import { fieldErrorsOf, useErrorMessage, useFormErrorMessage } from '../hooks'
 import { useDirty, useUnsavedChanges } from '../unsaved'
 import { PriceListForm, useListName } from './PriceListsPage'
@@ -38,8 +39,11 @@ export function PriceListPage() {
 
   const list = data?.lists.find((l) => l.id === id)
 
+  const update = (saved: PriceList) =>
+    setData((current) => current && { ...current, lists: current.lists.map((l) => (l.id === saved.id ? saved : l)) })
+
   return (
-    <>
+    <SectionGroup>
       <p>
         <Link to="/admin/price-lists">{t('admin.priceLists.back')}</Link>
       </p>
@@ -48,38 +52,40 @@ export function PriceListPage() {
       ) : !list ? (
         <Status message={t('errors.notFound')} error />
       ) : (
-        <div className="stack">
+        <>
           <h1>{nameOf(list)}</h1>
           {list.isDefault ? (
             <p className="hint">{t('admin.priceLists.defaultHint')}</p>
           ) : (
             <>
-              <PriceListForm
-                key={`${list.id}-${list.baseListId}`}
-                idPrefix="price-list"
-                lists={data.lists}
-                selfId={list.id}
-                initialName={list.name ?? ''}
-                initialBaseId={list.baseListId}
-                submitLabel={t('admin.save')}
-                onSave={async (name, baseListId) => {
-                  const saved = await priceListsApi.update(list.id, name, baseListId)
-                  // A new base copied its prices, so the dishes are loaded again.
-                  const dishes = saved.baseListId !== list.baseListId ? await priceListsApi.dishes(list.id) : data.dishes
-                  setData((current) => current && { ...current, dishes, lists: current.lists.map((l) => (l.id === saved.id ? saved : l)) })
-                }}
-              />
-              <PhonesForm
-                list={list}
-                onSaved={(saved) => setData((current) => current && { ...current, lists: current.lists.map((l) => (l.id === saved.id ? saved : l)) })}
-              />
-              <StatusesForm
-                list={list}
-                onSaved={(saved) => setData((current) => current && { ...current, lists: current.lists.map((l) => (l.id === saved.id ? saved : l)) })}
-              />
+              <SectionSlot>
+                <Section title={t('admin.priceLists.general')}>
+                  <PriceListForm
+                    key={`${list.id}-${list.baseListId}`}
+                    idPrefix="price-list"
+                    lists={data.lists}
+                    selfId={list.id}
+                    initialName={list.name ?? ''}
+                    initialBaseId={list.baseListId}
+                    submitLabel={t('admin.save')}
+                    onSave={async (name, baseListId) => {
+                      const saved = await priceListsApi.update(list.id, name, baseListId)
+                      // A new base copied its prices, so the dishes are loaded again.
+                      const dishes = saved.baseListId !== list.baseListId ? await priceListsApi.dishes(list.id) : data.dishes
+                      setData((current) => current && { ...current, dishes, lists: current.lists.map((l) => (l.id === saved.id ? saved : l)) })
+                    }}
+                  />
+                </Section>
+              </SectionSlot>
+              <SectionSlot>
+                <Section title={t('admin.priceLists.assignment')} hint={t('admin.priceLists.assignmentHint')}>
+                  <PhonesForm list={list} onSaved={update} />
+                  <StatusesForm list={list} onSaved={update} />
+                </Section>
+              </SectionSlot>
             </>
           )}
-          <DishesForm
+          <DishesSections
             key={`${list.id}-${list.baseListId}`}
             list={list}
             lists={data.lists}
@@ -87,9 +93,9 @@ export function PriceListPage() {
             categories={data.categories}
             onSaved={(dishes) => setData((current) => current && { ...current, dishes })}
           />
-        </div>
+        </>
       )}
-    </>
+    </SectionGroup>
   )
 }
 
@@ -125,7 +131,7 @@ function PhonesForm({ list, onSaved }: { list: PriceList; onSaved: (list: PriceL
   return (
     <section className="stack" aria-labelledby="price-list-phones">
       <span className="with-info">
-        <h2 id="price-list-phones">{t('admin.priceLists.phones')}</h2>
+        <h3 id="price-list-phones">{t('admin.priceLists.phones')}</h3>
         <Info text={t('admin.priceLists.phonesHint')} about={t('admin.priceLists.phones')} />
       </span>
       <span className="field">
@@ -208,7 +214,7 @@ function StatusesForm({ list, onSaved }: { list: PriceList; onSaved: (list: Pric
   return (
     <section className="stack" aria-labelledby="price-list-statuses">
       <span className="with-info">
-        <h2 id="price-list-statuses">{t('admin.priceLists.statuses')}</h2>
+        <h3 id="price-list-statuses">{t('admin.priceLists.statuses')}</h3>
         <Info text={t('admin.priceLists.statusesHint')} about={t('admin.priceLists.statuses')} />
       </span>
       <label className="checkbox">
@@ -266,8 +272,8 @@ function StatusesForm({ list, onSaved }: { list: PriceList; onSaved: (list: Pric
   )
 }
 
-/** Every dish's prices in the list, category by category. In the default list only the regular prices are edited. */
-function DishesForm({
+/** Every dish's prices in the list, a foldable block per category that saves on its own. */
+function DishesSections({
   list,
   lists,
   dishes,
@@ -281,24 +287,51 @@ function DishesForm({
   onSaved: (dishes: PriceListDish[]) => void
 }) {
   const { t } = useTranslation()
+  const byCategory = categories
+    .map((category) => ({ category, dishes: dishes.filter((d) => d.categoryId === category.id) }))
+    .filter((g) => g.dishes.length > 0)
+  if (byCategory.length === 0) return <p className="muted">{t('admin.priceLists.noDishes')}</p>
+  return byCategory.map(({ category, dishes: own }) => (
+    <SectionSlot key={category.id}>
+      <CategoryPrices list={list} lists={lists} category={category} dishes={own} onSaved={onSaved} />
+    </SectionSlot>
+  ))
+}
+
+/** One category's dishes in the list. In the default list only the regular prices are edited. */
+function CategoryPrices({
+  list,
+  lists,
+  category,
+  dishes,
+  onSaved,
+}: {
+  list: PriceList
+  lists: PriceList[]
+  category: Category
+  dishes: PriceListDish[]
+  onSaved: (dishes: PriceListDish[]) => void
+}) {
+  const { t } = useTranslation()
   const nameOf = useListName()
   const formError = useFormErrorMessage()
+  const [saved, setSavedDishes] = useState(dishes)
   const [rows, setRows] = useState(() => dishes.map(rowOf))
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
+  const [done, setDone] = useState(false)
   const [asking, setAsking] = useState(false)
   const { dirty, markSaved } = useDirty(rows)
   useUnsavedChanges(dirty, () => save(false))
   const linked = linkedLists(list, lists)
 
   function set(index: number, row: Row) {
-    setSaved(false)
+    setDone(false)
     setRows((current) => current.map((r, i) => (i === index ? row : r)))
   }
 
   function submit() {
-    const changed = rows.some((row, i) => pricesChanged(row, rowOf(dishes[i])))
+    const changed = rows.some((row, i) => pricesChanged(row, rowOf(saved[i])))
     if (linked.length > 0 && changed) setAsking(true)
     else void save(false)
   }
@@ -307,14 +340,16 @@ function DishesForm({
     setAsking(false)
     setErrors({})
     setError(null)
-    setSaved(false)
+    setDone(false)
     try {
       const result = await priceListsApi.saveDishes(list.id, rows.map((r) => inputOf(r, list.isDefault)), updateLinked)
-      const next = result.map(rowOf)
+      const own = saved.map((d) => result.find((r) => r.dishId === d.dishId) ?? d)
+      const next = own.map(rowOf)
+      setSavedDishes(own)
       setRows(next)
       markSaved(next)
       onSaved(result)
-      setSaved(true)
+      setDone(true)
       return true
     } catch (err) {
       setErrors(fieldErrorsOf(err))
@@ -323,49 +358,33 @@ function DishesForm({
     }
   }
 
-  const byCategory = categories
-    .map((c) => ({ category: c, indexes: dishes.map((d, i) => (d.categoryId === c.id ? i : -1)).filter((i) => i >= 0) }))
-    .filter((g) => g.indexes.length > 0)
-
   return (
-    <section className="stack" aria-labelledby="price-list-dishes">
-      <span className="with-info">
-        <h2 id="price-list-dishes">{t('admin.priceLists.dishes')}</h2>
-        <Info text={t(list.isDefault ? 'admin.priceLists.defaultDishesHint' : 'admin.priceLists.dishesHint')} about={t('admin.priceLists.dishes')} />
-      </span>
-      {dishes.length === 0 && <p className="muted">{t('admin.priceLists.noDishes')}</p>}
-      {byCategory.map(({ category, indexes }) => (
-        <fieldset key={category.id} className="stack">
-          <legend>{category.name}</legend>
-          <ul className="price-list-dishes">
-            {indexes.map((i) => (
-              <PriceRowFields
-                key={dishes[i].dishId}
-                list={list}
-                dish={dishes[i]}
-                row={rows[i]}
-                onChange={(row) => set(i, row)}
-                errors={errors}
-                field={`dishes[${i}]`}
-                idPrefix={`pl-${dishes[i].dishId}`}
-                heading={{ title: dishes[i].name, imageUrl: dishes[i].imageUrl, showImage: true }}
-              />
-            ))}
-          </ul>
-        </fieldset>
-      ))}
+    <Section title={category.name} hint={t(list.isDefault ? 'admin.priceLists.defaultDishesHint' : 'admin.priceLists.dishesHint')}>
+      <ul className="price-list-dishes">
+        {saved.map((dish, i) => (
+          <PriceRowFields
+            key={dish.dishId}
+            list={list}
+            dish={dish}
+            row={rows[i]}
+            onChange={(row) => set(i, row)}
+            errors={errors}
+            field={`dishes[${i}]`}
+            idPrefix={`pl-${dish.dishId}`}
+            heading={{ title: dish.name, imageUrl: dish.imageUrl, showImage: true }}
+          />
+        ))}
+      </ul>
       {error && <Status message={error} error />}
-      {saved && <Status message={t('admin.saved')} />}
-      {dishes.length > 0 && (
-        <span className="row">
-          <button type="button" onClick={submit}>
-            {t('admin.priceLists.saveDishes')}
-          </button>
-        </span>
-      )}
+      {done && <Status message={t('admin.saved')} />}
+      <span className="row">
+        <button type="button" onClick={submit}>
+          {t('admin.priceLists.saveDishes')}
+        </button>
+      </span>
       {asking && (
         <LinkedListsQuestion names={linked.map(nameOf)} onAnswer={(updateLinked) => void save(updateLinked)} onCancel={() => setAsking(false)} />
       )}
-    </section>
+    </Section>
   )
 }
