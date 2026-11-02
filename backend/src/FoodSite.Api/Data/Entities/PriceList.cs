@@ -42,8 +42,38 @@ public class PriceList
 
     public bool HasStatuses => NewClientsAmount is not null || ForNoOrders || ForMidOrder || OpenOrderAbove is not null;
 
+    // A discount on the whole menu, off each price's base and rounded up to a whole shekel (Orders.PriceBook.Discounted).
+
+    /// <summary>The percent off; null is no general discount.</summary>
+    public decimal? DiscountPercent { get; set; }
+
+    /// <summary>The general discount's dates, both included, either open (like a row's).</summary>
+    public DateOnly? DiscountFrom { get; set; }
+    public DateOnly? DiscountTo { get; set; }
+
+    /// <summary>Which wins where a dish has a discount of its own: a <see cref="DiscountRules"/> value.</summary>
+    public string DiscountRule { get; set; } = DiscountRules.Dish;
+
+    public bool DiscountActiveOn(DateOnly day) =>
+        DiscountPercent is not null && (DiscountFrom is null || DiscountFrom <= day) && (DiscountTo is null || DiscountTo >= day);
+
     public List<PriceListDish> Dishes { get; set; } = [];
     public List<PriceListPhone> Phones { get; set; } = [];
+}
+
+/// <summary>Where a dish of a list has a discount of its own and the list a general one, which price the client gets.</summary>
+public static class DiscountRules
+{
+    /// <summary>The general discount.</summary>
+    public const string General = "general";
+    /// <summary>The dish's own price.</summary>
+    public const string Dish = "dish";
+    /// <summary>The bigger discount (the lower price).</summary>
+    public const string Higher = "higher";
+    /// <summary>The smaller discount (the higher price).</summary>
+    public const string Lower = "lower";
+
+    public static readonly string[] All = [General, Dish, Higher, Lower];
 }
 
 /// <summary>

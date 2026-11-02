@@ -10,6 +10,7 @@
         {"name": "ספרייט", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406105/tin-sprite.jpg"]},
         {"name": "ספרייט זירו", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406111/tin-sprite-zero.jpg"]},
         {"name": "פאנטה", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406054/tin-fanta-orange.jpg"]},
+        {"name": "מיץ פז ענבים", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1793267508/common/drinks/tin-paz-grapes.jpg"]},
         {"name": "שוופס ענבים", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406089/tin-schweppes-grapes.jpg"]},
         {"name": "שוופס תות", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791404829/tin-schweppes-strawberry.jpg"]},
         {"name": "ספרינג אפרסק", "sellBy": "Units", "unitPrice": 12, "minAmount": 1, "maxAmount": 10, "amountStep": 1, "images": ["https://res.cloudinary.com/zt7wzpn4/image/upload/v1791406100/tin-spring-peach.jpg"]},

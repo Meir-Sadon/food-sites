@@ -23,7 +23,7 @@ public static class SupplyCalendar
         HourSlots(RangesOf(day));
 
     private static List<ShabbatSchedule.HoursRange> RangesOf(SupplyDay day) =>
-        day.Hours.Where(h => h.IsValid).OrderBy(h => h.From).Select(h => new ShabbatSchedule.HoursRange(h.From.ToTimeSpan(), h.End)).ToList();
+        day.Hours.Where(h => h.IsValid).OrderBy(h => h.From).Select(h => new ShabbatSchedule.HoursRange(h.From.ToTimeSpan(), h.End, h.DeliveryAllowed, h.PickupAllowed)).ToList();
 
     public static IReadOnlyList<HourSlot> HourSlots(IEnumerable<ShabbatSchedule.HoursRange> ranges, SlotTiming? timing = null)
     {
@@ -40,7 +40,8 @@ public static class SupplyCalendar
                 var slotEnd = timing.Align
                     ? new[] { end, RoundUp(start + TimeSpan.FromTicks(1), step) }.Min()
                     : end - start <= step ? end : start + step;
-                slots.Add(new HourSlot(TimeOnly.FromTimeSpan(start), slotEnd >= TimeSpan.FromDays(1) ? TimeOnly.MinValue : TimeOnly.FromTimeSpan(slotEnd)));
+                slots.Add(new HourSlot(TimeOnly.FromTimeSpan(start), slotEnd >= TimeSpan.FromDays(1) ? TimeOnly.MinValue : TimeOnly.FromTimeSpan(slotEnd),
+                    DeliveryOk: range.DeliveryAllowed, PickupOk: range.PickupAllowed));
             }
         }
         return slots;
@@ -127,7 +128,11 @@ public static class SupplyCalendar
         bool Allowed(int lead) => lead > 0
             ? date.ToDateTime(slot.From) >= nowLocal.AddMinutes(lead)
             : EndOf(date, slot) > nowLocal;
-        return slot with { DeliveryOk = Allowed(timing.DeliveryLeadMinutes), PickupOk = Allowed(timing.PickupLeadMinutes) };
+        return slot with
+        {
+            DeliveryOk = slot.DeliveryOk && Allowed(timing.DeliveryLeadMinutes),
+            PickupOk = slot.PickupOk && Allowed(timing.PickupLeadMinutes),
+        };
     }
 
     public static bool IsOpen(

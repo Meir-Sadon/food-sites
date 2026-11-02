@@ -37,6 +37,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool MinimumOrderAppliesToPickup,
         string ServiceCities,
         int? OrdersPerHour,
+        int? OrdersPerHourDelivery,
+        int? OrdersPerHourPickup,
         int SlotMinutes,
         bool AlignSlots,
         int DeliveryLeadMinutes,
@@ -75,6 +77,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? ServiceCities = null,
         bool? MinimumOrderAppliesToPickup = null,
         int? OrdersPerHour = null,
+        int? OrdersPerHourDelivery = null,
+        int? OrdersPerHourPickup = null,
         int? PortionsPerSupplyDate = null,
         string? Style = null,
         string? OrderTotalPosition = null,
@@ -134,6 +138,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.MinimumOrderAmount), "invalid");
         if (input.OrdersPerHour is < 0 or > MaxOrdersPerHour)
             errors.Add(nameof(input.OrdersPerHour), "invalid");
+        if (input.OrdersPerHourDelivery is < 0 or > MaxOrdersPerHour)
+            errors.Add(nameof(input.OrdersPerHourDelivery), "invalid");
+        if (input.OrdersPerHourPickup is < 0 or > MaxOrdersPerHour)
+            errors.Add(nameof(input.OrdersPerHourPickup), "invalid");
         if (input.SlotMinutes is { } slotMinutes && !SlotTiming.AllowedMinutes.Contains(slotMinutes))
             errors.Add(nameof(input.SlotMinutes), "invalid");
         if (input.DeliveryLeadMinutes is < 0 or > MaxLeadMinutes)
@@ -206,8 +214,13 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.AddressFirst = addressFirst;
         if (input.MinimumOrderAppliesToPickup is { } appliesToPickup)
             settings.MinimumOrderAppliesToPickup = appliesToPickup;
-        // Zero (or empty) means no limit.
-        settings.OrdersPerHour = input.OrdersPerHour is > 0 ? input.OrdersPerHour : null;
+        // Zero (or empty) means no limit. Separate limits for delivery and pickup replace the single one: it is then kept as
+        // the most orders an hour takes (the larger of the two, none when a way of receiving is unlimited).
+        settings.OrdersPerHourDelivery = input.OrdersPerHourDelivery is > 0 ? input.OrdersPerHourDelivery : null;
+        settings.OrdersPerHourPickup = input.OrdersPerHourPickup is > 0 ? input.OrdersPerHourPickup : null;
+        settings.OrdersPerHour = HourCapacity.HasSeparateLimits(settings)
+            ? HourCapacity.LimitsOf(settings).Total
+            : input.OrdersPerHour is > 0 ? input.OrdersPerHour : null;
         // Missing (an older client) keeps the slot timing.
         if (input.SlotMinutes is { } minutes) settings.SlotMinutes = minutes;
         if (input.AlignSlots is { } align) settings.AlignSlots = align;
@@ -401,7 +414,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
     private async Task<SettingsDto> ToDtoAsync(Data.Entities.Settings s) => new(
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.BitEnabled, s.PayBoxEnabled, s.BitLink, s.PayBoxLink, s.MinimumOrderAmount,
-        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour,
+        s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.OrdersPerHourDelivery, s.OrdersPerHourPickup,
         SlotTiming.Of(s).SlotMinutes, s.AlignSlots, s.DeliveryLeadMinutes, s.PickupLeadMinutes, s.PortionsPerSupplyDate,
         SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),

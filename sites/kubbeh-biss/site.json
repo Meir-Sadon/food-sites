@@ -1,0 +1,29 @@
+{
+  "id": "kubbeh-biss",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אור יהודה, יהוד, סביון, גני תקווה, קריית אונו",
+  "emoji": "🥟",
+  "whatsApp": {
+    "orderConfirmationTemplate": "kubbeh_biss_order_confirmation",
+    "newOrderTemplate": "kubbeh_biss_new_order"
+  },
+  "features": {
+    "recommendations": true,
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true
+  },
+  "settings": {
+    "contactName": "מאי",
+    "contactPhone": "054-581-4147",
+    "contactEmail": "maypinker12@gmail.com",
+    "contactAddress": "בן פורת 4, אור יהודה",
+    "contactOpeningHours": "ה׳ 09:00–17:00, ו׳ 09:00–15:00. הזמנה מראש, סגור בשבת",
+    "deliveryAreaText": "משלוחים באור יהודה, יהוד, סביון, גני תקווה וקריית אונו. מחוץ לאזור, בתיאום טלפוני",
+    "deliveryFeeText": "משלוח 15 ₪"
+  },
+  "seed": [
+    "seed/menu.json"
+  ]
+}

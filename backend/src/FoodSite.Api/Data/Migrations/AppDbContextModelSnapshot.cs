@@ -1033,6 +1033,23 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateOnly?>("DiscountFrom")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("DiscountRule")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("dish");
+
+                    b.Property<DateOnly?>("DiscountTo")
+                        .HasColumnType("date");
+
                     b.Property<bool>("ForMidOrder")
                         .HasColumnType("boolean");
 
@@ -1417,6 +1434,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int?>("OrdersPerHour")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("OrdersPerHourDelivery")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OrdersPerHourPickup")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("OwnerChangeMails")
                         .HasColumnType("boolean");
 
@@ -1607,8 +1630,14 @@ namespace FoodSite.Api.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("DeliveryAllowed")
+                        .HasColumnType("boolean");
+
                     b.Property<TimeOnly>("From")
                         .HasColumnType("time without time zone");
+
+                    b.Property<bool>("PickupAllowed")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("SupplyDayId")
                         .HasColumnType("integer");

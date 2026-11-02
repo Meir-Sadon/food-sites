@@ -43,6 +43,9 @@ export interface Settings {
   serviceCities: string
   /** How many orders can be supplied in one hour; null means no limit. */
   ordersPerHour: number | null
+  /** Separate limits for deliveries and pickups in one hour; when either is set it replaces the single limit, which then holds the larger of the two. */
+  ordersPerHourDelivery: number | null
+  ordersPerHourPickup: number | null
   /** The length of one slot the client picks, in minutes: 15, 30 or 60. */
   slotMinutes: number
   /** Slots start on round marks of the slot length (a range opening at 20:07 starts at 20:30). */
@@ -117,6 +120,9 @@ export interface SupplyDay {
 export interface SupplyHours {
   from: string
   to: string
+  /** Whether orders for delivery / pickup can be placed in this range; at least one is true. */
+  delivery: boolean
+  pickup: boolean
 }
 
 export interface ClosedDate {

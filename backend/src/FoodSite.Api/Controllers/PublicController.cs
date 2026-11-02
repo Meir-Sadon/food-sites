@@ -124,7 +124,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     public record SupplyDateDto(DateOnly Date, DateTime Cutoff, IReadOnlyList<SupplyCalendar.HourSlot>? Hours = null);
 
     /// <summary>Whether an hour already has as many orders as the site supplies in an hour. Picking it is still allowed.</summary>
-    public record HourAvailabilityDto(bool Full);
+    public record HourAvailabilityDto(bool Full, bool DeliveryFull, bool PickupFull);
 
     public record MenuDto(
         IReadOnlyList<MenuCategoryDto> Categories,
@@ -259,11 +259,14 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     [HttpGet("hour-availability")]
     public async Task<HourAvailabilityDto> HourAvailability(DateOnly date, TimeOnly hour)
     {
-        var limit = await db.Settings.AsNoTracking().Select(s => s.OrdersPerHour).SingleAsync();
-        if (limit is null)
-            return new HourAvailabilityDto(false);
-        var taken = await db.Orders.AsNoTracking().InSlot(date, hour).CountAsync();
-        return new HourAvailabilityDto(HourCapacity.IsFull(taken, limit));
+        var limits = HourCapacity.LimitsOf(await db.Settings.AsNoTracking().SingleAsync());
+        if (limits == new HourLimits(null, null, null))
+            return new HourAvailabilityDto(false, false, false);
+        var (deliveries, pickups) = await HourCapacity.CountAsync(db.Orders.AsNoTracking(), date, hour);
+        var delivery = HourCapacity.IsFull(limits, FulfillmentMethod.Delivery, deliveries, pickups);
+        var pickup = HourCapacity.IsFull(limits, FulfillmentMethod.Pickup, deliveries, pickups);
+        // "Full" is for both ways, which is what the single limit gives; a page that knows the two asks for the way it needs.
+        return new HourAvailabilityDto(delivery && pickup, delivery, pickup);
     }
 
     /// <summary>

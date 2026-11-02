@@ -1,4 +1,4 @@
-import type { PriceListDish, PriceListDishInput } from '../../api/priceLists'
+import type { PriceListDiscount, PriceListDish, PriceListDishInput } from '../../api/priceLists'
 
 export interface SubRow {
   key: string
@@ -52,4 +52,32 @@ export function patchRow(row: Row, patch: Partial<Omit<Row, 'subs'>>): Row {
 
 export function patchSub(row: Row, key: string, patch: Partial<SubRow>): Row {
   return { ...row, subs: row.subs.map((s) => (s.key === key ? follow(s, patch) : s)) }
+}
+
+const inDates = (day: string, from: string | null, to: string | null) => (!from || from <= day) && (!to || to >= day)
+
+/** A price less the general discount, rounded up to a whole shekel and never above the price (as the server does). */
+export const discounted = (price: number, percent: number) =>
+  Math.min(price, Math.max(0, Math.ceil((price * (100 - percent)) / 100 - 1e-9)))
+
+/**
+ * What a client on the list pays on `day` ("yyyy-MM-dd") for a price with this base and list price: the row's price in
+ * its dates, the general discount in its own, and the list's rule where the dish has a discount of its own. Null when
+ * the list leaves the regular price.
+ */
+export function clientPrice(basePrice: number, price: number, row: { from: string; to: string }, discount: PriceListDiscount, day: string) {
+  const own = inDates(day, row.from || null, row.to || null) ? price : null
+  if (discount.percent === null || !inDates(day, discount.from, discount.to)) return own
+  const general = discounted(basePrice, discount.percent)
+  if (own === null || own === basePrice) return general
+  switch (discount.rule) {
+    case 'general':
+      return general
+    case 'higher':
+      return Math.min(general, own)
+    case 'lower':
+      return Math.max(general, own)
+    default:
+      return own
+  }
 }

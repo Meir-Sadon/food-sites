@@ -116,7 +116,7 @@ describe('admin layout', () => {
     expect(await within(nav).findByRole('link', { current: 'page' })).toHaveTextContent('הגדרות אתר')
     expect(within(nav).getByText('בעל העסק')).toBeInTheDocument()
     const pages = screen.getByRole('navigation', { name: 'הגדרות אתר' })
-    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual(['הגדרות כלליות', 'הודעות וואטסאפ', 'דיווח על בעיה'])
+    expect(within(pages).getAllByRole('link').map((l) => l.textContent)).toEqual(['הגדרות כלליות', 'רשתות חברתיות ומעקב', 'הודעות וואטסאפ', 'דיווח על בעיה'])
     expect(within(pages).getByRole('link', { current: 'page' })).toHaveTextContent('הגדרות כלליות')
   })
 
@@ -135,7 +135,6 @@ describe('admin layout', () => {
       'קבוצות מנות',
       'עיצוב האתר',
       'פופ-אפ',
-      'רשתות חברתיות ומעקב',
       'אנשי קשר',
       'חוות דעת',
     ])

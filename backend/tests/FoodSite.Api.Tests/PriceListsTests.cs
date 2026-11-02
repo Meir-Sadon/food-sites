@@ -181,12 +181,34 @@ public sealed class PriceListsTests(PostgresFixture postgres) : IAsyncLifetime
     {
         var vip = await CreateList("קבועים").Read<PriceListDto>();
         var response = await SaveDishes(vip.Id,
-            new PriceListDishInput(_chicken, 0, 60, null, null),
+            new PriceListDishInput(_chicken, -1, 60, null, null),
             new PriceListDishInput(_meat, 90, 80, Today(), Today().AddDays(-1)),
             new PriceListDishInput(9999, 10, 10, null, null));
         await response.AssertInvalid("dishes[0].basePrice", "positive");
         await response.AssertInvalid("dishes[1].to", "toBeforeFrom");
         await response.AssertInvalid("dishes[2].dishId", "notFound");
+    }
+
+    [Fact]
+    public async Task A_list_can_price_a_dish_at_zero()
+    {
+        var vip = await CreateList("קבועים").Read<PriceListDto>();
+        (await SavePhones(vip.Id, Phone)).EnsureSuccessStatusCode();
+        (await SaveDishes(vip.Id, new PriceListDishInput(_chicken, 0, 0, null, null))).EnsureSuccessStatusCode();
+        var row = (await Dishes(vip.Id)).Single(d => d.DishId == _chicken);
+        Assert.Equal((0m, 0m), (row.BasePrice, row.Price));
+
+        var client = await LoggedIn();
+        Assert.Equal(0, DefaultPrice(await MenuDish(client, _chicken)));
+        var order = await Order(client);
+        Assert.Equal(0, order.Items.Single(i => i.DishName == "עוף בתנור").UnitPrice);
+    }
+
+    [Fact]
+    public async Task The_default_list_refuses_a_zero_that_would_make_a_dish_free()
+    {
+        var list = await DefaultList();
+        await (await SaveDishes(list.Id, new PriceListDishInput(_chicken, 0, 0, null, null))).AssertInvalid("dishes[0].price", "positive");
     }
 
     [Fact]

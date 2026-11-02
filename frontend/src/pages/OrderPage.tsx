@@ -2,7 +2,7 @@ import { availablePayment, isTransfer, paymentKey, transferChoices } from '../or
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ordersApi, siteApi, type Confirmation, type Menu, type MenuDish, type Fulfillment, type Payment } from '../api/site'
+import { ordersApi, siteApi, type HourAvailability, type Confirmation, type Menu, type MenuDish, type Fulfillment, type Payment } from '../api/site'
 import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
@@ -37,7 +37,7 @@ import { DishCard, DishGroupCard } from '../order/DishCard'
 import { clearDraft, loadDraft, saveDraft } from '../order/draft'
 import { useServerCart } from '../order/serverCart'
 import { availableMenu, pruneUnavailable, type When } from '../order/availability'
-import { formatMoney, formatSlot, formatSupplyDate, parseSlotId, slotId, slotsFor } from '../order/format'
+import { formatMoney, formatSlot, formatTime, formatSupplyDate, parseSlotId, slotId, slotsFor } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
 import { MinimumDialog } from '../order/MinimumDialog'
 import { QuickFill } from '../order/QuickFill'
@@ -68,6 +68,7 @@ import {
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
+import { HourFullDialog } from '../order/HourFullDialog'
 import { siteLogo } from '../site/config'
 import { marketingForOrder, trackMarketing } from '../tracking/marketing'
 import { trackUsage } from '../usage/track'
@@ -138,7 +139,9 @@ export function OrderPage() {
     payment: true,
   })
   // The picked hours the server said are already full ("date hour").
-  const [fullSlots, setFullSlots] = useState<string[]>([])
+  const [slotAvailability, setSlotAvailability] = useState<Record<string, HourAvailability>>({})
+  /** Full hours (with the way of receiving) the client chose to keep, so the pop-up is not shown for them again. */
+  const [keptFull, setKeptFull] = useState<string[]>([])
   // The admin's order layout: where the total sits, and whether the menu is paged one category at a time.
   const { totalPosition, flow } = useOrderLayout()
   const steps = flow === 'steps'
@@ -352,8 +355,18 @@ export function OrderPage() {
   // when it is after midnight (the day after the supply date).
   const deliveryHour = hours.some((h) => slotId(h) === state.deliveryHour) ? state.deliveryHour : null
   const pickedSlot = deliveryHour ? parseSlotId(deliveryHour) : null
-  const hourIsFull =
-    !!supplyDate && !!pickedSlot && fullSlots.includes(slotKey(pickedSlot.date ?? supplyDate.date, pickedSlot.hour))
+  const pickedKey = supplyDate && pickedSlot ? slotKey(pickedSlot.date ?? supplyDate.date, pickedSlot.hour) : null
+  const pickedAvailability = pickedKey ? slotAvailability[pickedKey] : undefined
+  const hourIsFull = !!pickedAvailability && (fulfillment === 'Delivery' ? pickedAvailability.deliveryFull : pickedAvailability.pickupFull)
+  const otherWay: Fulfillment = fulfillment === 'Delivery' ? 'Pickup' : 'Delivery'
+  // The other way of receiving is offered for a full hour when the site has it, the hour is open for it and it still has room.
+  const canSwitchWay =
+    !!pickedAvailability &&
+    (otherWay === 'Delivery' ? site.deliveryEnabled : site.pickupEnabled) &&
+    !!deliveryHour &&
+    slotsFor(supplyDate?.hours, otherWay === 'Delivery').some((h) => slotId(h) === deliveryHour) &&
+    !(otherWay === 'Delivery' ? pickedAvailability.deliveryFull : pickedAvailability.pickupFull)
+  const showHourFullDialog = hourIsFull && !keptFull.includes(`${pickedKey}|${fulfillment}`)
   const normalizedPhone = normalizePhone(state.phone)
   const missingNow: Missing = {
     hour: hours.length > 0 && !deliveryHour,
@@ -448,7 +461,8 @@ export function OrderPage() {
   }
 
   /**
-   * Asks whether a picked hour is already full. A full hour can still be sent: the client only gets a note.
+   * Asks whether a picked hour is already full for delivery and for pickup. A full hour can still be sent: the client
+   * is asked what to do (switch the way of receiving, pick another hour, or send it and wait for approval).
    * Nothing is shown in advance, so the client doesn't learn how busy the other hours are.
    */
   function checkHour(date: string, id: string | null) {
@@ -457,7 +471,7 @@ export function OrderPage() {
     const key = slotKey(slot.date ?? date, slot.hour)
     siteApi
       .hourAvailability(slot.date ?? date, slot.hour)
-      .then(({ full }) => setFullSlots((current) => (full ? [...current, key] : current.filter((k) => k !== key))))
+      .then((availability) => setSlotAvailability((current) => ({ ...current, [key]: availability })))
       .catch(() => undefined)
   }
 
@@ -981,7 +995,7 @@ export function OrderPage() {
                         </option>
                       ))}
                     </select>
-                    {hourIsFull && (
+                    {hourIsFull && !showHourFullDialog && (
                       <span id="order-hour-note" role="status" className="notice notice--warning hour-tooltip">
                         {t('order.hourFull')}
                       </span>
@@ -1253,6 +1267,19 @@ export function OrderPage() {
           }}
           onSend={() => submit(true)}
           onCancel={() => setMinimumAsked(false)}
+        />
+      )}
+      {showHourFullDialog && deliveryHour && (
+        <HourFullDialog
+          fulfillment={fulfillment}
+          hour={formatTime(pickedSlot!.hour)}
+          canSwitch={canSwitchWay}
+          onSwitch={() => change({ fulfillment: otherWay })}
+          onOtherHour={() => {
+            change({ deliveryHour: null })
+            setTimeout(() => document.getElementById('order-hour')?.focus(), 0)
+          }}
+          onKeep={() => setKeptFull((current) => [...current, `${pickedKey}|${fulfillment}`])}
         />
       )}
       {leaveTo && <LeaveDialog onSave={() => leave(true)} onDiscard={() => leave(false)} onStay={() => setLeaveTo(null)} />}

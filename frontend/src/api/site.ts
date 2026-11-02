@@ -428,12 +428,19 @@ export interface LocatedAddress {
   quote: DeliveryQuote | null
 }
 
+export interface HourAvailability {
+  /** Full for both ways of receiving. */
+  full: boolean
+  deliveryFull: boolean
+  pickupFull: boolean
+}
+
 export const siteApi = {
   get: () => apiJson<Site>('/api/site'),
   menu: () => apiJson<Menu>('/api/menu'),
-  /** Whether an hour is already full; asked only once the client picks it. */
+  /** Whether an hour is already full, for deliveries and for pickups; asked only once the client picks it. */
   hourAvailability: (date: string, hour: string) =>
-    apiJson<{ full: boolean }>(`/api/hour-availability?date=${date}&hour=${encodeURIComponent(hour)}`),
+    apiJson<HourAvailability>(`/api/hour-availability?date=${date}&hour=${encodeURIComponent(hour)}`),
 }
 
 export const deliveryApi = {

@@ -21,7 +21,14 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     public const int MaxPhones = 1000;
 
     /// <summary>Name is null for the default list. BaseListId null means the default list (and is the default list's own).</summary>
-    public record PriceListDto(int Id, string? Name, bool IsDefault, int? BaseListId, IReadOnlyList<string> Phones, StatusesDto Statuses);
+    public record PriceListDto(
+        int Id, string? Name, bool IsDefault, int? BaseListId, IReadOnlyList<string> Phones, StatusesDto Statuses, DiscountDto Discount);
+
+    /// <summary>
+    /// A discount on the whole menu: Percent off each base price (null is none), rounded up to a whole shekel, From/To
+    /// its dates (either open), and Rule (a <see cref="DiscountRules"/> value) which wins where a dish has its own discount.
+    /// </summary>
+    public record DiscountDto(decimal? Percent, DateOnly? From, DateOnly? To, string Rule);
 
     /// <summary>
     /// The clients a list is for by status: registered within NewClientsAmount NewClientsUnits (null is off), with no
@@ -29,7 +36,8 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     /// </summary>
     public record StatusesDto(int? NewClientsAmount, string? NewClientsUnit, bool NoOrders, bool MidOrder, decimal? OpenOrderAbove);
 
-    public record PriceListInput(string? Name, int? BaseListId);
+    /// <summary>Discount null keeps the list's general discount.</summary>
+    public record PriceListInput(string? Name, int? BaseListId, DiscountDto? Discount = null);
 
     /// <summary>
     /// A dish in a list: its regular main price, and the list's base price, price and dates. InList is false for a dish
@@ -72,6 +80,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
         if (await Validate(input, null) is { } invalid)
             return invalid;
         var list = new PriceList { Name = input.Name!.Trim(), BaseListId = await NonDefaultBaseAsync(input.BaseListId) };
+        SetDiscount(list, input.Discount);
         db.PriceLists.Add(list);
         await CopyBaseAsync(list);
         await db.SaveChangesAsync();
@@ -91,6 +100,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
             return invalid;
 
         list.Name = input.Name!.Trim();
+        SetDiscount(list, input.Discount);
         var baseId = await NonDefaultBaseAsync(input.BaseListId);
         if (baseId != list.BaseListId)
         {
@@ -166,9 +176,12 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
                 errors.Add($"dishes[{i}].dishId", "notFound");
                 continue;
             }
-            if (row.Price <= 0 || row.Price > MaxPrice)
+            // A list may price a dish at zero. The default list holds the dish's own prices, so there a zero is
+            // refused only when it would change one, as the dish form refuses a free option.
+            var regular = PriceBook.RegularMainPrice(dish);
+            if (row.Price < 0 || row.Price > MaxPrice || (list.IsDefault && row.Price == 0 && regular != 0))
                 errors.Add($"dishes[{i}].price", "positive");
-            if (!list.IsDefault && (row.BasePrice <= 0 || row.BasePrice > MaxPrice))
+            if (!list.IsDefault && (row.BasePrice < 0 || row.BasePrice > MaxPrice))
                 errors.Add($"dishes[{i}].basePrice", "positive");
             if (!list.IsDefault && row.From is { } from && row.To is { } to && to < from)
                 errors.Add($"dishes[{i}].to", "toBeforeFrom");
@@ -182,9 +195,9 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
                     errors.Add($"{path}.key", "notFound");
                     continue;
                 }
-                // An option costs something; an add-on's price, or one above a limit, may be zero, as in the dish form.
-                bool Bad(decimal value) => value >= MaxPrice || (sub.Kind == PriceBook.SubKinds.Option ? value <= 0 : value < 0);
-                if (Bad(subsSent[j].Price))
+                // Any price may be zero in a list; in the default list an option keeps a price unless it already had none.
+                bool Bad(decimal value) => value >= MaxPrice || value < 0;
+                if (Bad(subsSent[j].Price) || (list.IsDefault && sub.Kind == PriceBook.SubKinds.Option && subsSent[j].Price == 0 && sub.RegularPrice != 0))
                     errors.Add($"{path}.price", "invalid");
                 if (!list.IsDefault && Bad(subsSent[j].BasePrice))
                     errors.Add($"{path}.basePrice", "invalid");
@@ -265,7 +278,16 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
 
     private static PriceListDto ToDto(PriceList l) =>
         new(l.Id, l.Name, l.IsDefault, l.BaseListId, l.Phones.Select(p => p.Phone).Order().ToList(),
-            new StatusesDto(l.NewClientsAmount, l.NewClientsAmount is null ? null : l.NewClientsUnit, l.ForNoOrders, l.ForMidOrder, l.OpenOrderAbove));
+            new StatusesDto(l.NewClientsAmount, l.NewClientsAmount is null ? null : l.NewClientsUnit, l.ForNoOrders, l.ForMidOrder, l.OpenOrderAbove),
+            new DiscountDto(l.DiscountPercent, l.DiscountFrom, l.DiscountTo, l.DiscountRule));
+
+    private static void SetDiscount(PriceList list, DiscountDto? discount)
+    {
+        if (discount is null)
+            return;
+        list.DiscountPercent = discount.Percent is { } percent ? decimal.Round(percent, 2) : null;
+        (list.DiscountFrom, list.DiscountTo, list.DiscountRule) = (discount.From, discount.To, discount.Rule!);
+    }
 
     /// <summary>The statuses the list is for, besides its phones. A list for the client's phone wins over these.</summary>
     [HttpPut("{id:int}/statuses")]
@@ -314,6 +336,15 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     {
         var errors = new Errors();
         errors.Text(nameof(input.Name), input.Name, PriceList.NameMaxLength, required: true);
+        if (input.Discount is { } discount)
+        {
+            if (discount.Percent is { } percent && (percent <= 0 || percent >= 100))
+                errors.Add("discount.percent", "invalid");
+            if (discount.From is { } from && discount.To is { } to && to < from)
+                errors.Add("discount.to", "toBeforeFrom");
+            if (!DiscountRules.All.Contains(discount.Rule))
+                errors.Add("discount.rule", "invalid");
+        }
         var name = input.Name?.Trim();
         if (!string.IsNullOrEmpty(name) && await db.PriceLists.AnyAsync(l => l.Name == name && l.Id != (list == null ? 0 : list.Id)))
             errors.Add(nameof(input.Name), "duplicate");
@@ -415,14 +446,5 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
         db.ChangeTracker.Clear();
     }
 
-    private async Task<List<Dish>> PricedDishesAsync(bool tracking)
-    {
-        var query = db.Dishes.Include(d => d.Options).Include(d => d.Images).Include(d => d.Category)
-            .Include(d => d.AddOns).ThenInclude(a => a.AddOnDish).Include(d => d.AddOns).ThenInclude(a => a.Group)
-            .Include(d => d.AddOnGroups).AsSplitQuery()
-            .Where(d => !d.IsHidden && !(d.UseMainDishPrice && d.MainDishId != null));
-        var dishes = await (tracking ? query : query.AsNoTracking()).ToListAsync();
-        return dishes.Where(d => PriceBook.RegularMainPrice(d) is not null)
-            .OrderBy(d => d.Category?.DisplayOrder ?? int.MaxValue).ThenBy(d => d.DisplayOrder).ThenBy(d => d.Id).ToList();
-    }
+    private Task<List<Dish>> PricedDishesAsync(bool tracking) => PriceBook.PricedDishesAsync(db, tracking);
 }

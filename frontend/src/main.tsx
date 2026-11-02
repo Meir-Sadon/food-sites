@@ -12,6 +12,9 @@ import './styles/accessibility.css'
 // The site's palette, after the shared CSS so its variables win.
 import '@site/theme.css'
 import { App } from './App'
+import { registerServiceWorker } from './pwa/install'
+
+registerServiceWorker()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

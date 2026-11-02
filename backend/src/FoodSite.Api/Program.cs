@@ -270,7 +270,15 @@ app.MapControllers();
 if (Directory.Exists(app.Environment.WebRootPath))
 {
     app.UseDefaultFiles();
-    app.UseStaticFiles();
+    // The service worker and manifest are always revalidated, so a deploy reaches installed apps at once.
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
+        {
+            if (ctx.File.Name is "sw.js" or "manifest.webmanifest" or "index.html")
+                ctx.Context.Response.Headers.CacheControl = "no-cache";
+        },
+    });
     // Client-side routes (/login, /admin, ...) load the app; files and unknown /api paths stay 404.
     app.MapFallbackToFile("{*path:nonfile:regex(^(?!api(/|$)).*$)}", "index.html");
 }

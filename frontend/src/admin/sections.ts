@@ -23,7 +23,6 @@ export const sections: { key: string; tabs: Tab[] }[] = [
       { to: '/admin/price-lists', key: 'admin.nav.priceLists', feature: 'priceLists' },
       { to: '/admin/appearance', key: 'admin.nav.appearance' },
       { to: '/admin/popup', key: 'admin.nav.popup' },
-      { to: '/admin/social', key: 'admin.nav.social' },
       { to: '/admin/contacts', key: 'admin.nav.contacts' },
       { to: '/admin/reviews', key: 'admin.nav.reviews', feature: 'reviews' },
     ],
@@ -32,6 +31,7 @@ export const sections: { key: string; tabs: Tab[] }[] = [
     key: 'site',
     tabs: [
       { to: '/admin/settings', key: 'admin.nav.settings' },
+      { to: '/admin/social', key: 'admin.nav.social' },
       { to: '/admin/messages', key: 'admin.nav.messages' },
       { to: '/admin/feedback', key: 'admin.nav.feedback' },
     ],

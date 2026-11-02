@@ -225,6 +225,8 @@ public class AppDbContext(
             e.Property(l => l.Name).HasMaxLength(PriceList.NameMaxLength);
             e.Property(l => l.NewClientsUnit).HasMaxLength(10);
             e.Property(l => l.OpenOrderAbove).HasPrecision(10, 2);
+            e.Property(l => l.DiscountPercent).HasPrecision(5, 2);
+            e.Property(l => l.DiscountRule).HasMaxLength(10).HasDefaultValue(DiscountRules.Dish);
             e.HasOne(l => l.BaseList).WithMany().HasForeignKey(l => l.BaseListId).OnDelete(DeleteBehavior.Restrict);
             // One default list per site.
             e.HasIndex(l => l.IsDefault).IsUnique().HasFilter("\"IsDefault\"");
