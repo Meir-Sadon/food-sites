@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { searchForWorkspaceRoot, type Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
+import { sitePwa } from './vite-pwa.ts'
 
 // In development the API is reached through this proxy, so the session cookie stays same-origin.
 const apiProxyTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:5000'
@@ -25,7 +26,7 @@ function siteTitle(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), siteTitle()],
+  plugins: [react(), siteTitle(), sitePwa(siteDir, fileURLToPath(new URL('src/i18n/he.json', import.meta.url)))],
   resolve: {
     alias: { '@site': siteDir },
   },

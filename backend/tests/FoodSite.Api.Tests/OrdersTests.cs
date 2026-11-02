@@ -786,11 +786,11 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
 
         Assert.False((await PlaceAt("Delivery")).HourFull);
         Assert.False((await PlaceAt("Delivery")).HourFull);
-        // Two deliveries fill the deliveries, and leave two places for pickups.
+        // Two deliveries fill the deliveries, and leave two of the four places.
         Assert.Equal((true, false, false), ((await Availability()).DeliveryFull, (await Availability()).PickupFull, (await Availability()).Full));
         var overDelivery = await PlaceAt("Delivery");
         Assert.True(overDelivery.HourFull);
-        Assert.False((await PlaceAt("Pickup")).HourFull);
+        // The delivery over its limit was still taken, so it uses one of the four places: one pickup fits, the next does not.
         Assert.False((await PlaceAt("Pickup")).HourFull);
         Assert.True((await PlaceAt("Pickup")).HourFull);
         Assert.True((await Availability()).Full);
