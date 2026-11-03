@@ -32,7 +32,14 @@ public static class Features
     /// </summary>
     public const string PriceLists = "priceLists";
 
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists];
+    /// <summary>
+    /// The Claude connector: the site's MCP server (<c>/mcp</c>) and its OAuth sign-in, so an admin can connect their
+    /// own Claude account, ask how things work and change settings from Claude. Off, those addresses answer 404 and
+    /// the admin shows nothing about it.
+    /// </summary>
+    public const string Mcp = "mcp";
+
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists, Mcp];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }

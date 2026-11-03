@@ -14,7 +14,13 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.14" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.3.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Built by scripts/build-mcp-knowledge.mjs from the feature guide; the Claude connector explains from it. -->
+    <EmbeddedResource Include="Mcp/knowledge.json" LogicalName="FoodSite.Api.Mcp.knowledge.json" />
   </ItemGroup>
 
 </Project>

@@ -87,6 +87,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<FoodSite.Api.Marketing.IMetaConversionsSender>(Meta);
             services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
             services.AddSingleton<IGoogleTokenVerifier>(new FakeGoogleVerifier());
+            // The connector calls the admin API on the test server instead of over loopback.
+            services.AddSingleton<FoodSite.Api.Mcp.IAdminApiTransport>(new TestServerAdminApiTransport(() => Server));
         });
     }
 
@@ -130,4 +132,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         var scope = Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<AppDbContext>();
     }
+}
+
+/// <summary>The connector's admin API calls go to the test server.</summary>
+public sealed class TestServerAdminApiTransport(Func<TestServer> server) : FoodSite.Api.Mcp.IAdminApiTransport
+{
+    public HttpClient CreateClient() => server().CreateClient();
 }

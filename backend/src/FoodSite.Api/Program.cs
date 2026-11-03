@@ -81,6 +81,22 @@ builder.Services.Configure<AccountOptions>(config.GetSection(AccountOptions.Sect
 builder.Services.Configure<GoogleOptions>(config.GetSection(GoogleOptions.Section));
 builder.Services.AddHttpClient<IGoogleTokenVerifier, GoogleTokenVerifier>(c => c.Timeout = TimeSpan.FromSeconds(10));
 builder.Services.AddSingleton<AdminTokenService>();
+
+// The Claude connector (feature `mcp`): the site's MCP server at /mcp and its OAuth sign-in. See Mcp/ and
+// docs/ARCHITECTURE.md (Claude connector).
+builder.Services.Configure<FoodSite.Api.Mcp.McpOptions>(config.GetSection(FoodSite.Api.Mcp.McpOptions.Section));
+builder.Services.AddSingleton<FoodSite.Api.Mcp.McpClientId>();
+builder.Services.AddSingleton<FoodSite.Api.Mcp.McpKnowledge>();
+builder.Services.AddSingleton<FoodSite.Api.Mcp.AdminOperations>();
+builder.Services.AddSingleton<FoodSite.Api.Mcp.IAdminApiTransport, FoodSite.Api.Mcp.LoopbackAdminApiTransport>();
+builder.Services.AddScoped<FoodSite.Api.Mcp.AdminApiCaller>();
+builder.Services.AddMcpServer(options =>
+    {
+        options.ServerInfo = new() { Name = $"{site.Id}-admin", Version = "1.0" };
+        options.ServerInstructions = FoodSite.Api.Mcp.SiteTools.Instructions;
+    })
+    .WithHttpTransport(options => options.SessionMode = ModelContextProtocol.AspNetCore.HttpServerSessionMode.Stateless)
+    .WithTools<FoodSite.Api.Mcp.SiteTools>();
 builder.Services.AddSingleton<UserTokenService>();
 builder.Services.AddSingleton<SiteClock>();
 // Site usage (visits, started and sent orders): per-device events pruned after Usage:RawEventDays.
@@ -187,7 +203,10 @@ builder.Services
     // The console (ops API): the site's console token in an Authorization header, checked against its hash in
     // Settings. Only /api/ops asks for this scheme, and /api/ops asks for nothing else.
     .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, FoodSite.Api.Ops.OpsAuthenticationHandler>(
-        FoodSite.Api.Ops.OpsToken.Scheme, null);
+        FoodSite.Api.Ops.OpsToken.Scheme, null)
+    // The Claude connector: an access token from /oauth/token. Only /mcp asks for this scheme, and /mcp asks for nothing else.
+    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, FoodSite.Api.Mcp.McpAuthenticationHandler>(
+        FoodSite.Api.Mcp.McpOAuth.Scheme, null);
 builder.Services.AddAuthorization();
 
 var loginLimit = adminOptions.LoginAttemptsPerMinute;
@@ -211,6 +230,15 @@ builder.Services.AddRateLimiter(options =>
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = publicLimit * 4,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+    // The connector's registration and token endpoints, called by Claude's servers rather than browsers.
+    options.AddPolicy(McpOAuthController.RateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = publicLimit * 2,
                 Window = TimeSpan.FromMinutes(1),
             }));
     options.AddPolicy(AdminAuthController.LoginRateLimitPolicy, context =>
@@ -257,6 +285,19 @@ if (config.GetValue<bool>("ForwardedHeaders:Enabled"))
     app.UseForwardedHeaders();
 
 app.UseMiddleware<RequireRequestHeaderMiddleware>();
+// /mcp answers 404 while the connector is off (its OAuth endpoints check the flag themselves).
+app.UseWhen(
+    context => context.Request.Path.StartsWithSegments(FoodSite.Api.Mcp.McpOAuth.Path),
+    branch => branch.Use(async (context, next) =>
+    {
+        if (!await context.RequestServices.GetRequiredService<FeatureFlags>().IsEnabledAsync(Features.Mcp, context.RequestAborted))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new { code = "featureDisabled" });
+            return;
+        }
+        await next();
+    }));
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -264,6 +305,9 @@ app.UseAuthorization();
 // commit lets the deploy workflow tell when the canary runs a new build (Render sets RENDER_GIT_COMMIT).
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT") }));
 app.MapControllers();
+app.MapMcp(FoodSite.Api.Mcp.McpOAuth.Path).RequireAuthorization(policy => policy
+    .AddAuthenticationSchemes(FoodSite.Api.Mcp.McpOAuth.Scheme)
+    .RequireRole(FoodSite.Api.Mcp.McpOAuth.Role));
 
 // The production image (Dockerfile at the repo root) puts the built frontend in wwwroot,
 // so one service serves the site and the API on the same origin.

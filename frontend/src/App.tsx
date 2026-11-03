@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router'
 import { AdminLayout } from './admin/AdminLayout'
 import { AdminLoginPage } from './admin/AdminLoginPage'
 import { AuditPage } from './admin/audit/AuditPage'
+import { ClaudeConnectPage } from './admin/claude/ClaudeConnectPage'
 import { ClientsPage } from './admin/clients/ClientsPage'
 import { RequireAdmin } from './admin/RequireAdmin'
 import { CategoriesPage } from './admin/categories/CategoriesPage'
@@ -90,6 +91,15 @@ export function App() {
         >
           <Route index element={<Navigate to="settings" replace />} />
           <Route path="settings" element={<SettingsPage />} />
+          {/* Claude's sign-in lands here (/oauth/authorize forwards with the request) to ask the admin to approve. */}
+          <Route
+            path="claude-connect"
+            element={
+              <RequireFeature feature="mcp" to="/admin/settings">
+                <ClaudeConnectPage />
+              </RequireFeature>
+            }
+          />
           <Route path="appearance" element={<AppearancePage />} />
           <Route path="popup" element={<PopupPage />} />
           <Route path="social" element={<SocialPage />} />

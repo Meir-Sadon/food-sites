@@ -36,6 +36,8 @@ export default defineConfig({
     fs: { allow: [searchForWorkspaceRoot(process.cwd()), siteDir] },
     proxy: {
       '/api': apiProxyTarget,
+      // The Claude connector (feature `mcp`): its MCP endpoint and OAuth sign-in live outside /api.
+      '^/(mcp|oauth/|\\.well-known/oauth-)': apiProxyTarget,
     },
   },
   test: {

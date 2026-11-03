@@ -55,6 +55,7 @@ public class AppDbContext(
     public DbSet<DriverRoute> DriverRoutes => Set<DriverRoute>();
     public DbSet<DriverRouteStop> DriverRouteStops => Set<DriverRouteStop>();
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+    public DbSet<McpConnection> McpConnections => Set<McpConnection>();
 
     /// <summary>
     /// Saves, and when an admin made the changes, writes what changed to the audit trail in the same transaction,
@@ -468,6 +469,21 @@ public class AppDbContext(
             e.HasIndex(r => r.Token).IsUnique();
             e.HasIndex(r => r.SupplyDate);
             e.Property(r => r.Token).HasMaxLength(DriverRoute.TokenLength);
+        });
+
+        model.Entity<McpConnection>(e =>
+        {
+            e.HasIndex(c => c.CodeHash).IsUnique();
+            e.HasIndex(c => c.AccessTokenHash).IsUnique();
+            e.HasIndex(c => c.RefreshTokenHash).IsUnique();
+            e.Property(c => c.ClientName).HasMaxLength(McpConnection.ClientNameMaxLength);
+            e.Property(c => c.ClientId).HasMaxLength(Mcp.McpClientId.MaxLength);
+            e.Property(c => c.RedirectUri).HasMaxLength(McpConnection.RedirectUriMaxLength);
+            e.Property(c => c.Actor).HasMaxLength(20);
+            e.Property(c => c.CodeHash).HasMaxLength(McpConnection.HashLength);
+            e.Property(c => c.CodeChallenge).HasMaxLength(McpConnection.ChallengeMaxLength);
+            e.Property(c => c.AccessTokenHash).HasMaxLength(McpConnection.HashLength);
+            e.Property(c => c.RefreshTokenHash).HasMaxLength(McpConnection.HashLength);
         });
 
         model.Entity<DriverRouteStop>(e =>
