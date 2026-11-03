@@ -32,7 +32,12 @@ public class AuditActor(IHttpContextAccessor http)
             if (!user.IsInRole(AdminTokenService.AdminRole))
                 return null;
             var actor = user.FindFirst(AdminTokenService.ActorClaim)?.Value;
-            return AdminActor.IsKnown(actor) ? actor : null;
+            if (!AdminActor.IsKnown(actor))
+                return null;
+            // A change Claude made through the connector, with the rights of the admin who connected it.
+            return user.FindFirst(AdminTokenService.ViaClaim)?.Value == AdminTokenService.ViaClaude
+                ? AdminActor.ThroughClaude(actor!)
+                : actor;
         }
     }
 }
@@ -53,10 +58,15 @@ public static class AuditTrail
         ["DisplayOrder", "PublicId", "BackgroundImagePublicId", "ImagePublicId", "Token", nameof(Settings.SiteDefaultsApplied)];
 
     /// <summary>Recorded as changed, never with their values.</summary>
-    private static readonly HashSet<string> SecretFields = [nameof(Settings.AdminPasswordHash), nameof(Settings.OpsTokenHash), nameof(Settings.MetaAccessToken)];
+    private static readonly HashSet<string> SecretFields =
+    [
+        nameof(Settings.AdminPasswordHash), nameof(Settings.OpsTokenHash), nameof(Settings.MetaAccessToken),
+        nameof(McpConnection.CodeHash), nameof(McpConnection.CodeChallenge),
+        nameof(McpConnection.AccessTokenHash), nameof(McpConnection.RefreshTokenHash),
+    ];
 
     /// <summary>Properties that name an entity, tried in order.</summary>
-    private static readonly string[] LabelFields = ["Name", "Label", "Title", "DishName", "Phone", "Date", "Weekday"];
+    private static readonly string[] LabelFields = ["Name", "Label", "Title", "DishName", "ClientName", "Phone", "Date", "Weekday"];
 
     /// <summary>An entry waiting for its entity to be saved, so an added row's generated key can be read.</summary>
     public sealed class Pending(EntityEntry entry, AuditEntry audit)

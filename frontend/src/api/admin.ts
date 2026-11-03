@@ -48,7 +48,7 @@ export interface AuditChange {
 }
 
 /** Who made a change: one of the admins, or the platform's console (through the ops API). */
-export type AuditActor = AdminActor | 'console'
+export type AuditActor = AdminActor | 'console' | 'claude-owner' | 'claude-master'
 
 export interface AuditEntry {
   id: number
@@ -104,6 +104,44 @@ export const opsTokenApi = {
   /** The token itself is in this answer only. */
   create: () => apiJson<{ token: string; createdAt: string }>('/api/admin/ops-token', send('POST')),
   revoke: () => apiJson<void>('/api/admin/ops-token', send('DELETE')),
+}
+
+/** Who asks to connect, for the approval page (FoodSite.Api `McpConnectionsController`). */
+export interface ClaudeApprovalInfo {
+  clientName: string
+  redirectHost: string
+}
+
+/** What the approval page sends back: the OAuth request Claude opened it with. */
+export interface ClaudeApproval {
+  clientId: string
+  redirectUri: string
+  codeChallenge: string | null
+  codeChallengeMethod: string | null
+  state: string | null
+  resource: string | null
+}
+
+/** A Claude account connected to the site. */
+export interface ClaudeConnection {
+  id: number
+  clientName: string
+  actor: AdminActor
+  createdAt: string
+  lastUsedAt: string | null
+}
+
+/** The Claude connector (feature `mcp`): approving a connection, and the list of connected accounts. */
+export const claudeApi = {
+  approval: (clientId: string, redirectUri: string) =>
+    apiJson<ClaudeApprovalInfo>(
+      `/api/admin/mcp/approval?${new URLSearchParams({ clientId, redirectUri }).toString()}`,
+    ),
+  /** The address to send the browser back to Claude with the one-time code. */
+  approve: (approval: ClaudeApproval) =>
+    apiJson<{ redirectUrl: string }>('/api/admin/mcp/approve', send('POST', approval)),
+  connections: () => apiJson<ClaudeConnection[]>('/api/admin/mcp/connections'),
+  disconnect: (id: number) => apiJson<void>(`/api/admin/mcp/connections/${id}`, send('DELETE')),
 }
 
 /** A client who registered on this site (FoodSite.Api `ClientsController`). */

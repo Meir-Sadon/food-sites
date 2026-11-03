@@ -35,6 +35,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Site folders (scripts/check-sites.mjs)
         run: node ../scripts/check-sites.mjs
+      - name: Claude connector knowledge is up to date (scripts/build-mcp-knowledge.mjs)
+        run: node ../scripts/build-mcp-knowledge.mjs --check
       - run: npm run lint
       - name: Build every site (also the typecheck)
         run: for site in $(ls ../sites | grep -vx _shared); do echo "::group::$site"; SITE=$site npm run build; echo "::endgroup::"; done

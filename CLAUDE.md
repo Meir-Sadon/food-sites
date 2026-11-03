@@ -6,7 +6,7 @@ One codebase for the Hebrew (RTL) ordering sites of several home food businesses
 
 ## Docs map (read the part you are about to change)
 
-`docs/ARCHITECTURE.md` holds the detailed notes; `CLAUDE.md` holds only rules and commands. Sections there: platform history and site folders, one origin/deploy, site folder loading, auth and CSRF, feature flags, ops API, two admins, cancel reasons, audit trail, site styles/order layout/corners/colours/finish (appearance settings), basket and cart, category jump bar, `OrderBuilder`, variants/add-ons/questions/options, Google sign-in, accessibility, dietary tags, dish marks and groups, delivery fee and zones, social links, entry pop-up, duplicating dishes, usage, marketing tracking, owner mail, external services, `DatabaseInitializer`, backend tests, frontend routes/admin navigation/state/search/driver report/unsaved changes/reordering/i18n/tests. **Update the matching section in the same PR that changes the area** (a new setting, flag, style, palette, tracking tool or error code needs its checklist items there).
+`docs/ARCHITECTURE.md` holds the detailed notes; `CLAUDE.md` holds only rules and commands. Sections there: platform history and site folders, one origin/deploy, site folder loading, auth and CSRF, feature flags, ops API, Claude connector (MCP), two admins, cancel reasons, audit trail, site styles/order layout/corners/colours/finish (appearance settings), basket and cart, category jump bar, `OrderBuilder`, variants/add-ons/questions/options, Google sign-in, accessibility, dietary tags, dish marks and groups, delivery fee and zones, social links, entry pop-up, duplicating dishes, usage, marketing tracking, owner mail, external services, `DatabaseInitializer`, backend tests, frontend routes/admin navigation/state/search/driver report/unsaved changes/reordering/i18n/tests. **Update the matching section in the same PR that changes the area** (a new setting, flag, style, palette, tracking tool or error code needs its checklist items there).
 
 ## Rules
 
@@ -34,6 +34,7 @@ The catalog is [`docs/food-sites-feature-guide.html`](docs/food-sites-feature-gu
 - At session start run `node scripts/check-feature-guide.mjs`; if the last review (`docs/feature-guide-review.json`) is 3+ days old or product files changed since, review before finishing (without interrupting an urgent unrelated fix). Update the marker only after a real review.
 - Screenshots use synthetic local/staging data only: no credentials, tokens, real customers, orders, payments or contacts; never touch production. Never invent a screenshot; keep honest evidence labels.
 - Run `node scripts/check-feature-guide.mjs --check` before committing.
+- After changing the guide, the admin's tabs (`admin/sections.ts`) or an `errors.*` text, run `node scripts/build-mcp-knowledge.mjs`: the Claude connector explains from the generated `backend/src/FoodSite.Api/Mcp/knowledge.json`, and CI fails when it is stale.
 
 ## UI/UX design skill
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ClaudeSection } from './ClaudeSection'
 import { ClosedDatesSection } from './ClosedDatesSection'
 import { ConsoleTokenSection } from './ConsoleTokenSection'
 import { GeneralSection } from './GeneralSection'
@@ -9,12 +10,14 @@ import { ShabbatRulesSection } from './ShabbatRulesSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
 import { DeliveryZonesSection } from '../delivery/DeliveryZonesSection'
 import type { DeliveryPricing } from '../../api/site'
+import { useFeatures } from '../../site/useSite'
 import { useAdminSession } from '../session'
 import { SectionGroup, SectionSlot } from '../sectionGroup'
 
 export function SettingsPage() {
   const { t } = useTranslation()
   const { actor } = useAdminSession()
+  const hasFeature = useFeatures()
   const [pricing, setPricing] = useState<DeliveryPricing | null>(null)
   return (
     <SectionGroup>
@@ -42,6 +45,11 @@ export function SettingsPage() {
       <SectionSlot>
         <PasswordSection />
       </SectionSlot>
+      {hasFeature('mcp') && (
+        <SectionSlot>
+          <ClaudeSection />
+        </SectionSlot>
+      )}
       {actor === 'master' && (
         <SectionSlot>
           <ConsoleTokenSection />

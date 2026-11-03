@@ -18,7 +18,7 @@ namespace FoodSite.Api.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -731,6 +731,82 @@ namespace FoodSite.Api.Data.Migrations
                     b.HasIndex("Phone");
 
                     b.ToTable("LoginCodes");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.McpConnection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("AccessTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AccessTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(800)
+                        .HasColumnType("character varying(800)");
+
+                    b.Property<string>("ClientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CodeChallenge")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset?>("CodeExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CodeHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RedirectUri")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("RefreshTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessTokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("CodeHash")
+                        .IsUnique();
+
+                    b.HasIndex("RefreshTokenHash")
+                        .IsUnique();
+
+                    b.ToTable("McpConnections");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.MessageTemplate", b =>
