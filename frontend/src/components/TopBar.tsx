@@ -8,6 +8,7 @@ import { useFeatures } from '../site/useSite'
 import { useCartNav } from './cartNav'
 import { useLeaveCheck } from './leaveGuard'
 import { formatMoney } from '../order/format'
+import { InstallButton } from '../pwa/InstallButton'
 import { NavIcon, type NavIconName } from './NavIcons'
 
 const links: readonly { to: string; key: string; icon: NavIconName; end: boolean; feature?: Feature }[] = [
@@ -78,6 +79,9 @@ export function TopBar() {
               </button>
             </li>
           )}
+          <li>
+            <InstallButton />
+          </li>
           {links.filter((link) => !link.feature || isOn(link.feature)).map((link) => (
             <li key={link.to}>
               {link.to === '/login' && user ? (

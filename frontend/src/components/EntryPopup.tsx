@@ -9,6 +9,7 @@ import { conditionsMatch, isActive, needsActivity, type Visitor } from './popupC
 import { Modal } from './Modal'
 import { useExitIntent } from './exitIntent'
 import { useSite } from '../site/useSite'
+import { notePopupShown, setPopupBusy } from '../pwa/promptGate'
 
 const seenKey = (slot: number) => `entry-popup-seen-${slot}`
 const DEFAULT_INACTIVE_AFTER = { amount: 3, unit: 'month' } as const
@@ -159,6 +160,14 @@ export function EntryPopup() {
       // Storage can be blocked; the pop-up then shows on each load.
     }
   }, [show, openFrequency, openSlot])
+
+  // Tells the install window whether a pop-up is on screen or still coming (time-triggered, delay not yet passed, conditions met).
+  const coming = waiting.some((p) => p.trigger !== 'exit' && !elapsed.has(p.slot) && conditionsMatch(p, visitor))
+  const busy = !site || show || Boolean(due) || coming
+  useEffect(() => {
+    setPopupBusy(busy)
+    if (show) notePopupShown()
+  }, [busy, show])
 
   if (!open || !show) return null
   return (
