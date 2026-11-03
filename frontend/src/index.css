@@ -4930,3 +4930,139 @@ label {
   align-self: center;
   font-weight: 600;
 }
+
+/* ---------- Install as an app ---------- */
+
+.install-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+/* A colour of its own (the gold accent where the site has one), so it stands apart from the grey navigation icons. */
+.install-button__main {
+  display: grid;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-highlight, var(--color-accent));
+  color: var(--color-accent-contrast);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--color-highlight, var(--color-accent)) 40%, transparent);
+  cursor: pointer;
+}
+
+.install-button__hint {
+  display: grid;
+  place-items: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+  border: var(--line-width, 1px) solid var(--color-highlight, var(--color-accent));
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.install-button__tip {
+  position: absolute;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-end: 0;
+  z-index: 30;
+  inline-size: 15rem;
+  max-inline-size: 80vw;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.25);
+}
+
+.install-prompt__backdrop {
+  z-index: 40;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.modal.install-prompt {
+  gap: 0.75rem;
+  max-inline-size: 24rem;
+  padding: 0 1.5rem 1.25rem;
+  border-radius: calc(1.25rem * var(--corner-scale));
+  text-align: center;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
+}
+
+.install-prompt__top {
+  display: grid;
+  place-items: center;
+  margin-inline: -1.5rem;
+  padding: 1.75rem 1rem 1.25rem;
+  background: var(--gradient-hero);
+}
+
+.install-prompt__icon {
+  inline-size: 5rem;
+  block-size: 5rem;
+  border-radius: 1.25rem;
+  background: var(--color-surface);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.3);
+}
+
+.install-prompt .modal__close {
+  z-index: 1;
+  background: rgb(255 255 255 / 0.9);
+  color: #1f1f1f;
+}
+
+.install-prompt .modal__title--with-close {
+  padding-inline: 0;
+  font-size: 1.4rem;
+  line-height: 1.25;
+}
+
+.install-prompt__text {
+  color: var(--color-muted);
+}
+
+.install-prompt__steps {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  text-align: start;
+}
+
+.install-prompt__button {
+  align-self: stretch;
+  padding-block: 0.75rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-highlight, var(--color-accent));
+  color: var(--color-accent-contrast);
+  font-size: 1.1rem;
+  font-weight: 800;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-highlight, var(--color-accent)) 45%, transparent);
+  cursor: pointer;
+}
+
+.install-prompt__dismiss {
+  align-self: center;
+  border-color: transparent;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-decoration: underline;
+}

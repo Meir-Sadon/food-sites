@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 /** The browser's install offer (Chrome, Edge, Android); not in the DOM typings. */
 type InstallPrompt = Event & { prompt: () => Promise<void> }
@@ -19,36 +19,44 @@ export const isIos = () =>
 /** Safari proper; other iPhone browsers cannot add to the home screen from their menu the same way. */
 export const isIosSafari = () => isIos() && /safari/i.test(navigator.userAgent) && !/crios|fxios|edgios|opios|gsa/i.test(navigator.userAgent)
 
+// The browser's install offer arrives once, early: a store kept outside React lets every button and window share it.
+let offer: InstallPrompt | null = null
+let installed = false
+const listeners = new Set<() => void>()
+const emit = () => listeners.forEach((listener) => listener())
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault()
+    offer = event as InstallPrompt
+    emit()
+  })
+  window.addEventListener('appinstalled', () => {
+    offer = null
+    installed = true
+    emit()
+  })
+}
+const subscribe = (listener: () => void) => {
+  listeners.add(listener)
+  return () => void listeners.delete(listener)
+}
+
+/** Opens the browser's install question; false when the browser has not offered one. */
+async function installNow() {
+  const current = offer
+  if (!current) return
+  offer = null
+  emit()
+  await current.prompt()
+}
+
 /**
- * What the footer's install button does: `native` when the browser offered to install (call `install()`),
+ * What the install buttons do: `native` when the browser offered to install (call `install()`),
  * `ios` when only the manual steps exist, `none` when already installed (opened as an app) or unsupported.
  */
 export function useInstallApp() {
-  const [offer, setOffer] = useState<InstallPrompt | null>(null)
-  const [installed, setInstalled] = useState(false)
-
-  useEffect(() => {
-    const onOffer = (event: Event) => {
-      event.preventDefault()
-      setOffer(event as InstallPrompt)
-    }
-    const onInstalled = () => {
-      setOffer(null)
-      setInstalled(true)
-    }
-    window.addEventListener('beforeinstallprompt', onOffer)
-    window.addEventListener('appinstalled', onInstalled)
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onOffer)
-      window.removeEventListener('appinstalled', onInstalled)
-    }
-  }, [])
-
-  const mode: 'native' | 'ios' | 'none' = installed || isStandalone() ? 'none' : offer ? 'native' : isIos() ? 'ios' : 'none'
-  const install = async () => {
-    if (!offer) return
-    await offer.prompt()
-    setOffer(null)
-  }
-  return { mode, install }
+  const current = useSyncExternalStore(subscribe, () => offer)
+  const done = useSyncExternalStore(subscribe, () => installed)
+  const mode: 'native' | 'ios' | 'none' = done || isStandalone() ? 'none' : current ? 'native' : isIos() ? 'ios' : 'none'
+  return { mode, install: installNow }
 }
