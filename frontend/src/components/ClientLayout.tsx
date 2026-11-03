@@ -4,6 +4,7 @@ import { AccountProvider } from '../account/AccountContext'
 import { OrderSignalsProvider } from '../order/orderSignals'
 import { AccessibilityMenu } from '../accessibility/AccessibilityMenu'
 import { CartNavProvider } from './CartNavProvider'
+import { InstallPrompt } from '../pwa/InstallPrompt'
 import { EntryPopup } from './EntryPopup'
 import { Footer } from './Footer'
 import { WhatsAppButton } from './WhatsAppButton'
@@ -81,6 +82,7 @@ function Shell() {
       <Footer />
       <AccessibilityMenu />
       <EntryPopup />
+      <InstallPrompt />
       <div className="fabs">
         <ScrollButtons />
         <WhatsAppButton />

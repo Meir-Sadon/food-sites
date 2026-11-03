@@ -871,6 +871,17 @@ label {
   border-block-start: var(--line-width, 1px) solid var(--color-border);
 }
 
+/* On the order page the fixed total bar covers the bottom edge: the footer gets room above it (the side panel is not fixed). */
+.client-shell:has(.total-bar) .site-footer {
+  padding-block-end: 5rem;
+}
+
+@media (min-width: 64rem) {
+  .client-shell:has(.order-page[data-total='side']) .site-footer {
+    padding-block-end: 0.5rem;
+  }
+}
+
 .site-footer__contact {
   display: flex;
   flex-wrap: wrap;
@@ -884,7 +895,7 @@ label {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding-block-end: 5rem; /* room for the fixed total bar */
+  padding-block-end: 1.5rem; /* the footer below leaves room for the fixed total bar */
 }
 
 .order-page h1 {
