@@ -4,6 +4,7 @@ import { ClosedDatesSection } from './ClosedDatesSection'
 import { ConsoleTokenSection } from './ConsoleTokenSection'
 import { GeneralSection } from './GeneralSection'
 import { InactiveAfterSection } from './InactiveAfterSection'
+import { RestrictedClientsSection } from './RestrictedClientsSection'
 import { PasswordSection } from './PasswordSection'
 import { ShabbatRulesSection } from './ShabbatRulesSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
@@ -33,6 +34,9 @@ export function SettingsPage() {
       </SectionSlot>
       <SectionSlot>
         <InactiveAfterSection />
+      </SectionSlot>
+      <SectionSlot>
+        <RestrictedClientsSection />
       </SectionSlot>
       {pricing === 'zones' && (
         <SectionSlot>

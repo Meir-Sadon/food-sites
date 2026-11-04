@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { listClients, type RegisteredClient } from '../../api/admin'
+import { listClients, restrictedApi, type RegisteredClient } from '../../api/admin'
 import { normalizeSearchText } from '../../order/search'
 import { firstName, whatsAppUrl } from '../messages/compose'
 import { useLoad } from '../hooks'
@@ -19,8 +19,21 @@ function matches(client: RegisteredClient, query: string) {
 /** The clients who registered on this site, with a button that opens a WhatsApp chat with each. */
 export function ClientsPage() {
   const { t } = useTranslation()
-  const { data, failed } = useLoad(() => listClients())
+  const { data, setData, failed } = useLoad(() => listClients())
   const [query, setQuery] = useState('')
+
+  /** Marks or clears a client as restricted (admin-only); the list follows at once. */
+  async function toggle(client: RegisteredClient) {
+    try {
+      if (client.restricted) await restrictedApi.remove(client.phone)
+      else await restrictedApi.add(client.phone)
+      setData((current) =>
+        current && { ...current, clients: current.clients.map((c) => (c.id === client.id ? { ...c, restricted: !client.restricted } : c)) },
+      )
+    } catch {
+      // The mark stays as it was; the admin can try again.
+    }
+  }
 
   const shown = data?.clients.filter((c) => matches(c, query)) ?? []
 
@@ -54,6 +67,7 @@ export function ClientsPage() {
                   <li key={client.id} className="list__row">
                     <span className="list__main">
                       <strong>{client.fullName}</strong>
+                      {client.restricted && <span className="badge badge--warning">{t('admin.restricted.badge')}</span>}
                       <br />
                       <bdi dir="ltr">{client.phone}</bdi>
                       {client.email && (
@@ -73,6 +87,11 @@ export function ClientsPage() {
                           .join(' · ')}
                       </span>
                     </span>
+                    <button type="button" className="button-quiet" onClick={() => void toggle(client)} aria-pressed={!!client.restricted}
+                      aria-label={`${t(client.restricted ? 'admin.restricted.unmark' : 'admin.restricted.mark')}: ${client.fullName}`}
+                    >
+                      {t(client.restricted ? 'admin.restricted.unmark' : 'admin.restricted.mark')}
+                    </button>
                     {link && (
                       <a
                         className="button-link"

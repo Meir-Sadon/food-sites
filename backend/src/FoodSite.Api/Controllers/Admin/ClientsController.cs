@@ -12,7 +12,7 @@ public class ClientsController(AppDbContext db) : AdminControllerBase
     public const int Limit = 1000;
 
     public record ClientDto(
-        int Id, string FullName, string Phone, string? Email, DateTimeOffset? CreatedAt, int Orders, bool WithGoogle);
+        int Id, string FullName, string Phone, string? Email, DateTimeOffset? CreatedAt, int Orders, bool WithGoogle, bool Restricted = false);
 
     public record ClientsDto(int Total, IReadOnlyList<ClientDto> Clients);
 
@@ -20,12 +20,14 @@ public class ClientsController(AppDbContext db) : AdminControllerBase
     public async Task<ClientsDto> Get(CancellationToken ct)
     {
         var total = await db.Users.CountAsync(ct);
+        var restricted = (await db.RestrictedClients.AsNoTracking().Select(c => c.Phone).ToListAsync(ct)).ToHashSet();
         var clients = await db.Users.AsNoTracking()
             .OrderByDescending(u => u.CreatedAt).ThenByDescending(u => u.Id)
             .Take(Limit)
             .Select(u => new ClientDto(
                 u.Id, u.FullName, u.Phone, u.Email, u.CreatedAt, u.Orders.Count, u.GoogleSub != null))
             .ToListAsync(ct);
+        clients = clients.Select(c => c with { Restricted = restricted.Contains(c.Phone) }).ToList();
         return new ClientsDto(total, clients);
     }
 }

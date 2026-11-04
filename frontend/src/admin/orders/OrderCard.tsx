@@ -11,6 +11,8 @@ import { CancelForm } from './CancelForm'
 import { OrderEditor } from './OrderEditor'
 import { PaidForm } from './PaidForm'
 import { SendMessage } from './SendMessage'
+import { RestrictedPrepay } from './RestrictedPrepay'
+import { restrictedApi } from '../../api/admin'
 import { usePrintOrders } from './usePrintOrders'
 import { ItemAnswers } from '../../components/ItemAnswers'
 
@@ -22,6 +24,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
   const [markingPaid, setMarkingPaid] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [messaging, setMessaging] = useState(false)
+  const [prepaying, setPrepaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const printer = usePrintOrders()
 
@@ -50,6 +53,12 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
   }
   const cancelled = order.status === 'Cancelled'
 
+  /** Marks (or clears) the client's phone as restricted; shown at once, undone when saving fails. */
+  const toggleRestricted = () =>
+    apply({ restricted: !order.restricted }, async () => {
+      await (order.restricted ? restrictedApi.remove(order.phone) : restrictedApi.add(order.phone))
+    })
+
   return (
     <article className={`order-card${cancelled ? ' order-card--cancelled' : ''}`} aria-label={t('admin.orders.orderN', { id: order.id })}>
       {!compact && (
@@ -57,6 +66,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
       <header className="row row--between">
         <h4>
           {t('admin.orders.orderN', { id: order.id })} · {order.name}
+          {order.restricted && <span className="badge badge--warning">{t('admin.restricted.badge')}</span>}
         </h4>
         <span className="numeric">{formatMoney(order.total)}</span>
       </header>
@@ -71,6 +81,11 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
         {order.isGuest && <span className="badge">{t('admin.orders.guest')}</span>}
       </p>
         </>
+      )}
+      {order.restricted && (
+        <p role="status" className="notice notice--warning restricted-notice">
+          <strong>{t('admin.restricted.badge')}</strong> {t('admin.restricted.notice')}
+        </p>
       )}
       {order.hourFull && (
         <p role="status" className="notice notice--warning">
@@ -162,6 +177,16 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
           {t('admin.messages.send')}
           <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
         </button>
+        {order.restricted && (
+          <button type="button" className="button-quiet" onClick={() => setPrepaying(!prepaying)} aria-expanded={prepaying}>
+            {t('admin.restricted.askPrepay')}
+            <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+          </button>
+        )}
+        <button type="button" className="button-quiet" onClick={toggleRestricted} aria-pressed={!!order.restricted}>
+          {t(order.restricted ? 'admin.restricted.unmark' : 'admin.restricted.mark')}
+          <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+        </button>
         {!cancelled && (
           <button type="button" className="button-quiet" onClick={() => setCancelling(!cancelling)} aria-expanded={cancelling}>
             {t('admin.orders.cancelOrder')}
@@ -199,6 +224,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
         />
       )}
 
+      {prepaying && order.restricted && <RestrictedPrepay order={order} onClose={() => setPrepaying(false)} />}
       {messaging && <SendMessage order={order} onClose={() => setMessaging(false)} />}
 
       {editing && (
