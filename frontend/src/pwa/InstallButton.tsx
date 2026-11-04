@@ -4,7 +4,7 @@ import { IosInstallDialog } from './IosInstallDialog'
 import { useInstallApp } from './install'
 
 /**
- * The top bar's download button, in its own colour, with a small "!" beside it that opens a tooltip saying what it does.
+ * The top bar's download button, in its own colour, with a small "!" on its top corner that opens a tooltip saying what it does.
  * Tapping the button installs the site as an app at once (the browser's install question); on an iPhone, which has no such
  * question, it opens the steps instead. Hidden when the site already runs as an app or the browser cannot install it.
  */

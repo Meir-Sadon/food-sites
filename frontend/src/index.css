@@ -4937,7 +4937,6 @@ label {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.125rem;
 }
 
 /* A colour of its own (the gold accent where the site has one), so it stands apart from the grey navigation icons. */
@@ -4958,6 +4957,10 @@ label {
 }
 
 .install-button__hint {
+  /* A badge on the button's top corner (the end side, so the left in Hebrew), overlapping it. */
+  position: absolute;
+  inset-block-start: -0.25rem;
+  inset-inline-end: -0.25rem;
   display: grid;
   place-items: center;
   inline-size: 1.25rem;
@@ -4973,6 +4976,13 @@ label {
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
+}
+
+/* Keeps a comfortable tap area around the small badge. */
+.install-button__hint::after {
+  content: '';
+  position: absolute;
+  inset: -0.375rem;
 }
 
 .install-button__tip {
