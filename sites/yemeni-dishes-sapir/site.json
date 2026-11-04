@@ -9,10 +9,10 @@
     "newOrderTemplate": "yemeni_dishes_sapir_new_order"
   },
   "features": {
-    "recommendations": true,
     "favorites": true,
     "reviews": true,
-    "advancedDishes": true
+    "advancedDishes": true,
+    "priceLists": true
   },
   "settings": {
     "contactName": "ספיר",
