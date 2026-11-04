@@ -3,7 +3,7 @@ import { clientPrice, discounted } from './priceRowModel'
 
 const noDates = { from: '', to: '' }
 const discount = (rule: 'general' | 'dish' | 'higher' | 'lower', from: string | null = null, to: string | null = null) =>
-  ({ percent: 10, from, to, rule })
+  ({ percent: 10, from, to, rule, maxOrders: null, nextOrderOnly: false })
 
 describe('the general discount', () => {
   it('rounds up to a whole shekel and never raises a price', () => {

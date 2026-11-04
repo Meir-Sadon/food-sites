@@ -75,4 +75,7 @@ public class Order
     public DateTimeOffset CreatedAt { get; set; }
 
     public List<OrderItem> Items { get; set; } = [];
+
+    /// <summary>The one-time price list discounts this order used up.</summary>
+    public List<PriceListDiscountUse> DiscountUses { get; set; } = [];
 }

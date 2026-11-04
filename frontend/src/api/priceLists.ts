@@ -29,9 +29,13 @@ export interface PriceListDiscount {
   from: string | null
   to: string | null
   rule: DiscountRule
+  /** Only clients with at most this many orders that were not cancelled get it (0 = no orders yet); null is no limit. */
+  maxOrders: number | null
+  /** Given once per client, on the order they place with it; a cancelled order gives it back. */
+  nextOrderOnly: boolean
 }
 
-export const noDiscount: PriceListDiscount = { percent: null, from: null, to: null, rule: 'dish' }
+export const noDiscount: PriceListDiscount = { percent: null, from: null, to: null, rule: 'dish', maxOrders: null, nextOrderOnly: false }
 
 /** Any one is enough: registered within the period, no order that was not cancelled, dishes in the saved cart, an open order above the amount. */
 export interface PriceListStatuses {

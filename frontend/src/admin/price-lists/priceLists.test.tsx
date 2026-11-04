@@ -163,7 +163,7 @@ describe('price lists', () => {
   })
 
   it('saves a general discount with its dates and rule, and shows what a client on the list pays', async () => {
-    const discounted = { ...vip, discount: { percent: 15, from: null, to: '2026-12-31', rule: 'higher' as const } }
+    const discounted = { ...vip, discount: { percent: 15, from: null, to: '2026-12-31', rule: 'higher' as const, maxOrders: null, nextOrderOnly: false } }
     const api = fakeApi({
       ...withLists,
       ...categories,
@@ -185,11 +185,39 @@ describe('price lists', () => {
     expect(api.sent('PUT', '/api/admin/price-lists/2')[0].body).toEqual({
       name: 'לקוחות קבועים',
       baseListId: null,
-      discount: { percent: 15, from: null, to: '2026-12-31', rule: 'higher' },
+      discount: { percent: 15, from: null, to: '2026-12-31', rule: 'higher', maxOrders: null, nextOrderOnly: false },
     })
     // 15% off 70 is 59.5, rounded up to 60. The schnitzel's own 45 is the smaller discount next to 15% off 50 (42.5, so 43).
     expect(await screen.findByText('לקוח במחירון משלם היום: ₪60')).toBeInTheDocument()
     expect(screen.getByText('לקוח במחירון משלם היום: ₪43')).toBeInTheDocument()
+  })
+
+  it('saves a limit on earlier orders and a one-time discount', async () => {
+    const api = fakeApi({
+      ...withLists,
+      ...categories,
+      'GET /api/admin/price-lists': () => [defaultList, vip],
+      'GET /api/admin/price-lists/2/dishes': () => [],
+      'PUT /api/admin/price-lists/2': () => vip,
+    })
+    const user = userEvent.setup()
+    renderAt('/admin/price-lists/2')
+
+    const general = await screen.findByRole('region', { name: 'הגדרות כלליות' })
+    expect(within(general).queryByLabelText('מקסימום הזמנות קודמות')).not.toBeInTheDocument()
+    await user.type(within(general).getByLabelText('אחוז הנחה (%)'), '10')
+    await user.click(within(general).getByLabelText('ההנחה רק ללקוחות שלא הזמינו יותר ממספר הזמנות מסוים'))
+    await user.clear(within(general).getByLabelText('מקסימום הזמנות קודמות'))
+    await user.type(within(general).getByLabelText('מקסימום הזמנות קודמות'), '2')
+    await user.click(within(general).getByLabelText('ההנחה רק להזמנה הקרובה של כל לקוח'))
+    await user.click(within(general).getByRole('button', { name: 'שמירה' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/price-lists/2')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/price-lists/2')[0].body).toEqual({
+      name: 'לקוחות קבועים',
+      baseListId: null,
+      discount: { percent: 10, from: null, to: null, rule: 'dish', maxOrders: 2, nextOrderOnly: true },
+    })
   })
 
   it('names a refused discount next to its field', async () => {
