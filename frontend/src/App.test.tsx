@@ -14,14 +14,13 @@ describe('client site', () => {
     renderAt('/')
     const nav = screen.getByRole('navigation', { name: 'תפריט ראשי' })
     const links = within(nav).getAllByRole('link')
-    expect(links.map((l) => l.getAttribute('aria-label'))).toEqual(['הזמנה', 'התחברות / הרשמה', 'המלצות', 'פרופיל', 'אודות'])
-    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/', '/login', '/recommendations', '/profile', '/about'])
+    expect(links.map((l) => l.getAttribute('aria-label'))).toEqual(['הזמנה', 'התחברות / הרשמה', 'פרופיל', 'אודות'])
+    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/', '/login', '/profile', '/about'])
   })
 
   it.each([
     ['/', 'הזמנה'],
     ['/login', 'התחברות / הרשמה'],
-    ['/recommendations', 'המלצות'],
     ['/profile', 'פרופיל'],
     ['/about', 'אודות'],
   ])('renders %s with its title and marks its button active', (path, title) => {

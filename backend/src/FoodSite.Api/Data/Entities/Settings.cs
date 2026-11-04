@@ -41,6 +41,12 @@ public class Settings
     /// <summary>The order page first asks delivery or pickup and the contact and address, then shows the dishes. Off keeps the usual page.</summary>
     public bool AddressFirst { get; set; }
 
+    /// <summary>
+    /// The WhatsApp message the admin sends by hand for an order of a restricted client, asking for payment in advance
+    /// (placeholders {name} {order} {date} {total} {paymentPhone}). Null means the built-in text. Never shown to clients.
+    /// </summary>
+    public string? RestrictedClientMessage { get; set; }
+
     /// <summary>Phone number for manual Bit/PayBox transfers.</summary>
     public string? PaymentPhone { get; set; }
 

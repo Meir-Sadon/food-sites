@@ -1193,6 +1193,29 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("Recommendations");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.RestrictedClient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.ToTable("RestrictedClients");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Review", b =>
                 {
                     b.Property<int>("Id")
@@ -1526,6 +1549,9 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<int?>("PortionsPerSupplyDate")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RestrictedClientMessage")
+                        .HasColumnType("text");
 
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");

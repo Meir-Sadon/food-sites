@@ -53,7 +53,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         decimal DeliveryDiscount = 0m,
         string? CancelReason = null,
         DateTimeOffset? CancelledAt = null,
-        decimal MinimumTopUp = 0m);
+        decimal MinimumTopUp = 0m,
+        bool Restricted = false);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -101,13 +102,14 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         var orders = await query.OrderBy(o => o.SupplyDate).ThenBy(o => o.CreatedAt).ThenBy(o => o.Id).ToListAsync();
         var overbooked = await OverbookedAsync(orders.Select(o => o.SupplyDate).Distinct().ToList());
         var pictures = await PicturesAsync(orders);
-        return orders.Select(o => ToDto(o, overbooked, pictures));
+        var restricted = await RestrictedAsync(orders);
+        return orders.Select(o => ToDto(o, overbooked, pictures, restricted));
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<OrderDto>> Get(int id) =>
         await db.Orders.AsNoTracking().Include(o => o.Items).SingleOrDefaultAsync(o => o.Id == id) is { } order
-            ? ToDto(order, await OverbookedAsync([order.SupplyDate]), await PicturesAsync([order]))
+            ? ToDto(order, await OverbookedAsync([order.SupplyDate]), await PicturesAsync([order]), await RestrictedAsync([order]))
             : NotFound();
 
     /// <summary>
@@ -329,7 +331,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
         var saved = await db.Orders.AsNoTracking().Include(o => o.Items).SingleAsync(o => o.Id == id);
-        return ToDto(saved, await OverbookedAsync([input.SupplyDate]), await PicturesAsync([saved]));
+        return ToDto(saved, await OverbookedAsync([input.SupplyDate]), await PicturesAsync([saved]), await RestrictedAsync([saved]));
     }
 
     /// <summary>The first picture of each ordered dish (a variant without one shows its main dish's), by dish id.</summary>
@@ -353,7 +355,14 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         return result;
     }
 
-    private static OrderDto ToDto(Order o, HashSet<int> overbooked, Dictionary<int, string> pictures) => new(
+    /// <summary>The phones among these orders that the admin marked as restricted. Admin-only: no client endpoint reads this.</summary>
+    private async Task<HashSet<string>> RestrictedAsync(IEnumerable<Order> orders)
+    {
+        var phones = orders.Select(o => o.Phone).Distinct().ToList();
+        return (await db.RestrictedClients.AsNoTracking().Where(c => phones.Contains(c.Phone)).Select(c => c.Phone).ToListAsync()).ToHashSet();
+    }
+
+    private static OrderDto ToDto(Order o, HashSet<int> overbooked, Dictionary<int, string> pictures, HashSet<string> restricted) => new(
         o.Id, o.Phone, o.Name, o.Address, o.SupplyDate, o.FulfillmentMethod, o.Notes, o.PaymentMethod, o.IsPaid,
         o.PaidWith, o.PaymentComment, o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
         o.Items.OrderBy(i => i.Id)
@@ -370,7 +379,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.DeliveryDiscount,
         o.CancelReason,
         o.CancelledAt,
-        o.MinimumTopUp);
+        o.MinimumTopUp,
+        restricted.Contains(o.Phone));
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

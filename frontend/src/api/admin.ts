@@ -117,6 +117,8 @@ export interface RegisteredClient {
   createdAt: string | null
   orders: number
   withGoogle: boolean
+  /** Marked as restricted by the admin (admin-only). */
+  restricted?: boolean
 }
 
 export interface RegisteredClients {
@@ -125,3 +127,18 @@ export interface RegisteredClients {
 }
 
 export const listClients = () => apiJson<RegisteredClients>('/api/admin/clients')
+
+/** Restricted clients (FoodSite.Api `RestrictedClientsController`): admin-only, never shown to clients. */
+export interface RestrictedClients {
+  /** The admin's own message text; null means the built-in one. */
+  message: string | null
+  /** Local form, "0501234567" */
+  phones: string[]
+}
+
+export const restrictedApi = {
+  get: () => apiJson<RestrictedClients>('/api/admin/restricted-clients'),
+  add: (phone: string) => apiJson<RestrictedClients>('/api/admin/restricted-clients', send('POST', { phone })),
+  remove: (phone: string) => apiJson<RestrictedClients>(`/api/admin/restricted-clients/${encodeURIComponent(phone)}`, send('DELETE')),
+  saveMessage: (message: string) => apiJson<RestrictedClients>('/api/admin/restricted-clients/message', send('PUT', { message })),
+}

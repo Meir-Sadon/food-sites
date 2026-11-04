@@ -30,3 +30,16 @@ export function whatsAppUrl(phone: string, text: string): string | null {
 
 /** A wa.me link that opens WhatsApp with the text typed in and lets the admin pick who gets it. */
 export const whatsAppShareUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(text)}`
+
+/** The placeholders the restricted-client message may use. */
+export const RESTRICTED_PLACEHOLDERS = ['{name}', '{order}', '{date}', '{total}', '{paymentPhone}'] as const
+
+/** The prepayment request for a restricted client's order, with the order's details and the Bit / PayBox number filled in. */
+export function composeRestrictedMessage(text: string, order: AdminOrder, paymentPhone: string | null): string {
+  return text
+    .replaceAll('{name}', firstName(order.name))
+    .replaceAll('{order}', String(order.id))
+    .replaceAll('{date}', formatDate(order.supplyDate))
+    .replaceAll('{total}', formatMoney(order.total))
+    .replaceAll('{paymentPhone}', paymentPhone ?? '')
+}

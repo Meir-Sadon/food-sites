@@ -29,13 +29,14 @@ const dish = (dishId: number, name: string, patch: Partial<PriceListDish> = {}):
 
 const categories = { 'GET /api/admin/categories': () => [{ id: 5, name: 'עופות', displayOrder: 0, dishCount: 2 }] }
 
-// The admin's tabs follow the site's site.json, where the template site leaves price lists off.
-const features = siteConfig.features
+// The admin's tabs follow the site's site.json; `features` here is the build without price lists.
+const features = { ...siteConfig.features, priceLists: false }
+const original = siteConfig.features
 beforeEach(() => {
-  siteConfig.features = { ...features, priceLists: true }
+  siteConfig.features = { ...original, priceLists: true }
 })
 afterEach(() => {
-  siteConfig.features = features
+  siteConfig.features = original
 })
 
 describe('price lists', () => {

@@ -46,6 +46,7 @@ public class AppDbContext(
     public DbSet<Feedback> Feedback => Set<Feedback>();
     public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
     public DbSet<NotifyPhone> NotifyPhones => Set<NotifyPhone>();
+    public DbSet<RestrictedClient> RestrictedClients => Set<RestrictedClient>();
     public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
     public DbSet<MessageTemplate> MessageTemplates => Set<MessageTemplate>();
     public DbSet<Review> Reviews => Set<Review>();
@@ -408,6 +409,11 @@ public class AppDbContext(
         model.Entity<NotifyPhone>(e =>
         {
             e.HasIndex(p => p.Phone).IsUnique();
+        });
+
+        model.Entity<RestrictedClient>(e =>
+        {
+            e.HasIndex(c => c.Phone).IsUnique();
         });
 
         model.Entity<LoginCode>(e =>

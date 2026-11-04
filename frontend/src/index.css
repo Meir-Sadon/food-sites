@@ -564,6 +564,17 @@ label {
   font-size: 0.8125rem;
 }
 
+/* An order from a restricted client: stands out in the admin's list (admin-only). */
+.badge--warning {
+  margin-inline-start: 0.5rem;
+  background: var(--color-error);
+  color: #fff;
+}
+
+.restricted-notice {
+  border-inline-start: 4px solid var(--color-error);
+}
+
 /* "On sale", "new" and "almost out" marks beside a dish's name. */
 .item-badges {
   display: flex;
