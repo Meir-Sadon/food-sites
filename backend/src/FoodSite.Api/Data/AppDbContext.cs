@@ -32,6 +32,7 @@ public class AppDbContext(
     public DbSet<PriceList> PriceLists => Set<PriceList>();
     public DbSet<PriceListDish> PriceListDishes => Set<PriceListDish>();
     public DbSet<PriceListPhone> PriceListPhones => Set<PriceListPhone>();
+    public DbSet<PriceListDiscountUse> PriceListDiscountUses => Set<PriceListDiscountUse>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<DishAvailabilityRule> DishAvailabilityRules => Set<DishAvailabilityRule>();
     public DbSet<User> Users => Set<User>();
@@ -246,6 +247,14 @@ public class AppDbContext(
             e.Property(x => x.Phone).HasMaxLength(20);
             e.HasIndex(x => x.Phone);
             e.HasOne(x => x.PriceList).WithMany(l => l.Phones).HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<PriceListDiscountUse>(e =>
+        {
+            e.HasKey(x => new { x.OrderId, x.PriceListId });
+            e.HasIndex(x => new { x.UserId, x.PriceListId });
+            e.HasOne(x => x.Order).WithMany(o => o.DiscountUses).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.PriceList).WithMany().HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<AddOnGroup>(e =>

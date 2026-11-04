@@ -54,11 +54,36 @@ public class PriceList
     /// <summary>Which wins where a dish has a discount of its own: a <see cref="DiscountRules"/> value.</summary>
     public string DiscountRule { get; set; } = DiscountRules.Dish;
 
+    /// <summary>
+    /// The general discount is only for clients with at most this many orders that were not cancelled (0 = clients who
+    /// have not ordered yet); null is no limit. Prices from the list's own rows are not limited.
+    /// </summary>
+    public int? DiscountMaxOrders { get; set; }
+
+    /// <summary>
+    /// The general discount is given once per client: on the first order placed with it (<see cref="PriceListDiscountUse"/>).
+    /// Cancelling that order gives it back.
+    /// </summary>
+    public bool DiscountNextOrderOnly { get; set; }
+
     public bool DiscountActiveOn(DateOnly day) =>
         DiscountPercent is not null && (DiscountFrom is null || DiscountFrom <= day) && (DiscountTo is null || DiscountTo >= day);
 
     public List<PriceListDish> Dishes { get; set; } = [];
     public List<PriceListPhone> Phones { get; set; } = [];
+}
+
+/// <summary>An order that was priced with the general discount of a list that is for one order per client (<see cref="PriceList.DiscountNextOrderOnly"/>).</summary>
+public class PriceListDiscountUse
+{
+    public int OrderId { get; set; }
+    public Order? Order { get; set; }
+
+    public int PriceListId { get; set; }
+    public PriceList? PriceList { get; set; }
+
+    /// <summary>The client whose session got the discount.</summary>
+    public int UserId { get; set; }
 }
 
 /// <summary>Where a dish of a list has a discount of its own and the list a general one, which price the client gets.</summary>

@@ -221,6 +221,11 @@ public class OrdersController(
         foreach (var item in items)
             order.Items.Add(item);
         db.Orders.Add(order);
+        // A one-time discount that priced this order is now used up (until the order is cancelled).
+        if (await SessionUserIdAsync() is { } discountUserId)
+            foreach (var listId in await PriceBook.OneTimeDiscountsUsedAsync(
+                db, discountUserId, clock.Today(), items.SelectMany(i => i.AddOnItems.Prepend(i)).Select(i => i.PriceListName), ct))
+                order.DiscountUses.Add(new PriceListDiscountUse { PriceListId = listId, UserId = discountUserId });
         // The order in progress the client kept on the server is now sent.
         if (await SessionUserIdAsync() is { } sessionUserId
             && await db.SavedCarts.SingleOrDefaultAsync(c => c.UserId == sessionUserId, ct) is { } cart)

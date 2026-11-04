@@ -18,7 +18,7 @@ namespace FoodSite.Api.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1036,6 +1036,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateOnly?>("DiscountFrom")
                         .HasColumnType("date");
 
+                    b.Property<int?>("DiscountMaxOrders")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("DiscountNextOrderOnly")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal?>("DiscountPercent")
                         .HasPrecision(5, 2)
                         .HasColumnType("numeric(5,2)");
@@ -1083,6 +1089,26 @@ namespace FoodSite.Api.Data.Migrations
                         .HasFilter("\"IsDefault\"");
 
                     b.ToTable("PriceLists");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDiscountUse", b =>
+                {
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PriceListId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("OrderId", "PriceListId");
+
+                    b.HasIndex("PriceListId");
+
+                    b.HasIndex("UserId", "PriceListId");
+
+                    b.ToTable("PriceListDiscountUses");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDish", b =>
@@ -2103,6 +2129,25 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("BaseList");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDiscountUse", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Order", "Order")
+                        .WithMany("DiscountUses")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodSite.Api.Data.Entities.PriceList", "PriceList")
+                        .WithMany()
+                        .HasForeignKey("PriceListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("PriceList");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDish", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
@@ -2270,6 +2315,8 @@ namespace FoodSite.Api.Data.Migrations
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Order", b =>
                 {
+                    b.Navigation("DiscountUses");
+
                     b.Navigation("Items");
                 });
 
