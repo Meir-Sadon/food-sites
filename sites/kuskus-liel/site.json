@@ -9,10 +9,10 @@
     "newOrderTemplate": "kuskus_liel_new_order"
   },
   "features": {
-    "recommendations": true,
     "favorites": true,
     "reviews": true,
-    "advancedDishes": true
+    "advancedDishes": true,
+    "priceLists": true
   },
   "settings": {
     "contactName": "ליאל אמירגולוב",

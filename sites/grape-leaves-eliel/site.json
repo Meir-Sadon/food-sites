@@ -9,10 +9,10 @@
     "newOrderTemplate": "grape_leaves_eliel_new_order"
   },
   "features": {
-    "recommendations": true,
     "favorites": true,
     "reviews": true,
-    "advancedDishes": true
+    "advancedDishes": true,
+    "priceLists": true
   },
   "seed": ["../_shared/seed/drinks.json"]
 }

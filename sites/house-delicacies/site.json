@@ -9,10 +9,10 @@
     "newOrderTemplate": "house_delicacies_new_order"
   },
   "features": {
-    "recommendations": true,
     "favorites": true,
     "reviews": true,
-    "advancedDishes": true
+    "advancedDishes": true,
+    "priceLists": true
   },
   "settings": {
     "contactName": "אשר",
