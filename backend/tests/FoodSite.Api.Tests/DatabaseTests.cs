@@ -33,7 +33,7 @@ public sealed class DatabaseTests : IDisposable
         [
             "Settings", "SupplyDays", "ClosedDates", "Categories", "Dishes", "DishImages",
             "DishOptions", "DishQuestions", "DishAddOns", "AddOnGroups", "Users", "Orders", "OrderItems", "FavoriteOrders",
-            "Recommendations", "NotifyPhones", "LoginCodes", "FeatureFlags", "MessageTemplates", "Reviews", "ReviewImages",
+            "Recommendations", "NotifyPhones", "LoginCodes", "FeatureFlags", "MessageTemplates", "RestrictedClients", "Reviews", "ReviewImages",
             "UsageEvents", "UsageDays", "UsageDevices",
             "DriverRoutes", "DriverRouteStops",
             "AuditEntries", "Feedback", "DishGroups", "DishGroupDishes", "DeliveryZones", "SocialLinks", "SupplyDayHours", "GuestDetails", "UserAddresses", "Popups",
