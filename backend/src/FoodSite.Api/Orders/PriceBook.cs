@@ -188,6 +188,34 @@ public sealed class PriceBook
             .OrderBy(d => d.Category?.DisplayOrder ?? int.MaxValue).ThenBy(d => d.DisplayOrder).ThenBy(d => d.Id).ToList();
     }
 
+    /// <summary>The client's orders that were not cancelled, by account or by phone (orders from before the account).</summary>
+    private static Task<int> CountOrdersAsync(AppDbContext db, int userId, string? phone, CancellationToken ct) =>
+        db.Orders.AsNoTracking().CountAsync(o => o.Status != OrderStatus.Cancelled && (o.UserId == userId || (phone != null && o.Phone == phone)), ct);
+
+    /// <summary>The one-time lists whose discount the client got on an order that was not cancelled.</summary>
+    private static async Task<HashSet<int>> UsedDiscountListsAsync(AppDbContext db, int userId, CancellationToken ct) =>
+        (await db.PriceListDiscountUses.AsNoTracking()
+            .Where(u => u.UserId == userId && u.Order!.Status != OrderStatus.Cancelled).Select(u => u.PriceListId).ToListAsync(ct)).ToHashSet();
+
+    /// <summary>
+    /// The lists whose one-time discount (<see cref="PriceList.DiscountNextOrderOnly"/>) a new order of the client uses
+    /// up: those in their dates that priced a line (<paramref name="listNames"/>) and that the client has not used yet.
+    /// </summary>
+    public static async Task<List<int>> OneTimeDiscountsUsedAsync(
+        AppDbContext db, int userId, DateOnly today, IEnumerable<string?> listNames, CancellationToken ct = default)
+    {
+        var names = listNames.OfType<string>().Distinct().ToList();
+        if (names.Count == 0)
+            return [];
+        var lists = (await db.PriceLists.AsNoTracking()
+            .Where(l => l.DiscountNextOrderOnly && l.Name != null && names.Contains(l.Name)).ToListAsync(ct))
+            .Where(l => l.DiscountActiveOn(today)).ToList();
+        if (lists.Count == 0)
+            return [];
+        var used = await UsedDiscountListsAsync(db, userId, ct);
+        return lists.Where(l => !used.Contains(l.Id)).Select(l => l.Id).ToList();
+    }
+
     /// <summary>
     /// The book for a logged-in client on a day. A dish that a list assigned to the client's phone prices takes the
     /// lowest such price; otherwise the lowest among the lists whose statuses take the client in. A list prices a dish
@@ -226,8 +254,15 @@ public sealed class PriceBook
         var rows = (await db.PriceListDishes.AsNoTracking().Where(d => ids.Contains(d.PriceListId)).ToListAsync(ct))
             .ToLookup(r => r.PriceListId);
 
-        // A general discount reaches dishes the list has no row for, at their base list's prices.
-        var discounted = lists.Where(l => l.DiscountActiveOn(today)).ToList();
+        // A general discount reaches dishes the list has no row for, at their base list's prices. A client past the
+        // list's order limit, or who already had its one-time discount, gets the list without it.
+        var orderCount = lists.Any(l => l.DiscountMaxOrders is not null && l.DiscountActiveOn(today))
+            ? await CountOrdersAsync(db, userId, user.Phone, ct) : 0;
+        var used = lists.Any(l => l.DiscountNextOrderOnly && l.DiscountActiveOn(today))
+            ? await UsedDiscountListsAsync(db, userId, ct) : [];
+        bool DiscountOn(PriceList l) => l.DiscountActiveOn(today) && (l.DiscountMaxOrders is not { } max || orderCount <= max)
+            && !(l.DiscountNextOrderOnly && used.Contains(l.Id));
+        var discounted = lists.Where(DiscountOn).ToList();
         var dishes = discounted.Count > 0 ? await PricedDishesAsync(db, tracking: false, ct) : [];
         var baseIds = discounted.Where(l => l.BaseListId is not null).Select(l => l.BaseListId!.Value).Distinct().ToList();
         var baseRows = (await db.PriceListDishes.AsNoTracking().Where(d => baseIds.Contains(d.PriceListId)).ToListAsync(ct))
@@ -238,7 +273,7 @@ public sealed class PriceBook
         {
             var name = list.Name ?? "";
             var own = rows[list.Id].ToDictionary(r => r.DishId);
-            if (!list.DiscountActiveOn(today))
+            if (!DiscountOn(list))
             {
                 entries.AddRange(own.Values.Where(r => r.IsActiveOn(today)).Select(r => (list.Id, r.DishId, new Entry(r.Price, r.BasePrice, name,
                     (r.SubPrices ?? []).DistinctBy(x => x.Key).ToDictionary(x => x.Key, x => x.Price)))));

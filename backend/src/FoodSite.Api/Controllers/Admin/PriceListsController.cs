@@ -19,6 +19,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
 {
     public const decimal MaxPrice = DishesController.MaxAddOnPrice;
     public const int MaxPhones = 1000;
+    public const int MaxDiscountOrders = 10000;
 
     /// <summary>Name is null for the default list. BaseListId null means the default list (and is the default list's own).</summary>
     public record PriceListDto(
@@ -28,7 +29,9 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     /// A discount on the whole menu: Percent off each base price (null is none), rounded up to a whole shekel, From/To
     /// its dates (either open), and Rule (a <see cref="DiscountRules"/> value) which wins where a dish has its own discount.
     /// </summary>
-    public record DiscountDto(decimal? Percent, DateOnly? From, DateOnly? To, string Rule);
+    /// MaxOrders limits it to clients with at most that many orders that were not cancelled (null is no limit), and
+    /// NextOrderOnly gives it once per client, on the order they place with it.
+    public record DiscountDto(decimal? Percent, DateOnly? From, DateOnly? To, string Rule, int? MaxOrders = null, bool NextOrderOnly = false);
 
     /// <summary>
     /// The clients a list is for by status: registered within NewClientsAmount NewClientsUnits (null is off), with no
@@ -279,7 +282,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     private static PriceListDto ToDto(PriceList l) =>
         new(l.Id, l.Name, l.IsDefault, l.BaseListId, l.Phones.Select(p => p.Phone).Order().ToList(),
             new StatusesDto(l.NewClientsAmount, l.NewClientsAmount is null ? null : l.NewClientsUnit, l.ForNoOrders, l.ForMidOrder, l.OpenOrderAbove),
-            new DiscountDto(l.DiscountPercent, l.DiscountFrom, l.DiscountTo, l.DiscountRule));
+            new DiscountDto(l.DiscountPercent, l.DiscountFrom, l.DiscountTo, l.DiscountRule, l.DiscountMaxOrders, l.DiscountNextOrderOnly));
 
     private static void SetDiscount(PriceList list, DiscountDto? discount)
     {
@@ -287,6 +290,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
             return;
         list.DiscountPercent = discount.Percent is { } percent ? decimal.Round(percent, 2) : null;
         (list.DiscountFrom, list.DiscountTo, list.DiscountRule) = (discount.From, discount.To, discount.Rule!);
+        (list.DiscountMaxOrders, list.DiscountNextOrderOnly) = (discount.MaxOrders, discount.NextOrderOnly);
     }
 
     /// <summary>The statuses the list is for, besides its phones. A list for the client's phone wins over these.</summary>
@@ -344,6 +348,8 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
                 errors.Add("discount.to", "toBeforeFrom");
             if (!DiscountRules.All.Contains(discount.Rule))
                 errors.Add("discount.rule", "invalid");
+            if (discount.MaxOrders is { } maxOrders && (maxOrders < 0 || maxOrders > MaxDiscountOrders))
+                errors.Add("discount.maxOrders", "invalid");
         }
         var name = input.Name?.Trim();
         if (!string.IsNullOrEmpty(name) && await db.PriceLists.AnyAsync(l => l.Name == name && l.Id != (list == null ? 0 : list.Id)))
