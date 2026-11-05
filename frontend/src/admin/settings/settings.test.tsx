@@ -232,6 +232,25 @@ describe('Tiles groups', () => {
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'tiles', tileGroups: 'minimal' })
   })
+
+  it('offers the same minimal look for rectangles', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    await user.click(within(form).getByRole('radio', { name: /מלבנים/ }))
+    await user.click(within(form).getByRole('radio', { name: /מינימלי/ }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'rect', tileGroups: 'minimal' })
+  })
 })
 
 describe('Image size', () => {
