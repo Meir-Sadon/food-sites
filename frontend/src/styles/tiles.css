@@ -134,6 +134,10 @@
   margin: 0;
 }
 
+.tile__body .dish__price {
+  margin-block-start: auto;
+}
+
 .tile__body h3 {
   display: -webkit-box;
   overflow: hidden;
