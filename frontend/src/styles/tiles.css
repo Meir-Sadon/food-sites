@@ -136,6 +136,8 @@
 
 .tile__body .dish__price {
   margin-block-start: auto;
+  /* The price is plain text here: the name is the boldest line. */
+  font-weight: 400;
 }
 
 .tile__body h3 {
@@ -457,10 +459,10 @@
   font-size: 0.9rem;
 }
 
-/* ---------- Minimal categories (Settings → tileGroups = minimal) ----------
+/* ---------- Minimal categories (Settings → tileGroups = minimal; tiles and rectangles alike) ----------
    No frame around a category: a plain heading with a hairline above it, the tiles straight on the page, each one its
    own square. A background the admin set for the block (--category-bg) still applies. */
-:root[data-style='tiles'][data-tile-groups='minimal'] .category {
+:root[data-tile-groups='minimal'] .category:is([data-layout='tiles'], [data-layout='rect']) {
   overflow: visible;
   border: 0;
   border-block-start: var(--line-width, 1px) solid var(--color-border);
@@ -469,20 +471,20 @@
   background: var(--category-bg, transparent);
 }
 
-:root[data-style='tiles'][data-tile-groups='minimal'] .category:first-of-type {
+:root[data-tile-groups='minimal'] .category:is([data-layout='tiles'], [data-layout='rect']):first-of-type {
   border-block-start: 0;
 }
 
-:root[data-style='tiles'][data-tile-groups='minimal'] .category > summary {
+:root[data-tile-groups='minimal'] .category:is([data-layout='tiles'], [data-layout='rect']) > summary {
   padding: 1rem 0.25rem 0.25rem;
   background: none;
 }
 
-:root[data-style='tiles'][data-tile-groups='minimal'] .category > summary h2 {
+:root[data-tile-groups='minimal'] .category:is([data-layout='tiles'], [data-layout='rect']) > summary h2 {
   font-size: 1.5rem;
   font-weight: 800;
 }
 
-:root[data-style='tiles'][data-tile-groups='minimal'] .category__dishes {
+:root[data-tile-groups='minimal'] .category:is([data-layout='tiles'], [data-layout='rect']) .category__dishes {
   padding-inline: 0.25rem;
 }

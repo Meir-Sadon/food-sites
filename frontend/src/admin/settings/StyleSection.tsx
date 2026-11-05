@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
-import { IMAGE_SIZES, SITE_STYLES, TILE_GROUPS, type ImageSize, type SiteStyle, type TileGroups } from '../../api/site'
+import { IMAGE_SIZES, isTileStyle, SITE_STYLES, TILE_GROUPS, type ImageSize, type SiteStyle, type TileGroups } from '../../api/site'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
@@ -72,7 +72,7 @@ export function StyleSection() {
               </label>
             ))}
           </fieldset>
-          {style === 'tiles' && (
+          {style && isTileStyle(style) && (
             <fieldset className="style-options">
               <legend>{t('admin.settings.tileGroups.title')}</legend>
               {TILE_GROUPS.map((option) => (
