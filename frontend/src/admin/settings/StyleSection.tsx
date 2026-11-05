@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
-import { SITE_STYLES, TILE_GROUPS, type SiteStyle, type TileGroups } from '../../api/site'
+import { IMAGE_SIZES, SITE_STYLES, TILE_GROUPS, type ImageSize, type SiteStyle, type TileGroups } from '../../api/site'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
@@ -17,9 +17,11 @@ export function StyleSection() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pickedGroups, setPickedGroups] = useState<TileGroups | null>(null)
+  const [pickedSize, setPickedSize] = useState<ImageSize | null>(null)
   const style = picked ?? settings?.style
+  const imageSize = pickedSize ?? settings?.imageSize
   const tileGroups = pickedGroups ?? settings?.tileGroups
-  const changed = !!settings && (style !== settings.style || tileGroups !== settings.tileGroups)
+  const changed = !!settings && (style !== settings.style || tileGroups !== settings.tileGroups || imageSize !== settings.imageSize)
 
   useUnsavedChanges(changed, save)
 
@@ -35,9 +37,10 @@ export function StyleSection() {
     try {
       // The other settings as saved now, so this never sends stale values back.
       const { backgroundImageUrl: _, orderTotalPosition: __, orderFlow: ___, corners: ____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tracking: _tr, badges: _bd, inactiveAfter: _ia, ...current } = await settingsApi.get()
-      setData(await settingsApi.save({ ...current, style, tileGroups }))
+      setData(await settingsApi.save({ ...current, style, tileGroups, imageSize }))
       setPicked(null)
       setPickedGroups(null)
+      setPickedSize(null)
       flash()
       return true
     } catch (err) {
@@ -81,6 +84,16 @@ export function StyleSection() {
               ))}
             </fieldset>
           )}
+          <fieldset className="style-options">
+            <legend>{t(style === 'rect' ? 'admin.settings.imageSize.titleRect' : 'admin.settings.imageSize.title')}</legend>
+            <p className="hint">{t(style === 'rect' ? 'admin.settings.imageSize.hintRect' : 'admin.settings.imageSize.hint')}</p>
+            {IMAGE_SIZES.map((option) => (
+              <label key={option} className="style-option">
+                <input type="radio" name="image-size" value={option} checked={imageSize === option} onChange={() => setPickedSize(option)} />
+                <strong>{t(`admin.settings.imageSize.${option}`)}</strong>
+              </label>
+            ))}
+          </fieldset>
           <div className="row">
             <button type="submit" disabled={saving || !changed}>
               {saving ? t('admin.saving') : t('admin.save')}

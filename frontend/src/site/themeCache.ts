@@ -1,4 +1,4 @@
-import type { ColorSet, Corners, FontPair, Palette, Shadows, Site, SiteStyle, Spacing, TileGroups } from '../api/site'
+import type { ColorSet, Corners, FontPair, Palette, Shadows, Site, SiteStyle, Spacing, TileGroups, ImageSize } from '../api/site'
 import { colorVariables } from './palettes'
 
 /** Where the last look of the site is kept; `index.html` reads the same key before the first paint. */
@@ -15,6 +15,7 @@ export interface CachedTheme {
   shadows: Shadows
   spacing: Spacing
   tileGroups: TileGroups
+  imageSize: ImageSize
   /** The CSS variables and `<html data-*>` values these make, for the script in `index.html` to apply at once. */
   vars: Record<string, string>
   attrs: Record<string, string>
@@ -46,6 +47,7 @@ export function saveTheme(site: Site) {
     shadows: site.shadows,
     spacing: site.spacing,
     tileGroups: site.tileGroups,
+    imageSize: site.imageSize,
     vars: colorVariables(site.palette, site.customColors, site.lineWidth),
     attrs: {
       style: site.style,
@@ -54,6 +56,7 @@ export function saveTheme(site: Site) {
       shadows: site.shadows,
       spacing: site.spacing,
       tileGroups: site.tileGroups,
+      imageSize: site.imageSize,
     },
   }
   cached = theme

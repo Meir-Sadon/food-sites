@@ -1440,6 +1440,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("GoogleTagManagerId")
                         .HasColumnType("text");
 
+                    b.Property<string>("ImageSize")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<int?>("InactiveAfterAmount")
                         .HasColumnType("integer");
 

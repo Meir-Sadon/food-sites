@@ -16,7 +16,10 @@ public static class SiteStyles
     /// <summary>Dishes as square tiles side by side, a round add button on each, and a dialog for the choices.</summary>
     public const string Tiles = "tiles";
 
-    public static readonly IReadOnlyList<string> All = [Classic, Street, Tiles];
+    /// <summary>Dishes as wide rectangular cards: the picture at the end side with the add button on it, the details beside it.</summary>
+    public const string Rect = "rect";
+
+    public static readonly IReadOnlyList<string> All = [Classic, Street, Tiles, Rect];
 
     public const int MaxLength = 20;
 

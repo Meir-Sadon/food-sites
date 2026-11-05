@@ -57,6 +57,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string Shadows,
         string Spacing,
         string TileGroups,
+        string ImageSize,
         string DeliveryPricing,
         decimal? DeliveryFeeAmount,
         decimal? DeliveryBaseFee,
@@ -93,6 +94,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? Shadows = null,
         string? Spacing = null,
         string? TileGroups = null,
+        string? ImageSize = null,
         bool? BitEnabled = null,
         bool? PayBoxEnabled = null,
         string? BitLink = null,
@@ -178,6 +180,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.Spacing), "invalid");
         if (input.TileGroups is not null && !Finish.IsKnownTileGroups(input.TileGroups))
             errors.Add(nameof(input.TileGroups), "invalid");
+        if (input.ImageSize is not null && !Finish.IsKnownImageSize(input.ImageSize))
+            errors.Add(nameof(input.ImageSize), "invalid");
         if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !OwnerRecipients.IsValid(input.OwnerEmail, OwnerEmailMaxLength))
             errors.Add(nameof(input.OwnerEmail), "email");
         if (input.DeliveryPricing is not null && !Delivery.DeliveryPricing.IsKnown(input.DeliveryPricing))
@@ -256,6 +260,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.Spacing = input.Spacing;
         if (input.TileGroups is not null)
             settings.TileGroups = input.TileGroups;
+        if (input.ImageSize is not null)
+            settings.ImageSize = input.ImageSize;
         // Missing (an older client) keeps the address; an empty one turns the mails off.
         if (input.OwnerEmail is not null)
             settings.OwnerEmail = Clean(OwnerRecipients.Normalize(input.OwnerEmail));
@@ -429,6 +435,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
         Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
         Finish.EffectiveTileGroups(s.TileGroups),
+        Finish.EffectiveImageSize(s.ImageSize),
         s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
         s.DeliveryFeeAmount,
         s.DeliveryBaseFee,

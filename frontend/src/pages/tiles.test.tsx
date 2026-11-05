@@ -159,3 +159,20 @@ describe('The tiles style', () => {
     expect(within(tile).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' })).toBeInTheDocument()
   })
 })
+
+describe('The rectangles style', () => {
+  it('shows each dish as a card with the add button on the picture, and sets the size on <html>', async () => {
+    fakeApi({ 'GET /api/site': () => site({ style: 'rect', imageSize: 'large' }), 'GET /api/menu': () => tilesMenu() })
+    renderAt('/')
+    const user = userEvent.setup()
+    const card = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('article')!
+    expect(card).toHaveClass('dish--tile')
+    expect(card.querySelector('.tile__media .tile__add')).not.toBeNull()
+    expect(card.querySelector('.tile__body')).toHaveTextContent('חומוס פשוט')
+    expect(document.documentElement.dataset.style).toBe('rect')
+    expect(document.documentElement.dataset.imageSize).toBe('large')
+
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
+    expect(within(card).getByRole('group', { name: 'חומוס פשוט' })).toBeInTheDocument()
+  })
+})

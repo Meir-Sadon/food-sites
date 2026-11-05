@@ -234,6 +234,30 @@ describe('Tiles groups', () => {
   })
 })
 
+describe('Image size', () => {
+  it('saves the rectangles style with a size, and names the size after the rectangles', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    expect(within(form).getByRole('radio', { name: /קטן \(ברירת מחדל\)/ })).toBeChecked()
+    expect(within(form).getByText('גודל התמונות')).toBeInTheDocument()
+    await user.click(within(form).getByRole('radio', { name: /מלבנים/ }))
+    expect(within(form).getByText('גודל המלבנים')).toBeInTheDocument()
+    await user.click(within(form).getByRole('radio', { name: 'גדול מאוד' }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'rect', imageSize: 'huge' })
+  })
+})
+
 describe('Finish', () => {
   it('saves the font, shadows and spacing and nothing the other sections own', async () => {
     let saved = settings({ kashrutText: 'נשמר בינתיים' })
