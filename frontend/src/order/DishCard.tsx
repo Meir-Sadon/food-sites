@@ -452,9 +452,10 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         ) : (
           <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
         )}
-        <DishPrice dish={dish} />
         {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
         {rect && <AllergenLine text={dish.allergenInfo} />}
+        {/* The price is the last line, at the bottom of the tile or rectangle, under the description. */}
+        <DishPrice dish={dish} />
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
