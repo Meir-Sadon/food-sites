@@ -1,3 +1,4 @@
+using System.Globalization;
 using FoodSite.Api.Data;
 using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data.Entities;
@@ -42,7 +43,14 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     }
 
     /// <param name="DeliveryFees">The part of <paramref name="Sales"/> that is delivery fees.</param>
-    public record PeriodDto(DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees);
+    /// <param name="Bands">The same orders split by their total, when the summary was asked for <c>bands</c>; null otherwise.</param>
+    public record PeriodDto(DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees, IReadOnlyList<BandDto>? Bands = null);
+
+    /// <summary>The orders whose total is more than <paramref name="Above"/> and at most the next band's (0 for the first band, which also holds an order of 0).</summary>
+    public record BandDto(decimal Above, int Orders, decimal Sales, decimal DeliveryFees);
+
+    /// <summary>The most thresholds a summary splits its periods by.</summary>
+    public const int MaxBands = 20;
 
     /// <summary>Where an order stands, as the summary tells it apart: its status, or <see cref="WaitingApproval"/> while the admin has not approved it.</summary>
     public static class OrderState
@@ -114,11 +122,13 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     /// Orders and their totals per period, by supply date. <paramref name="statuses"/> (comma-separated
     /// <see cref="OrderState.All"/>) picks what counts; without it everything but cancelled does, orders waiting for the
     /// admin's approval included. Every state's own count is returned in <c>byStatus</c> either way.
-    /// Without dates: the last 12 months up to today.
+    /// Without dates: the last 12 months up to today. <paramref name="bands"/> (comma-separated order totals in shekels,
+    /// ascending) splits each period by the orders' totals, so a console can charge a commission that depends on the order's size.
     /// </summary>
     [HttpGet("summary")]
     public async Task<ActionResult<SummaryDto>> Summary(
-        DateOnly? from, DateOnly? to, SummaryPeriod period = SummaryPeriod.Month, string? statuses = null, CancellationToken ct = default)
+        DateOnly? from, DateOnly? to, SummaryPeriod period = SummaryPeriod.Month, string? statuses = null, string? bands = null,
+        CancellationToken ct = default)
     {
         var end = to ?? clock.Today();
         var start = from ?? new DateOnly(end.Year, end.Month, 1).AddMonths(-11);
@@ -138,6 +148,20 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
             counted = OrderState.All.Where(asked.Contains).ToList();
         }
 
+        List<decimal>? thresholds = null;
+        if (bands is not null)
+        {
+            var parts = bands.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            thresholds = parts
+                .Select(p => decimal.TryParse(p, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) ? amount : -1)
+                .ToList();
+            if (parts.Length == 0 || parts.Length > MaxBands || thresholds.Any(t => t <= 0)
+                || thresholds.Zip(thresholds.Skip(1)).Any(pair => pair.Second <= pair.First))
+                return ValidationProblem(new ValidationProblemDetails(
+                    new Admin.Errors().Add(nameof(bands), "invalid").ToDictionary()));
+            thresholds.Insert(0, 0);
+        }
+
         var all = (await db.Orders.AsNoTracking()
                 .Where(o => o.SupplyDate >= start && o.SupplyDate <= end)
                 .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, o.Status, o.NeedsReview })
@@ -148,7 +172,14 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
         var periods = orders
             .GroupBy(o => PeriodStart(o.SupplyDate, period))
             .OrderBy(g => g.Key)
-            .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Total), g.Sum(o => o.DeliveryFee)))
+            .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Total), g.Sum(o => o.DeliveryFee), thresholds?
+                .Select(above => g
+                    .Where(o => thresholds.LastOrDefault(t => t < o.Total) == above)
+                    .Aggregate(new BandDto(above, 0, 0, 0), (band, o) => band with
+                    {
+                        Orders = band.Orders + 1, Sales = band.Sales + o.Total, DeliveryFees = band.DeliveryFees + o.DeliveryFee,
+                    }))
+                .ToList()))
             .ToList();
         var byStatus = OrderState.All
             .Select(state => new StatusDto(state, all.Count(o => o.State == state), all.Where(o => o.State == state).Sum(o => o.Total)))

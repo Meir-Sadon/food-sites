@@ -45,7 +45,7 @@ The site owner gets `403 { code: "masterOnly" }` on all three.
 - `migration`: the last migration applied to the site's database.
 - `pendingMigrations`: migrations this build has and the database lacks (empty once the site migrated on startup).
 
-### `GET /api/ops/summary?from=&to=&period=&statuses=`
+### `GET /api/ops/summary?from=&to=&period=&statuses=&bands=`
 
 Orders and their totals per period, by **supply date**.
 
@@ -78,6 +78,17 @@ Orders and their totals per period, by **supply date**.
 ```
 
 `sales` is the sum of the orders' totals in shekels, delivery fees included; `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
+
+`bands` (optional): comma-separated order totals in shekels, ascending and above 0, at most 20 (anything else is `400` with `bands: ["invalid"]`). Each period then also gets `bands`, one per threshold plus one from 0, splitting the period's orders by their total (delivery fee included): a band holds the orders above its `above` and up to the next band's (the first also holds an order of 0). A console uses it to charge a commission that depends on the order's size. Without `bands` a period's `bands` is `null`.
+
+```json
+{ "start": "2030-01-01", "orders": 3, "sales": 900.00, "deliveryFees": 30.00,
+  "bands": [
+    { "above": 0, "orders": 1, "sales": 100.00, "deliveryFees": 15.00 },
+    { "above": 350, "orders": 1, "sales": 400.00, "deliveryFees": 15.00 },
+    { "above": 500, "orders": 1, "sales": 400.00, "deliveryFees": 0 }
+  ] }
+```
 
 ### `GET /api/ops/cancellations?from=&to=`
 
