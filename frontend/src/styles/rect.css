@@ -19,6 +19,10 @@
 }
 
 [data-layout='rect'] .dish--tile {
+  /* Every card is the same height: the picture's, and never less than the text needs (two lines of name, two of
+     description, the allergens and the price). */
+  --rect-h: max(calc(10rem * var(--image-scale)), 9.75rem);
+  block-size: calc(var(--rect-h) + 1rem);
   -webkit-tap-highlight-color: transparent;
   display: flex;
   flex-direction: row;
@@ -46,8 +50,7 @@
   /* The width is capped so the text keeps its room; the height always follows the size, the picture fills it. */
   inline-size: min(calc(10rem * var(--image-scale)), 52%);
   min-inline-size: 5.75rem;
-  block-size: calc(10rem * var(--image-scale));
-  min-block-size: 5.75rem;
+  block-size: var(--rect-h);
   aspect-ratio: auto;
   border-radius: calc(0.75rem * var(--corner-scale));
 }
@@ -58,17 +61,22 @@
   justify-content: flex-start;
   align-self: stretch;
   block-size: auto;
+  min-block-size: 0;
   max-block-size: none;
-  overflow: visible;
+  overflow: hidden;
   padding: 0.25rem var(--dish-pad, 0);
 }
 
 /* The name is the boldest line; a sale mark sits right beside it. */
 [data-layout='rect'] .tile__title {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.5rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+[data-layout='rect'] .tile__title h3 {
+  flex: 1;
+  min-inline-size: 0;
 }
 
 [data-layout='rect'] .tile__body h3 {
@@ -77,13 +85,10 @@
 }
 
 [data-layout='rect'] .tile__sale {
+  flex: none;
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-[data-layout='rect'] .tile__description {
-  -webkit-line-clamp: 3;
 }
 
 [data-layout='rect'] .tile__allergens {
@@ -97,38 +102,26 @@
   font-size: inherit;
 }
 
-/* The add button is flush with the picture's end-bottom corner (the picture's own rounding trims that corner); once
-   the dish is in the order the minus and the amount appear right beside the plus, in the same corner. */
+/* The add button is flush with the picture's end-bottom corner (the picture's own rounding trims that corner). Once the
+   dish is in the order the plus stays there and the minus and the amount slide open on its start side. */
 [data-layout='rect'] .tile__add,
-[data-layout='rect'] .tile__count {
+[data-layout='rect'] .tile__count,
+[data-layout='rect'] .tile__stepper {
+  --tile-btn: calc(2rem + 0.5rem * var(--image-scale));
   inset-block-end: 0;
   inset-inline-end: 0;
-  inline-size: calc(2rem + 0.5rem * var(--image-scale));
-  block-size: calc(2rem + 0.5rem * var(--image-scale));
+}
+
+[data-layout='rect'] .tile__add,
+[data-layout='rect'] .tile__count,
+[data-layout='rect'] .tile__plus {
   border-radius: calc(1rem * var(--corner-scale));
   box-shadow: none;
 }
 
-[data-layout='rect'] .tile__stepper {
-  inset-block-end: 0;
-  inset-inline: auto 0;
-  padding: 0.25rem;
+[data-layout='rect'] .tile__pill {
+  margin-inline-end: 0.25rem;
   border-radius: calc(1rem * var(--corner-scale));
-  background: var(--color-surface);
-  box-shadow: none;
-}
-
-[data-layout='rect'] .tile__stepper .button-icon {
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-}
-
-[data-layout='rect'] .tile__stepper .amount {
-  gap: 0.25rem;
-}
-
-[data-layout='rect'] .tile__stepper .amount__value {
-  min-inline-size: 1.25rem;
 }
 
 /* The marks (new, almost out, sold at set times) sit on the picture's top start corner (the right in Hebrew) and run
@@ -148,6 +141,7 @@
   max-inline-size: calc(100% - 3.5rem);
 }
 
-[data-layout='rect'] .dish--chosen .tile__badge {
-  inset-block: auto 0.375rem;
+/* A dish that cannot be added has no controls in the corner, so its note may use the whole bottom edge. */
+[data-layout='rect'] .tile__media:not(:has(.tile__add, .tile__count, .tile__stepper)) .tile__badge {
+  max-inline-size: calc(100% - 0.75rem);
 }
