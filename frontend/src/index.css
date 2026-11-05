@@ -4292,10 +4292,14 @@ label {
   display: block;
   inline-size: calc(100% + 3rem);
   max-inline-size: none;
-  aspect-ratio: 16 / 9;
+  /* The whole picture at its own proportions; a tall one is scaled down to fit the window, never cropped. */
+  block-size: auto;
+  max-block-size: 55vh;
+  max-block-size: 55dvh;
   margin-inline: -1.5rem;
   margin-block-end: 0.5rem;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--color-soft);
 }
 
 .entry-popup--large .entry-popup__image {
