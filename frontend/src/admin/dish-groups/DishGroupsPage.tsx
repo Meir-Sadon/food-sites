@@ -6,7 +6,7 @@ import { ConfirmRemove, FieldError, Info, Loading, MoveButtons, Status } from '.
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
 import { useDirty, useUnsavedChanges } from '../unsaved'
 import type { SectionLook } from '../../api/site'
-import { SectionLookFields, lookChoiceOf, lookOf, type LookChoice } from '../SectionLookFields'
+import { SectionLookFields, SectionLookQuick, lookChoiceOf, lookOf, type LookChoice } from '../SectionLookFields'
 
 /** The dishes a group can hold: ordered on their own, not removed. */
 const groupable = (dish: Dish) => !dish.isHidden && !dish.isAddOnOnly && dish.mainDishId === null
@@ -142,6 +142,7 @@ function GroupRow({
       <span className="list__main">
         <strong>{group.name}</strong>
         <span className="muted">{t('admin.dishGroups.dishCount', { count: group.dishIds.length })}</span>
+        <SectionLookQuick idPrefix={`group-${group.id}`} look={group} onSave={(next) => onSave(group.name, group.dishIds, next)} />
       </span>
       <span className="row">
         <MoveButtons name={group.name} first={first} last={last} onMove={onMove} />
@@ -231,7 +232,8 @@ function GroupForm({
         <input id={inputId} value={name} maxLength={60} onChange={(e) => setName(e.target.value)} aria-describedby={`${inputId}-error`} />
         <FieldError errors={errors} field="name" id={`${inputId}-error`} />
       </span>
-      <SectionLookFields idPrefix={idPrefix} value={look} onChange={setLook} />
+      {/* An existing group's look is changed on its row; only a new group asks for it here. */}
+      {resetOnSave && <SectionLookFields idPrefix={idPrefix} value={look} onChange={setLook} />}
       <fieldset className="stack">
         <legend>{t('admin.dishGroups.dishes')}</legend>
         {dishes.length === 0 && <p className="muted">{t('admin.dishGroups.noDishes')}</p>}

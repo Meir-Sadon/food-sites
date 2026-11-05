@@ -65,13 +65,12 @@ describe('Categories', () => {
     const user = userEvent.setup()
     const row = (await rows())[1]
 
-    await user.click(within(row).getByRole('button', { name: 'שינוי שם' }))
-    await user.selectOptions(screen.getByLabelText('סוג עיצוב'), 'מלבנים')
-    await user.selectOptions(screen.getByLabelText('גודל תמונה'), 'גדול')
-    await user.click(screen.getByRole('button', { name: 'שמירה' }))
-
+    // The two lists are on the row itself and save as soon as one changes.
+    await user.selectOptions(within(row).getByLabelText('סוג עיצוב'), 'מלבנים')
     await waitFor(() => expect(api.sent('PUT', '/api/admin/categories/2')).toHaveLength(1))
-    expect(api.sent('PUT', '/api/admin/categories/2')[0].body).toMatchObject({ layout: 'rect', imageSize: 'large' })
+    await user.selectOptions(within(row).getByLabelText('גודל תמונה'), 'גדול')
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/categories/2')).toHaveLength(2))
+    expect(api.sent('PUT', '/api/admin/categories/2')[0].body).toMatchObject({ layout: 'rect' })
   })
 
   it('renames a category', async () => {

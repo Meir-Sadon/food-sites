@@ -6,7 +6,7 @@ import type { SectionLook } from '../../api/site'
 import { ConfirmRemove, FieldError, Loading, MoveButtons, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
 import { useUnsavedChanges } from '../unsaved'
-import { SectionLookFields, lookChoiceOf, lookOf, type LookChoice } from '../SectionLookFields'
+import { SectionLookQuick, lookChoiceOf, lookOf } from '../SectionLookFields'
 
 export function CategoriesPage() {
   const { t } = useTranslation()
@@ -112,10 +112,8 @@ function CategoryRow({
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(category.name)
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [look, setLook] = useState<LookChoice>(lookChoiceOf(category))
   const inputId = `category-${category.id}-name`
-  const saved = lookChoiceOf(category)
-  useUnsavedChanges(editing && (name !== category.name || look.layout !== saved.layout || look.imageSize !== saved.imageSize), save)
+  useUnsavedChanges(editing && name !== category.name, save)
 
   function handleSave(event: FormEvent) {
     event.preventDefault()
@@ -126,7 +124,7 @@ function CategoryRow({
     if (!name.trim()) return false
     setErrors({})
     try {
-      await onRename(name, lookOf(look))
+      await onRename(name, lookOf(lookChoiceOf(category)))
       setEditing(false)
       return true
     } catch (err) {
@@ -144,14 +142,12 @@ function CategoryRow({
             <input id={inputId} value={name} maxLength={60} autoFocus onChange={(e) => setName(e.target.value)} aria-describedby={`${inputId}-error`} />
             <FieldError errors={errors} field="name" id={`${inputId}-error`} />
           </span>
-          <SectionLookFields idPrefix={`category-${category.id}`} value={look} onChange={setLook} />
           <button type="submit">{t('admin.save')}</button>
           <button
             type="button"
             className="button-quiet"
             onClick={() => {
               setName(category.name)
-              setLook(lookChoiceOf(category))
               setErrors({})
               setEditing(false)
             }}
@@ -167,6 +163,7 @@ function CategoryRow({
       <span className="list__main">
         <strong>{category.name}</strong>
         <span className="muted">{t('admin.categories.dishCount', { count: category.dishCount })}</span>
+        <SectionLookQuick idPrefix={`category-${category.id}`} look={category} onSave={(next) => onRename(category.name, next)} />
       </span>
       <span className="row">
         <MoveButtons name={category.name} first={first} last={last} onMove={onMove} />
