@@ -1297,6 +1297,31 @@ label {
   }
 }
 
+/* Settings → imageSize (<html data-image-size>): 1 is the size the pictures had before the setting existed. */
+:root {
+  --image-scale: 0.75;
+}
+
+:root[data-image-size='tiny'] {
+  --image-scale: 0.5;
+}
+
+:root[data-image-size='small'] {
+  --image-scale: 0.75;
+}
+
+:root[data-image-size='medium'] {
+  --image-scale: 1;
+}
+
+:root[data-image-size='large'] {
+  --image-scale: 1.25;
+}
+
+:root[data-image-size='huge'] {
+  --image-scale: 1.5;
+}
+
 .dish--group > .carousel {
   position: sticky;
   inset-block-start: calc(var(--top-bar-height) + 1.25rem);
@@ -1309,7 +1334,7 @@ label {
   .dish--group > .carousel {
     inset-block-start: calc(var(--top-bar-height) + 0.75rem);
     inline-size: 100%;
-    max-block-size: 9rem;
+    max-block-size: calc(9rem * var(--image-scale));
     overflow: hidden;
   }
 
@@ -1350,7 +1375,7 @@ label {
 
 /* A variant's own pictures are a small thumbnail beside its details, much smaller than the card's. */
 .dish-variant .carousel {
-  max-inline-size: 7rem;
+  max-inline-size: calc(7rem * var(--image-scale));
 }
 
 .dish-variant .carousel img {
@@ -1703,7 +1728,15 @@ label {
   }
 
   .dish > .carousel {
-    flex: 0 0 16rem;
+    flex: 0 0 calc(16rem * var(--image-scale));
+  }
+}
+
+/* On a phone the picture is as wide as the card at most; a smaller size centres it above the details. */
+@media (max-width: 39.99rem) {
+  .dish > .carousel {
+    inline-size: calc(100% * min(1, var(--image-scale)));
+    align-self: center;
   }
 }
 
@@ -3272,6 +3305,16 @@ label {
 .style-option__preview--tiles > span:not(:first-child) {
   block-size: auto;
   aspect-ratio: 1;
+  border: var(--line-width, 1px) solid var(--color-border);
+  border-radius: calc(0.5rem * var(--corner-scale));
+}
+
+.style-option__preview--rect {
+  grid-template-columns: 1fr;
+}
+
+.style-option__preview--rect > span:not(:first-child) {
+  block-size: 1.25rem;
   border: var(--line-width, 1px) solid var(--color-border);
   border-radius: calc(0.5rem * var(--corner-scale));
 }

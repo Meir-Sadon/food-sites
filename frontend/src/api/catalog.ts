@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ColorSet, InactiveAfter, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { ColorSet, InactiveAfter, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, ImageSize, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -82,6 +82,7 @@ export interface Settings {
   spacing: Spacing
   /** How the tiles style shows a category. */
   tileGroups: TileGroups
+  imageSize: ImageSize
   /** `simple` until the admin picks `zones`. */
   deliveryPricing: DeliveryPricing
   /** The marketing tools' ids; saved by `settingsApi.saveTracking`, never by `save`. */
@@ -92,8 +93,8 @@ export interface Settings {
   inactiveAfter: InactiveAfter
 }
 /** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking' | 'badges' | 'inactiveAfter'> &
-  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'>>
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'imageSize' | 'deliveryPricing' | 'tracking' | 'badges' | 'inactiveAfter'> &
+  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'imageSize' | 'deliveryPricing'>>
 
 /** Saved on its own (`settingsApi.saveTracking`); a missing id keeps that tool, an empty one turns it off. */
 export type TrackingInput = Partial<Omit<TrackingIds, 'metaServerEvents'>> & {

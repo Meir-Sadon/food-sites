@@ -15,9 +15,12 @@ export interface Contact {
 export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
-export type SiteStyle = 'classic' | 'street' | 'tiles'
+export type SiteStyle = 'classic' | 'street' | 'tiles' | 'rect'
 
-export const SITE_STYLES: readonly SiteStyle[] = ['classic', 'street', 'tiles']
+export const SITE_STYLES: readonly SiteStyle[] = ['classic', 'street', 'tiles', 'rect']
+
+/** The styles that show a dish as a tile (a picture with the add button on it): `DishTile` renders both. */
+export const isTileStyle = (style: SiteStyle) => style === 'tiles' || style === 'rect'
 
 /** Where the order total sits (FoodSite.Api `OrderLayout`): a bar at the bottom, or on a wide screen a panel at the side. */
 export type OrderTotalPosition = 'bottom' | 'side'
@@ -61,6 +64,10 @@ export type Spacing = (typeof SPACINGS)[number]
 /** How the tiles style shows a category: in a framed block, or minimal (a plain heading with the tiles under it). */
 export const TILE_GROUPS = ['framed', 'minimal'] as const
 export type TileGroups = (typeof TILE_GROUPS)[number]
+
+/** How big the dishes' pictures are on the order page (the rectangles of the rect style); `small` is the default, `medium` the old size. */
+export const IMAGE_SIZES = ['tiny', 'small', 'medium', 'large', 'huge'] as const
+export type ImageSize = (typeof IMAGE_SIZES)[number]
 
 /** The ids of the marketing tools the owner connected; an empty string means that tool is off. */
 export interface TrackingIds {
@@ -137,6 +144,7 @@ export interface Site {
   spacing: Spacing
   /** Only the tiles style uses it. */
   tileGroups: TileGroups
+  imageSize: ImageSize
   /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
   deliveryPricing: DeliveryPricing
   /** The buttons on the About page: Facebook, Instagram, TikTok, then the custom links. Empty: none. */

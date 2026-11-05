@@ -17,12 +17,23 @@ public static class Finish
     public const string Framed = "framed";
     public static readonly IReadOnlyList<string> TileGroups = [Framed, "minimal"];
 
+    /// <summary>
+    /// How big the dishes' pictures are on the order page (in the rect style: how big the rectangles are). <c>small</c>
+    /// is the default, about three quarters of what the pictures used to be; <c>medium</c> is the old size.
+    /// </summary>
+    public const string DefaultImageSize = "small";
+    public static readonly IReadOnlyList<string> ImageSizes = ["tiny", DefaultImageSize, "medium", "large", "huge"];
+
     public const int MaxLength = 20;
 
     public static bool IsKnownFont(string? value) => value is not null && Fonts.Contains(value);
     public static bool IsKnownShadows(string? value) => value is not null && Shadows.Contains(value);
     public static bool IsKnownSpacing(string? value) => value is not null && Spacings.Contains(value);
     public static bool IsKnownTileGroups(string? value) => value is not null && TileGroups.Contains(value);
+
+    public static bool IsKnownImageSize(string? value) => value is not null && ImageSizes.Contains(value);
+
+    public static string EffectiveImageSize(string? chosen) => IsKnownImageSize(chosen) ? chosen! : DefaultImageSize;
 
     public static string EffectiveTileGroups(string? chosen) => IsKnownTileGroups(chosen) ? chosen! : Framed;
 

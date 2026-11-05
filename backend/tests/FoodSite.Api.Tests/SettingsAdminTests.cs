@@ -282,6 +282,26 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task The_admin_picks_how_big_the_dish_pictures_are()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Equal("small", settings.ImageSize);
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, style = "rect", imageSize = "large" })).Read<SettingsDto>();
+        Assert.Equal("large", saved.ImageSize);
+        Assert.Equal("rect", saved.Style);
+        var site = await _factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal("large", site.ImageSize);
+
+        // Leaving it out (an older client) keeps the choice.
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.Equal("large", saved.ImageSize);
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, imageSize = "gigantic" })).AssertInvalid("ImageSize", "invalid");
+    }
+
+    [Fact]
     public async Task The_site_default_palette_applies_until_the_admin_picks_one()
     {
         using var factory = new ApiFactory(postgres, new() { ["Site:Settings:Palette"] = "olive" });

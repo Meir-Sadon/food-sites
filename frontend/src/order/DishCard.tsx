@@ -7,7 +7,7 @@ import { DietaryIcon } from './DietaryTags'
 import { useSiteStyle } from '../site/useSite'
 import { trackMarketing } from '../tracking/marketing'
 import { useTranslation } from 'react-i18next'
-import type { MenuAddOn, MenuAddOnGroup, MenuDish, MenuQuestion } from '../api/site'
+import { isTileStyle, type MenuAddOn, type MenuAddOnGroup, type MenuDish, type MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
 import { formatMoney, optionPriceText, priceBeforeDiscount, priceText, unitLabel } from './format'
 import { Highlighted } from './Highlight'
@@ -116,7 +116,7 @@ function DishDetails({ dish, nameId, variant, date }: { dish: MenuDish; nameId: 
 }
 
 export function DishCard(props: Props) {
-  return useSiteStyle() === 'tiles' ? <DishTile {...props} /> : <PlainDishCard {...props} />
+  return isTileStyle(useSiteStyle()) ? <DishTile {...props} /> : <PlainDishCard {...props} />
 }
 
 function PlainDishCard({ dish, dishes, selection, date, onChange }: Props) {
@@ -156,7 +156,7 @@ type GroupProps = {
 }
 
 export function DishGroupCard(props: GroupProps) {
-  return useSiteStyle() === 'tiles' ? <DishGroupTile {...props} /> : <PlainDishGroupCard {...props} />
+  return isTileStyle(useSiteStyle()) ? <DishGroupTile {...props} /> : <PlainDishGroupCard {...props} />
 }
 
 function PlainDishGroupCard(props: GroupProps) {

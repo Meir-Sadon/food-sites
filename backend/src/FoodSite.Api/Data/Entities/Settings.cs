@@ -151,6 +151,9 @@ public class Settings
     /// <summary>How the tiles style shows a category (see <c>Finish.TileGroups</c>); null means framed.</summary>
     public string? TileGroups { get; set; }
 
+    /// <summary>How big the dishes' pictures (the rectangles in the rect style) are on the order page (see <c>Finish.ImageSizes</c>); null means small.</summary>
+    public string? ImageSize { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }
