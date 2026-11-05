@@ -155,6 +155,8 @@ public class AppDbContext(
         model.Entity<Category>(e =>
         {
             e.Property(c => c.Name).IsRequired();
+            e.Property(c => c.Layout).HasMaxLength(Sites.SectionLook.MaxLength);
+            e.Property(c => c.ImageSize).HasMaxLength(Sites.SectionLook.MaxLength);
         });
 
         model.Entity<Dish>(e =>
@@ -214,6 +216,8 @@ public class AppDbContext(
         model.Entity<DishGroup>(e =>
         {
             e.Property(g => g.Name).HasMaxLength(DishGroup.NameMaxLength).IsRequired();
+            e.Property(g => g.Layout).HasMaxLength(Sites.SectionLook.MaxLength);
+            e.Property(g => g.ImageSize).HasMaxLength(Sites.SectionLook.MaxLength);
         });
 
         model.Entity<DishGroupDish>(e =>

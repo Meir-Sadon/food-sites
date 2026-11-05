@@ -176,3 +176,45 @@ describe('The rectangles style', () => {
     expect(within(card).getByRole('group', { name: 'חומוס פשוט' })).toBeInTheDocument()
   })
 })
+
+describe('A section with its own layout', () => {
+  it('shows a category as rectangles on a site in the regular style, and the rest as before', async () => {
+    const data = tilesMenu()
+    data.categories = [{ id: 1, name: 'עופות', layout: 'rect', imageSize: 'huge' }, { id: 2, name: 'בשרים' }]
+    fakeApi({ 'GET /api/site': () => site({ style: 'classic' }), 'GET /api/menu': () => data })
+    renderAt('/')
+    const chicken = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('details')!
+    expect(chicken).toHaveAttribute('data-layout', 'rect')
+    expect(chicken).toHaveAttribute('data-image-size', 'huge')
+    expect(within(chicken).getAllByRole('article')[0]).toHaveClass('dish--tile')
+    const meat = (await screen.findByRole('heading', { level: 3, name: 'בשר טחון' })).closest('details')!
+    expect(meat).toHaveAttribute('data-layout', 'list')
+    expect(meat).not.toHaveAttribute('data-image-size')
+    expect(within(meat).getAllByRole('article')[0]).not.toHaveClass('dish--tile')
+  })
+
+  it('shows a group in its own layout', async () => {
+    const data = tilesMenu()
+    data.groups = [{ id: 7, name: 'מומלצות', dishIds: [4], layout: 'tiles' }]
+    fakeApi({ 'GET /api/site': () => site({ style: 'classic' }), 'GET /api/menu': () => data })
+    renderAt('/')
+    const group = (await screen.findByRole('heading', { level: 2, name: 'מומלצות' })).closest('details')!
+    expect(group).toHaveAttribute('data-layout', 'tiles')
+    expect(within(group).getByRole('article')).toHaveClass('dish--tile')
+  })
+
+  it('in rectangles, shows the sale mark by the name and cuts long allergen text with a show-all button', async () => {
+    const data = tilesMenu()
+    data.dishes = data.dishes.map((d) => (d.id === 4 ? { ...d, onSale: true, allergenInfo: 'גלוטן חלב ביצים סומסום סויה בוטנים שקדים אגוזים' } : d))
+    fakeApi({ 'GET /api/site': () => site({ style: 'rect' }), 'GET /api/menu': () => data })
+    renderAt('/')
+    const user = userEvent.setup()
+    const card = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('article')!
+    expect(card.querySelector('.tile__title .item-badge--onSale')).not.toBeNull()
+    expect(card.querySelector('.tile__media .item-badge--onSale')).toBeNull()
+    expect(card.querySelector('.tile__media .tile__allergen')).toBeNull()
+    expect(within(card).queryByText(/אגוזים/)).not.toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'הצג הכל' }))
+    expect(within(card).getByText(/אגוזים/)).toBeInTheDocument()
+  })
+})

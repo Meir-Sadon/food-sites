@@ -2,9 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, type Category } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
+import type { SectionLook } from '../../api/site'
 import { ConfirmRemove, FieldError, Loading, MoveButtons, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
 import { useUnsavedChanges } from '../unsaved'
+import { SectionLookFields, lookChoiceOf, lookOf, type LookChoice } from '../SectionLookFields'
 
 export function CategoriesPage() {
   const { t } = useTranslation()
@@ -54,8 +56,8 @@ export function CategoriesPage() {
                   first={index === 0}
                   last={index === categories.length - 1}
                   onMove={(direction) => act(async () => setData(await categoriesApi.move(category.id, direction)))}
-                  onRename={async (name) => {
-                    await categoriesApi.rename(category.id, name)
+                  onRename={async (name, look) => {
+                    await categoriesApi.rename(category.id, name, look)
                     reload()
                   }}
                   onRemove={() =>
@@ -103,15 +105,17 @@ function CategoryRow({
   first: boolean
   last: boolean
   onMove: (direction: 'Up' | 'Down') => void
-  onRename: (name: string) => Promise<void>
+  onRename: (name: string, look: SectionLook) => Promise<void>
   onRemove: () => Promise<void>
 }) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(category.name)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [look, setLook] = useState<LookChoice>(lookChoiceOf(category))
   const inputId = `category-${category.id}-name`
-  useUnsavedChanges(editing && name !== category.name, save)
+  const saved = lookChoiceOf(category)
+  useUnsavedChanges(editing && (name !== category.name || look.layout !== saved.layout || look.imageSize !== saved.imageSize), save)
 
   function handleSave(event: FormEvent) {
     event.preventDefault()
@@ -122,7 +126,7 @@ function CategoryRow({
     if (!name.trim()) return false
     setErrors({})
     try {
-      await onRename(name)
+      await onRename(name, lookOf(look))
       setEditing(false)
       return true
     } catch (err) {
@@ -140,12 +144,14 @@ function CategoryRow({
             <input id={inputId} value={name} maxLength={60} autoFocus onChange={(e) => setName(e.target.value)} aria-describedby={`${inputId}-error`} />
             <FieldError errors={errors} field="name" id={`${inputId}-error`} />
           </span>
+          <SectionLookFields idPrefix={`category-${category.id}`} value={look} onChange={setLook} />
           <button type="submit">{t('admin.save')}</button>
           <button
             type="button"
             className="button-quiet"
             onClick={() => {
               setName(category.name)
+              setLook(lookChoiceOf(category))
               setErrors({})
               setEditing(false)
             }}

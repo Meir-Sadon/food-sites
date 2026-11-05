@@ -4,7 +4,7 @@
    marks beside it. Settings → imageSize (--image-scale, index.css) sets the size of the rectangle. Only shapes and
    layout change; every colour still comes from the site's theme.css. Client pages only. */
 
-[data-style='rect'] .category__dishes {
+[data-layout='rect'] .category__dishes {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
@@ -12,17 +12,17 @@
 }
 
 @media (min-width: 48rem) {
-  [data-style='rect'] .category__dishes {
+  [data-layout='rect'] .category__dishes {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 25rem), 1fr));
     gap: 1rem;
   }
 }
 
-[data-style='rect'] .dish--tile {
+[data-layout='rect'] .dish--tile {
   -webkit-tap-highlight-color: transparent;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   min-inline-size: 0;
   padding: 0.5rem;
@@ -33,14 +33,14 @@
   box-shadow: var(--shadow-sm);
 }
 
-[data-style='rect'] .dish--tile.dish--chosen {
+[data-layout='rect'] .dish--tile.dish--chosen {
   border-color: var(--color-accent);
   background: var(--dish-bg, var(--color-soft));
 }
 
 /* The text comes first in the markup's reading order after the picture, so the picture goes to the end side:
    on the left in a right-to-left page, with the details on the right. */
-[data-style='rect'] .tile__media {
+[data-layout='rect'] .tile__media {
   order: 1;
   flex: 0 0 auto;
   /* The width is capped so the text keeps its room; the height always follows the size, the picture fills it. */
@@ -52,70 +52,102 @@
   border-radius: calc(0.75rem * var(--corner-scale));
 }
 
-[data-style='rect'] .tile__body {
+[data-layout='rect'] .tile__body {
   flex: 1;
-  justify-content: center;
+  /* The text starts at the top of the card, beside the picture's top. */
+  justify-content: flex-start;
+  align-self: stretch;
   block-size: auto;
   max-block-size: none;
-  padding: 0 var(--dish-pad, 0);
+  overflow: visible;
+  padding: 0.25rem var(--dish-pad, 0);
 }
 
-[data-style='rect'] .tile__body h3 {
-  font-size: 1.0625rem;
+/* The name is the boldest line; a sale mark sits right beside it. */
+[data-layout='rect'] .tile__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
 }
 
-[data-style='rect'] .tile__description {
+[data-layout='rect'] .tile__body h3 {
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+[data-layout='rect'] .tile__sale {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-layout='rect'] .tile__description {
   -webkit-line-clamp: 3;
 }
 
-/* The add button, sized with the picture so it never covers most of a small one. */
-[data-style='rect'] .tile__add,
-[data-style='rect'] .tile__count {
-  inline-size: calc(2rem + 0.75rem * var(--image-scale));
-  block-size: calc(2rem + 0.75rem * var(--image-scale));
-  inset-block-end: 0.375rem;
-  inset-inline-end: 0.375rem;
+[data-layout='rect'] .tile__allergens {
+  margin: 0;
+  font-size: 0.8125rem;
 }
 
-/* The amount control is narrower, so it fits the picture's width. */
-[data-style='rect'] .tile__stepper {
-  inset-block-end: 0.375rem;
-  inset-inline: 0.375rem;
-  justify-content: center;
+[data-layout='rect'] .tile__allergens .link-button {
+  min-block-size: 0;
+  padding: 0;
+  font-size: inherit;
 }
 
-[data-style='rect'] .tile__stepper .button-icon {
+/* The add button is flush with the picture's end-bottom corner (the picture's own rounding trims that corner); once
+   the dish is in the order the minus and the amount appear right beside the plus, in the same corner. */
+[data-layout='rect'] .tile__add,
+[data-layout='rect'] .tile__count {
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  inline-size: calc(2rem + 0.5rem * var(--image-scale));
+  block-size: calc(2rem + 0.5rem * var(--image-scale));
+  border-radius: calc(1rem * var(--corner-scale));
+  box-shadow: none;
+}
+
+[data-layout='rect'] .tile__stepper {
+  inset-block-end: 0;
+  inset-inline: auto 0;
+  padding: 0.25rem;
+  border-radius: calc(1rem * var(--corner-scale));
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+[data-layout='rect'] .tile__stepper .button-icon {
   inline-size: 1.75rem;
   block-size: 1.75rem;
 }
 
-[data-style='rect'] .tile__stepper .amount {
-  gap: 0.125rem;
+[data-layout='rect'] .tile__stepper .amount {
+  gap: 0.25rem;
 }
 
-[data-style='rect'] .tile__stepper .amount__value {
+[data-layout='rect'] .tile__stepper .amount__value {
   min-inline-size: 1.25rem;
 }
 
-/* Sold out / remaining sits at the picture's bottom start corner, beside the add button; once the dish is in the
-   order the amount control fills the bottom, so the note moves up under the marks. */
-[data-style='rect'] .tile__badge {
+/* The marks (new, almost out, sold at set times) sit on the picture's top start corner (the right in Hebrew) and run
+   toward the other side when there are several. */
+[data-layout='rect'] .tile__marks {
+  inset-block-start: 0.375rem;
+  inset-inline: 0.375rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+/* Sold out / remaining sits on the picture's bottom start corner, away from the add button. */
+[data-layout='rect'] .tile__badge {
   inset-block-end: 0.375rem;
   inset-inline-start: 0.375rem;
   max-inline-size: calc(100% - 3.5rem);
 }
 
-[data-style='rect'] .dish--chosen .tile__badge {
-  inset-block: 2rem auto;
-  max-inline-size: calc(100% - 0.75rem);
-}
-
-[data-style='rect'] .tile__marks {
-  inset-block-start: 0.375rem;
-  inset-inline: 0.375rem 2.5rem;
-}
-
-[data-style='rect'] .tile__allergen {
-  inset-block-start: 0.375rem;
-  inset-inline-end: 0.375rem;
+[data-layout='rect'] .dish--chosen .tile__badge {
+  inset-block: auto 0.375rem;
 }

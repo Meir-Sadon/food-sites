@@ -2,7 +2,7 @@ import { availablePayment, isTransfer, paymentKey, transferChoices } from '../or
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ordersApi, siteApi, type HourAvailability, type Confirmation, type Menu, type MenuDish, type Fulfillment, type Payment } from '../api/site'
+import { ordersApi, siteApi, type HourAvailability, type Confirmation, type Menu, type MenuDish, type Fulfillment, type Payment, type SectionLook } from '../api/site'
 import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
@@ -17,7 +17,8 @@ import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
 import { bringIntoView, holdScroll } from '../components/scrollToInvalid'
 import { Modal } from '../components/Modal'
-import { useFeature, useOrderLayout, useSite, useSiteFailed } from '../site/useSite'
+import { useFeature, useOrderLayout, useSite, useSiteFailed, useSiteStyle } from '../site/useSite'
+import { DishLayoutContext, sectionAttributes } from '../order/dishLayout'
 import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DishSearch } from '../order/DishSearch'
 import { SearchQueryContext } from '../order/searchQuery'
@@ -144,6 +145,7 @@ export function OrderPage() {
   const [keptFull, setKeptFull] = useState<string[]>([])
   // The admin's order layout: where the total sits, and whether the menu is paged one category at a time.
   const { totalPosition, flow } = useOrderLayout()
+  const siteStyle = useSiteStyle()
   const steps = flow === 'steps'
   // Whole menu on one page, with the order details behind a button until the client is done choosing.
   const deferred = flow === 'continue'
@@ -391,6 +393,11 @@ export function OrderPage() {
   const searching = searchable && normalizeSearchText(query).length >= SEARCH_MIN_LENGTH
   const results = searching ? searchDishes(menu, query, categories.flatMap((group) => group.dishes)) : []
   const shownCategories = steps ? categories.slice(currentStep, currentStep + 1) : categories
+
+  /** One category's or group's dishes, laid out the way it asked for (else the site's). */
+  function renderSection(look: SectionLook | undefined, list: MenuDish[]) {
+    return <DishLayoutContext.Provider value={sectionAttributes(look, siteStyle).layout}><div className="category__dishes">{list.map(renderDish)}</div></DishLayoutContext.Provider>
+  }
 
   function renderDish(dish: MenuDish) {
     const variants = variantsOf(dish, menu!)
@@ -902,7 +909,7 @@ export function OrderPage() {
               </div>
             )}
             {searching && (
-              <section className="category dish-results" aria-labelledby="dish-results-title">
+              <section className="category dish-results" aria-labelledby="dish-results-title" {...sectionAttributes(undefined, siteStyle).attrs}>
                 <h2 id="dish-results-title" className="dish-results__title">
                   {results.length === 0 ? t('order.search.noResults') : t('order.search.results', { count: results.length })}
                 </h2>
@@ -912,27 +919,25 @@ export function OrderPage() {
                   </p>
                 ) : (
                   <SearchQueryContext.Provider value={query}>
-                    <div className="category__dishes">{results.map(renderDish)}</div>
+                    {renderSection(undefined, results)}
                   </SearchQueryContext.Provider>
                 )}
               </section>
             )}
             {!searching && (!steps || currentStep === 0) && groups.map(({ group, dishes: list }) => (
-              <details key={`group-${group.id}`} id={groupSectionId(group.id)} open className="category category--group">
+              <details key={`group-${group.id}`} id={groupSectionId(group.id)} open className="category category--group" {...sectionAttributes(group, siteStyle).attrs}>
                 <summary>
                   <h2>{group.name}</h2>
                 </summary>
-                <div className="category__dishes">{list.map(renderDish)}</div>
+                {renderSection(group, list)}
               </details>
             ))}
             {!searching && shownCategories.map(({ category, dishes: list }) => (
-              <details key={category.id} id={categorySectionId(category.id)} open className="category">
+              <details key={category.id} id={categorySectionId(category.id)} open className="category" {...sectionAttributes(category, siteStyle).attrs}>
                 <summary>
                   <h2>{category.name}</h2>
                 </summary>
-                <div className="category__dishes">
-                  {list.map(renderDish)}
-                </div>
+                {renderSection(category, list)}
               </details>
             ))}
             {steps && !searching && currentStep < detailsStep && <CategoryStepsFooter current={currentStep} last={detailsStep - 1} onChange={goToStep} />}

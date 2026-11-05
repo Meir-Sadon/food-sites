@@ -1,5 +1,6 @@
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +13,10 @@ namespace FoodSite.Api.Controllers.Admin;
 [Route("api/admin/dish-groups")]
 public class DishGroupsController(AppDbContext db) : AdminControllerBase
 {
-    public record DishGroupDto(int Id, string Name, int DisplayOrder, IReadOnlyList<int> DishIds);
+    public record DishGroupDto(int Id, string Name, int DisplayOrder, IReadOnlyList<int> DishIds, string? Layout = null, string? ImageSize = null);
 
     /// <summary>DishIds are dishes a client can order on their own (not variants or add-on-only dishes).</summary>
-    public record DishGroupInput(string? Name, List<int>? DishIds);
+    public record DishGroupInput(string? Name, List<int>? DishIds, string? Layout = null, string? ImageSize = null);
 
     [HttpGet]
     public async Task<IEnumerable<DishGroupDto>> Get()
@@ -33,7 +34,7 @@ public class DishGroupsController(AppDbContext db) : AdminControllerBase
             return invalid;
 
         var last = await db.DishGroups.MaxAsync(g => (int?)g.DisplayOrder) ?? -1;
-        var group = new DishGroup { Name = input.Name!.Trim(), DisplayOrder = last + 1 };
+        var group = new DishGroup { Name = input.Name!.Trim(), DisplayOrder = last + 1, Layout = SectionLook.Clean(input.Layout), ImageSize = SectionLook.Clean(input.ImageSize) };
         group.Dishes = (input.DishIds ?? []).Distinct().Select(id => new DishGroupDish { DishId = id }).ToList();
         db.DishGroups.Add(group);
         await db.SaveChangesAsync();
@@ -50,6 +51,8 @@ public class DishGroupsController(AppDbContext db) : AdminControllerBase
             return invalid;
 
         group.Name = input.Name!.Trim();
+        group.Layout = SectionLook.Clean(input.Layout);
+        group.ImageSize = SectionLook.Clean(input.ImageSize);
         var wanted = (input.DishIds ?? []).ToHashSet();
         foreach (var gone in group.Dishes.Where(d => !wanted.Contains(d.DishId)).ToList())
             group.Dishes.Remove(gone);
@@ -91,7 +94,7 @@ public class DishGroupsController(AppDbContext db) : AdminControllerBase
             .Select(d => d.Id).ToListAsync()).ToHashSet();
 
     private static DishGroupDto ToDto(DishGroup group, HashSet<int> listed) =>
-        new(group.Id, group.Name, group.DisplayOrder, group.Dishes.Select(d => d.DishId).Where(listed.Contains).Order().ToList());
+        new(group.Id, group.Name, group.DisplayOrder, group.Dishes.Select(d => d.DishId).Where(listed.Contains).Order().ToList(), group.Layout, group.ImageSize);
 
     private async Task<ActionResult?> Validate(DishGroupInput input, int? exceptId)
     {
@@ -99,6 +102,10 @@ public class DishGroupsController(AppDbContext db) : AdminControllerBase
         errors.Text("name", input.Name, DishGroup.NameMaxLength, required: true);
         if (input.DishIds is { } ids && ids.Except(await ListedDishIdsAsync()).Any())
             errors.Add("dishIds", "dishNotGroupable");
+        if (!SectionLook.IsValidLayout(input.Layout))
+            errors.Add("layout", "invalid");
+        if (!SectionLook.IsValidImageSize(input.ImageSize))
+            errors.Add("imageSize", "invalid");
         if (errors.Any)
             return Invalid(errors);
 

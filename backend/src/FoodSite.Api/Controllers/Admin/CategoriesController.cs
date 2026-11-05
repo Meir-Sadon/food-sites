@@ -1,5 +1,6 @@
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
+using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,29 +12,29 @@ public class CategoriesController(AppDbContext db) : AdminControllerBase
     public const int NameMaxLength = 60;
 
     /// <summary>DishCount counts dishes on the site, not removed ones.</summary>
-    public record CategoryDto(int Id, string Name, int DisplayOrder, int DishCount);
+    public record CategoryDto(int Id, string Name, int DisplayOrder, int DishCount, string? Layout = null, string? ImageSize = null);
 
-    public record CategoryInput(string? Name);
+    public record CategoryInput(string? Name, string? Layout = null, string? ImageSize = null);
 
     [HttpGet]
     public async Task<IEnumerable<CategoryDto>> Get() =>
         await db.Categories
             .Where(c => !c.IsHidden)
             .OrderBy(c => c.DisplayOrder).ThenBy(c => c.Id)
-            .Select(c => new CategoryDto(c.Id, c.Name, c.DisplayOrder, c.Dishes.Count(d => !d.IsHidden)))
+            .Select(c => new CategoryDto(c.Id, c.Name, c.DisplayOrder, c.Dishes.Count(d => !d.IsHidden), c.Layout, c.ImageSize))
             .ToListAsync();
 
     [HttpPost]
     public async Task<ActionResult<CategoryDto>> Add(CategoryInput input)
     {
-        if (await ValidateName(input.Name, null) is { } invalid)
+        if (await ValidateName(input.Name, null, input.Layout, input.ImageSize) is { } invalid)
             return invalid;
 
         var last = await db.Categories.Where(c => !c.IsHidden).MaxAsync(c => (int?)c.DisplayOrder) ?? -1;
-        var category = new Category { Name = input.Name!.Trim(), DisplayOrder = last + 1 };
+        var category = new Category { Name = input.Name!.Trim(), DisplayOrder = last + 1, Layout = SectionLook.Clean(input.Layout), ImageSize = SectionLook.Clean(input.ImageSize) };
         db.Categories.Add(category);
         await db.SaveChangesAsync();
-        return new CategoryDto(category.Id, category.Name, category.DisplayOrder, 0);
+        return new CategoryDto(category.Id, category.Name, category.DisplayOrder, 0, category.Layout, category.ImageSize);
     }
 
     [HttpPut("{id:int}")]
@@ -42,10 +43,12 @@ public class CategoriesController(AppDbContext db) : AdminControllerBase
         var category = await db.Categories.SingleOrDefaultAsync(c => c.Id == id && !c.IsHidden);
         if (category is null)
             return NotFound();
-        if (await ValidateName(input.Name, id) is { } invalid)
+        if (await ValidateName(input.Name, id, input.Layout, input.ImageSize) is { } invalid)
             return invalid;
 
         category.Name = input.Name!.Trim();
+        category.Layout = SectionLook.Clean(input.Layout);
+        category.ImageSize = SectionLook.Clean(input.ImageSize);
         await db.SaveChangesAsync();
         return NoContent();
     }
@@ -85,10 +88,14 @@ public class CategoriesController(AppDbContext db) : AdminControllerBase
         return NoContent();
     }
 
-    private async Task<ActionResult?> ValidateName(string? name, int? exceptId)
+    private async Task<ActionResult?> ValidateName(string? name, int? exceptId, string? layout, string? imageSize)
     {
         var errors = new Errors();
         errors.Text("name", name, NameMaxLength, required: true);
+        if (!SectionLook.IsValidLayout(layout))
+            errors.Add("layout", "invalid");
+        if (!SectionLook.IsValidImageSize(imageSize))
+            errors.Add("imageSize", "invalid");
         if (errors.Any)
             return Invalid(errors);
 

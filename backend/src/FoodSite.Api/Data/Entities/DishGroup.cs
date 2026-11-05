@@ -12,6 +12,12 @@ public class DishGroup
     public required string Name { get; set; }
     public int DisplayOrder { get; set; }
 
+    /// <summary>This group's dish layout (see <c>SectionLook.Layouts</c>); null means the site's own.</summary>
+    public string? Layout { get; set; }
+
+    /// <summary>This group's picture size (see <c>Finish.ImageSizes</c>); null means the site's own.</summary>
+    public string? ImageSize { get; set; }
+
     public List<DishGroupDish> Dishes { get; set; } = [];
 }
 

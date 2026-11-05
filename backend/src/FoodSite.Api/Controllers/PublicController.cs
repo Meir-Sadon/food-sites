@@ -113,10 +113,10 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     /// <summary>A heading over some of the dish's add-ons, and the most units the client can pick from them together.</summary>
     public record MenuAddOnGroupDto(int Id, string Name, int? MaxUnits, decimal? OverLimitPrice = null);
 
-    public record MenuCategoryDto(int Id, string Name);
+    public record MenuCategoryDto(int Id, string Name, string? Layout = null, string? ImageSize = null);
 
     /// <summary>A custom group of dishes (such as "מומלצות"), shown in its own section; DishIds are in menu order.</summary>
-    public record MenuGroupDto(int Id, string Name, IReadOnlyList<int> DishIds);
+    public record MenuGroupDto(int Id, string Name, IReadOnlyList<int> DishIds, string? Layout = null, string? ImageSize = null);
 
     /// <summary>
     /// A date the client can order for, when ordering for it closes (local time), and the hours they can ask for
@@ -178,7 +178,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     {
         var categories = await db.Categories.AsNoTracking()
             .Where(c => !c.IsHidden).OrderBy(c => c.DisplayOrder)
-            .Select(c => new MenuCategoryDto(c.Id, c.Name)).ToListAsync();
+            .Select(c => new MenuCategoryDto(c.Id, c.Name, c.Layout, c.ImageSize)).ToListAsync();
         var visible = categories.Select(c => c.Id).ToHashSet();
 
         var dishes = await db.Dishes.AsNoTracking()
@@ -239,7 +239,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var groupRows = await db.DishGroups.AsNoTracking().Include(g => g.Dishes)
             .OrderBy(g => g.DisplayOrder).ThenBy(g => g.Id).ToListAsync();
         var groups = groupRows
-            .Select(g => new MenuGroupDto(g.Id, g.Name, standalone.Where(id => g.Dishes.Any(x => x.DishId == id)).ToList()))
+            .Select(g => new MenuGroupDto(g.Id, g.Name, standalone.Where(id => g.Dishes.Any(x => x.DishId == id)).ToList(), g.Layout, g.ImageSize))
             .Where(g => g.DishIds.Count > 0).ToList();
 
         return new MenuDto(categories, menuDishes, supplyDates.Select(d => new SupplyDateDto(d.Date, d.Cutoff, d.Hours)).ToList(), groups);
