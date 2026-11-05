@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DISH_LAYOUTS, IMAGE_SIZES, type DishLayout, type ImageSize, type SectionLook } from '../api/site'
 
@@ -38,6 +39,32 @@ export function SectionLookFields({ idPrefix, value, onChange }: { idPrefix: str
           ))}
         </select>
       </span>
+    </span>
+  )
+}
+
+/** The same two lists straight on a category's or group's row: a change is saved at once, no edit form to open. */
+export function SectionLookQuick({ idPrefix, look, onSave }: { idPrefix: string; look: SectionLook; onSave: (look: SectionLook) => Promise<void> }) {
+  const { t } = useTranslation()
+  const [pending, setPending] = useState(false)
+  const [failed, setFailed] = useState(false)
+  async function change(next: LookChoice) {
+    setPending(true)
+    setFailed(false)
+    try {
+      await onSave(lookOf(next))
+    } catch {
+      setFailed(true)
+    } finally {
+      setPending(false)
+    }
+  }
+  return (
+    <span className="section-look-quick">
+      <fieldset disabled={pending} className="section-look-quick__fields">
+        <SectionLookFields idPrefix={`${idPrefix}-quick`} value={lookChoiceOf(look)} onChange={(next) => void change(next)} />
+      </fieldset>
+      {failed && <span role="alert" className="muted">{t('admin.sectionLook.saveFailed')}</span>}
     </span>
   )
 }
