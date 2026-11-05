@@ -119,8 +119,7 @@
   box-shadow: none;
 }
 
-[data-layout='rect'] .tile__pill {
-  margin-inline-end: 0.25rem;
+[data-layout='rect'] .tile__stepper {
   border-radius: calc(1rem * var(--corner-scale));
 }
 

@@ -243,6 +243,17 @@
     visibility 0.2s;
 }
 
+.tile__stepper {
+  border-radius: var(--radius-pill);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Open, the whole control is one white pill that ends in the plus. */
+.tile__stepper[data-open] {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
 .tile__stepper[data-open] .tile__extra {
   grid-template-columns: 1fr;
   opacity: 1;
@@ -258,13 +269,8 @@
   display: flex;
   align-items: center;
   gap: 0.125rem;
-  /* Space between the pill and the plus. */
-  margin-inline-end: 0.25rem;
-  padding-inline: 0.125rem;
+  padding-inline-start: 0.125rem;
   block-size: var(--tile-btn);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  box-shadow: inset 0 0 0 1px var(--color-border);
 }
 
 .tile__minus {
@@ -285,7 +291,8 @@
 }
 
 .tile__qty {
-  min-inline-size: 1.5rem;
+  /* Room for three digits. */
+  min-inline-size: 2rem;
   text-align: center;
   font-weight: 700;
   color: var(--color-text);
@@ -350,7 +357,7 @@
   }
 
   .tile__qty {
-    min-inline-size: 1.125rem;
+    min-inline-size: 1.75rem;
   }
 
   .tile__marks {
@@ -373,8 +380,7 @@
   }
 
   .tile__pill {
-    margin-inline-end: 0.125rem;
-    padding-inline: 0.0625rem;
+    padding-inline-start: 0.0625rem;
     gap: 0;
   }
 
@@ -384,7 +390,7 @@
   }
 
   .tile__qty {
-    min-inline-size: 0.875rem;
+    min-inline-size: 1.5rem;
     font-size: 0.8125rem;
   }
 }
