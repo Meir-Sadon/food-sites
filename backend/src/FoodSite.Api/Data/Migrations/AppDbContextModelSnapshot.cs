@@ -1096,6 +1096,12 @@ namespace FoodSite.Api.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<bool>("StatusesMatchAll")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("StatusesMaxOrders")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BaseListId");
