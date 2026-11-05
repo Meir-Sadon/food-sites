@@ -31,8 +31,14 @@ public class PriceList
     /// <summary>day, week or month (<c>Sites.ItemBadges.Units</c>).</summary>
     public string? NewClientsUnit { get; set; }
 
-    /// <summary>Clients with no order that was not cancelled.</summary>
+    /// <summary>Legacy: replaced by <see cref="StatusesMaxOrders"/> (0 = no orders yet); no longer read. Dropped in a later migration.</summary>
     public bool ForNoOrders { get; set; }
+
+    /// <summary>Clients with at most this many orders that were not cancelled (0 = none yet); null is off.</summary>
+    public int? StatusesMaxOrders { get; set; }
+
+    /// <summary>All the statuses that are on must hold (and); false means any one is enough (or).</summary>
+    public bool StatusesMatchAll { get; set; }
 
     /// <summary>Clients whose order in progress, saved on the server, is not empty (<see cref="SavedCart"/>).</summary>
     public bool ForMidOrder { get; set; }
@@ -40,7 +46,7 @@ public class PriceList
     /// <summary>Clients with an order not yet delivered or cancelled whose total is above this; null is off.</summary>
     public decimal? OpenOrderAbove { get; set; }
 
-    public bool HasStatuses => NewClientsAmount is not null || ForNoOrders || ForMidOrder || OpenOrderAbove is not null;
+    public bool HasStatuses => NewClientsAmount is not null || StatusesMaxOrders is not null || ForMidOrder || OpenOrderAbove is not null;
 
     // A discount on the whole menu, off each price's base and rounded up to a whole shekel (Orders.PriceBook.Discounted).
 
@@ -54,10 +60,7 @@ public class PriceList
     /// <summary>Which wins where a dish has a discount of its own: a <see cref="DiscountRules"/> value.</summary>
     public string DiscountRule { get; set; } = DiscountRules.Dish;
 
-    /// <summary>
-    /// The general discount is only for clients with at most this many orders that were not cancelled (0 = clients who
-    /// have not ordered yet); null is no limit. Prices from the list's own rows are not limited.
-    /// </summary>
+    /// <summary>Legacy, no longer read: the limit moved to <see cref="StatusesMaxOrders"/>.</summary>
     public int? DiscountMaxOrders { get; set; }
 
     /// <summary>

@@ -133,16 +133,11 @@ export function PriceListForm({
   const [from, setFrom] = useState(initialDiscount?.from ?? '')
   const [to, setTo] = useState(initialDiscount?.to ?? '')
   const [rule, setRule] = useState<DiscountRule>(initialDiscount?.rule ?? 'dish')
-  const [limitOrders, setLimitOrders] = useState(initialDiscount?.maxOrders != null)
-  const [maxOrders, setMaxOrders] = useState(String(initialDiscount?.maxOrders ?? 0))
-  const [nextOrderOnly, setNextOrderOnly] = useState(initialDiscount?.nextOrderOnly ?? false)
   const discount: PriceListDiscount | undefined = initialDiscount && {
     percent: percent.trim() === '' ? null : Number(percent),
     from: from || null,
     to: to || null,
     rule,
-    maxOrders: limitOrders ? Number(maxOrders) : null,
-    nextOrderOnly,
   }
   // Editing a list (not making one) asks before leaving with a changed name, base or discount.
   const [saved, setSavedState] = useState({ name: initialName, discount: JSON.stringify(initialDiscount ?? null) })
@@ -172,7 +167,7 @@ export function PriceListForm({
     } catch (err) {
       const fields = fieldErrorsOf(err)
       setErrors(fields)
-      if (!Object.keys(fields).some((f) => ['name', 'baselistid', 'discount.percent', 'discount.to', 'discount.rule', 'discount.maxorders'].includes(f)))
+      if (!Object.keys(fields).some((f) => ['name', 'baselistid', 'discount.percent', 'discount.to', 'discount.rule'].includes(f)))
         setError(errorMessage(err))
       return false
     }
@@ -247,28 +242,6 @@ export function PriceListForm({
                 </option>
               ))}
             </select>
-          </span>
-          <label className="checkbox">
-            <input type="checkbox" checked={limitOrders} onChange={(e) => setLimitOrders(e.target.checked)} />
-            {t('admin.priceLists.discountLimitOrders')}
-          </label>
-          {limitOrders && (
-            <span className="field field--narrow">
-              <span className="with-info">
-                <label htmlFor={`${idPrefix}-discount-max-orders`}>{t('admin.priceLists.discountMaxOrders')}</label>
-                <Info text={t('admin.priceLists.discountMaxOrdersHint')} about={t('admin.priceLists.discountMaxOrders')} />
-              </span>
-              <input id={`${idPrefix}-discount-max-orders`} type="number" inputMode="numeric" min="0" step="1" value={maxOrders}
-                onChange={(e) => setMaxOrders(e.target.value)} aria-describedby={`${idPrefix}-discount-max-orders-error`} />
-              <FieldError errors={errors} field="discount.maxOrders" id={`${idPrefix}-discount-max-orders-error`} />
-            </span>
-          )}
-          <span className="with-info">
-            <label className="checkbox">
-              <input type="checkbox" checked={nextOrderOnly} onChange={(e) => setNextOrderOnly(e.target.checked)} />
-              {t('admin.priceLists.discountNextOrderOnly')}
-            </label>
-            <Info text={t('admin.priceLists.discountNextOrderOnlyHint')} about={t('admin.priceLists.discountNextOrderOnly')} />
           </span>
         </fieldset>
       )}

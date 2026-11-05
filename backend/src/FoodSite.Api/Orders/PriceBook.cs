@@ -125,19 +125,24 @@ public sealed class PriceBook
     }
 
     /// <summary>What a client's status is, for the lists assigned by status.</summary>
-    public record ClientStatus(DateTimeOffset? RegisteredAt, bool HasOrders, bool MidOrder, decimal? LargestOpenOrder);
+    public record ClientStatus(DateTimeOffset? RegisteredAt, int OrderCount, bool MidOrder, decimal? LargestOpenOrder);
 
-    /// <summary>Whether a list's statuses take in the client (any one is enough).</summary>
+    /// <summary>
+    /// Whether a list's statuses take in the client: any one of the statuses that are on is enough, or all of them
+    /// when <see cref="PriceList.StatusesMatchAll"/>. A list with none on takes in nobody.
+    /// </summary>
     public static bool Matches(PriceList list, ClientStatus client, DateTimeOffset now)
     {
-        if (list.NewClientsAmount is { } amount && client.RegisteredAt is { } registered
-            && registered >= Since(now, amount, list.NewClientsUnit))
-            return true;
-        if (list.ForNoOrders && !client.HasOrders)
-            return true;
-        if (list.ForMidOrder && client.MidOrder)
-            return true;
-        return list.OpenOrderAbove is { } above && client.LargestOpenOrder > above;
+        var results = new List<bool>();
+        if (list.NewClientsAmount is { } amount)
+            results.Add(client.RegisteredAt is { } registered && registered >= Since(now, amount, list.NewClientsUnit));
+        if (list.StatusesMaxOrders is { } max)
+            results.Add(client.OrderCount <= max);
+        if (list.ForMidOrder)
+            results.Add(client.MidOrder);
+        if (list.OpenOrderAbove is { } above)
+            results.Add(client.LargestOpenOrder > above);
+        return results.Count > 0 && (list.StatusesMatchAll ? results.All(r => r) : results.Any(r => r));
     }
 
     private static DateTimeOffset Since(DateTimeOffset now, int amount, string? unit) => unit switch
@@ -229,14 +234,14 @@ public sealed class PriceBook
         if (user is null)
             return Regular;
         var statusLists = await db.PriceLists.AsNoTracking()
-            .Where(l => !l.IsDefault && (l.NewClientsAmount != null || l.ForNoOrders || l.ForMidOrder || l.OpenOrderAbove != null))
+            .Where(l => !l.IsDefault && (l.NewClientsAmount != null || l.StatusesMaxOrders != null || l.ForMidOrder || l.OpenOrderAbove != null))
             .ToListAsync(ct);
         var forStatus = new HashSet<int>();
         if (statusLists.Count > 0)
         {
             var status = new ClientStatus(
                 user.CreatedAt,
-                await db.Orders.AnyAsync(o => o.UserId == userId && o.Status != OrderStatus.Cancelled, ct),
+                await CountOrdersAsync(db, userId, user.Phone, ct),
                 await db.SavedCarts.AnyAsync(c => c.UserId == userId && c.ItemCount > 0, ct),
                 await db.Orders.Where(o => o.UserId == userId && o.Status != OrderStatus.Cancelled && o.Status != OrderStatus.Delivered)
                     .MaxAsync(o => (decimal?)o.Total, ct));
@@ -254,13 +259,10 @@ public sealed class PriceBook
         var rows = (await db.PriceListDishes.AsNoTracking().Where(d => ids.Contains(d.PriceListId)).ToListAsync(ct))
             .ToLookup(r => r.PriceListId);
 
-        // A general discount reaches dishes the list has no row for, at their base list's prices. A client past the
-        // list's order limit, or who already had its one-time discount, gets the list without it.
-        var orderCount = lists.Any(l => l.DiscountMaxOrders is not null && l.DiscountActiveOn(today))
-            ? await CountOrdersAsync(db, userId, user.Phone, ct) : 0;
+        // A general discount reaches dishes the list has no row for, at their base list's prices. A client who already had its one-time discount, gets the list without it.
         var used = lists.Any(l => l.DiscountNextOrderOnly && l.DiscountActiveOn(today))
             ? await UsedDiscountListsAsync(db, userId, ct) : [];
-        bool DiscountOn(PriceList l) => l.DiscountActiveOn(today) && (l.DiscountMaxOrders is not { } max || orderCount <= max)
+        bool DiscountOn(PriceList l) => l.DiscountActiveOn(today)
             && !(l.DiscountNextOrderOnly && used.Contains(l.Id));
         var discounted = lists.Where(DiscountOn).ToList();
         var dishes = discounted.Count > 0 ? await PricedDishesAsync(db, tracking: false, ct) : [];

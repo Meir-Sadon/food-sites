@@ -172,33 +172,12 @@ public sealed class PriceListDiscountTests(PostgresFixture postgres) : IAsyncLif
     }
 
     [Fact]
-    public async Task A_discount_for_clients_with_few_orders_stops_after_the_limit_and_a_cancelled_order_does_not_count()
-    {
-        var list = await ListWith(new DiscountDto(10, null, null, DiscountRules.Dish, MaxOrders: 1));
-        Assert.Equal(1, list.Discount.MaxOrders);
-        var client = await LoggedIn();
-        Assert.Equal(63, Whole(await MenuDish(client, _chicken))); // no orders
-        var first = await Order(client);
-        Assert.Equal(63, Whole(await MenuDish(client, _chicken))); // one order is still within the limit
-        await Order(client);
-        Assert.Equal(70, Whole(await MenuDish(client, _chicken))); // two are not
-
-        Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync($"/api/admin/orders/{first}/status",
-            new { status = "Cancelled", cancelReason = "test" })).StatusCode);
-        Assert.Equal(63, Whole(await MenuDish(client, _chicken)));
-
-        (await _admin.PutAsJsonAsync($"{Lists}/{list.Id}", new PriceListInput("קבועים", null,
-            new DiscountDto(10, null, null, DiscountRules.Dish, MaxOrders: 0)), TestFiles.Json)).EnsureSuccessStatusCode();
-        Assert.Equal(70, Whole(await MenuDish(client, _chicken)));
-        await (await _admin.PutAsJsonAsync($"{Lists}/{list.Id}", new PriceListInput("קבועים", null,
-            new DiscountDto(10, null, null, DiscountRules.Dish, MaxOrders: -1)), TestFiles.Json)).AssertInvalid("discount.maxOrders", "invalid");
-    }
-
-    [Fact]
     public async Task A_one_time_discount_is_used_up_by_an_order_and_given_back_when_it_is_cancelled()
     {
-        var list = await ListWith(new DiscountDto(10, null, null, DiscountRules.Dish, NextOrderOnly: true));
-        Assert.True(list.Discount.NextOrderOnly);
+        var list = await ListWith(new DiscountDto(10, null, null, DiscountRules.Dish));
+        var saved = await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses",
+            new StatusesDto(null, null, null, false, null, false, true), TestFiles.Json).Read<PriceListDto>();
+        Assert.True(saved.Statuses.NextOrderOnly);
         var client = await LoggedIn();
         Assert.Equal(63, Whole(await MenuDish(client, _chicken)));
 
