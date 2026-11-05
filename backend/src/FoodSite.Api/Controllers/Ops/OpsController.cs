@@ -164,9 +164,9 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
 
         var all = (await db.Orders.AsNoTracking()
                 .Where(o => o.SupplyDate >= start && o.SupplyDate <= end)
-                .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, o.Status, o.NeedsReview })
+                .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, o.Status, Held = o.NeedsReview || (o.DepositRequired && !o.DepositPaid) })
                 .ToListAsync(ct))
-            .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, State = OrderState.Of(o.Status, o.NeedsReview) })
+            .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, State = OrderState.Of(o.Status, o.Held) })
             .ToList();
         var orders = all.Where(o => counted.Contains(o.State)).ToList();
         var periods = orders

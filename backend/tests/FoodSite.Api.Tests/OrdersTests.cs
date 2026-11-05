@@ -692,6 +692,42 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("משלוחים רק באשקלון, אשדוד ושדרות"));
     }
 
+    [Fact]
+    public async Task A_big_order_waits_for_its_deposit_and_the_client_is_told_nothing()
+    {
+        var dish = await (await _admin.GetAsync($"/api/admin/dishes/{_chicken}")).Read<DishDto>();
+        var input = new DishInput(
+            dish.Name, dish.CategoryId, null, null, dish.SellBy, dish.ChoiceMode, null, null, null, null, false, false,
+            dish.Options.Select(o => new OptionInput(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(), dish.ParentDishIds.ToList(),
+            MaxPerSupplyDate: 3);
+        (await _admin.PutAsJsonAsync($"/api/admin/dishes/{_chicken}", input, TestFiles.Json)).EnsureSuccessStatusCode();
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { DepositMinOrder = 1m })).EnsureSuccessStatusCode();
+
+        var big = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+        Assert.False(big.NeedsReview);
+        Assert.DoesNotContain(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("מקדמה"));
+        // Waiting for the deposit, it takes no quantities and is marked for the admin.
+        Assert.Equal(3m, (await Menu()).Dishes.Single(d => d.Id == _chicken).Remaining![date]);
+        var waiting = await _admin.GetAsync($"/api/admin/orders/{big.Id}").Read<OrderDto>();
+        Assert.True(waiting.DepositRequired);
+        Assert.False(waiting.DepositPaid);
+
+        // Marking the deposit paid approves it.
+        (await _admin.PutAsJsonAsync($"/api/admin/orders/{big.Id}/deposit", new DepositInput(true))).EnsureSuccessStatusCode();
+        Assert.Equal(1m, (await Menu()).Dishes.Single(d => d.Id == _chicken).Remaining![date]);
+
+        // Without a threshold nothing is flagged, and an order that needs no deposit cannot be marked.
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { DepositMinOrder = null })).EnsureSuccessStatusCode();
+        var otherDate = (await Menu()).SupplyDates[1].Date.ToString("yyyy-MM-dd");
+        var small = await (await Place(await ValidOrder(o => o["supplyDate"] = otherDate))).Read<ConfirmationDto>();
+        var plain = await _admin.GetAsync($"/api/admin/orders/{small.Id}").Read<OrderDto>();
+        Assert.False(plain.DepositRequired);
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await _admin.PutAsJsonAsync($"/api/admin/orders/{small.Id}/deposit", new DepositInput(true))).StatusCode);
+    }
+
     // ---------- Supply hours ----------
 
     private async Task SetHours(TimeOnly from, TimeOnly to, int? ordersPerHour)

@@ -39,6 +39,15 @@ public class Order
     /// and its dishes are not taken out of the quantity left for the supply date.
     /// </summary>
     public bool NeedsReview { get; set; }
+
+    /// <summary>
+    /// The order total passed the site's deposit threshold: the order waits, unapproved, until the admin marks the deposit paid.
+    /// Admin-only: the client is never told (no message, mail or page reads this).
+    /// </summary>
+    public bool DepositRequired { get; set; }
+
+    /// <summary>The admin marked the deposit as paid; the order then takes its quantities like any approved order.</summary>
+    public bool DepositPaid { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.New;
 
     /// <summary>Why the admin cancelled the order; required to cancel, empty while the order is not cancelled.</summary>

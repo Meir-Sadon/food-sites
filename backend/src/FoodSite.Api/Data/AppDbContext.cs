@@ -184,6 +184,7 @@ public class AppDbContext(
             e.Property(s => s.DeliveryFeeAmount).HasPrecision(10, 2);
             e.Property(s => s.DeliveryBaseFee).HasPrecision(10, 2);
             e.Property(s => s.DeliveryDiscountMinOrder).HasPrecision(10, 2);
+            e.Property(s => s.DepositMinOrder).HasPrecision(10, 2);
         });
 
         model.Entity<DeliveryZone>(e =>

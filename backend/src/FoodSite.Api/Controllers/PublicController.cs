@@ -288,7 +288,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
 
         var ids = limits.Keys.ToList();
         var taken = await db.OrderItems.AsNoTracking()
-            .Where(i => ids.Contains(i.DishId) && dates.Contains(i.Order!.SupplyDate) && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
+            .Where(i => ids.Contains(i.DishId) && dates.Contains(i.Order!.SupplyDate) && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview && !(i.Order.DepositRequired && !i.Order.DepositPaid))
             .GroupBy(i => new { i.DishId, i.Order!.SupplyDate })
             .Select(g => new { g.Key.DishId, g.Key.SupplyDate, Quantity = g.Sum(i => i.Quantity) })
             .ToListAsync();

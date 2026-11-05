@@ -86,6 +86,27 @@ describe('Admin Orders', () => {
     expect(within(card).queryByText(/ממתינה לאישור המנהל/)).not.toBeInTheDocument()
   })
 
+  it('marks a big order as waiting for its deposit, approves it when the deposit is paid, and filters big orders', async () => {
+    const api = fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [order({ depositRequired: true, depositPaid: false }), order({ id: 8, name: 'יעל', total: 20 })],
+      'PUT /api/admin/orders/7/deposit': () => undefined,
+    })
+    renderAt('/admin/orders')
+    const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+    expect(within(card).getByText(/נדרשת מקדמה/)).toBeInTheDocument()
+
+    const user = userEvent.setup()
+    await user.selectOptions(screen.getByLabelText('תצוגה'), 'large')
+    expect(screen.queryByRole('article', { name: 'הזמנה #8' })).not.toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('תצוגה'), '')
+
+    await user.click(within(card).getByRole('button', { name: /המקדמה שולמה/ }))
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/deposit')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/orders/7/deposit')[0].body).toEqual({ paid: true })
+    expect(within(card).getByText(/המקדמה שולמה וההזמנה מאושרת/)).toBeInTheDocument()
+  })
+
   it('lists orders by supply day and links the tab', async () => {
     fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [order(), order({ id: 8, supplyDate: '2030-01-13', name: 'יעל' })] })
     renderAt('/admin/orders')

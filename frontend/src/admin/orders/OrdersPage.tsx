@@ -15,6 +15,15 @@ const today = () => {
 }
 
 /** Cancelled orders are left out of a printed list unless the list is filtered to them. */
+type View = '' | 'waiting' | 'large' | 'restricted'
+
+/** The admin's quick views over the loaded orders: waiting for approval, big orders (deposit), orders of marked clients. */
+const inView = (o: AdminOrder, view: View) =>
+  view === 'waiting' ? o.needsReview || (!!o.depositRequired && !o.depositPaid)
+  : view === 'large' ? !!o.depositRequired
+  : view === 'restricted' ? !!o.restricted
+  : true
+
 const printable = (orders: AdminOrder[], status: OrderStatus | '') =>
   status ? orders : orders.filter((o) => o.status !== 'Cancelled')
 
@@ -24,7 +33,8 @@ export function OrdersPage() {
   const [from, setFrom] = useState(today)
   const [to, setTo] = useState('')
   const [status, setStatus] = useState<OrderStatus | ''>('')
-  const [orders, setOrders] = useState<AdminOrder[] | null>(null)
+  const [view, setView] = useState<View>('')
+  const [loaded, setOrders] = useState<AdminOrder[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [summaryDate, setSummaryDate] = useState<string | null>(null)
   const printer = usePrintOrders()
@@ -51,6 +61,7 @@ export function OrdersPage() {
       return status && order.status !== status ? next.filter((o) => o.id !== order.id) : next
     })
 
+  const orders = loaded && loaded.filter((o) => inView(o, view))
   const days = [...new Set((orders ?? []).map((o) => o.supplyDate))]
 
   return (
@@ -75,6 +86,15 @@ export function OrdersPage() {
                 {t(`admin.orders.statuses.${s}`)}
               </option>
             ))}
+          </select>
+        </span>
+        <span className="field field--narrow">
+          <label htmlFor="orders-view">{t('admin.orders.viewFilter')}</label>
+          <select id="orders-view" value={view} onChange={(e) => setView(e.target.value as View)}>
+            <option value="">{t('admin.orders.views.all')}</option>
+            <option value="waiting">{t('admin.orders.views.waiting')}</option>
+            <option value="large">{t('admin.orders.views.large')}</option>
+            <option value="restricted">{t('admin.orders.views.restricted')}</option>
           </select>
         </span>
       </form>

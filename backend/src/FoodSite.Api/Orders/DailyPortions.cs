@@ -17,7 +17,7 @@ public static class DailyPortions
     public static Task<Dictionary<DateOnly, decimal>> TakenAsync(
         AppDbContext db, IReadOnlyCollection<DateOnly> dates, CancellationToken ct = default) =>
         db.OrderItems.AsNoTracking()
-            .Where(i => dates.Contains(i.Order!.SupplyDate) && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview
+            .Where(i => dates.Contains(i.Order!.SupplyDate) && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview && !(i.Order.DepositRequired && !i.Order.DepositPaid)
                 && i.Dish!.SellBy == SellBy.Units && !i.Dish.IsSideDish && !i.Dish.IsAddOnOnly)
             .GroupBy(i => i.Order!.SupplyDate)
             .Select(g => new { Date = g.Key, Quantity = g.Sum(i => i.Quantity) })

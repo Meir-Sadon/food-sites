@@ -86,7 +86,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     }
   }
 
-  const money = (field: 'deliveryBaseFee' | 'deliveryDiscountMinOrder') => {
+  const money = (field: 'deliveryBaseFee' | 'deliveryDiscountMinOrder' | 'depositMinOrder') => {
     const id = `settings-${field}`
     return (
       <span className="field">
@@ -223,6 +223,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
               {money('deliveryDiscountMinOrder')}
             </>
           )}
+          {money('depositMinOrder')}
           {text('kashrutText', t('admin.settings.kashrut'))}
           <fieldset className="field" aria-labelledby="settings-payments-legend">
             <legend id="settings-payments-legend">{t('admin.settings.payments')}</legend>

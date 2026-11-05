@@ -853,6 +853,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("DeliveryZoneName")
                         .HasColumnType("text");
 
+                    b.Property<bool>("DepositPaid")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("DepositRequired")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("FulfillmentMethod")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1445,6 +1451,10 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
+
+                    b.Property<decimal?>("DepositMinOrder")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<string>("FontPair")
                         .HasMaxLength(20)
