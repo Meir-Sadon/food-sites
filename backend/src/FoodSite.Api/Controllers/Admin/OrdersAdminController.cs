@@ -54,7 +54,9 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         string? CancelReason = null,
         DateTimeOffset? CancelledAt = null,
         decimal MinimumTopUp = 0m,
-        bool Restricted = false);
+        bool Restricted = false,
+        bool DepositRequired = false,
+        bool DepositPaid = false);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -64,6 +66,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     /// <summary>Marking an order paid takes how it was paid (Unknown is only for old orders) and an optional comment.</summary>
     public record PaidInput(bool IsPaid, PaidWith? PaidWith = null, string? PaymentComment = null);
+
+    public record DepositInput(bool Paid);
 
     public record ItemInput(int Id, decimal Quantity);
 
@@ -146,11 +150,11 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     public async Task<SummaryDto> Summary(DateOnly date)
     {
         var orders = await db.Orders.AsNoTracking()
-            .Where(o => o.SupplyDate == date && o.Status != OrderStatus.Cancelled && !o.NeedsReview)
+            .Where(o => o.SupplyDate == date && o.Status != OrderStatus.Cancelled && !o.NeedsReview && !(o.DepositRequired && !o.DepositPaid))
             .Select(o => new { o.FulfillmentMethod })
             .ToListAsync();
         var lines = await db.OrderItems.AsNoTracking()
-            .Where(i => i.Order!.SupplyDate == date && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
+            .Where(i => i.Order!.SupplyDate == date && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview && !(i.Order.DepositRequired && !i.Order.DepositPaid))
             .Select(i => new
             {
                 i.DishId, i.DishName, i.OptionLabel, i.Quantity, i.OrderId,
@@ -217,6 +221,23 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         if (order is null)
             return NotFound();
         order.NeedsReview = false;
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    /// <summary>
+    /// The admin received the deposit of a big order (or takes the mark back): a paid deposit approves the order, so it takes
+    /// its quantities. Admin-only: the client is never told.
+    /// </summary>
+    [HttpPut("{id:int}/deposit")]
+    public async Task<ActionResult> SetDeposit(int id, DepositInput input)
+    {
+        var order = await db.Orders.FindAsync(id);
+        if (order is null)
+            return NotFound();
+        if (!order.DepositRequired)
+            return Invalid(nameof(input.Paid), "invalid");
+        order.DepositPaid = input.Paid;
         await db.SaveChangesAsync();
         return NoContent();
     }
@@ -380,7 +401,9 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.CancelReason,
         o.CancelledAt,
         o.MinimumTopUp,
-        restricted.Contains(o.Phone));
+        restricted.Contains(o.Phone),
+        o.DepositRequired,
+        o.DepositPaid);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

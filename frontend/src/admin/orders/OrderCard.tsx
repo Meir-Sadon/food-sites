@@ -67,6 +67,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
         <h4>
           {t('admin.orders.orderN', { id: order.id })} · {order.name}
           {order.restricted && <span className="badge badge--warning">{t('admin.restricted.badge')}</span>}
+          {order.depositRequired && !order.depositPaid && <span className="badge badge--warning">{t('admin.orders.depositBadge')}</span>}
         </h4>
         <span className="numeric">{formatMoney(order.total)}</span>
       </header>
@@ -85,6 +86,20 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
       {order.restricted && (
         <p role="status" className="notice notice--warning restricted-notice">
           <strong>{t('admin.restricted.badge')}</strong> {t('admin.restricted.notice')}
+        </p>
+      )}
+      {order.depositRequired && (
+        <p role="status" className="notice notice--warning">
+          {t(order.depositPaid ? 'admin.orders.depositPaid' : 'admin.orders.depositWaiting')}{' '}
+          <button
+            type="button"
+            onClick={() =>
+              void apply({ depositPaid: !order.depositPaid }, () => ordersAdminApi.setDeposit(order.id, !order.depositPaid))
+            }
+          >
+            {t(order.depositPaid ? 'admin.orders.depositUnmark' : 'admin.orders.depositMark')}
+            <span className="visually-hidden"> {t('admin.orders.orderN', { id: order.id })}</span>
+          </button>
         </p>
       )}
       {order.hourFull && (

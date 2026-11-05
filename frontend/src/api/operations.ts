@@ -80,6 +80,10 @@ export interface AdminOrder {
   minimumTopUp?: number
   /** The client is marked as restricted (admin-only): ask for payment in advance. */
   restricted?: boolean
+  /** The order total passed the deposit threshold (admin-only; the client is never told). */
+  depositRequired?: boolean
+  /** The admin marked the deposit as paid, which approves the order. */
+  depositPaid?: boolean
   deliveryZoneName?: string | null
 }
 
@@ -160,6 +164,8 @@ export const ordersAdminApi = {
   /** Cancelling needs a reason (the business pays no sales commission on a cancelled order). */
   cancel: (id: number, cancelReason: string) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status: 'Cancelled', cancelReason })),
   approve: (id: number) => apiJson<void>(`${orders}/${id}/approve`, send('PUT')),
+  /** Marks the deposit of a big order as paid (which approves it), or takes the mark back. */
+  setDeposit: (id: number, paid: boolean) => apiJson<void>(`${orders}/${id}/deposit`, send('PUT', { paid })),
   setPaid: (id: number, input: PaidInput) => apiJson<void>(`${orders}/${id}/paid`, send('PUT', input)),
   update: (id: number, input: AdminOrderInput) => apiJson<AdminOrder>(`${orders}/${id}`, send('PUT', input)),
 }

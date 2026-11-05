@@ -27,6 +27,8 @@ export interface Settings {
   deliveryBaseFee: number | null
   /** From this dishes total (₪) the delivery fee is discounted; null means never. */
   deliveryDiscountMinOrder: number | null
+  /** An order whose total is above this (₪) waits, unapproved, until the admin marks its deposit paid; null means never (admin-only). */
+  depositMinOrder?: number | null
   kashrutText: string | null
   paymentPhone: string | null
   bitEnabled: boolean

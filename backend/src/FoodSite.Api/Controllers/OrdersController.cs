@@ -213,6 +213,8 @@ public class OrdersController(
                 && (quote is null or { Status: DeliveryQuote.Outside or DeliveryQuote.Unknown } or { Approximate: true }),
             DeliveryFee = fee - discount,
             DeliveryDiscount = discount,
+            // Admin-only: a big order waits for its deposit and the client is told nothing about it.
+            DepositRequired = settings.DepositMinOrder is > 0m && dishesTotal + minimumTopUp + fee - discount > settings.DepositMinOrder,
             DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
             MinimumTopUp = minimumTopUp,
             Total = dishesTotal + minimumTopUp + fee - discount,
@@ -272,7 +274,7 @@ public class OrdersController(
             return;
 
         var taken = await db.OrderItems.AsNoTracking()
-            .Where(i => limited.Contains(i.DishId) && i.Order!.SupplyDate == supplyDate && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
+            .Where(i => limited.Contains(i.DishId) && i.Order!.SupplyDate == supplyDate && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview && !(i.Order.DepositRequired && !i.Order.DepositPaid))
             .GroupBy(i => i.DishId)
             .Select(g => new { DishId = g.Key, Quantity = g.Sum(i => i.Quantity) })
             .ToDictionaryAsync(g => g.DishId, g => g.Quantity, ct);

@@ -30,6 +30,12 @@ public class Settings
     /// <summary>The dishes total from which the delivery fee is discounted; null means never.</summary>
     public decimal? DeliveryDiscountMinOrder { get; set; }
 
+    /// <summary>
+    /// An order whose total is above this (₪) comes in unapproved until the admin marks its deposit paid; null means never.
+    /// Admin-only: never sent to the client.
+    /// </summary>
+    public decimal? DepositMinOrder { get; set; }
+
     public string? KashrutText { get; set; }
 
     /// <summary>The smallest order total (₪) a client may place; null means no minimum.</summary>

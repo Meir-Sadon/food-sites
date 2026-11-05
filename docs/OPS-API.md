@@ -51,7 +51,7 @@ Orders and their totals per period, by **supply date**.
 
 - `from`, `to`: dates, both included. Without them: the first of the month 11 months ago up to today. At most 731 days; `from` after `to` or a longer range is `400` with `from: ["invalidRange"]`. An order for a supply date after `to` is not in the answer, so a console that wants upcoming orders sends a `to` in the future.
 - `period`: `Day`, `Week` (Sunday to Saturday) or `Month` (default).
-- `statuses`: comma-separated states to count (case-insensitive): `New`, `Confirmed`, `Ready`, `Delivered`, `WaitingApproval` (a delivery outside the service area that the admin has not approved yet) and `Cancelled`. Without it everything but `Cancelled` counts. An unknown name is `400` with `statuses: ["invalid"]`.
+- `statuses`: comma-separated states to count (case-insensitive): `New`, `Confirmed`, `Ready`, `Delivered`, `WaitingApproval` (an order the admin has not approved yet: a delivery outside the service area, or a big order whose deposit is not marked paid) and `Cancelled`. Without it everything but `Cancelled` counts. An unknown name is `400` with `statuses: ["invalid"]`.
 
 ```json
 {

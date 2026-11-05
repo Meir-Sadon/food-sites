@@ -52,7 +52,7 @@ public class ReportsController(AppDbContext db, IOptions<SiteOptions> site) : Ad
 
     private async Task<List<Line>> LoadAsync(DateOnly? from, DateOnly? to, int? dishId, int? categoryId, PaymentMethod? paymentMethod)
     {
-        var query = db.OrderItems.AsNoTracking().Where(i => i.Order!.Status != OrderStatus.Cancelled && !i.Order.NeedsReview);
+        var query = db.OrderItems.AsNoTracking().Where(i => i.Order!.Status != OrderStatus.Cancelled && !i.Order.NeedsReview && !(i.Order.DepositRequired && !i.Order.DepositPaid));
         if (from is { } start) query = query.Where(i => i.Order!.SupplyDate >= start);
         if (to is { } end) query = query.Where(i => i.Order!.SupplyDate <= end);
         if (dishId is { } dish) query = query.Where(i => i.DishId == dish);
