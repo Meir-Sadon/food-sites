@@ -299,7 +299,17 @@ export interface MenuAddOnGroup {
   maxUnits: number | null
 }
 
-export interface MenuCategory {
+/** A dish layout a category or group can ask for: the site's regular cards (`list`), tiles or rectangles. */
+export const DISH_LAYOUTS = ['list', 'tiles', 'rect'] as const
+export type DishLayout = (typeof DISH_LAYOUTS)[number]
+
+/** A category's or group's own look; null means the site's. */
+export interface SectionLook {
+  layout?: DishLayout | null
+  imageSize?: ImageSize | null
+}
+
+export interface MenuCategory extends SectionLook {
   id: number
   name: string
 }
@@ -325,7 +335,7 @@ export interface SupplyDate {
 }
 
 /** A custom group of dishes (such as "מומלצות"), shown as its own section above the categories; dishes in menu order. */
-export interface MenuGroup {
+export interface MenuGroup extends SectionLook {
   id: number
   name: string
   dishIds: number[]

@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ColorSet, InactiveAfter, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, ImageSize, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { SectionLook, ColorSet, InactiveAfter, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, ImageSize, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -133,7 +133,7 @@ export interface ClosedDate {
   reason: string | null
 }
 
-export interface Category {
+export interface Category extends SectionLook {
   id: number
   name: string
   displayOrder: number
@@ -392,14 +392,14 @@ export const closedDatesApi = {
 
 export const categoriesApi = {
   get: () => apiJson<Category[]>(`${admin}/categories`),
-  add: (name: string) => apiJson<Category>(`${admin}/categories`, send('POST', { name })),
-  rename: (id: number, name: string) => apiJson<void>(`${admin}/categories/${id}`, send('PUT', { name })),
+  add: (name: string, look: SectionLook = {}) => apiJson<Category>(`${admin}/categories`, send('POST', { name, ...look })),
+  rename: (id: number, name: string, look: SectionLook = {}) => apiJson<void>(`${admin}/categories/${id}`, send('PUT', { name, layout: look.layout ?? null, imageSize: look.imageSize ?? null })),
   move: (id: number, direction: Direction) =>
     apiJson<Category[]>(`${admin}/categories/${id}/move`, send('POST', { direction })),
   remove: (id: number) => apiJson<void>(`${admin}/categories/${id}`, send('DELETE')),
 }
 
-export interface DishGroup {
+export interface DishGroup extends SectionLook {
   id: number
   name: string
   displayOrder: number
@@ -425,9 +425,9 @@ export const deliveryZonesApi = {
 
 export const dishGroupsApi = {
   get: () => apiJson<DishGroup[]>(`${admin}/dish-groups`),
-  add: (name: string, dishIds: number[]) => apiJson<DishGroup>(`${admin}/dish-groups`, send('POST', { name, dishIds })),
-  update: (id: number, name: string, dishIds: number[]) =>
-    apiJson<DishGroup>(`${admin}/dish-groups/${id}`, send('PUT', { name, dishIds })),
+  add: (name: string, dishIds: number[], look: SectionLook = {}) => apiJson<DishGroup>(`${admin}/dish-groups`, send('POST', { name, dishIds, ...look })),
+  update: (id: number, name: string, dishIds: number[], look: SectionLook = {}) =>
+    apiJson<DishGroup>(`${admin}/dish-groups/${id}`, send('PUT', { name, dishIds, layout: look.layout ?? null, imageSize: look.imageSize ?? null })),
   move: (id: number, direction: Direction) =>
     apiJson<DishGroup[]>(`${admin}/dish-groups/${id}/move`, send('POST', { direction })),
   remove: (id: number) => apiJson<void>(`${admin}/dish-groups/${id}`, send('DELETE')),

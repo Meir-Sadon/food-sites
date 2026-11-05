@@ -46,7 +46,7 @@ describe('Dish groups', () => {
     await user.click(screen.getByRole('button', { name: 'הוספה' }))
 
     await waitFor(() => expect(api.sent('POST', '/api/admin/dish-groups')).toHaveLength(1))
-    expect(api.sent('POST', '/api/admin/dish-groups')[0].body).toEqual({ name: 'מומלצות', dishIds: [1, 3] })
+    expect(api.sent('POST', '/api/admin/dish-groups')[0].body).toEqual({ name: 'מומלצות', dishIds: [1, 3], layout: null, imageSize: null })
   })
 
   it('shows a duplicate name error', async () => {
@@ -77,7 +77,7 @@ describe('Dish groups', () => {
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
 
     await waitFor(() => expect(api.sent('PUT', '/api/admin/dish-groups/1')).toHaveLength(1))
-    expect(api.sent('PUT', '/api/admin/dish-groups/1')[0].body).toEqual({ name: 'מומלצות', dishIds: [2] })
+    expect(api.sent('PUT', '/api/admin/dish-groups/1')[0].body).toEqual({ name: 'מומלצות', dishIds: [2], layout: null, imageSize: null })
   })
 
   it('moves a group up', async () => {

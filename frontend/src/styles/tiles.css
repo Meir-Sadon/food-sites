@@ -4,7 +4,7 @@
 
 /* Settings → imageSize sets --image-scale (index.css): a tile is 9.75rem wide on a phone and 14.5rem on a wide screen at
    the old size (medium), scaled by it. Tiles keep that width and fill the line, centred. */
-[data-style='tiles'] .category__dishes {
+[data-layout='tiles'] .category__dishes {
   display: grid;
   grid-template-columns: repeat(auto-fit, calc(9.75rem * var(--image-scale)));
   justify-content: space-evenly;
@@ -14,23 +14,23 @@
 }
 
 @media (min-width: 40rem) {
-  [data-style='tiles'] .category__dishes {
+  [data-layout='tiles'] .category__dishes {
     grid-template-columns: repeat(auto-fill, calc(14.5rem * var(--image-scale)));
     justify-content: start;
     gap: 1.5rem 1rem;
   }
   /* Wider tiles need fewer lines for the same text. */
-  [data-style='tiles'] .tile__body {
+  [data-layout='tiles'] .tile__body {
     block-size: 7.25rem;
   }
 
-  [data-style='tiles'] .tile__description {
+  [data-layout='tiles'] .tile__description {
     -webkit-line-clamp: 2;
   }
 }
 
 /* A tile has no frame: the picture is the card and the text sits under it. */
-:is([data-style='tiles'], [data-style='rect']) .dish--tile {
+:is([data-layout='tiles'], [data-layout='rect']) .dish--tile {
   -webkit-tap-highlight-color: transparent;
   display: flex;
   flex-direction: column;
@@ -41,7 +41,7 @@
   background: var(--dish-bg, none);
 }
 
-:is([data-style='tiles'], [data-style='rect']) .dish--tile.dish--chosen {
+:is([data-layout='tiles'], [data-layout='rect']) .dish--tile.dish--chosen {
   background: var(--dish-bg, none);
 }
 
@@ -59,7 +59,7 @@
 }
 
 /* The ring is drawn over the picture (the picture fills the tile, so an outline would be hidden behind it). */
-:is([data-style='tiles'], [data-style='rect']) .dish--chosen .tile__media::after {
+:is([data-layout='tiles'], [data-layout='rect']) .dish--chosen .tile__media::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -288,7 +288,7 @@
 }
 
 /* The whole picture at its own proportions (no bands around it), at most 13rem each way. */
-:is([data-style='tiles'], [data-style='rect']) .modal .tile-dialog__pic .carousel img {
+.modal:has(.tile-dialog__head) .tile-dialog__pic .carousel img {
   display: block;
   inline-size: auto;
   block-size: auto;
@@ -328,19 +328,19 @@
   margin: 0;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .tile-dialog__info .dish__description {
+.modal:has(.tile-dialog__head) .tile-dialog__info .dish__description {
   display: block;
   -webkit-line-clamp: unset;
   overflow: visible;
 }
 
 /* Compact, so most of a dish's choices fit without scrolling. */
-:is([data-style='tiles'], [data-style='rect']) .modal {
+.modal:has(.tile-dialog__head) {
   gap: 0.375rem;
   padding: 0.875rem;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .dish__description {
+.modal:has(.tile-dialog__head) .dish__description {
   font-size: 0.85rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -349,37 +349,37 @@
   flex-shrink: 0;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .addon-units {
+.modal:has(.tile-dialog__head) .addon-units {
   gap: 0.375rem;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .addon-unit {
+.modal:has(.tile-dialog__head) .addon-unit {
   padding: 0.375rem 0.625rem;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .addon-unit[open] > .addon-unit__title {
+.modal:has(.tile-dialog__head) .addon-unit[open] > .addon-unit__title {
   margin-block-end: 0.375rem;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .dish__choice,
-:is([data-style='tiles'], [data-style='rect']) .modal .addon-unit .stack {
+.modal:has(.tile-dialog__head) .dish__choice,
+.modal:has(.tile-dialog__head) .addon-unit .stack {
   gap: 0.25rem;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .addon {
+.modal:has(.tile-dialog__head) .addon {
   padding: 0.125rem 0.625rem;
   gap: 0.25rem;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .question-row {
+.modal:has(.tile-dialog__head) .question-row {
   padding-block-end: 0.375rem;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .modal__actions {
+.modal:has(.tile-dialog__head) .modal__actions {
   margin-block-start: 0.375rem;
 }
 
-:is([data-style='tiles'], [data-style='rect']) .modal .dish-variants {
+.modal:has(.tile-dialog__head) .dish-variants {
   margin-block: 0.5rem;
 }
 

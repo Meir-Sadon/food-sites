@@ -1302,23 +1302,23 @@ label {
   --image-scale: 0.75;
 }
 
-:root[data-image-size='tiny'] {
+[data-image-size='tiny'] {
   --image-scale: 0.5;
 }
 
-:root[data-image-size='small'] {
+[data-image-size='small'] {
   --image-scale: 0.75;
 }
 
-:root[data-image-size='medium'] {
+[data-image-size='medium'] {
   --image-scale: 1;
 }
 
-:root[data-image-size='large'] {
+[data-image-size='large'] {
   --image-scale: 1.25;
 }
 
-:root[data-image-size='huge'] {
+[data-image-size='huge'] {
   --image-scale: 1.5;
 }
 

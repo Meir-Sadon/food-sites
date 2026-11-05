@@ -4,10 +4,10 @@ import { useReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
 import { DIETARY_QUESTION_ID } from '../api/catalog'
 import { DietaryIcon } from './DietaryTags'
-import { useSiteStyle } from '../site/useSite'
+import { useDishLayout } from './dishLayout'
 import { trackMarketing } from '../tracking/marketing'
 import { useTranslation } from 'react-i18next'
-import { isTileStyle, type MenuAddOn, type MenuAddOnGroup, type MenuDish, type MenuQuestion } from '../api/site'
+import { type MenuAddOn, type MenuAddOnGroup, type MenuDish, type MenuQuestion } from '../api/site'
 import { AmountControl } from './AmountControl'
 import { formatMoney, optionPriceText, priceBeforeDiscount, priceText, unitLabel } from './format'
 import { Highlighted } from './Highlight'
@@ -116,7 +116,7 @@ function DishDetails({ dish, nameId, variant, date }: { dish: MenuDish; nameId: 
 }
 
 export function DishCard(props: Props) {
-  return isTileStyle(useSiteStyle()) ? <DishTile {...props} /> : <PlainDishCard {...props} />
+  return useDishLayout() !== 'list' ? <DishTile {...props} /> : <PlainDishCard {...props} />
 }
 
 function PlainDishCard({ dish, dishes, selection, date, onChange }: Props) {
@@ -156,7 +156,7 @@ type GroupProps = {
 }
 
 export function DishGroupCard(props: GroupProps) {
-  return isTileStyle(useSiteStyle()) ? <DishGroupTile {...props} /> : <PlainDishGroupCard {...props} />
+  return useDishLayout() !== 'list' ? <DishGroupTile {...props} /> : <PlainDishGroupCard {...props} />
 }
 
 function PlainDishGroupCard(props: GroupProps) {
@@ -318,6 +318,31 @@ function AllergenMark({ text }: { text?: string | null }) {
   )
 }
 
+/** The allergens under a rectangle's description: the first few words, with a button for the rest when they are long. */
+const ALLERGEN_WORDS = 6
+
+function AllergenLine({ text }: { text?: string | null }) {
+  const { t } = useTranslation()
+  const [all, setAll] = useState(false)
+  if (!text) return null
+  const words = text.trim().split(/\s+/)
+  const long = words.length > ALLERGEN_WORDS
+  const shown = long && !all ? `${words.slice(0, ALLERGEN_WORDS).join(' ')}…` : text
+  return (
+    <p className="tile__allergens muted">
+      {t('order.allergens')}: {shown}
+      {long && (
+        <>
+          {' '}
+          <button type="button" className="link-button" aria-expanded={all} onClick={() => setAll(!all)}>
+            {t(all ? 'order.allergensLess' : 'order.allergensMore')}
+          </button>
+        </>
+      )}
+    </p>
+  )
+}
+
 /** The picture in a tile's dialog: whole, small, and a press opens it full screen. */
 function DialogPicture({ images, name, onZoom }: { images: string[]; name: string; onZoom: () => void }) {
   const { t } = useTranslation()
@@ -334,6 +359,8 @@ function DialogPicture({ images, name, onZoom }: { images: string[]; name: strin
 
 function DishTile({ dish, dishes, selection, date, onChange }: Props) {
   const { t } = useTranslation()
+  // The rectangles layout shows its extras beside the name and under the description instead of on the picture.
+  const rect = useDishLayout() === 'rect'
   const id = useId()
   const [open, setOpen] = useState(false)
   const [zoom, setZoom] = useState(false)
@@ -375,7 +402,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
       style={tappable ? { cursor: 'pointer' } : undefined}
     >
       <TileMedia images={dish.images} name={dish.name}>
-        <ItemBadges dish={dish} date={date} className="tile__marks" />
+        <ItemBadges dish={dish} date={date} className="tile__marks" except={rect ? ['onSale'] : undefined} />
         {dish.isSoldOut ? (
           <p className="badge tile__badge" role="status">
             {t('order.soldOut')}
@@ -392,7 +419,7 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
             </p>
           )
         )}
-        <AllergenMark text={dish.allergenInfo} />
+        {!rect && <AllergenMark text={dish.allergenInfo} />}
         {unavailable ? null : !selection ? (
           <button type="button" className="tile__add" aria-label={t('order.addDish', { name: dish.name })} onClick={add}>
             <TileIcon name="plus" />
@@ -417,9 +444,17 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
         )}
       </TileMedia>
       <div className="tile__body">
-        <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+        {rect ? (
+          <div className="tile__title">
+            <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+            <ItemBadges dish={dish} date={date} only={['onSale']} className="tile__sale" />
+          </div>
+        ) : (
+          <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+        )}
         <DishPrice dish={dish} />
         {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
+        {rect && <AllergenLine text={dish.allergenInfo} />}
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
