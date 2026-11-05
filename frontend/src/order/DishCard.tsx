@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { flushSync } from 'react-dom'
+import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { createPortal, flushSync } from 'react-dom'
 import { useReducedMotion } from '../components/motion'
 import { Modal } from '../components/Modal'
 import { DIETARY_QUESTION_ID } from '../api/catalog'
@@ -28,6 +28,7 @@ import {
   firmGroupLimit,
   groupUsed,
   keyDishId,
+  round2,
   startSelection,
   unitAddOnTotals,
   isCheckbox,
@@ -78,11 +79,11 @@ function RemainingNote({ dish, remaining }: { dish: MenuDish; remaining: number 
 
 /** The name, description, price and allergens of a dish (or of a variant, one heading level down). */
 /** The price on a dish card, after the admin's price before a discount struck through when there is one. */
-function DishPrice({ dish }: { dish: MenuDish }) {
+function DishPrice({ dish, clamp }: { dish: MenuDish; clamp?: boolean }) {
   const { t } = useTranslation()
   const before = priceBeforeDiscount(dish)
-  return (
-    <p className="dish__price">
+  const content = (
+    <>
       {before !== null && (
         <>
           <del className="dish__price-before">
@@ -92,8 +93,17 @@ function DishPrice({ dish }: { dish: MenuDish }) {
         </>
       )}
       {priceText(dish, t)}
-    </p>
+    </>
   )
+  // On a tile or rectangle the price is one line; a price too long for it shows whole in a tooltip.
+  if (clamp) {
+    return (
+      <ClampedText lines={1} className="dish__price" text={`${before !== null ? `${formatMoney(before)} ` : ''}${priceText(dish, t)}`}>
+        {content}
+      </ClampedText>
+    )
+  }
+  return <p className="dish__price">{content}</p>
 }
 
 function DishDetails({ dish, nameId, variant, date }: { dish: MenuDish; nameId: string; variant?: boolean; date?: string }) {
@@ -318,28 +328,176 @@ function AllergenMark({ text }: { text?: string | null }) {
   )
 }
 
-/** The allergens under a rectangle's description: the first few words, with a button for the rest when they are long. */
-const ALLERGEN_WORDS = 6
-
+/** The allergens under a rectangle's description: one line, the rest of a long list in a tooltip. */
 function AllergenLine({ text }: { text?: string | null }) {
   const { t } = useTranslation()
-  const [all, setAll] = useState(false)
   if (!text) return null
-  const words = text.trim().split(/\s+/)
-  const long = words.length > ALLERGEN_WORDS
-  const shown = long && !all ? `${words.slice(0, ALLERGEN_WORDS).join(' ')}…` : text
+  const line = `${t('order.allergens')}: ${text}`
   return (
-    <p className="tile__allergens muted">
-      {t('order.allergens')}: {shown}
-      {long && (
-        <>
-          {' '}
-          <button type="button" className="link-button" aria-expanded={all} onClick={() => setAll(!all)}>
-            {t(all ? 'order.allergensLess' : 'order.allergensMore')}
-          </button>
-        </>
-      )}
-    </p>
+    <ClampedText lines={1} className="tile__allergens muted" text={line}>
+      {line}
+    </ClampedText>
+  )
+}
+
+/**
+ * Text cut to a fixed number of lines so every tile is the same height. When it does not fit, the whole text shows in a
+ * tooltip: on hover with a mouse, on a tap (or Enter) otherwise; Escape, a scroll or a press elsewhere closes it.
+ */
+function ClampedText({
+  as = 'p',
+  lines,
+  text,
+  className,
+  id,
+  children,
+}: {
+  as?: 'p' | 'h3'
+  lines: number
+  text: string
+  className?: string
+  id?: string
+  children: ReactNode
+}) {
+  const ref = useRef<HTMLElement>(null)
+  const mouse = useRef(false)
+  const tipId = useId()
+  const [cut, setCut] = useState(false)
+  const [tip, setTip] = useState<{ top: number; left: number; width: number } | null>(null)
+  const Tag = as as 'p'
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setCut(el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)
+    measure()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    observer?.observe(el)
+    void document.fonts?.ready.then(measure)
+    return () => observer?.disconnect()
+  }, [text])
+
+  function show() {
+    const el = ref.current
+    if (!el || !cut) return
+    const box = el.getBoundingClientRect()
+    const width = Math.min(288, window.innerWidth - 16)
+    const left = Math.min(Math.max(8, box.left + box.width / 2 - width / 2), window.innerWidth - width - 8)
+    setTip({ top: box.bottom + 4, left, width })
+  }
+
+  useEffect(() => {
+    if (!tip) return
+    const close = () => setTip(null)
+    const outside = (event: PointerEvent) => !ref.current?.contains(event.target as Node) && close()
+    const escape = (event: KeyboardEvent) => event.key === 'Escape' && close()
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    document.addEventListener('pointerdown', outside)
+    document.addEventListener('keydown', escape)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+      document.removeEventListener('pointerdown', outside)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [tip])
+
+  return (
+    <>
+      <Tag
+        ref={ref as RefObject<HTMLParagraphElement>}
+        id={id}
+        className={`clamp${className ? ` ${className}` : ''}`}
+        style={{ '--lines': lines } as React.CSSProperties}
+        data-cut={cut || undefined}
+        tabIndex={cut ? 0 : undefined}
+        aria-describedby={tip ? tipId : undefined}
+        onPointerEnter={(event) => {
+          mouse.current = event.pointerType === 'mouse'
+          if (mouse.current) show()
+        }}
+        onPointerLeave={() => {
+          if (mouse.current) setTip(null)
+          mouse.current = false
+        }}
+        onClick={(event) => {
+          if (!cut) return
+          event.stopPropagation()
+          if (mouse.current) show()
+          else if (tip) setTip(null)
+          else show()
+        }}
+        onKeyDown={(event) => {
+          if (!cut || (event.key !== 'Enter' && event.key !== ' ')) return
+          event.preventDefault()
+          if (tip) setTip(null)
+          else show()
+        }}
+      >
+        {children}
+      </Tag>
+      {tip &&
+        createPortal(
+          <span id={tipId} role="tooltip" className="clamp-tip" style={{ top: tip.top, left: tip.left, inlineSize: tip.width }}>
+            {text}
+          </span>,
+          document.body,
+        )}
+    </>
+  )
+}
+
+/**
+ * The amount on a tile once the dish is in the order. The plus stays in the picture's corner, where the add button was;
+ * the minus and the number slide open on its other side, and slide shut again when the amount goes back to nothing.
+ * Only the number shows (no unit name).
+ */
+function TileAmount({ name, value, min, max, step, onChange }: { name: string; value: number; min: number; max: number; step: number; onChange: (quantity: number) => void }) {
+  const { t } = useTranslation()
+  const reduced = useReducedMotion()
+  const [open, setOpen] = useState(reduced)
+  const closing = useRef<number | undefined>(undefined)
+
+  useEffect(() => {
+    if (open) return
+    const timer = window.setTimeout(() => setOpen(true), 30)
+    return () => window.clearTimeout(timer)
+  }, [open])
+  useEffect(() => () => window.clearTimeout(closing.current), [])
+
+  function down() {
+    const next = value - step < min ? 0 : round2(value - step)
+    if (next > 0 || reduced) return onChange(next)
+    if (closing.current !== undefined) return
+    setOpen(false)
+    closing.current = window.setTimeout(() => onChange(0), 220)
+  }
+
+  return (
+    <span className="tile__stepper" role="group" aria-label={name} data-open={open || undefined} onClick={(event) => event.stopPropagation()}>
+      <span className="tile__extra">
+        <span className="tile__extra-inner">
+          <span className="tile__pill">
+            <button type="button" className="tile__minus" aria-label={t('order.less', { name })} tabIndex={open ? undefined : -1} onClick={down}>
+              −
+            </button>
+            <output className="tile__qty numeric" aria-live="polite">
+              {number.format(value)}
+            </output>
+          </span>
+        </span>
+      </span>
+      <button
+        type="button"
+        className="tile__plus"
+        aria-label={t('order.more', { name })}
+        disabled={value >= max}
+        onClick={() => onChange(value < min ? min : Math.min(round2(value + step), max))}
+      >
+        <TileIcon name="plus" />
+      </button>
+    </span>
   )
 }
 
@@ -430,32 +588,33 @@ function DishTile({ dish, dishes, selection, date, onChange }: Props) {
           </button>
         ) : (
           // Taking the amount down to 0 removes the dish from the order.
-          <span className="tile__stepper" onClick={(event) => event.stopPropagation()}>
-            <AmountControl
-              name={dish.name}
-              value={selection.quantity}
-              {...range}
-              max={Math.max(range.max, range.min)}
-              unit={unitName}
-              allowZero
-              onChange={(quantity) => onChange(quantity <= 0 ? undefined : fitAddOns(dish, { ...selection, quantity }, dishes))}
-            />
-          </span>
+          <TileAmount
+            name={dish.name}
+            value={selection.quantity}
+            min={range.min}
+            max={Math.max(range.max, range.min)}
+            step={range.step}
+            onChange={(quantity) => onChange(quantity <= 0 ? undefined : fitAddOns(dish, { ...selection, quantity }, dishes))}
+          />
         )}
       </TileMedia>
       <div className="tile__body">
         {rect ? (
           <div className="tile__title">
-            <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+            <ClampedText as="h3" lines={2} id={`${id}-name`} text={dish.name}><Highlighted text={dish.name} /></ClampedText>
             <ItemBadges dish={dish} date={date} only={['onSale']} className="tile__sale" />
           </div>
         ) : (
-          <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
+          <ClampedText as="h3" lines={2} id={`${id}-name`} text={dish.name}><Highlighted text={dish.name} /></ClampedText>
         )}
-        {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
+        {dish.description && (
+          <ClampedText lines={2} className="dish__description tile__description" text={dish.description}>
+            <Highlighted text={dish.description} />
+          </ClampedText>
+        )}
         {rect && <AllergenLine text={dish.allergenInfo} />}
         {/* The price is the last line, at the bottom of the tile or rectangle, under the description. */}
-        <DishPrice dish={dish} />
+        <DishPrice dish={dish} clamp />
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>
@@ -520,9 +679,15 @@ function DishGroupTile(props: GroupProps) {
         </button>
       </TileMedia>
       <div className="tile__body">
-        <h3 id={`${id}-name`}><Highlighted text={dish.name} /></h3>
-        {dish.description && <p className="dish__description tile__description"><Highlighted text={dish.description} /></p>}
-        <p className="muted tile__variants">{variants.map((v) => v.name).join(' · ')}</p>
+        <ClampedText as="h3" lines={2} id={`${id}-name`} text={dish.name}><Highlighted text={dish.name} /></ClampedText>
+        {dish.description && (
+          <ClampedText lines={2} className="dish__description tile__description" text={dish.description}>
+            <Highlighted text={dish.description} />
+          </ClampedText>
+        )}
+        <ClampedText lines={1} className="muted tile__variants" text={variants.map((v) => v.name).join(' · ')}>
+          {variants.map((v) => v.name).join(' · ')}
+        </ClampedText>
       </div>
       {open && (
         <Modal title={dish.name} onClose={() => { setZoom(false); setOpen(false) }} wide closeButton>

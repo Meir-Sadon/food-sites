@@ -19,14 +19,6 @@
     justify-content: start;
     gap: 1.5rem 1rem;
   }
-  /* Wider tiles need fewer lines for the same text. */
-  [data-layout='tiles'] .tile__body {
-    block-size: 7.25rem;
-  }
-
-  [data-layout='tiles'] .tile__description {
-    -webkit-line-clamp: 2;
-  }
 }
 
 /* A tile has no frame: the picture is the card and the text sits under it. */
@@ -46,6 +38,10 @@
 }
 
 .tile__media {
+  /* The controls on the picture adapt to the picture's own width (see the container rules below). */
+  container-type: inline-size;
+  /* The size of the round buttons on the picture; smaller pictures set smaller ones (see the container rules below). */
+  --tile-btn: 2.75rem;
   position: relative;
   /* The picture spans the whole tile and is the same height on every tile. */
   aspect-ratio: 1;
@@ -84,21 +80,26 @@
 
 /* The round add button (a count once the dish is in the order) floats on the picture's end corner. */
 .tile__add,
-.tile__count {
-  position: absolute;
-  inset-block-end: 0.5rem;
-  inset-inline-end: 0.5rem;
+.tile__count,
+.tile__plus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
+  inline-size: var(--tile-btn);
+  block-size: var(--tile-btn);
   min-block-size: 0;
   margin: 0;
   padding: 0;
   border: 0;
   border-radius: 50%;
   box-shadow: var(--shadow-md);
+}
+
+.tile__add,
+.tile__count {
+  position: absolute;
+  inset-block-end: 0.5rem;
+  inset-inline-end: 0.5rem;
 }
 
 .tile__add {
@@ -109,6 +110,19 @@
 .tile__add:hover {
   background: var(--btn-bg-hover, var(--color-accent));
   color: var(--btn-text, var(--color-surface));
+}
+
+.tile__plus {
+  background: var(--btn-bg, var(--color-accent));
+  color: var(--btn-text, var(--color-accent-contrast));
+}
+
+.tile__plus:hover:not(:disabled) {
+  background: var(--btn-bg-hover, var(--color-accent-hover, var(--color-accent)));
+}
+
+.tile__plus:disabled {
+  opacity: 0.4;
 }
 
 .tile__count {
@@ -122,11 +136,42 @@
   flex-direction: column;
   gap: 0.25rem;
   min-inline-size: 0;
-  /* Every tile's text block has the same height, whatever the name, description or badge: long text is clamped. */
-  block-size: 9rem;
+  /* Every tile is the same height: two lines of name, two of description and the price. Text that does not fit is cut
+     and shown whole in a tooltip (ClampedText), so nothing here ever changes the tile's size. */
+  flex: none;
+  block-size: 7.75rem;
   overflow: hidden;
+  overflow-wrap: anywhere;
   /* Air around the text only when the admin gave the dishes a background (palettes.ts sets --dish-pad). */
   padding: 0 var(--dish-pad, 0) var(--dish-pad, 0);
+}
+
+/* Text cut to --lines lines; the full text is in a tooltip when it is cut. */
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--lines, 2);
+  line-clamp: var(--lines, 2);
+  overflow: hidden;
+}
+
+.clamp[data-cut] {
+  cursor: help;
+}
+
+.clamp-tip {
+  position: fixed;
+  z-index: 1000;
+  padding: 0.5rem 0.625rem;
+  border-radius: calc(0.5rem * var(--corner-scale, 1));
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  pointer-events: none;
 }
 
 .tile__body h3,
@@ -136,26 +181,21 @@
 
 .tile__body .dish__price {
   margin-block-start: auto;
+  line-height: 1.4;
+  white-space: nowrap;
   /* The price is plain text here: the name is the boldest line. */
   font-weight: 400;
 }
 
 .tile__body h3 {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
   font-size: 1.0625rem;
   line-height: 1.25;
 }
 
 .tile__description {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
   color: var(--color-muted);
   font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 /* On sale / new / almost out sit side by side on the picture's top corner. */
@@ -182,29 +222,60 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* The amount stepper floats over the picture's bottom corner once the dish is in the order. */
+/* The amount control sits in the picture's bottom end corner where the add button was: the plus stays put and the minus
+   and the number slide open on its start side (TileAmount). */
 .tile__stepper {
   position: absolute;
   inset-block-end: 0.5rem;
   inset-inline-end: 0.5rem;
-  display: inline-flex;
-  padding: 0.125rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-md);
-}
-
-.tile__stepper .amount {
-  gap: 0.25rem;
+  display: flex;
   align-items: center;
 }
 
-/* Round buttons that fit inside the pill (the shared button size would push them out of it). */
-.tile__stepper .button-icon {
+.tile__extra {
+  display: grid;
+  grid-template-columns: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-columns 0.2s ease,
+    opacity 0.2s ease,
+    visibility 0.2s;
+}
+
+.tile__stepper[data-open] .tile__extra {
+  grid-template-columns: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+
+.tile__extra-inner {
+  min-inline-size: 0;
+  overflow: hidden;
+}
+
+.tile__pill {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  /* Space between the pill and the plus. */
+  margin-inline-end: 0.25rem;
+  padding-inline: 0.125rem;
+  block-size: var(--tile-btn);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.tile__minus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: calc(var(--tile-btn) - 0.5rem);
+  block-size: calc(var(--tile-btn) - 0.5rem);
   min-block-size: 0;
   min-inline-size: 0;
-  inline-size: 2.25rem;
-  block-size: 2.25rem;
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -213,20 +284,17 @@
   line-height: 1;
 }
 
-.tile__stepper .button-icon:hover:not(:disabled) {
-  background: var(--btn-bg-hover, var(--color-accent-hover, var(--color-accent)));
-  color: var(--btn-text, var(--color-accent-contrast));
-}
-
-.tile__stepper .button-icon:disabled {
-  opacity: 0.4;
-  background: var(--btn-bg, var(--color-accent));
-}
-
-.tile__stepper .amount__value {
-  min-inline-size: 1.75rem;
+.tile__qty {
+  min-inline-size: 1.5rem;
   text-align: center;
   font-weight: 700;
+  color: var(--color-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile__extra {
+    transition: none;
+  }
 }
 
 /* A small "!" on the picture's top end corner; it shows the dish's allergens when pressed. */
@@ -268,6 +336,57 @@
   color: var(--color-text);
   font-size: 0.8125rem;
   box-shadow: var(--shadow-md);
+}
+
+/* A small picture (the small and very small sizes): smaller buttons, so nothing runs out of the picture or onto another
+   mark. The variable is set on the buttons, since a container's own style is not changed by its container query. */
+@container (max-width: 9rem) {
+  .tile__add,
+  .tile__count,
+  .tile__stepper {
+    --tile-btn: 2.25rem;
+    inset-block-end: 0.375rem;
+    inset-inline-end: 0.375rem;
+  }
+
+  .tile__qty {
+    min-inline-size: 1.125rem;
+  }
+
+  .tile__marks {
+    inset-inline: 0.375rem 2.25rem;
+    inset-block-start: 0.375rem;
+  }
+
+  .tile__badge {
+    max-inline-size: calc(100% - 3rem);
+  }
+}
+
+@container (max-width: 6rem) {
+  .tile__add,
+  .tile__count,
+  .tile__stepper {
+    --tile-btn: 1.625rem;
+    inset-block-end: 0.25rem;
+    inset-inline-end: 0.25rem;
+  }
+
+  .tile__pill {
+    margin-inline-end: 0.125rem;
+    padding-inline: 0.0625rem;
+    gap: 0;
+  }
+
+  .tile__minus {
+    inline-size: calc(var(--tile-btn) - 0.375rem);
+    block-size: calc(var(--tile-btn) - 0.375rem);
+  }
+
+  .tile__qty {
+    min-inline-size: 0.875rem;
+    font-size: 0.8125rem;
+  }
 }
 
 /* The dialog: the whole picture at a fixed size beside the dish's details, then the choices underneath. */
@@ -452,11 +571,8 @@
 }
 
 .tile__variants {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
   font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 /* ---------- Minimal categories (Settings → tileGroups = minimal; tiles and rectangles alike) ----------
