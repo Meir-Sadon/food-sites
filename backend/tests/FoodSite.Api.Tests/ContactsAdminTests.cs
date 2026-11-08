@@ -72,6 +72,23 @@ public sealed class ContactsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task Notify_phone_keeps_a_valid_pushover_key_and_sound()
+    {
+        var key = "uQiRzpo4DXghDmr9QzzfQu27cmVRsG";
+        var added = await (await _admin.PostAsJsonAsync("/api/admin/notify-phones",
+            new { phone = "0501234567", pushoverKey = " " + key + " ", pushoverSound = "siren" })).Read<NotifyPhoneDto>();
+        Assert.Equal((key, "siren"), (added.PushoverKey, added.PushoverSound));
+
+        var list = await (await _admin.GetAsync("/api/admin/notify-phones")).Read<List<NotifyPhoneDto>>();
+        Assert.Equal(key, Assert.Single(list).PushoverKey);
+
+        await (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0502222222", pushoverKey = "short" }))
+            .AssertInvalid("PushoverKey", "pushoverKey");
+        await (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0502222222", pushoverKey = key, pushoverSound = "nope" }))
+            .AssertInvalid("PushoverSound", "invalid");
+    }
+
+    [Fact]
     public async Task Notify_phone_can_be_removed()
     {
         var added = await (await AddPhone("0501234567")).Read<NotifyPhoneDto>();

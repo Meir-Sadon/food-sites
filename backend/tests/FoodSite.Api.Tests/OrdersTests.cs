@@ -353,6 +353,38 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
                 m => m.StartsWith(ApiFactory.SiteName + "\n") && m.Contains($"הזמנה חדשה #{confirmation.Id}") && m.Contains("₪311"));
     }
 
+    private const string PushKeyA = "uQiRzpo4DXghDmr9QzzfQu27cmVRsG";
+    private const string PushKeyB = "gznej3rKEVAvPUhteTCB6mxWa8DWI4";
+
+    [Fact]
+    public async Task Every_admin_phone_with_a_pushover_key_gets_an_emergency_alert_with_its_sound()
+    {
+        (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0521111111", pushoverKey = PushKeyA, pushoverSound = "alien" })).EnsureSuccessStatusCode();
+        (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0522222222" })).EnsureSuccessStatusCode();
+
+        var confirmation = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+
+        var alert = Assert.Single(_factory.Push.Sent);
+        Assert.Equal((PushKeyA, "alien"), (alert.UserKey, alert.Sound));
+        Assert.Contains($"#{confirmation.Id}", alert.Message);
+        Assert.Contains(ApiFactory.SiteName, alert.Title);
+        Assert.EndsWith($"/admin/orders/{confirmation.Id}", alert.Url);
+    }
+
+    [Fact]
+    public async Task Order_is_saved_and_the_other_alerts_still_go_when_one_pushover_alert_fails()
+    {
+        (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0521111111", pushoverKey = PushKeyA })).EnsureSuccessStatusCode();
+        (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0522222222", pushoverKey = PushKeyB })).EnsureSuccessStatusCode();
+        _factory.Push.FailFor.Add(PushKeyA);
+
+        Assert.Equal(HttpStatusCode.OK, (await Place(await ValidOrder())).StatusCode);
+
+        Assert.Equal(PushKeyB, Assert.Single(_factory.Push.Sent).UserKey);
+        await using var db = _factory.CreateDbContext();
+        Assert.Equal(1, await db.Orders.CountAsync());
+    }
+
     [Fact]
     public async Task Order_is_saved_even_when_whatsapp_fails()
     {

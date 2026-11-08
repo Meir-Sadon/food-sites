@@ -7,6 +7,7 @@ using FoodSite.Api.Messaging;
 using FoodSite.Api.Marketing;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Phones;
+using FoodSite.Api.Push;
 using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -25,6 +26,7 @@ public class OrdersController(
     ISmsSender sms,
     IOptions<SmsOptions> smsOptions,
     OwnerNotifier ownerMail,
+    PushNotifier pushNotifier,
     MarketingNotifier marketing,
     IOptions<SiteOptions> site,
     DeliveryQuoter deliveryQuoter,
@@ -314,8 +316,9 @@ public class OrdersController(
     {
         await ownerMail.NewOrderAsync(ownerEmail, order, hourFull, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}",
             await features.IsEnabledAsync(Features.PriceLists, ct));
-        var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
-        var messages = admins
+        var recipients = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).ToListAsync(CancellationToken.None);
+        await pushNotifier.NewOrderAsync(recipients, order, site.Value.Name, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}");
+        var messages = recipients.Select(p => p.Phone)
             .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name, hourFull)))
             .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone, site.Value.Name, serviceCities, hourFull)));
         foreach (var (phone, template, text) in messages)

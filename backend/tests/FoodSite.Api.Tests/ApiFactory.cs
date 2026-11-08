@@ -51,6 +51,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["Site:Features:favorites"] = "true",
             ["Site:Features:reviews"] = "true",
             ["Site:Features:priceLists"] = "true",
+            ["Pushover:AppToken"] = "test-app-token",
             // Changes are mailed (to the capturing mailer) as soon as the next poll sees them.
             ["Mail:ChangeQuietSeconds"] = "0",
             ["Mail:PollSeconds"] = "1",
@@ -64,6 +65,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     /// <summary>Records every WhatsApp message instead of sending it.</summary>
     public CapturingWhatsAppSender WhatsApp { get; } = new();
+
+    /// <summary>Records every phone alert instead of sending it to Pushover.</summary>
+    public CapturingPushSender Push { get; } = new();
 
     /// <summary>Records every SMS instead of sending it.</summary>
     public CapturingSmsSender Sms { get; } = new();
@@ -83,6 +87,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IImageStore>(Images);
             services.AddSingleton<IWhatsAppSender>(WhatsApp);
             services.AddSingleton<ISmsSender>(Sms);
+            services.AddSingleton<FoodSite.Api.Push.IPushSender>(Push);
             services.AddSingleton<IMailer>(Mail);
             services.AddSingleton<FoodSite.Api.Marketing.IMetaConversionsSender>(Meta);
             services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
