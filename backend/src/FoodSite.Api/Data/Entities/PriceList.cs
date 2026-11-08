@@ -34,7 +34,7 @@ public class PriceList
     /// <summary>Legacy: replaced by <see cref="StatusesMaxOrders"/> (0 = no orders yet); no longer read. Dropped in a later migration.</summary>
     public bool ForNoOrders { get; set; }
 
-    /// <summary>Clients with at most this many orders that were not cancelled (0 = none yet); null is off.</summary>
+    /// <summary>Clients with fewer than this many orders that were not cancelled (1 = none yet); null is off.</summary>
     public int? StatusesMaxOrders { get; set; }
 
     /// <summary>All the statuses that are on must hold (and); false means any one is enough (or).</summary>
