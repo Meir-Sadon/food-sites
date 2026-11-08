@@ -491,6 +491,7 @@ export const contactsApi = {
   notifyPhones: () => apiJson<NotifyPhone[]>('/api/admin/notify-phones'),
   addNotifyPhone: (phone: string, name: string, pushoverKey = '', pushoverSound = '') =>
     apiJson<NotifyPhone>('/api/admin/notify-phones', send('POST', { phone, name, pushoverKey, pushoverSound })),
+  testNotifyPhone: (id: number) => apiJson<void>(`/api/admin/notify-phones/${id}/test`, send('POST')),
   removeNotifyPhone: (id: number) => apiJson<void>(`/api/admin/notify-phones/${id}`, send('DELETE')),
 }
 

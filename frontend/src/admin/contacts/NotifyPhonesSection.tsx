@@ -17,6 +17,7 @@ export function NotifyPhonesSection() {
   const alerts = useFeature('phoneAlerts')
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   async function handleAdd(event: FormEvent) {
     event.preventDefault()
@@ -31,6 +32,17 @@ export function NotifyPhonesSection() {
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       if (!Object.keys(fieldErrorsOf(err)).length) setError(errorMessage(err))
+    }
+  }
+
+  async function handleTest(id: number) {
+    setError(null)
+    setNotice(null)
+    try {
+      await contactsApi.testNotifyPhone(id)
+      setNotice(t('admin.contacts.pushTestSent'))
+    } catch (err) {
+      setError(errorMessage(err))
     }
   }
 
@@ -60,6 +72,11 @@ export function NotifyPhonesSection() {
                     {p.name && ` · ${p.name}`}
                     {p.pushoverKey && ` · ${t('admin.contacts.alertOn')}`}
                   </span>
+                  {alerts && p.pushoverKey && (
+                    <button type="button" className="button--secondary" onClick={() => handleTest(p.id)}>
+                      {t('admin.contacts.pushTest')}
+                    </button>
+                  )}
                   <ConfirmRemove name={p.phone} onConfirm={() => handleRemove(p.id)} />
                 </li>
               ))}
@@ -114,6 +131,7 @@ export function NotifyPhonesSection() {
               {t('admin.add')}
             </button>
           </form>
+          {notice && <Status message={notice} />}
           {error && <Status message={error} error />}
         </div>
       )}
