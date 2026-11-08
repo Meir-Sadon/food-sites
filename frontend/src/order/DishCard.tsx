@@ -461,10 +461,11 @@ function TileAmount({ name, value, min, max, step, onChange }: { name: string; v
   const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
-    if (open) return
+    // The first render is closed so the pill slides open; once the amount is going to 0 it must stay closed.
+    if (open || leaving) return
     const timer = window.setTimeout(() => setOpen(true), 30)
     return () => window.clearTimeout(timer)
-  }, [open])
+  }, [open, leaving])
   useEffect(() => () => window.clearTimeout(closing.current), [])
 
   function down() {
