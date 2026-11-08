@@ -307,7 +307,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
             if (input.NewClientsUnit is null || !ItemBadges.Units.Contains(input.NewClientsUnit))
                 errors.Add(nameof(input.NewClientsUnit), "invalid");
         }
-        if (input.MaxOrders is { } maxOrders && (maxOrders < 0 || maxOrders > MaxDiscountOrders))
+        if (input.MaxOrders is { } maxOrders && (maxOrders < 1 || maxOrders > MaxDiscountOrders))
             errors.Add(nameof(input.MaxOrders), "invalid");
         if (input.OpenOrderAbove is { } above && (above < 0 || above >= MaxPrice))
             errors.Add(nameof(input.OpenOrderAbove), "invalid");

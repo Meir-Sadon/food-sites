@@ -51,7 +51,7 @@ public sealed class PriceListStatusTests(PostgresFixture postgres) : IAsyncLifet
     }
 
     private static StatusesDto Statuses(int? newDays = null, bool noOrders = false, bool midOrder = false, decimal? openAbove = null, int? maxOrders = null, bool matchAll = false) =>
-        new(newDays, newDays is null ? null : "day", noOrders ? 0 : maxOrders, midOrder, openAbove, matchAll);
+        new(newDays, newDays is null ? null : "day", noOrders ? 1 : maxOrders, midOrder, openAbove, matchAll);
 
     private async Task<HttpClient> LoggedIn()
     {
@@ -129,7 +129,7 @@ public sealed class PriceListStatusTests(PostgresFixture postgres) : IAsyncLifet
     [Fact]
     public async Task A_client_with_few_orders_gets_the_list_until_they_pass_the_limit_and_a_cancelled_order_does_not_count()
     {
-        await ListFor("ראשונה", 50, Statuses(maxOrders: 1));
+        await ListFor("ראשונה", 50, Statuses(maxOrders: 2));
         var client = await LoggedIn();
         Assert.Equal(50, await ChickenPrice(client));
         var first = await Order(client);
@@ -140,7 +140,7 @@ public sealed class PriceListStatusTests(PostgresFixture postgres) : IAsyncLifet
             new { status = "Cancelled", cancelReason = "test" })).StatusCode);
         Assert.Equal(50, await ChickenPrice(client));
         await (await _admin.PutAsJsonAsync($"{Lists}/{(await _admin.GetAsync(Lists).Read<List<PriceListDto>>()).Single(l => !l.IsDefault).Id}/statuses",
-            Statuses(maxOrders: -1), TestFiles.Json)).AssertInvalid("MaxOrders", "invalid");
+            Statuses(maxOrders: 0), TestFiles.Json)).AssertInvalid("MaxOrders", "invalid");
     }
 
     [Fact]

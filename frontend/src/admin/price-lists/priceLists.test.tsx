@@ -204,11 +204,11 @@ describe('price lists', () => {
     const user = userEvent.setup()
     renderAt('/admin/price-lists/2')
 
-    expect(await screen.findByLabelText('לקוחות שעוד לא הזמינו (הזמנה שבוטלה לא נחשבת) X הזמנות')).toBeInTheDocument()
-    expect(screen.queryByLabelText('מספר הזמנות X (0 = עוד לא הזמינו)')).not.toBeInTheDocument()
-    await user.click(screen.getByLabelText('לקוחות שעוד לא הזמינו (הזמנה שבוטלה לא נחשבת) X הזמנות'))
-    await user.clear(screen.getByLabelText('מספר הזמנות X (0 = עוד לא הזמינו)'))
-    await user.type(screen.getByLabelText('מספר הזמנות X (0 = עוד לא הזמינו)'), '2')
+    expect(await screen.findByLabelText('לקוחות עם פחות מ-X הזמנות (הזמנה שבוטלה לא נחשבת)')).toBeInTheDocument()
+    expect(screen.queryByLabelText('X: מספר הזמנות (1 = עוד לא הזמינו)')).not.toBeInTheDocument()
+    await user.click(screen.getByLabelText('לקוחות עם פחות מ-X הזמנות (הזמנה שבוטלה לא נחשבת)'))
+    await user.clear(screen.getByLabelText('X: מספר הזמנות (1 = עוד לא הזמינו)'))
+    await user.type(screen.getByLabelText('X: מספר הזמנות (1 = עוד לא הזמינו)'), '2')
     await user.click(screen.getByLabelText('לקוחות באמצע הזמנה: יש להם מנות בעגלה'))
     await user.selectOptions(screen.getByLabelText('כשסימנתי כמה מצבים'), 'וגם: כל המצבים יחד')
     await user.click(screen.getByLabelText('ההנחה הכללית רק להזמנה הקרובה של כל לקוח'))
@@ -403,7 +403,7 @@ describe('price lists', () => {
   it('shows on the lists page which lists are by status', async () => {
     fakeApi({
       ...withLists,
-      'GET /api/admin/price-lists': () => [defaultList, { ...vip, statuses: { ...noStatuses, maxOrders: 0 } }],
+      'GET /api/admin/price-lists': () => [defaultList, { ...vip, statuses: { ...noStatuses, maxOrders: 1 } }],
     })
     renderAt('/admin/price-lists')
     expect(await screen.findByText('טלפונים', { exact: false })).toHaveTextContent('לפי מצב')
