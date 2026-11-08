@@ -97,6 +97,13 @@ else if (mailOptions?.IsConfigured == true)
 else
     builder.Services.AddSingleton<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.NoopMailer>();
 builder.Services.AddScoped<FoodSite.Api.Mail.OwnerNotifier>();
+// Phone alerts for new orders go out through Pushover once Pushover__AppToken is set; without it nothing is sent.
+builder.Services.Configure<FoodSite.Api.Push.PushoverOptions>(config.GetSection(FoodSite.Api.Push.PushoverOptions.Section));
+if (config.GetSection(FoodSite.Api.Push.PushoverOptions.Section).Get<FoodSite.Api.Push.PushoverOptions>()?.IsConfigured == true)
+    builder.Services.AddHttpClient<FoodSite.Api.Push.IPushSender, FoodSite.Api.Push.PushoverSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
+else
+    builder.Services.AddSingleton<FoodSite.Api.Push.IPushSender, FoodSite.Api.Push.NoopPushSender>();
+builder.Services.AddScoped<FoodSite.Api.Push.PushNotifier>();
 builder.Services.AddHttpClient<FoodSite.Api.Marketing.IMetaConversionsSender, FoodSite.Api.Marketing.MetaConversionsSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
 builder.Services.AddScoped<FoodSite.Api.Marketing.MarketingNotifier>();
 builder.Services.AddSingleton<FoodSite.Api.Mail.ChangeDigest>();

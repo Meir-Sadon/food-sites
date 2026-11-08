@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { Contact, NotifyPhone } from '../../api/site'
 import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
+import { site } from '../../test/catalogData'
 import { renderAt } from '../../test/render'
 import { openSection } from '../../test/sections'
 
@@ -81,11 +82,40 @@ describe('Admin Contacts', () => {
     await user.type(within(list).getByLabelText('שם (לא חובה)'), 'יעל')
     await user.click(within(list).getByRole('button', { name: 'הוספה' }))
     expect(await within(list).findByText('0522222222')).toBeInTheDocument()
-    expect(api.sent('POST', '/api/admin/notify-phones')[0].body).toEqual({ phone: '052-222-2222', name: 'יעל' })
+    expect(api.sent('POST', '/api/admin/notify-phones')[0].body).toEqual({ phone: '052-222-2222', name: 'יעל', pushoverKey: '', pushoverSound: '' })
 
     await user.click(within(list).getAllByRole('button', { name: 'הסרה' })[0])
     await user.click(within(list).getByRole('button', { name: 'כן, להסיר' }))
     await waitFor(() => expect(within(list).queryByText('0521111111')).not.toBeInTheDocument())
+  })
+
+  it('lets the admin add a Pushover key and sound when phone alerts are on', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/site': () => site({ features: ['phoneAlerts'] }),
+      'POST /api/admin/notify-phones': (_, body) => ({ id: 2, phone: '0522222222', name: null, ...(body as object) }),
+    })
+    renderAt('/admin/contacts')
+    const user = userEvent.setup()
+    const list = await section("מספרים להתראות ולצ'אט בוואטסאפ")
+
+    await user.type(within(list).getByLabelText('טלפון'), '0522222222')
+    await user.type(await within(list).findByLabelText('מפתח Pushover (לא חובה)'), 'uQiRzpo4DXghDmr9QzzfQu27cmVRsG')
+    await user.selectOptions(within(list).getByLabelText('צליל ההתראה'), 'alien')
+    await user.click(within(list).getByRole('button', { name: 'הוספה' }))
+
+    expect(await within(list).findByText(/התראה בטלפון/)).toBeInTheDocument()
+    expect(api.sent('POST', '/api/admin/notify-phones')[0].body).toMatchObject({
+      pushoverKey: 'uQiRzpo4DXghDmr9QzzfQu27cmVRsG',
+      pushoverSound: 'alien',
+    })
+  })
+
+  it('hides the Pushover fields when phone alerts are off', async () => {
+    fakeApi({ ...base, 'GET /api/site': () => site({ features: [] }) })
+    renderAt('/admin/contacts')
+    const list = await section("מספרים להתראות ולצ'אט בוואטסאפ")
+    expect(within(list).queryByLabelText('מפתח Pushover (לא חובה)')).not.toBeInTheDocument()
   })
 
   it('shows a duplicate phone error', async () => {

@@ -1,6 +1,7 @@
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Phones;
+using FoodSite.Api.Push;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static FoodSite.Api.Controllers.Admin.Ordering;
@@ -9,7 +10,7 @@ namespace FoodSite.Api.Controllers.Admin;
 
 /// <summary>The main contact shown on the site, and the phones that get a WhatsApp for every new order.</summary>
 [Route("api/admin")]
-public class ContactsController(AppDbContext db) : AdminControllerBase
+public partial class ContactsController(AppDbContext db) : AdminControllerBase
 {
     public const int NameMaxLength = 100;
     public const int AddressMaxLength = 300;
@@ -18,9 +19,9 @@ public class ContactsController(AppDbContext db) : AdminControllerBase
 
     public record ContactDto(string? Name, string? Phone, string? Address, string? Email, string? OpeningHours);
 
-    public record NotifyPhoneDto(int Id, string Phone, string? Name);
+    public record NotifyPhoneDto(int Id, string Phone, string? Name, string? PushoverKey = null, string? PushoverSound = null);
 
-    public record NotifyPhoneInput(string? Phone, string? Name);
+    public record NotifyPhoneInput(string? Phone, string? Name, string? PushoverKey = null, string? PushoverSound = null);
 
     [HttpGet("contact")]
     public async Task<ContactDto> GetContact() => ToDto(await db.Settings.AsNoTracking().SingleAsync());
@@ -55,7 +56,7 @@ public class ContactsController(AppDbContext db) : AdminControllerBase
     [HttpGet("notify-phones")]
     public async Task<IEnumerable<NotifyPhoneDto>> GetNotifyPhones() =>
         await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id)
-            .Select(p => new NotifyPhoneDto(p.Id, p.Phone, p.Name)).ToListAsync();
+            .Select(p => new NotifyPhoneDto(p.Id, p.Phone, p.Name, p.PushoverKey, p.PushoverSound)).ToListAsync();
 
     [HttpPost("notify-phones")]
     public async Task<ActionResult<NotifyPhoneDto>> AddNotifyPhone(NotifyPhoneInput input)
@@ -67,15 +68,21 @@ public class ContactsController(AppDbContext db) : AdminControllerBase
             errors.Add(nameof(input.Phone), "required");
         else if (phone is null)
             errors.Add(nameof(input.Phone), "phone");
+        var key = Clean(input.PushoverKey);
+        if (key is not null && !PushoverKeyPattern().IsMatch(key))
+            errors.Add(nameof(input.PushoverKey), "pushoverKey");
+        var sound = Clean(input.PushoverSound);
+        if (sound is not null && !PushoverSounds.IsKnown(sound))
+            errors.Add(nameof(input.PushoverSound), "invalid");
         if (errors.Any)
             return Invalid(errors);
         if (await db.NotifyPhones.AnyAsync(p => p.Phone == phone))
             return Invalid(nameof(input.Phone), "duplicate");
 
-        var entity = new NotifyPhone { Phone = phone!, Name = Clean(input.Name) };
+        var entity = new NotifyPhone { Phone = phone!, Name = Clean(input.Name), PushoverKey = key, PushoverSound = key is null ? null : sound };
         db.NotifyPhones.Add(entity);
         await db.SaveChangesAsync();
-        return new NotifyPhoneDto(entity.Id, entity.Phone, entity.Name);
+        return new NotifyPhoneDto(entity.Id, entity.Phone, entity.Name, entity.PushoverKey, entity.PushoverSound);
     }
 
     [HttpDelete("notify-phones/{id:int}")]
@@ -89,6 +96,10 @@ public class ContactsController(AppDbContext db) : AdminControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    /// <summary>A Pushover user key: 30 letters and digits.</summary>
+    [System.Text.RegularExpressions.GeneratedRegex("^[A-Za-z0-9]{30}$")]
+    private static partial System.Text.RegularExpressions.Regex PushoverKeyPattern();
 
     internal static bool LooksLikeEmail(string value)
     {

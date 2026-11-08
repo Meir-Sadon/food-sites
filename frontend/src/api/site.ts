@@ -12,7 +12,7 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists'
+export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
 export type SiteStyle = 'classic' | 'street' | 'tiles' | 'rect'
@@ -489,8 +489,8 @@ export const contactsApi = {
   get: () => apiJson<Contact>('/api/admin/contact'),
   save: (contact: Contact) => apiJson<Contact>('/api/admin/contact', send('PUT', contact)),
   notifyPhones: () => apiJson<NotifyPhone[]>('/api/admin/notify-phones'),
-  addNotifyPhone: (phone: string, name: string) =>
-    apiJson<NotifyPhone>('/api/admin/notify-phones', send('POST', { phone, name })),
+  addNotifyPhone: (phone: string, name: string, pushoverKey = '', pushoverSound = '') =>
+    apiJson<NotifyPhone>('/api/admin/notify-phones', send('POST', { phone, name, pushoverKey, pushoverSound })),
   removeNotifyPhone: (id: number) => apiJson<void>(`/api/admin/notify-phones/${id}`, send('DELETE')),
 }
 
@@ -498,7 +498,13 @@ export interface NotifyPhone {
   id: number
   phone: string
   name: string | null
+  /** Pushover user key: the phone also gets a loud alert that repeats until acknowledged. */
+  pushoverKey?: string | null
+  pushoverSound?: string | null
 }
+
+/** The Pushover sounds the admin can pick for the new-order alert (the first is the default). */
+export const pushoverSounds = ['siren', 'alien', 'persistent', 'echo', 'updown', 'climb', 'bugle', 'cosmic', 'falling', 'pushover'] as const
 
 /** Who answers accessibility requests, and the limits the business knows of (the accessibility statement). */
 export interface AccessibilityInfo {

@@ -793,6 +793,12 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PushoverKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PushoverSound")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Phone")

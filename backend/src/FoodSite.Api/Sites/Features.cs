@@ -32,7 +32,13 @@ public static class Features
     /// </summary>
     public const string PriceLists = "priceLists";
 
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists];
+    /// <summary>
+    /// Phone alerts for new orders (Pushover, which passes silent mode and repeats until acknowledged): the Pushover
+    /// key and sound fields next to each notify phone in the admin. Needs <c>Pushover__AppToken</c> on the server.
+    /// </summary>
+    public const string PhoneAlerts = "phoneAlerts";
+
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists, PhoneAlerts];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }
