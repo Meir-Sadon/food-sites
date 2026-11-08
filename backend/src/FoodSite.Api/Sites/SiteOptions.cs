@@ -16,6 +16,13 @@ public partial class SiteOptions
     /// <summary>The business's display name (<c>app.name</c> in the site's <c>i18n/he.json</c>), shown in WhatsApp messages.</summary>
     public string? Name { get; set; }
 
+    /// <summary>
+    /// The site's public address, e.g. <c>https://kuskus.co.il</c> (<c>Site__PublicUrl</c>). Search engines are given
+    /// it as the canonical address and in the sitemap, so a custom domain wins over the <c>onrender.com</c> one.
+    /// Empty: the address the request came to.
+    /// </summary>
+    public string? PublicUrl { get; set; }
+
     public string TimeZone { get; set; } = "Asia/Jerusalem";
 
     /// <summary>The site folder (absolute once loaded). Seed files are resolved against it.</summary>
