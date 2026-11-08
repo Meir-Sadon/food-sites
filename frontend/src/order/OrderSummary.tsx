@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MenuDish } from '../api/site'
 import { DeliveryFeeNote } from './DeliveryFeeNote'
-import { amountText, formatMoney } from './format'
+import { DeliveryFeePrice, DiscountedPrice } from './DiscountedPrice'
+import { amountText, lineBeforeDiscount } from './format'
 import { lineTotal, summaryLines, type Selection, type SummaryLine } from './model'
 
 /** What the client adjusted or wrote on one dish, a unit per line. */
@@ -55,7 +56,11 @@ export function OrderSummary({
               <div className="order-summary__main">
                 <span className="order-summary__name">{line.dish.name}</span>
                 <span className="order-summary__amount numeric">×{amountText(line.dish, line.selection.quantity, t)}</span>
-                <span className="order-summary__price numeric">{formatMoney(lineTotal(line.dish, line.selection.optionId, line.selection.quantity))}</span>
+                <span className="order-summary__price numeric"><DiscountedPrice
+                    before={lineBeforeDiscount(line.dish, line.selection.optionId, line.selection.quantity)}
+                    price={lineTotal(line.dish, line.selection.optionId, line.selection.quantity)}
+                  />
+                </span>
                 {hasDetails && (
                   <button
                     type="button"
@@ -82,7 +87,7 @@ export function OrderSummary({
                 {delivery.zoneName ? ` (${delivery.zoneName})` : ''}
                 <DeliveryFeeNote discount={delivery.discount} free={delivery.fee <= 0} />
               </span>
-              <span className="order-summary__price numeric">{delivery.pending ? '—' : delivery.fee <= 0 && delivery.discount ? t('order.deliveryDiscount.freePrice') : formatMoney(delivery.fee)}</span>
+              <span className="order-summary__price numeric">{delivery.pending ? '—' : <DeliveryFeePrice fee={delivery.fee} discount={delivery.discount} />}</span>
             </div>
           </li>
         )}

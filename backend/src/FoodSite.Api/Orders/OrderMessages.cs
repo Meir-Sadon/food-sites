@@ -73,6 +73,13 @@ public static class OrderMessages
         return string.Join('\n', lines);
     }
 
+    /// <summary>The name shown for the regular prices (the default price list) once a site uses price lists.</summary>
+    public const string DefaultPriceListName = "מחירון ברירת מחדל";
+
+    /// <summary>What a line cost less than its regular price in all its units; zero when no discount applied.</summary>
+    public static decimal ListSaving(OrderItem item) =>
+        item.RegularUnitPrice is { } regular && regular > item.UnitPrice ? decimal.Round((regular - item.UnitPrice) * item.Quantity, 2) : 0m;
+
     /// <summary>The delivery fee, with why it is not the regular one when a discount applied.</summary>
     public static string FeeText(Order order) =>
         order.DeliveryDiscount <= 0m

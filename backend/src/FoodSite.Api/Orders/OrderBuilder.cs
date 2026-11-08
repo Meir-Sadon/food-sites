@@ -215,6 +215,7 @@ public static class OrderBuilder
         UnitPrice = source.UnitPrice,
         LineTotal = decimal.Round(source.UnitPrice * quantity, 2),
         PriceListName = source.PriceListName,
+        RegularUnitPrice = source.RegularUnitPrice,
     };
 
     /// <summary>
@@ -249,8 +250,11 @@ public static class OrderBuilder
             if (child is null)
                 continue;
             child.DishName = DishRules.AddOnName(link, addOnDish);
-            if (link.Price is not null)
+            if (link.Price is { } linkPrice)
+            {
                 child.PriceListName = prices.ListNameForSub(link.ParentDishId, PriceBook.AddOnKey(link));
+                child.RegularUnitPrice = Above(linkPrice, child.UnitPrice);
+            }
 
             // Above the add-on's own limit.
             var over = 0m;
@@ -297,10 +301,10 @@ public static class OrderBuilder
                 children.Add(Part(child, within - groupOver, child.UnitPrice, ""));
             if (groupOver > 0)
                 children.Add(Part(child, groupOver, prices.GroupOverLimitPrice(link.Group!)!.Value, OverLimitSuffix,
-                    prices.ListNameForSub(link.Group!.DishId, PriceBook.GroupOverLimitKey(link.Group!))));
+                    prices.ListNameForSub(link.Group!.DishId, PriceBook.GroupOverLimitKey(link.Group!)), link.Group!.OverLimitPrice));
             if (over > 0)
                 children.Add(Part(child, over, prices.AddOnOverLimitPrice(link)!.Value, OverLimitSuffix,
-                    prices.ListNameForSub(link.ParentDishId, PriceBook.AddOnOverLimitKey(link))));
+                    prices.ListNameForSub(link.ParentDishId, PriceBook.AddOnOverLimitKey(link)), link.OverLimitPrice));
         }
         return children;
     }
@@ -309,7 +313,8 @@ public static class OrderBuilder
     public const string OverLimitSuffix = " (מעבר למכסה)";
 
     /// <summary>A part of an add-on line at another amount and price (the units above a limit).</summary>
-    private static OrderItem Part(OrderItem source, decimal quantity, decimal unitPrice, string nameSuffix, string? overLimitListName = null) => new()
+    private static OrderItem Part(
+        OrderItem source, decimal quantity, decimal unitPrice, string nameSuffix, string? overLimitListName = null, decimal? regularPrice = null) => new()
     {
         Dish = source.Dish,
         DishId = source.DishId,
@@ -320,7 +325,11 @@ public static class OrderBuilder
         LineTotal = decimal.Round(unitPrice * quantity, 2),
         // Units above a limit cost the over-limit price, which a list may change too.
         PriceListName = nameSuffix == "" ? source.PriceListName : overLimitListName,
+        RegularUnitPrice = nameSuffix == "" ? source.RegularUnitPrice : Above(regularPrice, unitPrice),
     };
+
+    /// <summary>The price before a discount, when it is above what the line costs; null otherwise.</summary>
+    private static decimal? Above(decimal? before, decimal unitPrice) => before is { } b && b > unitPrice ? b : null;
 
     public static decimal Total(IEnumerable<OrderItem> items) => items.Sum(i => i.LineTotal);
 
@@ -352,6 +361,7 @@ public static class OrderBuilder
                 UnitPrice = price ?? unitPrice,
                 LineTotal = decimal.Round((price ?? unitPrice) * quantity, 2),
                 PriceListName = price is null ? prices.ListNameFor(pricing, null) : null,
+                RegularUnitPrice = price is null ? Above(prices.PriceBeforeDiscount(pricing) ?? pricing.UnitPrice, unitPrice) : null,
             };
         }
 
@@ -381,6 +391,15 @@ public static class OrderBuilder
             UnitPrice = price ?? prices.OptionPrice(pricing, option),
             LineTotal = decimal.Round((price ?? prices.OptionPrice(pricing, option)) * quantity, 2),
             PriceListName = price is null ? prices.ListNameFor(pricing, option) : null,
+            RegularUnitPrice = price is null ? RegularOption(pricing, option, prices) : null,
         };
+    }
+
+    /// <summary>What an option cost before a discount: the admin's price before a discount or the regular price, when above its price now.</summary>
+    private static decimal? RegularOption(Dish pricing, DishOption option, PriceBook prices)
+    {
+        var now = prices.OptionPrice(pricing, option);
+        var isMain = PriceBook.DefaultOption(pricing)?.Id == option.Id;
+        return Above(isMain ? prices.PriceBeforeDiscount(pricing) : null, now) ?? Above(option.Price, now);
     }
 }

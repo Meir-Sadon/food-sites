@@ -943,6 +943,9 @@
       "notSaved": "מנה חדשה, עוד לא נשמרה במחירון",
       "saveDishes": "שמירת המחירים",
       "orderLine": "מחירון: {{name}}",
+      "orderLineBase": "מחירון: {{name}}",
+      "orderDiscount": "הנחה על הפריט: מחיר רגיל {{regular}}, אחרי הנחה {{price}} ליחידה (חיסכון {{saved}})",
+      "orderTotalDiscount": "סה״כ הנחות במחירון",
       "subPrices": "תתי מחירים ({{count}})",
       "subPricesHint": "תאריכי המנה חלים גם על תתי המחירים שלה.",
       "subKinds": {
@@ -1435,7 +1438,13 @@
       "weekOf": "שבוע שמתחיל ב־{{date}}",
       "weekTotal": "{{orders}} הזמנות · {{sales}}",
       "byDish": "לפי מנה",
-      "sales": "מכירות"
+      "sales": "מכירות",
+      "regularSales": "במחיר רגיל",
+      "priceList": "מחירון",
+      "discountTotals": "הנחות במחירונים: {{discount}} · הנחות על דמי משלוח: {{delivery}}",
+      "byList": "לפי מחירון",
+      "listHint": "מה נמכר בכל מחירון, בכמה נמכר ובכמה היה נמכר במחירים הרגילים. מחירון שאינו מחירון ברירת המחדל מודגש.",
+      "discount": "הנחה"
     },
     "usage": {
       "title": "שימוש באתר",
@@ -1951,6 +1960,7 @@
     "deliveryArea": "אזור המשלוחים",
     "deliveryFee": "דמי משלוח",
     "includesDelivery": "כולל משלוח {{amount}}",
+    "youSaved": "חסכתם {{amount}} בהזמנה הזו",
     "deliveryDiscount": {
       "free": "(הנחת משלוח בהזמנה גדולה)",
       "partial": "(כולל הנחת משלוח של {{amount}} בהזמנה גדולה)",

@@ -5,6 +5,7 @@ import type { Profile, RememberInput } from '../api/account'
 import type { Confirmation } from '../api/site'
 import { RememberDetails } from './RememberDetails'
 import { Modal } from '../components/Modal'
+import { DeliveryFeePrice, DiscountedPrice, orderSaving } from './DiscountedPrice'
 import { DeliveryFeeNote } from './DeliveryFeeNote'
 import { formatMoney, formatSupplyDate, formatTime } from './format'
 
@@ -39,7 +40,9 @@ export function SuccessDialog({ confirmation, contactPhone, remember, onRemember
               {number.format(item.quantity)} × {item.dishName}
               {item.optionLabel ? ` (${item.optionLabel})` : ''}
             </span>
-            <span className="numeric">{formatMoney(item.lineTotal)}</span>
+            <span className="numeric">
+              <DiscountedPrice before={item.regularUnitPrice ? item.regularUnitPrice * item.quantity : null} price={item.lineTotal} />
+            </span>
           </li>
         ))}
       </ul>
@@ -63,9 +66,14 @@ export function SuccessDialog({ confirmation, contactPhone, remember, onRemember
       {(!!confirmation.deliveryFee || !!confirmation.deliveryDiscount) && (
         <p className="summary__total">
           {t('order.deliveryFee')}:{' '}
-          <strong className="numeric">{confirmation.deliveryFee ? formatMoney(confirmation.deliveryFee) : t('order.deliveryDiscount.freePrice')}</strong>
+          <strong className="numeric">
+            <DeliveryFeePrice fee={confirmation.deliveryFee ?? 0} discount={confirmation.deliveryDiscount} />
+          </strong>
           <DeliveryFeeNote discount={confirmation.deliveryDiscount} free={!confirmation.deliveryFee} />
         </p>
+      )}
+      {orderSaving(confirmation.items, confirmation.deliveryDiscount) > 0 && (
+        <p className="summary__total">{t('order.youSaved', { amount: formatMoney(orderSaving(confirmation.items, confirmation.deliveryDiscount)) })}</p>
       )}
       <p className="summary__total">
         {t('order.total')}: <strong className="numeric">{formatMoney(confirmation.total)}</strong>
