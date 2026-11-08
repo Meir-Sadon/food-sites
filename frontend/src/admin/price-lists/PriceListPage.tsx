@@ -168,7 +168,7 @@ const fieldsOf = (s: PriceListStatuses): StatusFields => ({
   newClientsAmount: String(s.newClientsAmount ?? 1),
   newClientsUnit: s.newClientsUnit ?? 'week',
   maxOrders: s.maxOrders !== null,
-  maxOrdersAmount: String(s.maxOrders ?? 0),
+  maxOrdersAmount: String(s.maxOrders ?? 1),
   midOrder: s.midOrder,
   openOrder: s.openOrderAbove !== null,
   openOrderAbove: s.openOrderAbove === null ? '' : String(s.openOrderAbove),
@@ -257,7 +257,7 @@ function StatusesForm({ list, onSaved }: { list: PriceList; onSaved: (list: Pric
       {fields.maxOrders && (
         <span className="field field--narrow">
           <label htmlFor="price-list-max-orders">{t('admin.priceLists.maxOrdersAmount')}</label>
-          <input id="price-list-max-orders" type="number" min={0} step={1} inputMode="numeric" value={fields.maxOrdersAmount}
+          <input id="price-list-max-orders" type="number" min={1} step={1} inputMode="numeric" value={fields.maxOrdersAmount}
             onChange={(e) => set({ maxOrdersAmount: e.target.value })} aria-describedby="price-list-max-orders-error" />
           <FieldError errors={errors} field="maxOrders" id="price-list-max-orders-error" />
         </span>

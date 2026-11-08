@@ -137,7 +137,7 @@ public sealed class PriceBook
         if (list.NewClientsAmount is { } amount)
             results.Add(client.RegisteredAt is { } registered && registered >= Since(now, amount, list.NewClientsUnit));
         if (list.StatusesMaxOrders is { } max)
-            results.Add(client.OrderCount <= max);
+            results.Add(client.OrderCount < max);
         if (list.ForMidOrder)
             results.Add(client.MidOrder);
         if (list.OpenOrderAbove is { } above)

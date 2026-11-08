@@ -34,7 +34,7 @@ export interface PriceListDiscount {
 export const noDiscount: PriceListDiscount = { percent: null, from: null, to: null, rule: 'dish' }
 
 /**
- * Registered within the period, at most `maxOrders` orders that were not cancelled (0 = none yet), dishes in the saved
+ * Registered within the period, fewer than `maxOrders` orders that were not cancelled (1 = none yet), dishes in the saved
  * cart, an open order above the amount. Any one is enough, or all of them that are on when `matchAll`.
  * `nextOrderOnly` gives the list's general discount once per client; a cancelled order gives it back.
  */
