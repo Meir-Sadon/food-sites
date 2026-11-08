@@ -118,3 +118,15 @@ Pick a long passphrase for the master password (four or five random words). The 
 1. Buy the domain from any registrar (for example `kuskus.co.il`).
 2. On Render, open the service, then **Settings → Custom Domains**, and add the domain.
 3. Render shows the DNS records to add at your registrar. HTTPS is set up automatically once they work.
+4. Set `Site__PublicUrl` on the service to the new address (e.g. `https://kuskus.co.il`), so search engines list that address and not the `onrender.com` one (it is the canonical address and the one in `sitemap.xml`).
+
+## Getting found on Google
+
+Each site serves `/robots.txt` and `/sitemap.xml` and tells Google the business's name, tagline, phone, address and delivery cities (see "Search engines and link previews" in `docs/ARCHITECTURE.md`). Google still has to learn the site exists:
+
+1. Open [Google Search Console](https://search.google.com/search-console), add the site's address as a property and verify it (a DNS record on your own domain; on `onrender.com`, the HTML-tag method).
+2. Under **Sitemaps**, submit `sitemap.xml`. Under **URL inspection**, enter the home page and choose **Request indexing**.
+3. Create a [Google Business Profile](https://business.google.com) for the business with the site as its website. For a local business this is what puts it on Google Maps and in "near me" searches.
+4. Link the site from the business's Facebook, Instagram and WhatsApp Business profile.
+
+Indexing a new site usually takes days to a few weeks.
