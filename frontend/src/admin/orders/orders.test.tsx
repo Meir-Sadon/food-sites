@@ -391,6 +391,17 @@ describe('Admin Reports', () => {
       expect(within(basket).getByText('מחירון: לקוחות קבועים')).toBeInTheDocument()
     })
 
+    it('shows the price list and the saving in the orders list too', async () => {
+      const listed = {
+        ...detailed,
+        items: detailed.items.map((i) => (i.id === 1 ? { ...i, priceListName: 'לקוחות קבועים', unitPrice: 40, regularUnitPrice: 50, quantity: 2 } : i)),
+      }
+      fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [listed] })
+      renderAt('/admin/orders')
+      expect(await screen.findByText('מחירון: לקוחות קבועים')).toBeInTheDocument()
+      expect(screen.getByText(/מחיר רגיל ₪50, אחרי הנחה ₪40 ליחידה/)).toBeInTheDocument()
+    })
+
     it('shows the regular price and what was saved when a line cost less', async () => {
       const listed = {
         ...detailed,

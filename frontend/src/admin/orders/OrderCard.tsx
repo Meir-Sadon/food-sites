@@ -14,6 +14,7 @@ import { SendMessage } from './SendMessage'
 import { RestrictedPrepay } from './RestrictedPrepay'
 import { restrictedApi } from '../../api/admin'
 import { usePrintOrders } from './usePrintOrders'
+import { PriceNote } from './PriceNote'
 import { ItemAnswers } from '../../components/ItemAnswers'
 
 /** `compact` leaves out the header and dish list, for the order page that shows them in its own way. */
@@ -130,6 +131,9 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
               {item.optionLabel ? ` (${item.optionLabel})` : ''}
               {item.note ? ` · ${item.note}` : ''}
               <ItemAnswers answers={item.answers} />
+              <span className="price-notes">
+                <PriceNote item={item} />
+              </span>
             </span>
             <span className="numeric">{formatMoney(item.lineTotal)}</span>
           </li>

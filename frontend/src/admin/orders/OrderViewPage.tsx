@@ -3,16 +3,16 @@ import { paymentKey } from '../../order/payment'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
-import { ordersAdminApi, type AdminOrder, type AdminOrderItem } from '../../api/operations'
+import { ordersAdminApi, type AdminOrder } from '../../api/operations'
 import { ItemAnswers } from '../../components/ItemAnswers'
 import { DeliveryFeePrice } from '../../order/DiscountedPrice'
 import { DeliveryFeeNote } from '../../order/DeliveryFeeNote'
 import { formatMoney, formatTime } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { whatsAppShareUrl } from '../messages/compose'
-import { useFeature } from '../../site/useSite'
 import { Loading } from '../ui'
 import { OrderCard } from './OrderCard'
+import { listSaving, PriceNote } from './PriceNote'
 import { usePrintOrders } from './usePrintOrders'
 import { orderLines, prepReport } from './report'
 
@@ -171,40 +171,6 @@ export function OrderViewPage() {
 }
 
 /** The preparation report as WhatsApp text: the admin may edit it, then WhatsApp opens with it typed in. */
-/** What a line cost less than its regular price, over all its units. */
-function listSaving(items: AdminOrderItem[]): number {
-  return items.reduce((sum, i) => (i.regularUnitPrice && i.regularUnitPrice > i.unitPrice ? sum + (i.regularUnitPrice - i.unitPrice) * i.quantity : sum), 0)
-}
-
-/**
- * The price list a line was priced from (always, once the site uses price lists; one that is not the default list is
- * marked) and, when the line cost less than its regular price, both prices.
- */
-function PriceNote({ item }: { item: AdminOrderItem }) {
-  const { t } = useTranslation()
-  const priceLists = useFeature('priceLists')
-  const discounted = !!item.regularUnitPrice && item.regularUnitPrice > item.unitPrice
-  if (!item.priceListName && !priceLists && !discounted) return null
-  return (
-    <>
-      {item.priceListName ? (
-        <span className="cart-row__unit price-note price-note--list">{t('admin.priceLists.orderLine', { name: item.priceListName })}</span>
-      ) : (
-        priceLists && <span className="muted cart-row__unit">{t('admin.priceLists.orderLineBase', { name: t('admin.priceLists.defaultName') })}</span>
-      )}
-      {discounted && (
-        <span className="cart-row__unit price-note price-note--discount">
-          {t('admin.priceLists.orderDiscount', {
-            regular: formatMoney(item.regularUnitPrice!),
-            price: formatMoney(item.unitPrice),
-            saved: formatMoney((item.regularUnitPrice! - item.unitPrice) * item.quantity),
-          })}
-        </span>
-      )}
-    </>
-  )
-}
-
 function ShareReport({ order }: { order: AdminOrder }) {
   const { t } = useTranslation()
   const [text, setText] = useState(() => prepReport(order, t))

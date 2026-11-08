@@ -4,6 +4,7 @@ import type { AdminOrder } from '../../api/operations'
 import { DeliveryFeeNote } from '../../order/DeliveryFeeNote'
 import { formatMoney, formatTime } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
+import { PriceNote } from './PriceNote'
 import { orderLines } from './report'
 
 export function PrintSheet({ orders }: { orders: AdminOrder[] }) {
@@ -73,6 +74,9 @@ function PrintedOrder({ order }: { order: AdminOrder }) {
               <td>
                 <strong>{item.dishName}</strong>
                 {item.optionLabel ? ` (${item.optionLabel})` : ''}
+                <span className="price-notes">
+                  <PriceNote item={item} />
+                </span>
                 {(item.note || item.answers?.length || addOns.length > 0) && (
                   <ul className="print-order__extras" aria-label={t('admin.orders.sheet.instructions')}>
                     {item.note && <li>{t('admin.orders.report.note')}: {item.note}</li>}
