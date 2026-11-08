@@ -64,10 +64,35 @@ describe('Admin Orders', () => {
       ],
     })
     renderAt('/admin/orders')
+    await userEvent.setup().click(await screen.findByRole('checkbox', { name: 'נמסרה' }))
     const report = await screen.findByRole('group', { name: 'דיווח השליח' })
     expect(within(report).getByText(/^השליח מסר ב־.* · הערת השליח: הושאר אצל שכן$/)).toBeInTheDocument()
     expect(within(report).getByRole('img', { name: 'תמונה מהמסירה של הזמנה #7' })).toHaveAttribute('src', 'https://images.test/p.jpg')
     expect(screen.getByText('שולם: מזומן · נרשם על ידי השליח')).toBeInTheDocument()
+  })
+
+  it('hides delivered and cancelled orders until the admin ticks them, and lets several statuses show together', async () => {
+    fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [
+        order({ id: 1, name: 'דנה' }),
+        order({ id: 2, name: 'יעל', status: 'Delivered' }),
+        order({ id: 3, name: 'רות', status: 'Cancelled' }),
+      ],
+    })
+    renderAt('/admin/orders')
+    const user = userEvent.setup()
+    expect(await screen.findByRole('article', { name: 'הזמנה #1' })).toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'הזמנה #2' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'הזמנה #3' })).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'נמסרה' })).not.toBeChecked()
+    await user.click(screen.getByRole('checkbox', { name: 'נמסרה' }))
+    await user.click(screen.getByRole('checkbox', { name: 'בוטלה' }))
+    expect(screen.getByRole('article', { name: 'הזמנה #1' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'הזמנה #2' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'הזמנה #3' })).toBeInTheDocument()
+    await user.click(screen.getByRole('checkbox', { name: 'חדשה' }))
+    expect(screen.queryByRole('article', { name: 'הזמנה #1' })).not.toBeInTheDocument()
   })
 
   it('flags an order outside the service city and lets the admin approve it', async () => {

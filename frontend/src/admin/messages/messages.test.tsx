@@ -55,6 +55,7 @@ describe('Admin WhatsApp messages', () => {
     })
     renderAt('/admin/orders')
     const user = userEvent.setup()
+    await user.click(await screen.findByRole('checkbox', { name: 'נמסרה' }))
     const card = await screen.findByRole('article', { name: 'הזמנה #7' })
     await user.click(within(card).getByRole('button', { name: /וואטסאפ/ }))
 

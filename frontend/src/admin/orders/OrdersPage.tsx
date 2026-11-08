@@ -14,17 +14,18 @@ const today = () => {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 }
 
-/** Cancelled orders are left out of a printed list unless the list is filtered to them. */
-const printable = (orders: AdminOrder[], status: OrderStatus | '') =>
-  status ? orders : orders.filter((o) => o.status !== 'Cancelled')
+/** Finished orders (delivered, cancelled) start hidden; the admin ticks them to see them. */
+const defaultStatuses: OrderStatus[] = ['New', 'Confirmed', 'Ready']
 
 /** Orders grouped by supply day, with a printable cooking summary for each day. */
 export function OrdersPage() {
   const { t } = useTranslation()
   const [from, setFrom] = useState(today)
   const [to, setTo] = useState('')
-  const [status, setStatus] = useState<OrderStatus | ''>('')
-  const [orders, setOrders] = useState<AdminOrder[] | null>(null)
+  const [statuses, setStatuses] = useState<OrderStatus[]>(defaultStatuses)
+  /** Orders the admin changed stay on screen even when their new status is hidden, until the list reloads. */
+  const [touched, setTouched] = useState<number[]>([])
+  const [loaded, setOrders] = useState<AdminOrder[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [summaryDate, setSummaryDate] = useState<string | null>(null)
   const printer = usePrintOrders()
@@ -32,25 +33,28 @@ export function OrdersPage() {
   useEffect(() => {
     let current = true
     ordersAdminApi
-      .list({ from, to, status })
+      .list({ from, to })
       .then((result) => {
         if (!current) return
         setOrders(result)
+        setTouched([])
         setFailed(false)
       })
       .catch(() => current && setFailed(true))
     return () => {
       current = false
     }
-  }, [from, to, status])
+  }, [from, to])
 
-  const replace = (order: AdminOrder) =>
+  const replace = (order: AdminOrder) => {
+    setTouched((ids) => [...ids, order.id])
     setOrders((list) => {
       if (!list) return list
-      const next = list.map((o) => (o.id === order.id ? order : o))
-      return status && order.status !== status ? next.filter((o) => o.id !== order.id) : next
+      return list.map((o) => (o.id === order.id ? order : o))
     })
+  }
 
+  const orders = loaded && loaded.filter((o) => statuses.includes(o.status) || touched.includes(o.id))
   const days = [...new Set((orders ?? []).map((o) => o.supplyDate))]
 
   return (
@@ -66,22 +70,26 @@ export function OrdersPage() {
           <label htmlFor="orders-to">{t('admin.orders.to')}</label>
           <input id="orders-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </span>
-        <span className="field field--narrow">
-          <label htmlFor="orders-status">{t('admin.orders.statusFilter')}</label>
-          <select id="orders-status" value={status} onChange={(e) => setStatus(e.target.value as OrderStatus | '')}>
-            <option value="">{t('admin.orders.allStatuses')}</option>
+        <fieldset className="field">
+          <legend>{t('admin.orders.statusFilter')}</legend>
+          <span className="row">
             {orderStatuses.map((s) => (
-              <option key={s} value={s}>
+              <label key={s} className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={statuses.includes(s)}
+                  onChange={(e) => setStatuses((list) => (e.target.checked ? orderStatuses.filter((x) => x === s || list.includes(x)) : list.filter((x) => x !== s)))}
+                />
                 {t(`admin.orders.statuses.${s}`)}
-              </option>
+              </label>
             ))}
-          </select>
-        </span>
+          </span>
+        </fieldset>
       </form>
 
       {orders && orders.length > 0 && (
         <p className="row no-print">
-          <button type="button" onClick={() => printer.print(printable(orders, status))}>
+          <button type="button" onClick={() => printer.print(orders)}>
             {t('admin.orders.printAll')}
           </button>
           <span className="hint">{t('admin.orders.printHint')}</span>
@@ -109,7 +117,7 @@ export function OrdersPage() {
                       {t('admin.orders.cookingSummary')}
                       <span className="visually-hidden"> {formatDate(date)}</span>
                     </button>
-                    <button type="button" className="button-quiet" onClick={() => printer.print(printable(ofDay, status))}>
+                    <button type="button" className="button-quiet" onClick={() => printer.print(ofDay)}>
                       {t('admin.orders.printDay')}
                       <span className="visually-hidden"> {formatDate(date)}</span>
                     </button>
