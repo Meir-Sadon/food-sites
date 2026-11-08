@@ -12,7 +12,7 @@ public class PushoverOptions
     public string BaseUrl { get; set; } = "https://api.pushover.net";
 
     /// <summary>Emergency priority: the alert repeats every <see cref="RetrySeconds"/> until acknowledged or <see cref="ExpireSeconds"/> pass.</summary>
-    public int RetrySeconds { get; set; } = 60;
+    public int RetrySeconds { get; set; } = 30;
     public int ExpireSeconds { get; set; } = 3600;
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(AppToken);

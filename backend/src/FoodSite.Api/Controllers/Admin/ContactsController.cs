@@ -4,13 +4,15 @@ using FoodSite.Api.Phones;
 using FoodSite.Api.Push;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using static FoodSite.Api.Controllers.Admin.Ordering;
 
 namespace FoodSite.Api.Controllers.Admin;
 
 /// <summary>The main contact shown on the site, and the phones that get a WhatsApp for every new order.</summary>
 [Route("api/admin")]
-public partial class ContactsController(AppDbContext db) : AdminControllerBase
+public partial class ContactsController(
+    AppDbContext db, IPushSender push, IOptions<PushoverOptions> pushover, ILogger<ContactsController> logger) : AdminControllerBase
 {
     public const int NameMaxLength = 100;
     public const int AddressMaxLength = 300;
@@ -83,6 +85,29 @@ public partial class ContactsController(AppDbContext db) : AdminControllerBase
         db.NotifyPhones.Add(entity);
         await db.SaveChangesAsync();
         return new NotifyPhoneDto(entity.Id, entity.Phone, entity.Name, entity.PushoverKey, entity.PushoverSound);
+    }
+
+    /// <summary>Sends one alert to the phone, with its own sound, so the admin can hear what a new order will do.</summary>
+    [HttpPost("notify-phones/{id:int}/test")]
+    public async Task<IActionResult> TestNotifyPhone(int id, CancellationToken ct)
+    {
+        var phone = await db.NotifyPhones.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id, ct);
+        if (phone is null)
+            return NotFound();
+        if (!pushover.Value.IsConfigured)
+            return Invalid(nameof(NotifyPhoneInput.PushoverKey), "pushoverNotConfigured");
+        if (string.IsNullOrWhiteSpace(phone.PushoverKey))
+            return Invalid(nameof(NotifyPhoneInput.PushoverKey), "required");
+        try
+        {
+            await push.SendAsync(phone.PushoverKey, phone.PushoverSound, "התראת ניסיון", "כך תישמע התראה על הזמנה חדשה.", null, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Pushover test alert to {Phone} failed", phone.Phone);
+            return Invalid(nameof(NotifyPhoneInput.PushoverKey), "pushoverFailed");
+        }
+        return NoContent();
     }
 
     [HttpDelete("notify-phones/{id:int}")]

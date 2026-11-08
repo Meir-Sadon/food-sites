@@ -111,6 +111,39 @@ describe('Admin Contacts', () => {
     })
   })
 
+  it('sends a test alert to a phone that has a Pushover key', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/site': () => site({ features: ['phoneAlerts'] }),
+      'GET /api/admin/notify-phones': () => [{ id: 1, phone: '0521111111', name: 'דוד', pushoverKey: 'k'.repeat(30), pushoverSound: 'siren' }],
+      'POST /api/admin/notify-phones/1/test': () => ({ status: 204 }),
+    })
+    renderAt('/admin/contacts')
+    const user = userEvent.setup()
+    const list = await section("מספרים להתראות ולצ'אט בוואטסאפ")
+
+    await user.click(await within(list).findByRole('button', { name: 'שליחת התראת ניסיון' }))
+
+    expect(await within(list).findByText(/נשלחה התראת ניסיון/)).toBeInTheDocument()
+    expect(api.sent('POST', '/api/admin/notify-phones/1/test')).toHaveLength(1)
+  })
+
+  it('shows why a test alert failed', async () => {
+    fakeApi({
+      ...base,
+      'GET /api/site': () => site({ features: ['phoneAlerts'] }),
+      'GET /api/admin/notify-phones': () => [{ id: 1, phone: '0521111111', name: null, pushoverKey: 'k'.repeat(30), pushoverSound: null }],
+      'POST /api/admin/notify-phones/1/test': () => invalid({ PushoverKey: ['pushoverFailed'] }),
+    })
+    renderAt('/admin/contacts')
+    const user = userEvent.setup()
+    const list = await section("מספרים להתראות ולצ'אט בוואטסאפ")
+
+    await user.click(await within(list).findByRole('button', { name: 'שליחת התראת ניסיון' }))
+
+    expect(await within(list).findByText(/שליחת ההתראה נכשלה/)).toBeInTheDocument()
+  })
+
   it('hides the Pushover fields when phone alerts are off', async () => {
     fakeApi({ ...base, 'GET /api/site': () => site({ features: [] }) })
     renderAt('/admin/contacts')
