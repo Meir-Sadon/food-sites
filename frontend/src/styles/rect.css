@@ -144,3 +144,9 @@
 [data-layout='rect'] .tile__media:not(:has(.tile__add, .tile__count, .tile__stepper)) .tile__badge {
   max-inline-size: calc(100% - 0.75rem);
 }
+
+/* Settings → rectPicture = start: the picture (with the add button or amount control on it) goes to the start side,
+   the right in Hebrew, and the text sits to its left. The default (end) is the layout above. */
+:root[data-rect-picture='start'] [data-layout='rect'] .tile__media {
+  order: 0;
+}

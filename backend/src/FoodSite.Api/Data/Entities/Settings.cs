@@ -160,6 +160,12 @@ public class Settings
     /// <summary>How big the dishes' pictures (the rectangles in the rect style) are on the order page (see <c>Finish.ImageSizes</c>); null means small.</summary>
     public string? ImageSize { get; set; }
 
+    /// <summary>Which side of a rectangle the picture is on (see <c>Finish.RectPictures</c>); null means the end side.</summary>
+    public string? RectPicture { get; set; }
+
+    /// <summary>Whether tiles and rectangles take the whole row on a phone (see <c>Finish.MobileCards</c>); null means standard.</summary>
+    public string? MobileCards { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }

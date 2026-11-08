@@ -27,7 +27,7 @@ function useStyleAttribute() {
   const style = useSiteStyle()
   const corners = useCorners()
   const { palette, customColors, lineWidth } = useColors()
-  const { font, shadows, spacing, tileGroups, imageSize } = useFinish()
+  const { font, shadows, spacing, tileGroups, imageSize, rectPicture, mobileCards } = useFinish()
   const site = useSite()
   const settled = useSiteSettled()
   // Kept for the next visit, whose first paint (index.html) then already has the look the admin chose.
@@ -43,6 +43,8 @@ function useStyleAttribute() {
     root.dataset.spacing = spacing
     root.dataset.tileGroups = tileGroups
     root.dataset.imageSize = imageSize
+    root.dataset.rectPicture = rectPicture
+    root.dataset.mobileCards = mobileCards
     return () => {
       delete root.dataset.style
       delete root.dataset.corners
@@ -51,8 +53,10 @@ function useStyleAttribute() {
       delete root.dataset.spacing
       delete root.dataset.tileGroups
       delete root.dataset.imageSize
+      delete root.dataset.rectPicture
+      delete root.dataset.mobileCards
     }
-  }, [style, corners, font, shadows, spacing, tileGroups, imageSize])
+  }, [style, corners, font, shadows, spacing, tileGroups, imageSize, rectPicture, mobileCards])
   useApplyColors(palette, customColors, lineWidth)
   // A first visit has no saved look, so index.html keeps the page hidden until the real one is on <html> (see its script).
   useEffect(() => {

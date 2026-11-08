@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { settingsApi } from '../../api/catalog'
-import { IMAGE_SIZES, isTileStyle, SITE_STYLES, TILE_GROUPS, type ImageSize, type SiteStyle, type TileGroups } from '../../api/site'
+import { IMAGE_SIZES, isTileStyle, MOBILE_CARDS, RECT_PICTURES, SITE_STYLES, TILE_GROUPS, type ImageSize, type MobileCards, type RectPicture, type SiteStyle, type TileGroups } from '../../api/site'
 import { SavedNote, useSavedFlash } from '../../components/savedFlash'
 import { Loading, Section, Status } from '../ui'
 import { useErrorMessage, useLoad } from '../hooks'
@@ -18,10 +18,20 @@ export function StyleSection() {
   const [error, setError] = useState<string | null>(null)
   const [pickedGroups, setPickedGroups] = useState<TileGroups | null>(null)
   const [pickedSize, setPickedSize] = useState<ImageSize | null>(null)
+  const [pickedPicture, setPickedPicture] = useState<RectPicture | null>(null)
+  const [pickedMobile, setPickedMobile] = useState<MobileCards | null>(null)
   const style = picked ?? settings?.style
   const imageSize = pickedSize ?? settings?.imageSize
   const tileGroups = pickedGroups ?? settings?.tileGroups
-  const changed = !!settings && (style !== settings.style || tileGroups !== settings.tileGroups || imageSize !== settings.imageSize)
+  const rectPicture = pickedPicture ?? settings?.rectPicture
+  const mobileCards = pickedMobile ?? settings?.mobileCards
+  const changed =
+    !!settings &&
+    (style !== settings.style ||
+      tileGroups !== settings.tileGroups ||
+      imageSize !== settings.imageSize ||
+      rectPicture !== settings.rectPicture ||
+      mobileCards !== settings.mobileCards)
 
   useUnsavedChanges(changed, save)
 
@@ -37,10 +47,12 @@ export function StyleSection() {
     try {
       // The other settings as saved now, so this never sends stale values back.
       const { backgroundImageUrl: _, orderTotalPosition: __, orderFlow: ___, corners: ____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tracking: _tr, badges: _bd, inactiveAfter: _ia, ...current } = await settingsApi.get()
-      setData(await settingsApi.save({ ...current, style, tileGroups, imageSize }))
+      setData(await settingsApi.save({ ...current, style, tileGroups, imageSize, rectPicture, mobileCards }))
       setPicked(null)
       setPickedGroups(null)
       setPickedSize(null)
+      setPickedPicture(null)
+      setPickedMobile(null)
       flash()
       return true
     } catch (err) {
@@ -91,6 +103,29 @@ export function StyleSection() {
               <label key={option} className="style-option">
                 <input type="radio" name="image-size" value={option} checked={imageSize === option} onChange={() => setPickedSize(option)} />
                 <strong>{t(`admin.settings.imageSize.${option}`)}</strong>
+              </label>
+            ))}
+          </fieldset>
+          {style === 'rect' && (
+            <fieldset className="style-options">
+              <legend>{t('admin.settings.rectPicture.title')}</legend>
+              {RECT_PICTURES.map((option) => (
+                <label key={option} className="style-option">
+                  <input type="radio" name="rect-picture" value={option} checked={rectPicture === option} onChange={() => setPickedPicture(option)} />
+                  <strong>{t(`admin.settings.rectPicture.${option}.name`)}</strong>
+                  <span className="hint">{t(`admin.settings.rectPicture.${option}.description`)}</span>
+                </label>
+              ))}
+            </fieldset>
+          )}
+          <fieldset className="style-options">
+            <legend>{t('admin.settings.mobileCards.title')}</legend>
+            <p className="hint">{t('admin.settings.mobileCards.hint')}</p>
+            {MOBILE_CARDS.map((option) => (
+              <label key={option} className="style-option">
+                <input type="radio" name="mobile-cards" value={option} checked={mobileCards === option} onChange={() => setPickedMobile(option)} />
+                <strong>{t(`admin.settings.mobileCards.${option}.name`)}</strong>
+                <span className="hint">{t(`admin.settings.mobileCards.${option}.description`)}</span>
               </label>
             ))}
           </fieldset>
