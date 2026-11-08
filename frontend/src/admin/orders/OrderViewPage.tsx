@@ -3,12 +3,14 @@ import { paymentKey } from '../../order/payment'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
-import { ordersAdminApi, type AdminOrder } from '../../api/operations'
+import { ordersAdminApi, type AdminOrder, type AdminOrderItem } from '../../api/operations'
 import { ItemAnswers } from '../../components/ItemAnswers'
+import { DeliveryFeePrice } from '../../order/DiscountedPrice'
 import { DeliveryFeeNote } from '../../order/DeliveryFeeNote'
 import { formatMoney, formatTime } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { whatsAppShareUrl } from '../messages/compose'
+import { useFeature } from '../../site/useSite'
 import { Loading } from '../ui'
 import { OrderCard } from './OrderCard'
 import { usePrintOrders } from './usePrintOrders'
@@ -95,7 +97,7 @@ export function OrderViewPage() {
                     {formatNumber(item.quantity)} × {formatMoney(item.unitPrice)}
                     {item.optionLabel ? ` · ${item.optionLabel}` : ''}
                   </span>
-                  {item.priceListName && <span className="muted cart-row__unit">{t('admin.priceLists.orderLine', { name: item.priceListName })}</span>}
+                  <PriceNote item={item} />
                 </div>
                 <strong className="cart-row__price numeric">{formatMoney(item.lineTotal)}</strong>
               </div>
@@ -108,12 +110,14 @@ export function OrderViewPage() {
                   )}
                   <ItemAnswers answers={item.answers} />
                   {addOns.map((addOn) => (
-                    <p key={addOn.id}>
-                      + {formatNumber(addOn.quantity)} × {addOn.dishName}
-                      {addOn.optionLabel ? ` (${addOn.optionLabel})` : ''}
-                      {addOn.lineTotal > 0 ? ` · ${formatMoney(addOn.lineTotal)}` : ''}
-                      {addOn.priceListName ? ` · ${t('admin.priceLists.orderLine', { name: addOn.priceListName })}` : ''}
-                    </p>
+                    <div key={addOn.id}>
+                      <p>
+                        + {formatNumber(addOn.quantity)} × {addOn.dishName}
+                        {addOn.optionLabel ? ` (${addOn.optionLabel})` : ''}
+                        {addOn.lineTotal > 0 ? ` · ${formatMoney(addOn.lineTotal)}` : ''}
+                      </p>
+                      <PriceNote item={addOn} />
+                    </div>
                   ))}
                 </div>
               )}
@@ -132,7 +136,14 @@ export function OrderViewPage() {
               {order.deliveryZoneName ? ` (${order.deliveryZoneName})` : ''}
               <DeliveryFeeNote discount={order.deliveryDiscount} free={!order.deliveryFee} />
             </span>{' '}
-            <strong className="numeric">{order.deliveryFee ? formatMoney(order.deliveryFee) : t('order.deliveryDiscount.freePrice')}</strong>
+            <strong className="numeric">
+              <DeliveryFeePrice fee={order.deliveryFee ?? 0} discount={order.deliveryDiscount} />
+            </strong>
+          </p>
+        )}
+        {listSaving(order.items) > 0 && (
+          <p className="cart-sheet__total">
+            <span>{t('admin.priceLists.orderTotalDiscount')}</span> <strong className="numeric">{formatMoney(listSaving(order.items))}</strong>
           </p>
         )}
         <p className="cart-sheet__total">
@@ -160,6 +171,40 @@ export function OrderViewPage() {
 }
 
 /** The preparation report as WhatsApp text: the admin may edit it, then WhatsApp opens with it typed in. */
+/** What a line cost less than its regular price, over all its units. */
+function listSaving(items: AdminOrderItem[]): number {
+  return items.reduce((sum, i) => (i.regularUnitPrice && i.regularUnitPrice > i.unitPrice ? sum + (i.regularUnitPrice - i.unitPrice) * i.quantity : sum), 0)
+}
+
+/**
+ * The price list a line was priced from (always, once the site uses price lists; one that is not the default list is
+ * marked) and, when the line cost less than its regular price, both prices.
+ */
+function PriceNote({ item }: { item: AdminOrderItem }) {
+  const { t } = useTranslation()
+  const priceLists = useFeature('priceLists')
+  const discounted = !!item.regularUnitPrice && item.regularUnitPrice > item.unitPrice
+  if (!item.priceListName && !priceLists && !discounted) return null
+  return (
+    <>
+      {item.priceListName ? (
+        <span className="cart-row__unit price-note price-note--list">{t('admin.priceLists.orderLine', { name: item.priceListName })}</span>
+      ) : (
+        priceLists && <span className="muted cart-row__unit">{t('admin.priceLists.orderLineBase', { name: t('admin.priceLists.defaultName') })}</span>
+      )}
+      {discounted && (
+        <span className="cart-row__unit price-note price-note--discount">
+          {t('admin.priceLists.orderDiscount', {
+            regular: formatMoney(item.regularUnitPrice!),
+            price: formatMoney(item.unitPrice),
+            saved: formatMoney((item.regularUnitPrice! - item.unitPrice) * item.quantity),
+          })}
+        </span>
+      )}
+    </>
+  )
+}
+
 function ShareReport({ order }: { order: AdminOrder }) {
   const { t } = useTranslation()
   const [text, setText] = useState(() => prepReport(order, t))

@@ -96,6 +96,8 @@ export interface HistoryItem {
   quantity: number
   unitPrice: number
   lineTotal: number
+  /** The unit price before a discount, when the line cost less. */
+  regularUnitPrice?: number | null
 }
 
 export interface HistoryOrder {
@@ -108,6 +110,9 @@ export interface HistoryOrder {
   total: number
   createdAt: string
   items: HistoryItem[]
+  /** The delivery fee paid, and what the large-order discount took off it. */
+  deliveryFee?: number
+  deliveryDiscount?: number
 }
 
 export interface Favorite {

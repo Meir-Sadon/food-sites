@@ -40,4 +40,33 @@ public class OwnerMessagesTests
 
         Assert.DoesNotContain("admin/orders", OwnerMessages.NewOrder(order, null, false).Text);
     }
+
+    [Fact]
+    public void The_new_order_mail_names_the_price_list_marks_other_lists_and_shows_both_prices_of_a_discounted_line()
+    {
+        var discounted = new OrderItem
+        {
+            Id = 1, DishName = "עוף בתנור", Quantity = 2, UnitPrice = 60, LineTotal = 120, PriceListName = "קבועים", RegularUnitPrice = 70,
+        };
+        var plain = new OrderItem { Id = 2, DishName = "בשר טחון", Quantity = 1, UnitPrice = 90, LineTotal = 90 };
+        var order = new Order
+        {
+            Id = 13, Phone = "050-123-4567", Name = "דנה", Address = "", SupplyDate = new DateOnly(2030, 1, 6), Total = 210, Items = [discounted, plain],
+        };
+
+        var mail = OwnerMessages.NewOrder(order, null, false, null, priceLists: true);
+
+        Assert.Contains("★ מחירון: קבועים", mail.Text);
+        Assert.Contains("מחירון: מחירון ברירת מחדל", mail.Text);
+        Assert.DoesNotContain("★ מחירון: מחירון ברירת מחדל", mail.Text);
+        Assert.Contains("מחיר רגיל ₪70, אחרי הנחה ₪60 ליחידה (חיסכון ₪20)", mail.Text);
+        Assert.Contains("סה״כ הנחות במחירון: ₪20", mail.Text);
+        Assert.Contains("font-weight:bold", mail.Html);
+
+        // A site without price lists shows none of it for regular prices.
+        Assert.DoesNotContain("מחירון", OwnerMessages.NewOrder(new Order
+        {
+            Id = 14, Phone = "1", Name = "x", Address = "", SupplyDate = new DateOnly(2030, 1, 6), Total = 90, Items = [plain],
+        }, null, false).Text);
+    }
 }

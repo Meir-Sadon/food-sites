@@ -8,12 +8,12 @@ namespace FoodSite.Api.Mail;
 public class OwnerNotifier(IMailer mailer, IOptions<SiteOptions> site, ILogger<OwnerNotifier> logger)
 {
     /// <summary>A failed mail never fails the order: it is already saved and shows in the admin's Orders tab.</summary>
-    public async Task NewOrderAsync(string? ownerEmail, Order order, bool hourFull, string? adminUrl = null)
+    public async Task NewOrderAsync(string? ownerEmail, Order order, bool hourFull, string? adminUrl = null, bool priceLists = false)
     {
         if (string.IsNullOrWhiteSpace(ownerEmail))
             return;
         foreach (var to in OwnerRecipients.Split(ownerEmail))
-            await SendAsync(to, OwnerMessages.NewOrder(order, site.Value.Name, hourFull, adminUrl), $"order {order.Id}");
+            await SendAsync(to, OwnerMessages.NewOrder(order, site.Value.Name, hourFull, adminUrl, priceLists), $"order {order.Id}");
     }
 
     /// <summary>Only when the admin ticked "mail about changes"; it is off by default.</summary>

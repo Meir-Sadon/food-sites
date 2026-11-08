@@ -409,6 +409,21 @@ describe('Profile', () => {
     expect(within(order).getByText(/3 × ירך/)).toBeInTheDocument()
   })
 
+  it('shows the regular price and the delivery discount on a past order', async () => {
+    const discounted = {
+      ...pastOrder,
+      deliveryFee: 10,
+      deliveryDiscount: 20,
+      items: pastOrder.items.map((i) => (i.id === 1 ? { ...i, regularUnitPrice: 50 } : i)),
+    }
+    open('/profile', { ...loggedIn, 'GET /api/account/orders': () => [discounted] })
+
+    const order = await screen.findByRole('article', { name: 'הזמנה #5' })
+    expect(within(order).getByText('₪100')).toBeInTheDocument()
+    expect(within(order).getByText('₪30')).toBeInTheDocument()
+    expect(within(order).getByText(/חסכתם ₪40/)).toBeInTheDocument()
+  })
+
   it('reorders into the order page, which shows the filled order', async () => {
     const { user } = open('/profile', loggedIn)
     const order = await screen.findByRole('article', { name: 'הזמנה #5' })

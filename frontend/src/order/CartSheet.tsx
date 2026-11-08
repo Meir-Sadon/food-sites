@@ -4,7 +4,8 @@ import { Modal } from '../components/Modal'
 import type { MenuDish } from '../api/site'
 import { AmountControl } from './AmountControl'
 import { DeliveryFeeNote } from './DeliveryFeeNote'
-import { formatMoney, priceText } from './format'
+import { DiscountedPrice } from './DiscountedPrice'
+import { formatMoney, lineBeforeDiscount, priceText } from './format'
 import { SummaryDetails } from './OrderSummary'
 import { fitAddOns, limitedRange, lineTotal, remainingOn, summaryLines, type Selection } from './model'
 
@@ -58,7 +59,7 @@ export function CartSheet({ selections, dishes, date, total, deliveryFee = 0, de
                     <span className="muted cart-row__unit">{priceText(dish, t)}</span>
                   </div>
                   <strong key={lineTotal(dish, selection.optionId, selection.quantity)} className="cart-row__price numeric">
-                    {formatMoney(lineTotal(dish, selection.optionId, selection.quantity))}
+                    <DiscountedPrice before={lineBeforeDiscount(dish, selection.optionId, selection.quantity)} price={lineTotal(dish, selection.optionId, selection.quantity)} />
                   </strong>
                 </div>
                 <div className="cart-sheet__controls">

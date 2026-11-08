@@ -52,7 +52,8 @@ public class OrdersController(
         bool AcceptMinimumTopUp = false);
 
     public record ConfirmationItemDto(
-        string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null);
+        string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null,
+        decimal? RegularUnitPrice = null);
 
     public record ConfirmationDto(
         int Id,
@@ -243,7 +244,7 @@ public class OrdersController(
             order.PaymentMethod switch { PaymentMethod.Bit => settings.BitLink, PaymentMethod.PayBox => settings.PayBoxLink, _ => null },
             order.NeedsReview,
             order.Items
-                .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null, i.Dish?.AllergenInfo))
+                .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null, i.Dish?.AllergenInfo, i.RegularUnitPrice))
                 .ToList(),
             order.DeliveryHour,
             hourFull,
@@ -311,7 +312,8 @@ public class OrdersController(
     private async Task NotifyAsync(
         Order order, string? paymentPhone, string? ownerEmail, IReadOnlyList<string> serviceCities, bool hourFull, CancellationToken ct)
     {
-        await ownerMail.NewOrderAsync(ownerEmail, order, hourFull, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}");
+        await ownerMail.NewOrderAsync(ownerEmail, order, hourFull, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}",
+            await features.IsEnabledAsync(Features.PriceLists, ct));
         var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
         var messages = admins
             .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name, hourFull)))

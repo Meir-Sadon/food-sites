@@ -2,10 +2,41 @@ import { paymentKey } from '../../order/payment'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, dishesApi, type Category, type Dish } from '../../api/catalog'
-import { reportsApi, type Report, type ReportFilter } from '../../api/operations'
+import { reportsApi, type DishSales, type Report, type ReportFilter } from '../../api/operations'
 import { formatMoney } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
+import { useFeature } from '../../site/useSite'
 import { Loading, Section } from '../ui'
+
+/** The price lists a dish was sold from, the ones that are not the default list marked. */
+function ListNames({ names }: { names?: (string | null)[] }) {
+  const { t } = useTranslation()
+  return (
+    <>
+      {(names ?? []).map((name, i) => (
+        <span key={name ?? 'default'}>
+          {i > 0 && ', '}
+          {name === null ? t('admin.priceLists.defaultName') : <strong>{name}</strong>}
+        </span>
+      ))}
+    </>
+  )
+}
+
+/** The sales of a dish: what was charged, and above it what the same units cost at regular prices when a discount applied. */
+function SalesCell({ dish }: { dish: DishSales }) {
+  return (
+    <td className="numeric">
+      {dish.regularSales && dish.regularSales > dish.sales ? (
+        <>
+          <s className="muted">{formatMoney(dish.regularSales)}</s> {formatMoney(dish.sales)}
+        </>
+      ) : (
+        formatMoney(dish.sales)
+      )}
+    </td>
+  )
+}
 
 /** Dishes sold and total sales per week, with filters and an Excel export. */
 export function ReportsPage() {
@@ -15,6 +46,7 @@ export function ReportsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [dishes, setDishes] = useState<Dish[]>([])
   const [failed, setFailed] = useState(false)
+  const priceLists = useFeature('priceLists')
 
   useEffect(() => {
     Promise.all([categoriesApi.get(), dishesApi.getAll()])
@@ -100,6 +132,14 @@ export function ReportsPage() {
           <p role="status" className="report-total">
             {t('admin.reports.total', { orders: report.orders, sales: formatMoney(report.sales) })}
           </p>
+          {!!(report.listDiscount || report.deliveryDiscount) && (
+            <p>
+              {t('admin.reports.discountTotals', {
+                discount: formatMoney(report.listDiscount ?? 0),
+                delivery: formatMoney(report.deliveryDiscount ?? 0),
+              })}
+            </p>
+          )}
           {report.orders === 0 && <p>{t('admin.reports.empty')}</p>}
 
           {report.weeks.length > 0 && (
@@ -116,6 +156,7 @@ export function ReportsPage() {
                         <th scope="col">{t('admin.orders.dish')}</th>
                         <th scope="col">{t('admin.orders.quantity')}</th>
                         <th scope="col">{t('admin.reports.sales')}</th>
+                        {priceLists && <th scope="col">{t('admin.reports.priceList')}</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -123,7 +164,12 @@ export function ReportsPage() {
                         <tr key={d.dishId}>
                           <th scope="row">{d.dishName}</th>
                           <td className="numeric">{formatNumber(d.quantity)}</td>
-                          <td className="numeric">{formatMoney(d.sales)}</td>
+                          <SalesCell dish={d} />
+                          {priceLists && (
+                            <td>
+                              <ListNames names={d.priceLists} />
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -141,6 +187,7 @@ export function ReportsPage() {
                     <th scope="col">{t('admin.orders.dish')}</th>
                     <th scope="col">{t('admin.orders.quantity')}</th>
                     <th scope="col">{t('admin.reports.sales')}</th>
+                    {priceLists && <th scope="col">{t('admin.reports.priceList')}</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -148,7 +195,39 @@ export function ReportsPage() {
                     <tr key={d.dishId}>
                       <th scope="row">{d.dishName}</th>
                       <td className="numeric">{formatNumber(d.quantity)}</td>
-                      <td className="numeric">{formatMoney(d.sales)}</td>
+                      <SalesCell dish={d} />
+                      {priceLists && (
+                        <td>
+                          <ListNames names={d.priceLists} />
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Section>
+          )}
+
+          {priceLists && !!report.lists?.length && (
+            <Section title={t('admin.reports.byList')} hint={t('admin.reports.listHint')}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">{t('admin.reports.priceList')}</th>
+                    <th scope="col">{t('admin.orders.quantity')}</th>
+                    <th scope="col">{t('admin.reports.regularSales')}</th>
+                    <th scope="col">{t('admin.reports.sales')}</th>
+                    <th scope="col">{t('admin.reports.discount')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.lists.map((l) => (
+                    <tr key={l.name ?? 'default'}>
+                      <th scope="row">{l.name === null ? t('admin.priceLists.defaultName') : <strong>{l.name}</strong>}</th>
+                      <td className="numeric">{formatNumber(l.quantity)}</td>
+                      <td className="numeric">{formatMoney(l.regularSales)}</td>
+                      <td className="numeric">{formatMoney(l.sales)}</td>
+                      <td className="numeric">{formatMoney(l.regularSales - l.sales)}</td>
                     </tr>
                   ))}
                 </tbody>

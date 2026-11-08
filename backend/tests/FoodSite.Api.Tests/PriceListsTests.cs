@@ -255,6 +255,9 @@ public sealed class PriceListsTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal(2 * 60 + 90, confirmation.Items.Sum(i => i.LineTotal));
         var order = await _admin.GetAsync($"/api/admin/orders/{confirmation.Id}").Read<OrderDto>();
         Assert.Equal("קבועים", order.Items.Single(i => i.DishName == "עוף בתנור").PriceListName);
+        // The regular price is kept on the line, so the owner can see what the client saved.
+        Assert.Equal(70, order.Items.Single(i => i.DishName == "עוף בתנור").RegularUnitPrice);
+        Assert.Null(order.Items.Single(i => i.DishName == "בשר טחון").RegularUnitPrice);
         // The list holds every dish, at its regular price where the admin didn't change it.
         Assert.Equal("קבועים", order.Items.Single(i => i.DishName == "בשר טחון").PriceListName);
 

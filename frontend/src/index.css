@@ -3900,6 +3900,19 @@ label {
   font-size: 0.9rem;
 }
 
+.price-note--list {
+  align-self: flex-start;
+  padding: 0 0.5rem;
+  border-radius: var(--radius);
+  background: var(--color-badge);
+  color: var(--color-badge-text);
+  font-weight: 700;
+}
+
+.price-note--discount {
+  color: var(--color-success);
+}
+
 .cart-row__price {
   color: var(--color-accent);
   font-size: 1.125rem;

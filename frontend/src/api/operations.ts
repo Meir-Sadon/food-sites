@@ -38,6 +38,8 @@ export interface AdminOrderItem {
   imageUrl?: string | null
   /** The price list the line was priced from (feature priceLists); absent for regular prices. */
   priceListName?: string | null
+  /** The unit price before a discount (the regular price, or the price it was struck from) when the line cost less; absent otherwise. */
+  regularUnitPrice?: number | null
 }
 
 export interface AdminOrder {
@@ -129,6 +131,19 @@ export interface DishSales {
   dishName: string
   quantity: number
   sales: number
+  /** What the same units cost at their regular prices; above sales when a discount applied. */
+  regularSales?: number
+  /** The price lists the sales came from; null is the default list. */
+  priceLists?: (string | null)[]
+}
+
+/** Sales by price list; a null name is the default list. */
+export interface ListSales {
+  name: string | null
+  orders: number
+  quantity: number
+  sales: number
+  regularSales: number
 }
 
 export interface Report {
@@ -136,6 +151,11 @@ export interface Report {
   sales: number
   weeks: { weekStart: string; orders: number; sales: number; dishes: DishSales[] }[]
   dishes: DishSales[]
+  lists?: ListSales[]
+  /** Total taken off by price lists and the dishes' own discounts. */
+  listDiscount?: number
+  /** Total taken off delivery fees by the large-order discount. */
+  deliveryDiscount?: number
 }
 
 export interface ReportFilter {

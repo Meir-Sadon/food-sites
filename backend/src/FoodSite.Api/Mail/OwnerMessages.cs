@@ -47,9 +47,9 @@ public static class OwnerMessages
     /// The new-order mail: everything about the order (who, when, where, payment, every dish with its option, remark,
     /// answers and add-ons, prices and totals), spaced out, and a link that opens the order in the admin.
     /// </summary>
-    public static OwnerMail NewOrder(Order order, string? siteName, bool hourFull, string? adminUrl = null)
+    public static OwnerMail NewOrder(Order order, string? siteName, bool hourFull, string? adminUrl = null, bool priceLists = false)
     {
-        var sections = NewOrderSections(order, hourFull);
+        var sections = NewOrderSections(order, hourFull, priceLists);
         var site = string.IsNullOrWhiteSpace(siteName) ? null : siteName.Trim();
         var title = $"הזמנה חדשה #{order.Id}";
 
@@ -71,7 +71,11 @@ public static class OwnerMessages
             if (section.Heading is not null)
                 html.Append($"<h2 style=\"margin:0 0 8px;font-size:15px;color:#7a1f1f\">{Enc(section.Heading)}</h2>");
             foreach (var line in section.Lines)
-                html.Append($"<div style=\"margin:0 0 {(line.StartsWith("  ") ? 2 : 8)}px;{(line.StartsWith("  ") ? "padding-right:18px;color:#555;font-size:15px" : "")}\">{Enc(line.TrimStart())}</div>");
+            {
+                var sub = line.StartsWith("  ");
+                var strong = line.TrimStart().StartsWith(Emphasis);
+                html.Append($"<div style=\"margin:0 0 {(sub ? 2 : 8)}px;{(sub ? "padding-right:18px;color:#555;font-size:15px" : "")}{(strong ? ";font-weight:bold;color:#7a1f1f" : "")}\">{Enc(line.TrimStart())}</div>");
+            }
             html.Append("</div>");
         }
         if (adminUrl is not null)
@@ -83,7 +87,7 @@ public static class OwnerMessages
 
     private record Section(string? Heading, List<string> Lines);
 
-    private static List<Section> NewOrderSections(Order order, bool hourFull)
+    private static List<Section> NewOrderSections(Order order, bool hourFull, bool priceLists)
     {
         var delivery = order.FulfillmentMethod == FulfillmentMethod.Delivery;
         var sections = new List<Section>();
@@ -129,12 +133,19 @@ public static class OwnerMessages
                 + (item.Quantity > 1 || item.UnitPrice != item.LineTotal ? $" (₪{Money(item.UnitPrice)} ליחידה)" : ""));
             if (!string.IsNullOrWhiteSpace(item.Note))
                 dishes.Add($"  הערה למנה: {item.Note}");
+            dishes.AddRange(PriceLines(item, priceLists, "  "));
             dishes.AddRange((item.Answers ?? []).Select(a => $"  {a.Question}: {a.Answer}"));
             foreach (var addOn in item.AddOnItems.OrderBy(a => a.Id))
+            {
                 dishes.Add($"  + {Number(addOn.Quantity)} × {addOn.DishName}"
                     + (string.IsNullOrEmpty(addOn.OptionLabel) ? "" : $" ({addOn.OptionLabel})")
                     + (addOn.LineTotal > 0 ? $" – ₪{Money(addOn.LineTotal)}" : ""));
+                dishes.AddRange(PriceLines(addOn, priceLists, "    "));
+            }
         }
+        var saved = order.Items.Sum(OrderMessages.ListSaving);
+        if (saved > 0)
+            dishes.Add($"סה״כ הנחות במחירון: ₪{Money(saved)}");
         if (order.MinimumTopUp > 0)
             dishes.Add($"השלמה למינימום הזמנה – ₪{Money(order.MinimumTopUp)}");
         if (order.DeliveryFee > 0 || order.DeliveryDiscount > 0)
@@ -146,6 +157,23 @@ public static class OwnerMessages
 
         sections.Add(new(null, [$"סה״כ: ₪{Money(order.Total)}"]));
         return sections;
+    }
+
+    /// <summary>Marks a line the owner should notice (a price list that is not the base one).</summary>
+    private const string Emphasis = "★";
+
+    /// <summary>
+    /// The price list of a line (always, once the site uses price lists; the base list plainly, any other marked) and, when
+    /// the line cost less than its regular price, both prices and what was saved.
+    /// </summary>
+    private static IEnumerable<string> PriceLines(OrderItem item, bool priceLists, string indent)
+    {
+        if (item.PriceListName is { } name)
+            yield return $"{indent}{Emphasis} מחירון: {name}";
+        else if (priceLists)
+            yield return $"{indent}מחירון: {OrderMessages.DefaultPriceListName}";
+        if (item.RegularUnitPrice is { } regular && regular > item.UnitPrice)
+            yield return $"{indent}הנחה על הפריט: מחיר רגיל ₪{Money(regular)}, אחרי הנחה ₪{Money(item.UnitPrice)} ליחידה (חיסכון ₪{Money(OrderMessages.ListSaving(item))})";
     }
 
     private static string Join(this IEnumerable<string> lines, string separator) => string.Join(separator, lines);
