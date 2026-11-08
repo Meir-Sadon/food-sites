@@ -458,6 +458,7 @@ function TileAmount({ name, value, min, max, step, onChange }: { name: string; v
   const reduced = useReducedMotion()
   const [open, setOpen] = useState(reduced)
   const closing = useRef<number | undefined>(undefined)
+  const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
     if (open) return
@@ -471,11 +472,12 @@ function TileAmount({ name, value, min, max, step, onChange }: { name: string; v
     if (next > 0 || reduced) return onChange(next)
     if (closing.current !== undefined) return
     setOpen(false)
+    setLeaving(true)
     closing.current = window.setTimeout(() => onChange(0), 220)
   }
 
   return (
-    <span className="tile__stepper" role="group" aria-label={name} data-open={open || undefined} onClick={(event) => event.stopPropagation()}>
+    <span className="tile__stepper" role="group" aria-label={name} data-open={open || undefined} data-leaving={leaving || undefined} onClick={(event) => event.stopPropagation()}>
       <span className="tile__extra">
         <span className="tile__extra-inner">
           <span className="tile__pill">
