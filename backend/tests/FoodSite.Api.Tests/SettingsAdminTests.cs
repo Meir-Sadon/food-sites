@@ -302,6 +302,27 @@ public sealed class SettingsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task The_admin_picks_the_rectangle_picture_side_and_full_width_cards_on_a_phone()
+    {
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        Assert.Equal(("end", "standard"), (settings.RectPicture, settings.MobileCards));
+
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, rectPicture = "start", mobileCards = "full" })).Read<SettingsDto>();
+        Assert.Equal(("start", "full"), (saved.RectPicture, saved.MobileCards));
+        var site = await _factory.CreateApiClient().GetAsync("/api/site").Read<Controllers.PublicController.SiteDto>();
+        Assert.Equal(("start", "full"), (site.RectPicture, site.MobileCards));
+
+        // Leaving them out (an older client) keeps the choices.
+        saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", Input())).Read<SettingsDto>();
+        Assert.Equal(("start", "full"), (saved.RectPicture, saved.MobileCards));
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, rectPicture = "middle" })).AssertInvalid("RectPicture", "invalid");
+        await (await _admin.PutAsJsonAsync("/api/admin/settings",
+            new { deliveryEnabled = true, pickupEnabled = true, mobileCards = "wide" })).AssertInvalid("MobileCards", "invalid");
+    }
+
+    [Fact]
     public async Task The_site_default_palette_applies_until_the_admin_picks_one()
     {
         using var factory = new ApiFactory(postgres, new() { ["Site:Settings:Palette"] = "olive" });

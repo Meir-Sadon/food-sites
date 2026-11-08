@@ -1504,6 +1504,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<bool>("MinimumOrderAppliesToPickup")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("MobileCards")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<DateTimeOffset?>("OpsTokenCreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1588,6 +1592,10 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<int?>("PortionsPerSupplyDate")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RectPicture")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("RestrictedClientMessage")
                         .HasColumnType("text");

@@ -66,7 +66,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Tracking.Ids Tracking,
         ItemBadges.Effective Badges,
         ClientActivity.Period InactiveAfter,
-        decimal? DepositMinOrder = null);
+        decimal? DepositMinOrder = null,
+        string RectPicture = "end",
+        string MobileCards = "standard");
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -96,6 +98,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? Spacing = null,
         string? TileGroups = null,
         string? ImageSize = null,
+        string? RectPicture = null,
+        string? MobileCards = null,
         bool? BitEnabled = null,
         bool? PayBoxEnabled = null,
         string? BitLink = null,
@@ -184,6 +188,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.TileGroups), "invalid");
         if (input.ImageSize is not null && !Finish.IsKnownImageSize(input.ImageSize))
             errors.Add(nameof(input.ImageSize), "invalid");
+        if (input.RectPicture is not null && !Finish.IsKnownRectPicture(input.RectPicture))
+            errors.Add(nameof(input.RectPicture), "invalid");
+        if (input.MobileCards is not null && !Finish.IsKnownMobileCards(input.MobileCards))
+            errors.Add(nameof(input.MobileCards), "invalid");
         if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !OwnerRecipients.IsValid(input.OwnerEmail, OwnerEmailMaxLength))
             errors.Add(nameof(input.OwnerEmail), "email");
         if (input.DeliveryPricing is not null && !Delivery.DeliveryPricing.IsKnown(input.DeliveryPricing))
@@ -268,6 +276,10 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.TileGroups = input.TileGroups;
         if (input.ImageSize is not null)
             settings.ImageSize = input.ImageSize;
+        if (input.RectPicture is not null)
+            settings.RectPicture = input.RectPicture;
+        if (input.MobileCards is not null)
+            settings.MobileCards = input.MobileCards;
         // Missing (an older client) keeps the address; an empty one turns the mails off.
         if (input.OwnerEmail is not null)
             settings.OwnerEmail = Clean(OwnerRecipients.Normalize(input.OwnerEmail));
@@ -450,7 +462,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Sites.Tracking.Of(s),
         ItemBadges.Of(s),
         ClientActivity.Of(s),
-        s.DepositMinOrder);
+        s.DepositMinOrder,
+        Finish.EffectiveRectPicture(s.RectPicture),
+        Finish.EffectiveMobileCards(s.MobileCards));
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

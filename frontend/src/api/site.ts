@@ -69,6 +69,14 @@ export type TileGroups = (typeof TILE_GROUPS)[number]
 export const IMAGE_SIZES = ['tiny', 'small', 'medium', 'large', 'huge'] as const
 export type ImageSize = (typeof IMAGE_SIZES)[number]
 
+/** Which side of a rectangle (the rect style) the picture with its add button is on: `end` is the left in Hebrew (default), `start` the right. */
+export const RECT_PICTURES = ['end', 'start'] as const
+export type RectPicture = (typeof RECT_PICTURES)[number]
+
+/** Tiles and rectangles on a phone: `standard`, or `full` (each one takes the whole row, edge to edge, one after another). */
+export const MOBILE_CARDS = ['standard', 'full'] as const
+export type MobileCards = (typeof MOBILE_CARDS)[number]
+
 /** The ids of the marketing tools the owner connected; an empty string means that tool is off. */
 export interface TrackingIds {
   /** Meta (Facebook / Instagram) Pixel id: digits from Events Manager. */
@@ -145,6 +153,8 @@ export interface Site {
   /** Only the tiles style uses it. */
   tileGroups: TileGroups
   imageSize: ImageSize
+  rectPicture: RectPicture
+  mobileCards: MobileCards
   /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
   deliveryPricing: DeliveryPricing
   /** The buttons on the About page: Facebook, Instagram, TikTok, then the custom links. Empty: none. */

@@ -253,6 +253,29 @@ describe('Tiles groups', () => {
   })
 })
 
+describe('Mobile cards and rectangle picture side', () => {
+  it('saves the picture side for rectangles and full-width cards for a phone', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    expect(within(form).queryByRole('radio', { name: /תמונה בימין/ })).not.toBeInTheDocument()
+    await user.click(within(form).getByRole('radio', { name: /מלבנים/ }))
+    await user.click(within(form).getByRole('radio', { name: /תמונה בימין/ }))
+    await user.click(within(form).getByRole('radio', { name: /שורה מלאה/ }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'rect', rectPicture: 'start', mobileCards: 'full' })
+  })
+})
+
 describe('Image size', () => {
   it('saves the rectangles style with a size, and names the size after the rectangles', async () => {
     let saved = settings()

@@ -56,7 +56,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         ItemBadges.Effective? Badges = null,
         IReadOnlyList<EntryPopup.Dto>? Popups = null,
         ClientActivity.Period? InactiveAfter = null,
-        string? GoogleClientId = null);
+        string? GoogleClientId = null,
+        string RectPicture = "end",
+        string MobileCards = "standard");
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -170,7 +172,9 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             ItemBadges.Of(s),
             EntryPopup.ForClient(await db.PopupSlots.AsNoTracking().ToListAsync()),
             ClientActivity.Of(s),
-            google.Value.IsConfigured ? google.Value.ClientId!.Trim() : null);
+            google.Value.IsConfigured ? google.Value.ClientId!.Trim() : null,
+            Finish.EffectiveRectPicture(s.RectPicture),
+            Finish.EffectiveMobileCards(s.MobileCards));
     }
 
     [HttpGet("menu")]

@@ -137,6 +137,8 @@ public class AppDbContext(
             e.Property(s => s.Spacing).HasMaxLength(Sites.Finish.MaxLength);
             e.Property(s => s.TileGroups).HasMaxLength(Sites.Finish.MaxLength);
             e.Property(s => s.ImageSize).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.RectPicture).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.MobileCards).HasMaxLength(Sites.Finish.MaxLength);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
         });
 
