@@ -64,6 +64,7 @@ describe('Admin Orders', () => {
       ],
     })
     renderAt('/admin/orders')
+    await userEvent.setup().click(await screen.findByRole('checkbox', { name: 'נמסרה' }))
     const report = await screen.findByRole('group', { name: 'דיווח השליח' })
     expect(within(report).getByText(/^השליח מסר ב־.* · הערת השליח: הושאר אצל שכן$/)).toBeInTheDocument()
     expect(within(report).getByRole('img', { name: 'תמונה מהמסירה של הזמנה #7' })).toHaveAttribute('src', 'https://images.test/p.jpg')
@@ -144,6 +145,29 @@ describe('Admin Orders', () => {
     for (const text of ['הזמנה #7', 'חיפה', '0501234567', 'להגיע בשקט', 'סביח', 'בלי חצילים', 'טחינה', 'ביצה'])
       expect(within(sheet).getAllByText(new RegExp(text)).length).toBeGreaterThan(0)
     vi.unstubAllGlobals()
+  })
+
+  it('hides delivered and cancelled orders until their status is ticked, and allows several statuses together', async () => {
+    fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [
+        order({ id: 1, name: 'חדשה', status: 'New' }),
+        order({ id: 2, name: 'נמסרה', status: 'Delivered' }),
+        order({ id: 3, name: 'מבוטלת', status: 'Cancelled', cancelReason: 'בדיקה' }),
+      ],
+    })
+    renderAt('/admin/orders')
+    expect(await screen.findByRole('article', { name: 'הזמנה #1' })).toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'הזמנה #2' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'הזמנה #3' })).not.toBeInTheDocument()
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('checkbox', { name: 'נמסרה' }))
+    expect(screen.getByRole('article', { name: 'הזמנה #2' })).toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'הזמנה #3' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('checkbox', { name: 'בוטלה' }))
+    expect(screen.getByRole('article', { name: 'הזמנה #3' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'הזמנה #1' })).toBeInTheDocument()
   })
 
   it('changes the status', async () => {
