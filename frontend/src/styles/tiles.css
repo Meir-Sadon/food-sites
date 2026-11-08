@@ -629,3 +629,43 @@
 :root[data-tile-groups='minimal'] .category:is([data-layout='tiles'], [data-layout='rect']) .category__dishes {
   padding-inline: 0.25rem;
 }
+
+/* ---------- Full-width cards on a phone (Settings → mobileCards = full; tiles and rectangles alike) ----------
+   On a narrow screen each tile or rectangle takes the whole row, edge to edge with no margin, one after another. The
+   category's frame and the page's side padding are dropped so nothing is left at the sides; a wide screen is not touched. */
+@media (max-width: 39.99rem) {
+  :root[data-mobile-cards='full'] .category:is([data-layout='tiles'], [data-layout='rect']) {
+    margin-inline: -1.25rem;
+    border-inline: 0;
+    border-radius: 0;
+  }
+
+  :root[data-mobile-cards='full'] .category:is([data-layout='tiles'], [data-layout='rect']) .category__dishes {
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    gap: 0;
+    padding: 0;
+  }
+
+  :root[data-mobile-cards='full'] .category[data-layout='tiles'] .dish--tile {
+    border-block-end: var(--line-width, 1px) solid var(--color-border);
+  }
+
+  :root[data-mobile-cards='full'] .category[data-layout='tiles'] .tile__media {
+    aspect-ratio: 4 / 3;
+    border-radius: 0;
+  }
+
+  :root[data-mobile-cards='full'] .category[data-layout='tiles'] .tile__body {
+    padding: 0.5rem 1.25rem 0.75rem;
+  }
+
+  :root[data-mobile-cards='full'] .category[data-layout='rect'] .dish--tile {
+    inline-size: 100%;
+    border-inline: 0;
+    border-block-start: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding-inline: 1.25rem;
+  }
+}

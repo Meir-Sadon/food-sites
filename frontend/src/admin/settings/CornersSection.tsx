@@ -33,7 +33,7 @@ export function CornersSection() {
     setSaving(true)
     setError(null)
     try {
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, imageSize: _is, tracking: _tr, badges: _bd, inactiveAfter: _ia, ...current } = await settingsApi.get()
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, imageSize: _is, rectPicture: _rp, mobileCards: _mc, tracking: _tr, badges: _bd, inactiveAfter: _ia, ...current } = await settingsApi.get()
       setData(await settingsApi.save({ ...current, corners }))
       setPicked(null)
       flash()
