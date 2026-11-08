@@ -121,6 +121,25 @@
   background: var(--btn-bg-hover, var(--color-accent-hover, var(--color-accent)));
 }
 
+/* Taking the amount to 0: while the pill collapses, the plus fades into the round add button that replaces the control
+   (same colours), so nothing flashes when the swap happens. */
+.tile__plus {
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.tile__stepper[data-leaving] .tile__plus,
+.tile__stepper[data-leaving] .tile__plus:hover:not(:disabled) {
+  background: var(--btn-bg, var(--color-surface));
+  color: var(--btn-text, var(--color-accent));
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile__plus {
+    transition: none;
+  }
+}
+
 .tile__plus:disabled {
   opacity: 0.4;
 }
