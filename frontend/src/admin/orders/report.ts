@@ -38,8 +38,22 @@ export function prepReport(order: AdminOrder, t: TFunction): string {
   const paid = order.isPaid
     ? t('admin.orders.report.paidWith', { method: t(`admin.orders.paidMethods.${order.paidWith ?? 'Unknown'}`) })
     : t('admin.orders.report.unpaid')
-  const prices = order.items.map(
-    (item) => `${item.parentItemId !== null ? '+ ' : ''}${name(item)} – ${formatMoney(item.lineTotal)}`,
+  const prices = order.items.flatMap((item) => [
+    `${item.parentItemId !== null ? '+ ' : ''}${name(item)} – ${formatMoney(item.lineTotal)}`,
+    ...(item.priceListName ? [`   ★ ${t('admin.priceLists.orderLine', { name: item.priceListName })}`] : []),
+    ...(item.regularUnitPrice && item.regularUnitPrice > item.unitPrice
+      ? [
+          `   ${t('admin.priceLists.orderDiscount', {
+            regular: formatMoney(item.regularUnitPrice),
+            price: formatMoney(item.unitPrice),
+            saved: formatMoney((item.regularUnitPrice - item.unitPrice) * item.quantity),
+          })}`,
+        ]
+      : []),
+  ])
+  const saved = order.items.reduce(
+    (sum, i) => (i.regularUnitPrice && i.regularUnitPrice > i.unitPrice ? sum + (i.regularUnitPrice - i.unitPrice) * i.quantity : sum),
+    0,
   )
 
   const details = [
@@ -63,6 +77,8 @@ export function prepReport(order: AdminOrder, t: TFunction): string {
     '',
     `*${t('admin.orders.report.prices')}*`,
     ...prices,
+    ...(saved > 0 ? [`${t('admin.priceLists.orderTotalDiscount')}: ${formatMoney(saved)}`] : []),
+    ...(order.deliveryDiscount ? [`${t('order.deliveryFee')}: ${formatMoney(order.deliveryFee ?? 0)} (${t('order.deliveryDiscount.partial', { amount: formatMoney(order.deliveryDiscount) })})`] : []),
     `${t('admin.orders.report.total')}: ${formatMoney(order.total)}`,
   ].join('\n')
 }

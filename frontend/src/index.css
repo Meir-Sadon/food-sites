@@ -5158,3 +5158,8 @@ label {
   font-weight: 400;
   text-decoration: underline;
 }
+
+.price-notes {
+  display: flex;
+  flex-direction: column;
+}
