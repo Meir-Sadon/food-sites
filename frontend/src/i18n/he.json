@@ -1299,7 +1299,6 @@
       "from": "מתאריך",
       "to": "עד תאריך",
       "statusFilter": "סטטוס",
-      "allStatuses": "כל הסטטוסים",
       "empty": "אין הזמנות בטווח שנבחר.",
       "dayCount_one": "הזמנה אחת",
       "dayCount_other": "{{count}} הזמנות",
