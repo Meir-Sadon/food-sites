@@ -125,16 +125,28 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     /// </summary>
     private async Task<HashSet<int>> OverbookedAsync(List<DateOnly> dates)
     {
-        var settings = await db.Settings.AsNoTracking().SingleAsync();
-        var limits = HourCapacity.LimitsOf(settings);
+        var limits = HourCapacity.LimitsOf(await db.Settings.AsNoTracking().SingleAsync());
         if (limits == new HourLimits(null, null, null) || dates.Count == 0)
             return [];
         var slotted = await db.Orders.AsNoTracking()
             .Where(o => dates.Contains(o.SupplyDate) && o.DeliveryHour != null && o.Status != OrderStatus.Cancelled)
-            .Select(o => new { o.Id, o.SupplyDate, o.DeliveryHour, o.DeliveryHourEnd, o.CreatedAt, o.FulfillmentMethod })
+            .Select(o => new { o.Id, o.SupplyDate, Hour = o.CapacityHour ?? o.DeliveryHour, o.CreatedAt, o.FulfillmentMethod })
             .ToListAsync();
-        return HourCapacity.Overbooked(limits, SlotTiming.Of(settings), slotted.Select(o =>
-            (o.Id, o.SupplyDate, new HourCapacity.Placed(o.FulfillmentMethod, o.DeliveryHour!.Value, o.DeliveryHourEnd), o.CreatedAt)));
+        var overbooked = new HashSet<int>();
+        // A pickup at a finer time counts in the slot of the site's length that holds it.
+        foreach (var slot in slotted.GroupBy(o => (o.SupplyDate, o.Hour)))
+        {
+            int deliveries = 0, pickups = 0;
+            // Every order takes a place, also one that came late, as when the order was placed.
+            foreach (var order in slot.OrderBy(o => o.CreatedAt).ThenBy(o => o.Id))
+            {
+                if (HourCapacity.IsFull(limits, order.FulfillmentMethod, deliveries, pickups))
+                    overbooked.Add(order.Id);
+                if (order.FulfillmentMethod == FulfillmentMethod.Delivery) deliveries++;
+                else pickups++;
+            }
+        }
+        return overbooked;
     }
 
     /// <summary>The total of each dish and option to cook for one supply day. Cancelled orders and orders still waiting for approval are left out.</summary>
@@ -320,6 +332,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         {
             var minutes = SlotTiming.Of(await db.Settings.AsNoTracking().SingleAsync()).MinutesFor(input.FulfillmentMethod == FulfillmentMethod.Delivery);
             order.DeliveryHourEnd = input.DeliveryHour.Value.AddMinutes(minutes);
+            // An hour the admin typed counts by itself.
+            order.CapacityHour = null;
         }
         order.DeliveryHour = input.DeliveryHour;
         order.FulfillmentMethod = input.FulfillmentMethod;

@@ -94,10 +94,10 @@ public class Settings
     /// <summary>Length of one hour slot a client picks, in minutes: 15, 30 or 60 (see <c>SlotTiming</c>).</summary>
     public int SlotMinutes { get; set; } = 60;
 
-    /// <summary>Length of a delivery slot; null means <see cref="SlotMinutes"/> (the single setting applies to both ways).</summary>
-    public int? DeliverySlotMinutes { get; set; }
-
-    /// <summary>Length of a pickup slot; null means <see cref="SlotMinutes"/>.</summary>
+    /// <summary>
+    /// How finely a client picks a pickup time: 15, 30 or 60 minutes. Null, or a value not below <see cref="SlotMinutes"/>, means the
+    /// same slots as delivery. A finer pickup time is still counted in the slot of <see cref="SlotMinutes"/> it falls in.
+    /// </summary>
     public int? PickupSlotMinutes { get; set; }
 
     /// <summary>Slots start on round marks of <see cref="SlotMinutes"/> (a range opening at 20:07 starts at 20:30), instead of at the range's own start.</summary>

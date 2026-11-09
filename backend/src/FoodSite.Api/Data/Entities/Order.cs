@@ -22,6 +22,12 @@ public class Order
 
     /// <summary>The end of that slot (00:00 for a slot ending at midnight); empty on an order without an hour.</summary>
     public TimeOnly? DeliveryHourEnd { get; set; }
+
+    /// <summary>
+    /// The start of the slot of the site's slot length that this order counts in, when it differs from <see cref="DeliveryHour"/>:
+    /// a pickup picked at a finer time (see <c>Settings.PickupSlotMinutes</c>). Empty means the order counts by its own hour.
+    /// </summary>
+    public TimeOnly? CapacityHour { get; set; }
     public FulfillmentMethod FulfillmentMethod { get; set; }
     public string? Notes { get; set; }
 

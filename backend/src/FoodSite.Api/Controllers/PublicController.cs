@@ -276,19 +276,11 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         var limits = HourCapacity.LimitsOf(settings);
         if (limits == new HourLimits(null, null, null))
             return new HourAvailabilityDto(false, false, false);
-        // Each way has the slot of its own length that starts at this hour (they differ when delivery and pickup are cut differently).
-        var timing = SlotTiming.Of(settings);
-        var slots = (await OpenDatesAsync()).FirstOrDefault(d => d.Date == date)?.Hours.Where(h => h.From == hour && h.Date is null).ToList() ?? [];
-        async Task<bool> FullAsync(FulfillmentMethod method)
-        {
-            var isDelivery = method == FulfillmentMethod.Delivery;
-            var slot = slots.FirstOrDefault(h => isDelivery ? h.DeliveryOk : h.PickupOk);
-            var (deliveries, pickups) = await HourCapacity.CountAsync(
-                db.Orders.AsNoTracking(), date, HourCapacity.Span(hour, slot?.To, timing.MinutesFor(isDelivery)), timing);
-            return HourCapacity.IsFull(limits, method, deliveries, pickups);
-        }
-        var delivery = await FullAsync(FulfillmentMethod.Delivery);
-        var pickup = await FullAsync(FulfillmentMethod.Pickup);
+        // A pickup at a finer time is counted in the slot of the site's length it falls in, which is where both ways are asked about.
+        var group = (await OpenDatesAsync()).FirstOrDefault(d => d.Date == date)?.Hours.FirstOrDefault(h => h.From == hour && h.Date is null && h.Group is not null)?.Group ?? hour;
+        var (deliveries, pickups) = await HourCapacity.CountAsync(db.Orders.AsNoTracking(), date, group);
+        var delivery = HourCapacity.IsFull(limits, FulfillmentMethod.Delivery, deliveries, pickups);
+        var pickup = HourCapacity.IsFull(limits, FulfillmentMethod.Pickup, deliveries, pickups);
         // "Full" is for both ways, which is what the single limit gives; a page that knows the two asks for the way it needs.
         return new HourAvailabilityDto(delivery && pickup, delivery, pickup);
     }

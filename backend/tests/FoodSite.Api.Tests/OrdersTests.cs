@@ -919,11 +919,11 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Delivery_and_pickup_slots_of_different_lengths_keep_their_own_limits_and_show_their_range()
+    public async Task A_finer_pickup_time_is_counted_in_the_hour_it_falls_in()
     {
         await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);
         var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
-        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHourDelivery = 2, OrdersPerHourPickup = 4, SlotMinutes = 60, DeliverySlotMinutes = 0, PickupSlotMinutes = 15 })).EnsureSuccessStatusCode();
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHourDelivery = 2, OrdersPerHourPickup = 4, SlotMinutes = 60, PickupSlotMinutes = 15 })).EnsureSuccessStatusCode();
         var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
         var hours = (await Menu()).SupplyDates[0].Hours!;
         Assert.Equal(4, hours.Count(h => h.DeliveryOk && !h.PickupOk));
@@ -933,25 +933,32 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         async Task<HourAvailabilityDto> Availability(string hour = "08:00") =>
             await _client.GetAsync($"/api/hour-availability?date={date}&hour={hour}").Read<HourAvailabilityDto>();
 
-        for (var i = 0; i < 4; i++)
-            Assert.False((await PlaceAt("Pickup")).HourFull);
-        // Four pickups fill the quarter, not the hour: deliveries are not held back by them, and the next quarter is free.
-        Assert.Equal((false, true), ((await Availability()).DeliveryFull, (await Availability()).PickupFull));
-        Assert.False((await Availability("08:15")).PickupFull);
-        var first = await PlaceAt("Delivery");
-        Assert.Equal((new TimeOnly(8, 0), new TimeOnly(9, 0)), (first.DeliveryHour, first.DeliveryHourEnd));
+        // Case A: two deliveries leave two pickups for the hour, whichever quarter they are picked in.
         Assert.False((await PlaceAt("Delivery")).HourFull);
-        Assert.True((await PlaceAt("Delivery")).HourFull);
-        var pickup = await PlaceAt("Pickup", "08:15");
-        Assert.Equal((new TimeOnly(8, 15), new TimeOnly(8, 30), false), (pickup.DeliveryHour, pickup.DeliveryHourEnd, pickup.HourFull));
-        // A pickup quarter is not offered to a delivery, nor a delivery hour that starts between the quarters to a pickup.
-        await (await Place(await ValidOrder(o => { o["deliveryHour"] = "08:15"; o["fulfillmentMethod"] = "Delivery"; }))).AssertInvalid("DeliveryHour", "deliveryHourUnavailable");
+        Assert.False((await PlaceAt("Delivery")).HourFull);
+        var first = await PlaceAt("Pickup", "08:15");
+        Assert.Equal((new TimeOnly(8, 15), new TimeOnly(8, 30), false), (first.DeliveryHour, first.DeliveryHourEnd, first.HourFull));
+        Assert.False((await PlaceAt("Pickup", "08:45")).HourFull);
+        Assert.True((await PlaceAt("Pickup", "08:30")).HourFull);
+        Assert.True((await Availability("08:15")).PickupFull);
+        // The next hour is untouched.
+        Assert.False((await Availability("09:00")).PickupFull);
+        Assert.False((await PlaceAt("Pickup", "09:15")).HourFull);
 
-        await using var db = _factory.CreateDbContext();
-        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("08:00–08:15 · איסוף עצמי"));
+        // Case B: two pickups leave two deliveries.
+        Assert.False((await PlaceAt("Pickup", "10:00")).HourFull);
+        Assert.False((await PlaceAt("Pickup", "10:45")).HourFull);
+        Assert.False((await PlaceAt("Delivery", "10:00")).HourFull);
+        Assert.False((await PlaceAt("Delivery", "10:00")).HourFull);
+        Assert.True((await PlaceAt("Delivery", "10:00")).HourFull);
+
+        // A pickup quarter is not offered to a delivery.
+        await (await Place(await ValidOrder(o => { o["deliveryHour"] = "08:15"; o["fulfillmentMethod"] = "Delivery"; }))).AssertInvalid("DeliveryHour", "deliveryHourUnavailable");
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("08:15–08:30 · איסוף עצמי"));
         var admin = await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>();
-        Assert.Contains(admin, o => o.Id == first.Id && o.DeliveryHourEnd == new TimeOnly(9, 0));
-        Assert.Single(admin.Where(o => o.HourFull && o.FulfillmentMethod == FulfillmentMethod.Delivery));
+        Assert.Contains(admin, o => o.Id == first.Id && o.DeliveryHourEnd == new TimeOnly(8, 30));
+        // The 08:30 pickup and the third 10:00 delivery came to a full hour.
+        Assert.Equal(2, admin.Count(o => o.HourFull));
     }
 
     [Fact]

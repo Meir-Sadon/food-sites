@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodSite.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261109202801_SeparateSlotLengths")]
-    partial class SeparateSlotLengths
+    [Migration("20261109210958_PickupTimePrecision")]
+    partial class PickupTimePrecision
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -687,6 +687,10 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("BuildingType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("text");
@@ -832,6 +836,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset?>("CancelledAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<TimeOnly?>("CapacityHour")
+                        .HasColumnType("time without time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -918,6 +925,10 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<DateOnly>("SupplyDate")
                         .HasColumnType("date");
+
+                    b.Property<decimal>("Tip")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal>("Total")
                         .HasPrecision(10, 2)
@@ -1471,12 +1482,18 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
 
-                    b.Property<int?>("DeliverySlotMinutes")
-                        .HasColumnType("integer");
-
                     b.Property<decimal?>("DepositMinOrder")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
+
+                    b.Property<bool>("EmergencyEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("EmergencyMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyPhone")
+                        .HasColumnType("text");
 
                     b.Property<string>("FontPair")
                         .HasMaxLength(20)
@@ -1653,6 +1670,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<bool>("TipsEnabled")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.ToTable("Settings");
@@ -1668,6 +1688,7 @@ namespace FoodSite.Api.Data.Migrations
                             BitEnabled = false,
                             DeliveryEnabled = true,
                             DeliveryLeadMinutes = 0,
+                            EmergencyEnabled = false,
                             MinimumOrderAppliesToPickup = true,
                             OwnerChangeMails = false,
                             PayBoxEnabled = false,
@@ -1675,7 +1696,8 @@ namespace FoodSite.Api.Data.Migrations
                             PickupLeadMinutes = 0,
                             PopupEnabled = false,
                             SiteDefaultsApplied = false,
-                            SlotMinutes = 60
+                            SlotMinutes = 60,
+                            TipsEnabled = false
                         });
                 });
 
@@ -1857,6 +1879,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateOnly?>("Birthday")
                         .HasColumnType("date");
 
+                    b.Property<string>("BuildingType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1914,6 +1940,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Apartment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BuildingType")
                         .IsRequired()
                         .HasColumnType("text");
 

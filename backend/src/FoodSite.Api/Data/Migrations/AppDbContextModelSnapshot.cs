@@ -833,6 +833,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset?>("CancelledAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<TimeOnly?>("CapacityHour")
+                        .HasColumnType("time without time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1475,9 +1478,6 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
-
-                    b.Property<int?>("DeliverySlotMinutes")
-                        .HasColumnType("integer");
 
                     b.Property<decimal?>("DepositMinOrder")
                         .HasPrecision(10, 2)

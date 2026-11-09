@@ -27,7 +27,6 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   ordersPerHourDelivery: null,
   ordersPerHourPickup: null,
   slotMinutes: 60,
-  deliverySlotMinutes: 0,
   pickupSlotMinutes: 0,
   alignSlots: false,
   deliveryLeadMinutes: 0,

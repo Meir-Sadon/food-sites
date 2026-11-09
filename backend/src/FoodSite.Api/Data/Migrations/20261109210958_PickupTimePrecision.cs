@@ -6,21 +6,21 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FoodSite.Api.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class SeparateSlotLengths : Migration
+    public partial class PickupTimePrecision : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
-                name: "DeliverySlotMinutes",
+                name: "PickupSlotMinutes",
                 table: "Settings",
                 type: "integer",
                 nullable: true);
 
-            migrationBuilder.AddColumn<int>(
-                name: "PickupSlotMinutes",
-                table: "Settings",
-                type: "integer",
+            migrationBuilder.AddColumn<TimeOnly>(
+                name: "CapacityHour",
+                table: "Orders",
+                type: "time without time zone",
                 nullable: true);
 
             migrationBuilder.AddColumn<TimeOnly>(
@@ -29,7 +29,7 @@ namespace FoodSite.Api.Data.Migrations
                 type: "time without time zone",
                 nullable: true);
 
-            // Orders already placed get the end of their slot from the length the site cuts slots to today (time wraps at midnight: 00:00 is the end of a slot reaching 24:00).
+            // Orders already placed get the end of their slot from the slot length the site uses today (time wraps at midnight: 00:00 is the end of a slot reaching 24:00).
             migrationBuilder.Sql(
                 """
                 UPDATE "Orders" o
@@ -42,20 +42,20 @@ namespace FoodSite.Api.Data.Migrations
                 table: "Settings",
                 keyColumn: "Id",
                 keyValue: 1,
-                columns: new[] { "DeliverySlotMinutes", "PickupSlotMinutes" },
-                values: new object[] { null, null });
+                column: "PickupSlotMinutes",
+                value: null);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "DeliverySlotMinutes",
+                name: "PickupSlotMinutes",
                 table: "Settings");
 
             migrationBuilder.DropColumn(
-                name: "PickupSlotMinutes",
-                table: "Settings");
+                name: "CapacityHour",
+                table: "Orders");
 
             migrationBuilder.DropColumn(
                 name: "DeliveryHourEnd",

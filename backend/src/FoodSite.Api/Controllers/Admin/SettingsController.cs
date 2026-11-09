@@ -40,7 +40,6 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         int? OrdersPerHourDelivery,
         int? OrdersPerHourPickup,
         int SlotMinutes,
-        int DeliverySlotMinutes,
         int PickupSlotMinutes,
         bool AlignSlots,
         int DeliveryLeadMinutes,
@@ -113,7 +112,6 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         decimal? DeliveryBaseFee = null,
         decimal? DeliveryDiscountMinOrder = null,
         int? SlotMinutes = null,
-        int? DeliverySlotMinutes = null,
         int? PickupSlotMinutes = null,
         bool? AlignSlots = null,
         int? DeliveryLeadMinutes = null,
@@ -158,9 +156,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.OrdersPerHourPickup), "invalid");
         if (input.SlotMinutes is { } slotMinutes && !SlotTiming.AllowedMinutes.Contains(slotMinutes))
             errors.Add(nameof(input.SlotMinutes), "invalid");
-        // 0 is "the same as the general length".
-        if (input.DeliverySlotMinutes is { } deliverySlot && deliverySlot != 0 && !SlotTiming.AllowedMinutes.Contains(deliverySlot))
-            errors.Add(nameof(input.DeliverySlotMinutes), "invalid");
+        // 0 is "the same as the slot length"; a value not finer than the slot length is ignored (see SlotTiming).
         if (input.PickupSlotMinutes is { } pickupSlot && pickupSlot != 0 && !SlotTiming.AllowedMinutes.Contains(pickupSlot))
             errors.Add(nameof(input.PickupSlotMinutes), "invalid");
         if (input.DeliveryLeadMinutes is < 0 or > MaxLeadMinutes)
@@ -254,7 +250,6 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             : input.OrdersPerHour is > 0 ? input.OrdersPerHour : null;
         // Missing (an older client) keeps the slot timing.
         if (input.SlotMinutes is { } minutes) settings.SlotMinutes = minutes;
-        if (input.DeliverySlotMinutes is { } deliveryMinutes) settings.DeliverySlotMinutes = deliveryMinutes == 0 ? null : deliveryMinutes;
         if (input.PickupSlotMinutes is { } pickupMinutes) settings.PickupSlotMinutes = pickupMinutes == 0 ? null : pickupMinutes;
         if (input.AlignSlots is { } align) settings.AlignSlots = align;
         if (input.DeliveryLeadMinutes is { } deliveryLead) settings.DeliveryLeadMinutes = deliveryLead;
@@ -454,7 +449,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.BitEnabled, s.PayBoxEnabled, s.BitLink, s.PayBoxLink, s.MinimumOrderAmount,
         s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.OrdersPerHourDelivery, s.OrdersPerHourPickup,
-        SlotTiming.Of(s).SlotMinutes, s.DeliverySlotMinutes is null ? 0 : SlotTiming.Of(s).DeliveryMinutes, s.PickupSlotMinutes is null ? 0 : SlotTiming.Of(s).PickupMinutes, s.AlignSlots, s.DeliveryLeadMinutes, s.PickupLeadMinutes, s.PortionsPerSupplyDate,
+        SlotTiming.Of(s).SlotMinutes, SlotTiming.Of(s).PickupSlotMinutes ?? 0, s.AlignSlots, s.DeliveryLeadMinutes, s.PickupLeadMinutes, s.PortionsPerSupplyDate,
         SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
         OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),

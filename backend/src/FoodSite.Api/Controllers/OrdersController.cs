@@ -206,9 +206,7 @@ public class OrdersController(
         var hourFull = false;
         if (hour is { } slot)
         {
-            var timing = SlotTiming.Of(settings);
-            var (deliveries, pickups) = await HourCapacity.CountAsync(
-                db.Orders.AsNoTracking(), supplyDate, HourCapacity.Span(slot, chosenSlot?.To, timing.MinutesFor(input.FulfillmentMethod == FulfillmentMethod.Delivery)), timing, ct);
+            var (deliveries, pickups) = await HourCapacity.CountAsync(db.Orders.AsNoTracking(), supplyDate, chosenSlot?.Group ?? slot, ct);
             hourFull = HourCapacity.IsFull(HourCapacity.LimitsOf(settings), input.FulfillmentMethod, deliveries, pickups);
         }
 
@@ -235,6 +233,7 @@ public class OrdersController(
             SupplyDate = supplyDate,
             DeliveryHour = hour,
             DeliveryHourEnd = hour is null ? null : chosenSlot?.To,
+            CapacityHour = chosenSlot?.Group,
             FulfillmentMethod = input.FulfillmentMethod,
             Notes = Clean(input.Notes),
             // An older page still sends the combined "Transfer": it becomes whichever service is on.
