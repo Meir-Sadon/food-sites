@@ -2,8 +2,9 @@ import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { RegisteredClients } from '../../api/admin'
-import { adminSession, fakeApi } from '../../test/fakeApi'
+import { adminSession, fakeApi, invalid } from '../../test/fakeApi'
 import { renderAt } from '../../test/render'
+import { publicApi } from '../../test/catalogData'
 
 const clients: RegisteredClients = {
   total: 2,
@@ -33,5 +34,42 @@ describe('registered clients', () => {
     fakeApi({ ...adminSession, 'GET /api/admin/clients': () => ({ total: 0, clients: [] }) })
     renderAt('/admin/clients')
     expect(await screen.findByText('עוד לא נרשמו לקוחות.')).toBeInTheDocument()
+  })
+
+  it('registers a client for the owner and shows the field messages', async () => {
+    let taken = true
+    const api = fakeApi({
+      ...adminSession,
+      'GET /api/admin/clients': () => clients,
+      'POST /api/admin/clients': () => (taken ? invalid({ phone: ['phone'] }) : { ...clients.clients[1], id: 9 }),
+    })
+    const user = userEvent.setup()
+    renderAt('/admin/clients')
+
+    await user.click(await screen.findByText('הוספת לקוח', { selector: 'summary' }))
+    await user.type(screen.getByLabelText('שם מלא'), 'סבתא רחל')
+    await user.type(screen.getByLabelText('טלפון'), '12')
+    await user.click(screen.getByRole('button', { name: 'הוספת הלקוח' }))
+    expect(await screen.findByText('מספר הטלפון לא תקין.')).toBeInTheDocument()
+
+    taken = false
+    await user.click(screen.getByRole('button', { name: 'הוספת הלקוח' }))
+    expect(api.sent('POST', '/api/admin/clients')).toHaveLength(2)
+    expect(api.sent('POST', '/api/admin/clients')[1].body).toMatchObject({ fullName: 'סבתא רחל', phone: '12' })
+  })
+
+  it('opens the order page as the client', async () => {
+    const api = fakeApi({
+      ...publicApi,
+      ...adminSession,
+      'GET /api/admin/clients': () => clients,
+      'POST /api/admin/clients/(\\d+)/order-session': () => undefined,
+      'GET /api/account/me': () => ({ status: 401, body: {} }),
+    } as Parameters<typeof fakeApi>[0])
+    const user = userEvent.setup()
+    renderAt('/admin/clients')
+
+    await user.click((await screen.findAllByRole('button', { name: /הזמנה עבור הלקוח/ }))[0])
+    expect(api.sent('POST', '/api/admin/clients/2/order-session')).toHaveLength(1)
   })
 })

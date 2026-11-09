@@ -30,6 +30,13 @@ public abstract class PublicControllerBase : ControllerBase
         return result.Succeeded && int.TryParse(result.Principal?.FindFirst("sub")?.Value, out var id) ? id : null;
     }
 
+    /// <summary>Whether the session is one the business owner opened as a client (<see cref="UserTokenService.OwnerClaim"/>).</summary>
+    protected async Task<bool> SessionOpenedByOwnerAsync()
+    {
+        var result = await HttpContext.AuthenticateAsync(UserTokenService.Scheme);
+        return result.Succeeded && result.Principal?.FindFirst(UserTokenService.OwnerClaim)?.Value == "1";
+    }
+
     /// <summary>
     /// The logged-in client's price lists for today, while the site has them on; a guest (or the phone typed into an
     /// order) never gets them, so only the session's own account decides.

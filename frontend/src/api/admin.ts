@@ -128,6 +128,23 @@ export interface RegisteredClients {
 
 export const listClients = () => apiJson<RegisteredClients>('/api/admin/clients')
 
+export interface NewClientInput {
+  fullName: string
+  phone: string
+  email: string
+  city: string
+  street: string
+  houseNumber: string
+  apartment: string
+}
+
+export const clientsApi = {
+  /** Registers a client for someone who does not order on the site. */
+  create: (input: NewClientInput) => apiJson<RegisteredClient>('/api/admin/clients', send('POST', input)),
+  /** Opens the client's session in this browser, marked as the owner's, so the order page orders as them. */
+  openOrderSession: (id: number) => apiJson<void>(`/api/admin/clients/${id}/order-session`, send('POST')),
+}
+
 /** Restricted clients (FoodSite.Api `RestrictedClientsController`): admin-only, never shown to clients. */
 export interface RestrictedClients {
   /** The admin's own message text; null means the built-in one. */

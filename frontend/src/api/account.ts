@@ -21,6 +21,8 @@ export interface Profile {
   ethnicBackground: string | null
   /** The saved addresses, the default one first. The address fields above are the default one. */
   addresses: SavedAddress[]
+  /** The business owner opened this session as the client, to place an order for them. */
+  openedByOwner?: boolean
 }
 
 /** One of the client's saved addresses (home, work...). */

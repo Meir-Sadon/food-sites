@@ -44,12 +44,15 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     }
 
     /// <param name="DeliveryFees">The part of <paramref name="Sales"/> that is delivery fees.</param>
+    /// <param name="OwnerOrders">How many of <paramref name="Orders"/> the business owner placed for a client.</param>
+    /// <param name="OwnerSales">The part of <paramref name="Sales"/> from those orders.</param>
     /// <param name="Tips">The tips for couriers on these orders. Not part of <paramref name="Sales"/>: no commission is charged on them.</param>
     /// <param name="Bands">The same orders split by their total, when the summary was asked for <c>bands</c>; null otherwise.</param>
     /// <param name="Phones">The part of these orders placed with each of the phones the summary was asked for (only phones with orders); null when it was not asked for <c>phones</c>.</param>
     public record PeriodDto(
         DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees, decimal Tips = 0m, IReadOnlyList<BandDto>? Bands = null,
-        IReadOnlyList<PhoneTotalsDto>? Phones = null);
+        IReadOnlyList<PhoneTotalsDto>? Phones = null,
+        int OwnerOrders = 0, decimal OwnerSales = 0m);
 
     /// <summary>A period's orders placed with one phone (local form, "0501234567"); they are counted in the period's own figures too.</summary>
     /// <param name="Bands">Split by order total like the period's own, when the summary was asked for <c>bands</c>.</param>
@@ -87,9 +90,12 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     /// <param name="ByStatus">Every state's orders and sales in the range, whatever <paramref name="Statuses"/> asks for.</param>
     /// <param name="DeliveryFees">The part of <paramref name="Sales"/> that is delivery fees.</param>
     /// <param name="Tips">The tips for couriers, kept out of every sales figure.</param>
+    /// <param name="OwnerOrders">How many of <paramref name="Orders"/> the business owner placed for a client (billed apart; <paramref name="Orders"/> still counts them).</param>
+    /// <param name="OwnerSales">The part of <paramref name="Sales"/> from those orders.</param>
     public record SummaryDto(
         DateOnly From, DateOnly To, SummaryPeriod Period, int Orders, decimal Sales, IReadOnlyList<PeriodDto> Periods,
-        IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus, decimal DeliveryFees, decimal Tips = 0m);
+        IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus, decimal DeliveryFees, decimal Tips = 0m,
+        int OwnerOrders = 0, decimal OwnerSales = 0m);
 
     public record CancellationItemDto(string DishName, string? OptionLabel, decimal Quantity, decimal LineTotal);
 
@@ -98,7 +104,7 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     public record CancellationDto(
         int OrderId, string? Reason, DateTimeOffset? CancelledAt, DateTimeOffset OrderedAt, DateOnly SupplyDate, TimeOnly? DeliveryHour,
         string ClientName, string Phone, FulfillmentMethod FulfillmentMethod, string? Address, PaymentMethod PaymentMethod, bool IsPaid,
-        decimal Total, decimal DeliveryFee, IReadOnlyList<CancellationItemDto> Items);
+        decimal Total, decimal DeliveryFee, IReadOnlyList<CancellationItemDto> Items, bool PlacedByOwner = false);
 
     public record CancellationsDto(DateOnly From, DateOnly To, int Orders, decimal Total, IReadOnlyList<CancellationDto> Cancellations);
 
@@ -190,11 +196,11 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
 
         var all = (await db.Orders.AsNoTracking()
                 .Where(o => o.SupplyDate >= start && o.SupplyDate <= end)
-                .Select(o => new { o.SupplyDate, Sale = o.Total - o.Tip, o.DeliveryFee, o.Tip, o.Phone, o.Status, Held = o.NeedsReview || (o.DepositRequired && !o.DepositPaid) })
+                .Select(o => new { o.SupplyDate, Sale = o.Total - o.Tip, o.DeliveryFee, o.Tip, o.Phone, o.PlacedByOwner, o.Status, Held = o.NeedsReview || (o.DepositRequired && !o.DepositPaid) })
                 .ToListAsync(ct))
             .Select(o => new
             {
-                o.SupplyDate, o.Sale, o.DeliveryFee, o.Tip, Phone = split is null ? null : PhoneNumber.Normalize(o.Phone),
+                o.SupplyDate, o.Sale, o.DeliveryFee, o.Tip, o.PlacedByOwner, Phone = split is null ? null : PhoneNumber.Normalize(o.Phone),
                 State = OrderState.Of(o.Status, o.Held),
             })
             .ToList();
@@ -219,13 +225,15 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                     .OrderBy(p => p.Key, StringComparer.Ordinal)
                     .Select(p => new PhoneTotalsDto(p.Key, p.Count(), p.Sum(o => o.Sale), p.Sum(o => o.DeliveryFee), p.Sum(o => o.Tip),
                         Bands(p.Select(o => (o.Sale, o.DeliveryFee, o.Tip)))))
-                    .ToList()))
+                    .ToList(),
+                g.Count(o => o.PlacedByOwner), g.Where(o => o.PlacedByOwner).Sum(o => o.Sale)))
             .ToList();
         var byStatus = OrderState.All
             .Select(state => new StatusDto(state, all.Count(o => o.State == state), all.Where(o => o.State == state).Sum(o => o.Sale)))
             .ToList();
         return new SummaryDto(
-            start, end, period, orders.Count, orders.Sum(o => o.Sale), periods, counted, byStatus, orders.Sum(o => o.DeliveryFee), orders.Sum(o => o.Tip));
+            start, end, period, orders.Count, orders.Sum(o => o.Sale), periods, counted, byStatus, orders.Sum(o => o.DeliveryFee), orders.Sum(o => o.Tip),
+            orders.Count(o => o.PlacedByOwner), orders.Where(o => o.PlacedByOwner).Sum(o => o.Sale));
     }
 
     /// <summary>
@@ -270,7 +278,8 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                 o.Id, o.CancelReason, o.CancelledAt, o.CreatedAt, o.SupplyDate, o.DeliveryHour, o.Name, o.Phone, o.FulfillmentMethod,
                 o.FulfillmentMethod == FulfillmentMethod.Delivery ? o.Address : null, o.PaymentMethod, o.IsPaid, o.Total, o.DeliveryFee,
                 o.Items.OrderBy(i => i.Id)
-                    .Select(i => new CancellationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.LineTotal)).ToList()))
+                    .Select(i => new CancellationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.LineTotal)).ToList(),
+                o.PlacedByOwner))
             .ToList();
         return new CancellationsDto(start, end, count, total, list);
     }

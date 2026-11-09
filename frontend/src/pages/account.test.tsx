@@ -551,3 +551,20 @@ describe('Features the site has turned off', () => {
     expect(api.sent('GET', '/api/account/favorites')).toHaveLength(0)
   })
 })
+
+describe('The owner ordering as a client', () => {
+  it('shows who the order is for, and ending it logs the client out', async () => {
+    const { api, user } = open('/', {
+      'GET /api/account/me': () => ({ ...profile, openedByOwner: true }),
+      'GET /api/account/orders': () => [],
+      'GET /api/account/favorites': () => [],
+      'POST /api/account/logout': () => undefined,
+      'GET /api/admin/me': () => ({ role: 'admin', actor: 'owner', username: 'admin' }),
+      'GET /api/admin/clients': () => ({ total: 0, clients: [] }),
+    })
+    expect(await screen.findByText('מזמינים עבור דנה כהן. ההזמנה תסומן כהזמנה של בעל העסק.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'סיום וחזרה ללקוחות' }))
+    expect(await screen.findByText('עוד לא נרשמו לקוחות.')).toBeInTheDocument()
+    expect(api.sent('POST', '/api/account/logout')).toHaveLength(1)
+  })
+})

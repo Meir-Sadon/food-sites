@@ -108,6 +108,11 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
           {t('admin.orders.hourFull')}
         </p>
       )}
+      {order.placedByOwner && (
+        <p role="status" className="notice">
+          {t('admin.orders.placedByOwner')}
+        </p>
+      )}
       {order.needsReview && (
         <p role="status" className="notice notice--warning">
           {t('admin.orders.needsReview')}{' '}

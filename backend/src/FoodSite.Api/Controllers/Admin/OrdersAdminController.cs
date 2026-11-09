@@ -58,7 +58,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         bool Restricted = false,
         bool DepositRequired = false,
         bool DepositPaid = false,
-        decimal Tip = 0m);
+        decimal Tip = 0m,
+        bool PlacedByOwner = false);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -406,7 +407,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         restricted.Contains(o.Phone),
         o.DepositRequired,
         o.DepositPaid,
-        o.Tip);
+        o.Tip,
+        o.PlacedByOwner);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null
