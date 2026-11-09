@@ -287,6 +287,42 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_summary_gives_each_asked_phones_part_of_a_period()
+    {
+        await using (var db = _factory.CreateDbContext())
+        {
+            Order Make(string phone, DateOnly date, decimal total, decimal fee = 0, decimal tip = 0) => new()
+            {
+                Phone = phone, Name = "דנה", Address = "אשקלון", SupplyDate = date, Total = total, DeliveryFee = fee, Tip = tip,
+                Status = OrderStatus.New, CreatedAt = DateTimeOffset.UtcNow,
+            };
+            db.Orders.AddRange(
+                Make("0501234567", new(2030, 1, 6), 110, fee: 15, tip: 10),
+                Make("0501234567", new(2030, 1, 7), 600),
+                Make("0521111111", new(2030, 1, 8), 200),
+                Make("0539999999", new(2030, 1, 9), 300));
+            await db.SaveChangesAsync();
+        }
+        var console = await ConsoleAsync();
+
+        // Any common way of writing a phone works; a phone with no orders is left out.
+        var months = await console.GetAsync(
+            "/api/ops/summary?from=2030-01-01&to=2030-01-31&phones=%2B972-50-123-4567,0521111111,0547777777&bands=500").Read<SummaryDto>();
+        var period = Assert.Single(months.Periods);
+        Assert.Equal((4, 1200m), (period.Orders, period.Sales));
+        Assert.Equal(2, period.Phones!.Count);
+        var first = period.Phones[0];
+        Assert.Equal(("0501234567", 2, 700m, 15m, 10m), (first.Phone, first.Orders, first.Sales, first.DeliveryFees, first.Tips));
+        Assert.Equal([new BandDto(0, 1, 100, 15, 10), new BandDto(500, 1, 600, 0)], first.Bands);
+        Assert.Equal(("0521111111", 1, 200m), (period.Phones[1].Phone, period.Phones[1].Orders, period.Phones[1].Sales));
+
+        // Without phones nothing is split.
+        Assert.Null((await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-01-31").Read<SummaryDto>()).Periods[0].Phones);
+        foreach (var bad in new[] { "abc", "123", "," })
+            await (await console.GetAsync($"/api/ops/summary?phones={bad}")).AssertInvalid("phones", "invalid");
+    }
+
+    [Fact]
     public async Task The_usage_report_is_the_admins_numbers_for_the_console()
     {
         await using (var db = _factory.CreateDbContext())
