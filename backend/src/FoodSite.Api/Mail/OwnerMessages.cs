@@ -116,7 +116,7 @@ public static class OwnerMessages
             $"תאריך: {order.SupplyDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)}",
         };
         if (order.DeliveryHour is { } hour)
-            when.Add($"שעה: {hour.ToString("HH:mm", CultureInfo.InvariantCulture)}");
+            when.Add($"שעה: {OrderMessages.TimeRange(hour, order.DeliveryHourEnd)}");
         if (delivery)
             when.Add($"כתובת: {order.Address}");
         sections.Add(new("אספקה", when));

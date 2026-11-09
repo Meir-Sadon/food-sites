@@ -196,6 +196,21 @@ public class SupplyCalendarTests
     }
 
     [Fact]
+    public void Pickup_can_be_cut_finer_than_delivery_and_is_counted_in_the_slot_it_falls_in()
+    {
+        var ranges = new[] { new ShabbatSchedule.HoursRange(new TimeSpan(8, 0, 0), new TimeSpan(9, 30, 0)) };
+        var slots = SupplyCalendar.HourSlots(ranges, new SlotTiming(60, PickupSlotMinutes: 15));
+        var deliveries = slots.Where(s => s.DeliveryOk).ToList();
+        var pickups = slots.Where(s => s.PickupOk).ToList();
+        Assert.Equal([new SupplyCalendar.HourSlot(new(8, 0), new(9, 0), PickupOk: false), new SupplyCalendar.HourSlot(new(9, 0), new(9, 30), PickupOk: false)], deliveries);
+        Assert.Equal(6, pickups.Count);
+        Assert.Equal(new SupplyCalendar.HourSlot(new(8, 45), new(9, 0), DeliveryOk: false, Group: new TimeOnly(8, 0)), pickups[3]);
+        Assert.Equal(new SupplyCalendar.HourSlot(new(9, 15), new(9, 30), DeliveryOk: false, Group: new TimeOnly(9, 0)), pickups[^1]);
+        // A precision that is not finer than the slot length changes nothing.
+        Assert.All(SupplyCalendar.HourSlots(ranges, SlotTiming.Of(new Settings { SlotMinutes = 30, PickupSlotMinutes = 60 })), x => Assert.True(x.DeliveryOk && x.PickupOk && x.Group is null));
+    }
+
+    [Fact]
     public void A_range_can_allow_only_delivery_or_only_pickup()
     {
         var day = Day(DayOfWeek.Thursday, new(10, 0), new(12, 0));

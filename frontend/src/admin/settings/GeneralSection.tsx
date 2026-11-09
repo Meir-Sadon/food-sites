@@ -386,6 +386,28 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
             </label>
             <FieldError errors={errors} field="slotMinutes" id="settings-slotMinutes-error" />
           </span>
+          <span className="field">
+            <span className="with-info">
+              <label htmlFor="settings-pickupSlotMinutes">{t('admin.settings.pickupSlotMinutes')}</label>
+              <Info text={t('admin.settings.pickupSlotMinutesHint')} about={t('admin.settings.pickupSlotMinutes')} />
+            </span>
+            <select
+              id="settings-pickupSlotMinutes"
+              className="input-narrow"
+              value={settings.pickupSlotMinutes}
+              onChange={(e) => change({ pickupSlotMinutes: Number(e.target.value) })}
+            >
+              <option value={0}>{t('admin.settings.slotSameAsGeneral')}</option>
+              {[15, 30, 60]
+                .filter((minutes) => minutes < settings.slotMinutes)
+                .map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {t(`admin.settings.slotOptions.${minutes}`)}
+                  </option>
+                ))}
+            </select>
+            <FieldError errors={errors} field="pickupSlotMinutes" id="settings-pickupSlotMinutes-error" />
+          </span>
           {(['delivery', 'pickup'] as const).map((way) => {
             const field = `${way}LeadMinutes` as const
             return (

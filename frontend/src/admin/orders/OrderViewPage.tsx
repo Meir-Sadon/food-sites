@@ -7,7 +7,7 @@ import { ordersAdminApi, type AdminOrder } from '../../api/operations'
 import { ItemAnswers } from '../../components/ItemAnswers'
 import { DeliveryFeePrice } from '../../order/DiscountedPrice'
 import { DeliveryFeeNote } from '../../order/DeliveryFeeNote'
-import { formatMoney, formatTime } from '../../order/format'
+import { formatHourRange, formatMoney } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { whatsAppShareUrl } from '../messages/compose'
 import { Loading } from '../ui'
@@ -64,7 +64,7 @@ export function OrderViewPage() {
         </p>
         <p>
           {formatDate(order.supplyDate)}
-          {order.deliveryHour ? ` · ${t('admin.orders.hourAt', { hour: formatTime(order.deliveryHour) })}` : ''}
+          {order.deliveryHour ? ` · ${t('admin.orders.hourAt', { hour: formatHourRange(order.deliveryHour, order.deliveryHourEnd, t) })}` : ''}
           {' · '}
           {t(delivery ? 'admin.orders.delivery' : 'admin.orders.pickup')}
           {delivery && order.address ? `: ${order.address}` : ''}

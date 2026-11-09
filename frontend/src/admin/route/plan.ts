@@ -27,7 +27,7 @@ export interface Stop {
   late: boolean
 }
 
-/** One hour slot; the last slot of a day may be shorter, which the order doesn't record. */
+/** The window of an order saved without an end (placed before slots recorded one). */
 const SLOT_MINUTES = 60
 /** Leave the kitchen at this time when no order asks for an hour. */
 export const DEFAULT_START = 9 * 60
@@ -35,6 +35,13 @@ export const DEFAULT_START = 9 * 60
 export const toMinutes = (time: string) => {
   const [h, m] = time.split(':').map(Number)
   return h * 60 + m
+}
+
+/** How long an order's window is: its start to its end (00:00 is midnight), or an hour when the order has no end. */
+export function windowMinutes(from: string, end?: string | null): number {
+  if (!end) return SLOT_MINUTES
+  const length = toMinutes(end) - toMinutes(from)
+  return length > 0 ? length : length + 1440
 }
 
 export const formatMinutes = (minutes: number) => {
@@ -111,7 +118,7 @@ export function schedule(
       leave: arrive - travel,
       arrive,
       windowFrom,
-      late: windowFrom !== null && arrive > windowFrom + SLOT_MINUTES,
+      late: windowFrom !== null && arrive > windowFrom + windowMinutes(order.deliveryHour!, order.deliveryHourEnd),
     })
     free = arrive + estimate.atStop
     at = order.address

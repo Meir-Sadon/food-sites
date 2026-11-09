@@ -42,6 +42,19 @@ const summary: CookingSummary = {
 }
 
 describe('Admin Orders', () => {
+  it('shows the whole window of an order, and only the start for one saved without an end', async () => {
+    fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [
+        order({ id: 7, deliveryHour: '11:00:00', deliveryHourEnd: '12:00:00' }),
+        order({ id: 8, deliveryHour: '09:00:00' }),
+      ],
+    })
+    renderAt('/admin/orders')
+    expect(within(await screen.findByRole('article', { name: 'הזמנה #7' })).getByText(/בשעה 11:00 עד 12:00/)).toBeInTheDocument()
+    expect(within(screen.getByRole('article', { name: 'הזמנה #8' })).getByText(/בשעה 09:00 ·/)).toBeInTheDocument()
+  })
+
   it('shows the hour the client asked for and flags an order that came when the hour was full', async () => {
     fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [order({ deliveryHour: '09:00:00', hourFull: true })] })
     renderAt('/admin/orders')

@@ -885,7 +885,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal((new TimeOnly(9, 0), false), (placed.DeliveryHour, placed.HourFull));
         await using var db = _factory.CreateDbContext();
         Assert.Equal(new TimeOnly(9, 0), (await db.Orders.SingleAsync()).DeliveryHour);
-        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("09:00 · משלוח"));
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("09:00–10:00 · משלוח"));
     }
 
     [Fact]
@@ -958,6 +958,49 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         var single = await (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerHour = 6, OrdersPerHourDelivery = null, OrdersPerHourPickup = null })).Read<SettingsDto>();
         Assert.Equal((6, null, null), (single.OrdersPerHour, single.OrdersPerHourDelivery, single.OrdersPerHourPickup));
         await (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerHourDelivery = -1 })).AssertInvalid("OrdersPerHourDelivery", "invalid");
+    }
+
+    [Fact]
+    public async Task A_finer_pickup_time_is_counted_in_the_hour_it_falls_in()
+    {
+        await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHourDelivery = 2, OrdersPerHourPickup = 4, SlotMinutes = 60, PickupSlotMinutes = 15 })).EnsureSuccessStatusCode();
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        var hours = (await Menu()).SupplyDates[0].Hours!;
+        Assert.Equal(4, hours.Count(h => h.DeliveryOk && !h.PickupOk));
+        Assert.Equal(16, hours.Count(h => h.PickupOk && !h.DeliveryOk));
+        async Task<ConfirmationDto> PlaceAt(string method, string hour = "08:00") =>
+            await (await Place(await ValidOrder(o => { o["deliveryHour"] = hour; o["fulfillmentMethod"] = method; }))).Read<ConfirmationDto>();
+        async Task<HourAvailabilityDto> Availability(string hour = "08:00") =>
+            await _client.GetAsync($"/api/hour-availability?date={date}&hour={hour}").Read<HourAvailabilityDto>();
+
+        // Case A: two deliveries leave two pickups for the hour, whichever quarter they are picked in.
+        Assert.False((await PlaceAt("Delivery")).HourFull);
+        Assert.False((await PlaceAt("Delivery")).HourFull);
+        var first = await PlaceAt("Pickup", "08:15");
+        Assert.Equal((new TimeOnly(8, 15), new TimeOnly(8, 30), false), (first.DeliveryHour, first.DeliveryHourEnd, first.HourFull));
+        Assert.False((await PlaceAt("Pickup", "08:45")).HourFull);
+        Assert.True((await PlaceAt("Pickup", "08:30")).HourFull);
+        Assert.True((await Availability("08:15")).PickupFull);
+        // The next hour is untouched.
+        Assert.False((await Availability("09:00")).PickupFull);
+        Assert.False((await PlaceAt("Pickup", "09:15")).HourFull);
+
+        // Case B: two pickups leave two deliveries.
+        Assert.False((await PlaceAt("Pickup", "10:00")).HourFull);
+        Assert.False((await PlaceAt("Pickup", "10:45")).HourFull);
+        Assert.False((await PlaceAt("Delivery", "10:00")).HourFull);
+        Assert.False((await PlaceAt("Delivery", "10:00")).HourFull);
+        Assert.True((await PlaceAt("Delivery", "10:00")).HourFull);
+
+        // A pickup quarter is not offered to a delivery.
+        await (await Place(await ValidOrder(o => { o["deliveryHour"] = "08:15"; o["fulfillmentMethod"] = "Delivery"; }))).AssertInvalid("DeliveryHour", "deliveryHourUnavailable");
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("08:15–08:30 · איסוף עצמי"));
+        var admin = await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>();
+        Assert.Contains(admin, o => o.Id == first.Id && o.DeliveryHourEnd == new TimeOnly(8, 30));
+        // The 08:30 pickup and the third 10:00 delivery came to a full hour.
+        Assert.Equal(2, admin.Count(o => o.HourFull));
     }
 
     [Fact]

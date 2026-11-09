@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { paymentKey } from '../../order/payment'
 import type { AdminOrder } from '../../api/operations'
 import { DeliveryFeeNote } from '../../order/DeliveryFeeNote'
-import { formatMoney, formatTime } from '../../order/format'
+import { formatHourRange, formatMoney } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { PriceNote } from './PriceNote'
 import { orderLines } from './report'
@@ -42,7 +42,7 @@ function PrintedOrder({ order }: { order: AdminOrder }) {
           <dt>{t('admin.orders.sheet.when')}</dt>
           <dd>
             {formatDate(order.supplyDate)}
-            {order.deliveryHour ? ` · ${formatTime(order.deliveryHour)}` : ''}
+            {order.deliveryHour ? ` · ${formatHourRange(order.deliveryHour, order.deliveryHourEnd, t)}` : ''}
           </dd>
           <dd>{t(delivery ? 'admin.orders.delivery' : 'admin.orders.pickup')}</dd>
         </div>

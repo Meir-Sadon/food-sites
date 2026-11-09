@@ -7,7 +7,7 @@ import { RememberDetails } from './RememberDetails'
 import { Modal } from '../components/Modal'
 import { DeliveryFeePrice, DiscountedPrice, orderSaving } from './DiscountedPrice'
 import { DeliveryFeeNote } from './DeliveryFeeNote'
-import { formatMoney, formatSupplyDate, formatTime } from './format'
+import { formatHourRange, formatMoney, formatSupplyDate } from './format'
 
 const number = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 3 })
 
@@ -30,7 +30,7 @@ export function SuccessDialog({ confirmation, contactPhone, remember, onRemember
       <p>{t('order.success.number', { id: confirmation.id })}</p>
       <p>
         {formatSupplyDate(confirmation.supplyDate, t)} ·{' '}
-        {confirmation.deliveryHour && <>{t('order.success.hour', { hour: formatTime(confirmation.deliveryHour) })} · </>}
+        {confirmation.deliveryHour && <>{t('order.success.hour', { hour: formatHourRange(confirmation.deliveryHour, confirmation.deliveryHourEnd, t) })} · </>}
         {confirmation.fulfillmentMethod === 'Delivery' ? t('order.delivery') : t('order.pickup')}
       </p>
       <ul className="summary">

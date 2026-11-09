@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import { paymentKey } from '../../order/payment'
 import type { AdminOrder, AdminOrderItem } from '../../api/operations'
-import { formatMoney, formatTime } from '../../order/format'
+import { formatHourRange, formatMoney } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 
 /** A dish line of the order with the add-ons ordered under it. */
@@ -59,7 +59,7 @@ export function prepReport(order: AdminOrder, t: TFunction): string {
 
   const details = [
     `${t('admin.orders.report.customer')}: ${order.name}, ${order.phone}`,
-    `${t('admin.orders.report.when')}: ${formatDate(order.supplyDate)}${order.deliveryHour ? ` · ${formatTime(order.deliveryHour)}` : ''} · ${t(delivery ? 'admin.orders.delivery' : 'admin.orders.pickup')}`,
+    `${t('admin.orders.report.when')}: ${formatDate(order.supplyDate)}${order.deliveryHour ? ` · ${formatHourRange(order.deliveryHour, order.deliveryHourEnd, t)}` : ''} · ${t(delivery ? 'admin.orders.delivery' : 'admin.orders.pickup')}`,
     ...(delivery && order.address ? [`${t('admin.orders.report.address')}: ${order.address}`] : []),
     `${t('admin.orders.report.payment')}: ${t(paymentKey(order.paymentMethod))} · ${paid}`,
     `${t('admin.orders.report.status')}: ${t(`admin.orders.statuses.${order.status}`)}`,

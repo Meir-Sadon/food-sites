@@ -77,7 +77,8 @@ public class OrdersController(
         decimal DeliveryFee = 0m,
         decimal DeliveryDiscount = 0m,
         decimal MinimumTopUp = 0m,
-        decimal Tip = 0m);
+        decimal Tip = 0m,
+        TimeOnly? DeliveryHourEnd = null);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
@@ -132,16 +133,20 @@ public class OrdersController(
         var hour = openDate is { Hours.Count: > 0 } ? input.DeliveryHour : null;
         // A slot after midnight that continues the day's shift belongs to the next date, which is where the order is saved.
         var supplyDate = input.SupplyDate;
+        SupplyCalendar.HourSlot? chosenSlot = null;
         if (openDate is { Hours.Count: > 0 })
         {
             var slotDate = input.DeliveryHourDate ?? input.SupplyDate;
             var delivery = input.FulfillmentMethod == FulfillmentMethod.Delivery;
             if (input.DeliveryHour is null)
                 errors.Add(nameof(input.DeliveryHour), "required");
-            else if (!openDate.Hours.Any(h => h.From == input.DeliveryHour && (h.Date ?? input.SupplyDate) == slotDate && (delivery ? h.DeliveryOk : h.PickupOk)))
+            else if (openDate.Hours.FirstOrDefault(h => h.From == input.DeliveryHour && (h.Date ?? input.SupplyDate) == slotDate && (delivery ? h.DeliveryOk : h.PickupOk)) is not { } found)
                 errors.Add(nameof(input.DeliveryHour), "deliveryHourUnavailable");
             else
+            {
                 supplyDate = slotDate;
+                chosenSlot = found;
+            }
         }
 
         var ids = (input.Items ?? [])
@@ -158,9 +163,7 @@ public class OrdersController(
             .Where(d => ids.Contains(d.Id))
             .ToDictionaryAsync(d => d.Id, ct);
         // The slot the client picked (the day itself when it has no hours), which decides what is sold.
-        var pickedSlot = hour is { } picked && openDate is not null
-            ? openDate.Hours.FirstOrDefault(h => h.From == picked && (h.Date ?? input.SupplyDate) == supplyDate)
-            : null;
+        var pickedSlot = chosenSlot;
         var prices = await SessionPricesAsync(db, features, clock, ct);
         var items = OrderBuilder.Build(input.Items, dishes, errors, openDate is null ? null : DishAvailability.Of(supplyDate, pickedSlot), prices);
         var minimumApplies = input.FulfillmentMethod == FulfillmentMethod.Delivery || settings.MinimumOrderAppliesToPickup;
@@ -203,7 +206,7 @@ public class OrdersController(
         var hourFull = false;
         if (hour is { } slot)
         {
-            var (deliveries, pickups) = await HourCapacity.CountAsync(db.Orders.AsNoTracking(), supplyDate, slot, ct);
+            var (deliveries, pickups) = await HourCapacity.CountAsync(db.Orders.AsNoTracking(), supplyDate, chosenSlot?.Group ?? slot, ct);
             hourFull = HourCapacity.IsFull(HourCapacity.LimitsOf(settings), input.FulfillmentMethod, deliveries, pickups);
         }
 
@@ -229,6 +232,8 @@ public class OrdersController(
             Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment, input.BuildingType),
             SupplyDate = supplyDate,
             DeliveryHour = hour,
+            DeliveryHourEnd = hour is null ? null : chosenSlot?.To,
+            CapacityHour = chosenSlot?.Group,
             FulfillmentMethod = input.FulfillmentMethod,
             Notes = Clean(input.Notes),
             // An older page still sends the combined "Transfer": it becomes whichever service is on.
@@ -282,7 +287,8 @@ public class OrdersController(
             order.DeliveryFee,
             order.DeliveryDiscount,
             order.MinimumTopUp,
-            order.Tip);
+            order.Tip,
+            order.DeliveryHourEnd);
     }
 
     /// <summary>A manual payment needs the business's number and that service switched on.</summary>

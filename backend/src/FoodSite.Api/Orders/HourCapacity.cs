@@ -13,8 +13,12 @@ public record HourLimits(int? Total, int? Delivery, int? Pickup);
 /// <summary>How full an hour slot is: every order in it that is not cancelled counts, whatever its other state.</summary>
 public static class HourCapacity
 {
+    /// <summary>
+    /// The orders in the slot of the site's slot length that starts at <paramref name="hour"/>. A pickup picked at a finer
+    /// time still belongs to that slot (<see cref="Order.CapacityHour"/>); an order without one counts by its own hour.
+    /// </summary>
     public static IQueryable<Order> InSlot(this IQueryable<Order> orders, DateOnly date, TimeOnly hour) =>
-        orders.Where(o => o.SupplyDate == date && o.DeliveryHour == hour && o.Status != OrderStatus.Cancelled);
+        orders.Where(o => o.SupplyDate == date && (o.CapacityHour ?? o.DeliveryHour) == hour && o.Status != OrderStatus.Cancelled);
 
     /// <summary>Whether delivery and pickup have limits of their own instead of the single one.</summary>
     public static bool HasSeparateLimits(Settings settings) => settings.OrdersPerHourDelivery is not null || settings.OrdersPerHourPickup is not null;

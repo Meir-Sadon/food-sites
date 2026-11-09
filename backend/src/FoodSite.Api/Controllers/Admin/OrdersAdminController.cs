@@ -59,7 +59,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         bool DepositRequired = false,
         bool DepositPaid = false,
         decimal Tip = 0m,
-        bool PlacedByOwner = false);
+        bool PlacedByOwner = false,
+        TimeOnly? DeliveryHourEnd = null);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -130,10 +131,11 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
             return [];
         var slotted = await db.Orders.AsNoTracking()
             .Where(o => dates.Contains(o.SupplyDate) && o.DeliveryHour != null && o.Status != OrderStatus.Cancelled)
-            .Select(o => new { o.Id, o.SupplyDate, o.DeliveryHour, o.CreatedAt, o.FulfillmentMethod })
+            .Select(o => new { o.Id, o.SupplyDate, Hour = o.CapacityHour ?? o.DeliveryHour, o.CreatedAt, o.FulfillmentMethod })
             .ToListAsync();
         var overbooked = new HashSet<int>();
-        foreach (var slot in slotted.GroupBy(o => (o.SupplyDate, o.DeliveryHour)))
+        // A pickup at a finer time counts in the slot of the site's length that holds it.
+        foreach (var slot in slotted.GroupBy(o => (o.SupplyDate, o.Hour)))
         {
             int deliveries = 0, pickups = 0;
             // Every order takes a place, also one that came late, as when the order was placed.
@@ -324,6 +326,16 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         order.Address = Clean(input.Address) ?? "";
         order.SupplyDate = input.SupplyDate;
         // The admin may set any hour (or none) after talking to the client; the site's hours don't bind them.
+        // The slot keeps its end unless the hour or the way of receiving changed; then it is the length that way is cut to.
+        if (input.DeliveryHour is null)
+            order.DeliveryHourEnd = null;
+        else if (order.DeliveryHour != input.DeliveryHour || order.FulfillmentMethod != input.FulfillmentMethod || order.DeliveryHourEnd is null)
+        {
+            var minutes = SlotTiming.Of(await db.Settings.AsNoTracking().SingleAsync()).MinutesFor(input.FulfillmentMethod == FulfillmentMethod.Delivery);
+            order.DeliveryHourEnd = input.DeliveryHour.Value.AddMinutes(minutes);
+            // An hour the admin typed counts by itself.
+            order.CapacityHour = null;
+        }
         order.DeliveryHour = input.DeliveryHour;
         order.FulfillmentMethod = input.FulfillmentMethod;
         order.PaymentMethod = input.PaymentMethod;
@@ -408,7 +420,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.DepositRequired,
         o.DepositPaid,
         o.Tip,
-        o.PlacedByOwner);
+        o.PlacedByOwner,
+        o.DeliveryHourEnd);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

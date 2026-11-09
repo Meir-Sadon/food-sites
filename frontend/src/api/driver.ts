@@ -27,6 +27,7 @@ export interface DriverStop {
   phone: string
   address: string
   deliveryHour: string | null
+  deliveryHourEnd?: string | null
   notes: string | null
   items: DriverItem[]
   total: number

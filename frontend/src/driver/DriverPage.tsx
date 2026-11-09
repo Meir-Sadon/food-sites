@@ -6,7 +6,7 @@ import { driverApi, type DriverRoute, type DriverStop } from '../api/driver'
 import { Loading } from '../admin/ui'
 import { formatDate } from '../admin/format'
 import { BUILDING_TYPES } from '../account/addressParts'
-import { formatMinutes, navigationAddress, toMinutes, wazeUrl } from '../admin/route/plan'
+import { formatMinutes, navigationAddress, toMinutes, wazeUrl, windowMinutes } from '../admin/route/plan'
 import { formatMoney, formatTime } from '../order/format'
 import { siteLogo } from '../site/config'
 import { isOpen, toCollect, useDriver, type DriverContext } from './stops'
@@ -166,7 +166,7 @@ export function StopTimes({ stop }: { stop: DriverStop }) {
   if (stop.plannedArrival) parts.push(t('driver.plannedAt', { time: formatTime(stop.plannedArrival) }))
   if (stop.deliveryHour) {
     const from = toMinutes(stop.deliveryHour)
-    parts.push(t('driver.asked', { from: formatMinutes(from), to: formatMinutes(from + 60) }))
+    parts.push(t('driver.asked', { from: formatMinutes(from), to: formatMinutes(from + windowMinutes(stop.deliveryHour, stop.deliveryHourEnd)) }))
   }
   return <>{parts.length ? parts.join(' · ') : t('driver.noHour')}</>
 }

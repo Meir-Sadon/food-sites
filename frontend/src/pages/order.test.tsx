@@ -493,6 +493,32 @@ describe('Order page', () => {
       expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ deliveryHour: '00:00:00', deliveryHourDate: '2026-10-09' })
     })
 
+    it('offers finer pickup times, and clears the hour when the way of receiving changes', async () => {
+      const finer = () =>
+        menu({
+          supplyDates: [
+            {
+              date: '2026-10-08',
+              cutoff: '2026-10-07T20:00:00',
+              hours: [
+                { from: '08:00:00', to: '09:00:00', deliveryOk: true, pickupOk: false },
+                { from: '08:00:00', to: '08:30:00', deliveryOk: false, pickupOk: true },
+                { from: '08:30:00', to: '09:00:00', deliveryOk: false, pickupOk: true },
+              ],
+            },
+          ],
+        })
+      const { user } = await openOrderPage({ 'GET /api/menu': finer, 'GET /api/hour-availability.*': () => ({ full: false, deliveryFull: false, pickupFull: false }) })
+      const hour = screen.getByLabelText('שעת אספקה מועדפת')
+      expect([...hour.querySelectorAll('option')]).toHaveLength(2)
+      await user.selectOptions(hour, '08:00:00')
+      expect(hour).toHaveValue('08:00:00')
+      await user.click(screen.getByRole('radio', { name: /איסוף עצמי/ }))
+      // The same start exists for both ways, but the windows differ, so the hour is cleared and must be picked again.
+      expect(screen.getByLabelText('שעת אספקה מועדפת')).toHaveValue('')
+      expect([...screen.getByLabelText('שעת אספקה מועדפת').querySelectorAll('option')]).toHaveLength(3)
+    })
+
     it('hides hours the lead time blocks for the chosen way of receiving the order', async () => {
       const { user } = await openOrderPage({ 'GET /api/menu': shift })
       await user.click(screen.getByRole('radio', { name: /איסוף עצמי/ }))

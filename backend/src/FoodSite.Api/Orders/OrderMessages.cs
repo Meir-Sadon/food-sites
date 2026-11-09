@@ -50,7 +50,7 @@ public static class OrderMessages
         var lines = new List<string>
         {
             $"הזמנה #{order.Id} · {order.SupplyDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)} · "
-                + (order.DeliveryHour is { } hour ? $"{Time(hour)} · " : "")
+                + (order.DeliveryHour is { } hour ? $"{TimeRange(hour, order.DeliveryHourEnd)} · " : "")
                 + (order.FulfillmentMethod == FulfillmentMethod.Delivery ? "משלוח" : "איסוף עצמי"),
             $"{order.Name}, {order.Phone}",
         };
@@ -96,6 +96,10 @@ public static class OrderMessages
         + (string.IsNullOrEmpty(item.OptionLabel) ? "" : $" ({item.OptionLabel})")
         + (string.IsNullOrEmpty(item.Note) ? "" : $" [{item.Note}]")
         + $" – ₪{Money(item.LineTotal)}";
+
+    /// <summary>"11:00–12:00" for a slot with its end, just "11:00" for an order saved without one.</summary>
+    public static string TimeRange(TimeOnly from, TimeOnly? to) =>
+        to is { } end ? $"{Time(from)}–{Time(end)}" : Time(from);
 
     private static string Time(TimeOnly value) => value.ToString("HH:mm", CultureInfo.InvariantCulture);
 

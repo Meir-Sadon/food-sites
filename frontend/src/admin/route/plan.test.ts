@@ -9,6 +9,7 @@ import {
   schedule,
   travelMinutes,
   wazeUrl,
+  windowMinutes,
 } from './plan'
 
 const order = (id: number, address: string, deliveryHour: string | null = null): AdminOrder => ({
@@ -80,6 +81,23 @@ describe('route plan', () => {
       ['09:40', false],
       ['10:55', true],
     ])
+  })
+
+  it('judges lateness by the end of the order\'s own window', () => {
+    const quarter = { ...order(1, 'הרצל 1, אשקלון', '09:00:00'), deliveryHourEnd: '09:15:00' }
+    const hour = { ...order(2, 'הרצל 1, אשדוד', '09:00:00'), deliveryHourEnd: '10:00:00' }
+    const stops = schedule([quarter, hour], kitchen, { sameCity: 10, otherCity: 20, atStop: 10 }, 9 * 60 + 20)
+    // 09:30 is past the quarter that ended at 09:15; 10:00 is still inside an hour that ends at 10:00 or later.
+    expect(stops.map((s) => [formatMinutes(s.arrive), s.late])).toEqual([
+      ['09:30', true],
+      ['10:00', false],
+    ])
+  })
+
+  it('measures a window to its end, an hour when there is none, and across midnight', () => {
+    expect(windowMinutes('11:00:00', '11:15:00')).toBe(15)
+    expect(windowMinutes('11:00:00')).toBe(60)
+    expect(windowMinutes('23:30:00', '00:00:00')).toBe(30)
   })
 
   it('leaves the building type out of the Waze link', () => {

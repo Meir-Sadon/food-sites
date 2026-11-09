@@ -363,6 +363,7 @@ describe('General settings', () => {
       ordersPerHourDelivery: null,
       ordersPerHourPickup: null,
       slotMinutes: 60,
+      pickupSlotMinutes: 0,
       alignSlots: false,
       deliveryLeadMinutes: 0,
       pickupLeadMinutes: 0,
@@ -370,6 +371,22 @@ describe('General settings', () => {
       ownerEmail: '',
       ownerChangeMails: false,
     })
+  })
+
+  it('lets pickup be picked more finely than the slot length, never more coarsely', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    const precision = within(form).getByLabelText('דיוק זמן באיסוף עצמי')
+    expect(precision).toHaveValue('0')
+    // With a slot of an hour: quarter and half an hour are finer, an hour is not offered.
+    expect(within(precision).getAllByRole('option').map((o) => o.textContent)).toEqual(['כמו אורך החלון הכללי', 'רבע שעה', 'חצי שעה'])
+    await user.selectOptions(precision, 'רבע שעה')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ slotMinutes: 60, pickupSlotMinutes: 15 })
   })
 
   it('saves the owner mail address', async () => {

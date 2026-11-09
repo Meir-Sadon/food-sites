@@ -463,6 +463,12 @@ export function OrderPage() {
   const change = (patch: Partial<OrderState>) => {
     setState((current) => {
       const next = { ...current, ...patch }
+      // Delivery and pickup can be offered different times (pickup picked more finely): changing the way clears the hour.
+      if (patch.fulfillment && patch.fulfillment !== current.fulfillment && next.deliveryHour && !patch.deliveryHour) {
+        const hours = (menu?.supplyDates.find((d) => d.date === next.supplyDate) ?? menu?.supplyDates[0])?.hours
+        const ids = (delivery: boolean) => slotsFor(hours, delivery).map(slotId).join('|')
+        if (ids(true) !== ids(false)) next.deliveryHour = null
+      }
       return patch.supplyDate
         ? {
             ...next,

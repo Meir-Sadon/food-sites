@@ -833,6 +833,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateTimeOffset?>("CancelledAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<TimeOnly?>("CapacityHour")
+                        .HasColumnType("time without time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -845,6 +848,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("numeric(10,2)");
 
                     b.Property<TimeOnly?>("DeliveryHour")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("DeliveryHourEnd")
                         .HasColumnType("time without time zone");
 
                     b.Property<string>("DeliveryNote")
@@ -1585,6 +1591,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int>("PickupLeadMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PickupSlotMinutes")
                         .HasColumnType("integer");
 
                     b.Property<string>("PopupBody")

@@ -12,13 +12,14 @@ public static class SupplyCalendar
     /// One slot a client can ask for: <see cref="From"/> to <see cref="To"/> (the last slot of a range may be shorter).
     /// <see cref="Date"/> is set only on a slot of the next day that continues the day's hours (a day ending at 24:00 followed
     /// by a day starting at 00:00 is one long shift); the others are on the supply date itself. <see cref="DeliveryOk"/> and
-    /// <see cref="PickupOk"/> say whether the lead time of that method still allows it.
+    /// <see cref="PickupOk"/> say whether the lead time of that method still allows it. <see cref="Group"/> is set on a pickup
+    /// slot finer than the site's slot length: the start of the slot of the site's length it falls in, where it is counted.
     /// </summary>
-    public record HourSlot(TimeOnly From, TimeOnly To, DateOnly? Date = null, bool DeliveryOk = true, bool PickupOk = true);
+    public record HourSlot(TimeOnly From, TimeOnly To, DateOnly? Date = null, bool DeliveryOk = true, bool PickupOk = true, TimeOnly? Group = null);
 
     public record OpenDate(DateOnly Date, DateTime Cutoff, IReadOnlyList<HourSlot> Hours);
 
-    /// <summary>The day's working hours, range by range, cut into one-hour slots; none when the day has no (valid) hours.</summary>
+    /// <summary>The day's working hours, range by range, cut into slots; none when the day has no (valid) hours.</summary>
     public static IReadOnlyList<HourSlot> HourSlots(SupplyDay day) =>
         HourSlots(RangesOf(day));
 
@@ -28,20 +29,45 @@ public static class SupplyCalendar
     public static IReadOnlyList<HourSlot> HourSlots(IEnumerable<ShabbatSchedule.HoursRange> ranges, SlotTiming? timing = null)
     {
         timing ??= SlotTiming.Default;
-        var step = TimeSpan.FromMinutes(timing.SlotMinutes);
+        var list = ranges.ToList();
+        if (!timing.SeparateGrids)
+            return Cut(list, timing.SlotMinutes, timing.Align, delivery: true, pickup: true);
+        // Pickup is cut finer than delivery: each way gets slots of its own. A pickup slot is counted in the slot of the site's
+        // length that it falls in, so that finer times only help the client aim, not add places.
+        var whole = Cut(list, timing.SlotMinutes, timing.Align, delivery: true, pickup: true);
+        var pickups = Cut(list, timing.PickupMinutes, timing.Align, delivery: false, pickup: true)
+            .Select(p => p with { Group = whole.FirstOrDefault(w => Contains(w, p.From))?.From ?? p.From });
+        return Cut(list, timing.SlotMinutes, timing.Align, delivery: true, pickup: false)
+            .Concat(pickups)
+            .OrderBy(x => x.From).ThenBy(x => x.PickupOk).ToList();
+    }
+
+    /// <summary>Whether <paramref name="time"/> falls inside <paramref name="slot"/> (a slot ending at 00:00 ends at midnight).</summary>
+    private static bool Contains(HourSlot slot, TimeOnly time) =>
+        slot.From <= time && (slot.To <= slot.From || time < slot.To);
+
+    /// <summary>The ranges cut into slots of <paramref name="minutes"/>, open for the ways of receiving that are asked for (and that the range allows).</summary>
+    private static List<HourSlot> Cut(List<ShabbatSchedule.HoursRange> ranges, int minutes, bool align, bool delivery, bool pickup)
+    {
+        var step = TimeSpan.FromMinutes(minutes);
         var slots = new List<HourSlot>();
         foreach (var range in ranges)
         {
+            var deliveryOk = delivery && range.DeliveryAllowed;
+            var pickupOk = pickup && range.PickupAllowed;
+            // With one grid a range that allows neither way still yields (unusable) slots, as it always has; a way's own grid skips it.
+            if (!deliveryOk && !pickupOk && !(delivery && pickup))
+                continue;
             var end = range.End;
-            var first = timing.Align ? RoundUp(range.From, step) : range.From;
+            var first = align ? RoundUp(range.From, step) : range.From;
             // TimeSpan, not TimeOnly, so that a range ending at midnight (24:00) does not wrap.
             for (var start = first; start < end; start += step)
             {
-                var slotEnd = timing.Align
+                var slotEnd = align
                     ? new[] { end, RoundUp(start + TimeSpan.FromTicks(1), step) }.Min()
                     : end - start <= step ? end : start + step;
                 slots.Add(new HourSlot(TimeOnly.FromTimeSpan(start), slotEnd >= TimeSpan.FromDays(1) ? TimeOnly.MinValue : TimeOnly.FromTimeSpan(slotEnd),
-                    DeliveryOk: range.DeliveryAllowed, PickupOk: range.PickupAllowed));
+                    DeliveryOk: deliveryOk, PickupOk: pickupOk));
             }
         }
         return slots;

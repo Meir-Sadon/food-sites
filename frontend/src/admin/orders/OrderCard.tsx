@@ -3,7 +3,7 @@ import { paymentKey } from '../../order/payment'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ordersAdminApi, orderStatuses, type AdminOrder, type OrderStatus } from '../../api/operations'
-import { formatMoney, formatTime } from '../../order/format'
+import { formatHourRange, formatMoney } from '../../order/format'
 import { formatNumber } from '../format'
 import { useErrorMessage } from '../hooks'
 import { Status } from '../ui'
@@ -75,7 +75,7 @@ export function OrderCard({ order, onChange, compact = false }: { order: AdminOr
       <p className="muted">
         <a href={`tel:${order.phone}`}>{order.phone}</a>
         {' · '}
-        {order.deliveryHour && <>{t('admin.orders.hourAt', { hour: formatTime(order.deliveryHour) })} · </>}
+        {order.deliveryHour && <>{t('admin.orders.hourAt', { hour: formatHourRange(order.deliveryHour, order.deliveryHourEnd, t) })} · </>}
         {t(order.fulfillmentMethod === 'Delivery' ? 'admin.orders.delivery' : 'admin.orders.pickup')}
         {order.fulfillmentMethod === 'Delivery' && order.address ? `: ${order.address}` : ''}
         {' · '}

@@ -79,6 +79,7 @@ public static class SmsMessages
             ["orderId"] = order.Id.ToString(CultureInfo.InvariantCulture),
             ["date"] = order.SupplyDate.ToString("dd/MM", CultureInfo.InvariantCulture),
             ["time"] = order.DeliveryHour?.ToString("HH:mm", CultureInfo.InvariantCulture) ?? "",
+            ["timeRange"] = order.DeliveryHour is { } from ? FoodSite.Api.Orders.OrderMessages.TimeRange(from, order.DeliveryHourEnd) : "",
             ["method"] = order.FulfillmentMethod == FulfillmentMethod.Delivery ? "משלוח" : "איסוף עצמי",
             ["total"] = order.Total.ToString("0.##", CultureInfo.InvariantCulture),
         };
