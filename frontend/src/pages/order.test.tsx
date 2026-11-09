@@ -508,7 +508,7 @@ describe('Order page', () => {
             },
           ],
         })
-      const { user } = await openOrderPage({ 'GET /api/menu': finer, 'GET /api/hour-availability.*': () => availability(false, false, false) })
+      const { user } = await openOrderPage({ 'GET /api/menu': finer, 'GET /api/hour-availability.*': () => ({ full: false, deliveryFull: false, pickupFull: false }) })
       const hour = screen.getByLabelText('שעת אספקה מועדפת')
       expect([...hour.querySelectorAll('option')]).toHaveLength(2)
       await user.selectOptions(hour, '08:00:00')
