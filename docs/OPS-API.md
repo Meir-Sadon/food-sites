@@ -45,7 +45,7 @@ The site owner gets `403 { code: "masterOnly" }` on all three.
 - `migration`: the last migration applied to the site's database.
 - `pendingMigrations`: migrations this build has and the database lacks (empty once the site migrated on startup).
 
-### `GET /api/ops/summary?from=&to=&period=&statuses=&bands=`
+### `GET /api/ops/summary?from=&to=&period=&statuses=&bands=&phones=`
 
 Orders and their totals per period, by **supply date**.
 
@@ -62,9 +62,11 @@ Orders and their totals per period, by **supply date**.
   "sales": 250.00,
   "deliveryFees": 30.00,
   "tips": 12.00,
+  "ownerOrders": 1,
+  "ownerSales": 70.00,
   "periods": [
-    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00, "tips": 12.00 },
-    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0, "tips": 0 }
+    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00, "tips": 12.00, "ownerOrders": 0, "ownerSales": 0 },
+    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0, "tips": 0, "ownerOrders": 1, "ownerSales": 70.00 }
   ],
   "statuses": ["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"],
   "byStatus": [
@@ -78,7 +80,7 @@ Orders and their totals per period, by **supply date**.
 }
 ```
 
-`sales` is the sum of the orders' totals in shekels, delivery fees included but **tips for the courier excluded**; `tips` (on the whole range, each period and each band) is the sum of those tips, reported separately because a tip belongs to the courier, not to the business's sales, so a console must not charge a commission on it (the customer paid `sales` + `tips`); `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
+`sales` is the sum of the orders' totals in shekels, delivery fees included but **tips for the courier excluded**; `tips` (on the whole range, each period and each band) is the sum of those tips, reported separately because a tip belongs to the courier, not to the business's sales, so a console must not charge a commission on it (the customer paid `sales` + `tips`); `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. `ownerOrders` and `ownerSales` (on the whole range and on each period, not per band) are the part of `orders` and `sales` that the business owner placed for a client from the admin (`Order.PlacedByOwner`); they are still inside `orders`, `sales` and the bands, and the site names no rate, so a console that bills such orders at a different commission subtracts them. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
 
 `bands` (optional): comma-separated order totals in shekels, ascending and above 0, at most 20 (anything else is `400` with `bands: ["invalid"]`). Each period then also gets `bands`, one per threshold plus one from 0, splitting the period's orders by their total (delivery fee included): a band holds the orders above its `above` and up to the next band's (the first also holds an order of 0). A console uses it to charge a commission that depends on the order's size. Without `bands` a period's `bands` is `null`.
 
@@ -88,6 +90,15 @@ Orders and their totals per period, by **supply date**.
     { "above": 0, "orders": 1, "sales": 100.00, "deliveryFees": 15.00 },
     { "above": 350, "orders": 1, "sales": 400.00, "deliveryFees": 15.00 },
     { "above": 500, "orders": 1, "sales": 400.00, "deliveryFees": 0 }
+  ] }
+```
+
+`phones` (optional): comma-separated phone numbers, written any common way (`050-1234567`, `+972501234567`), at most 100 (anything else, or a number that is not a plausible Israeli phone, is `400` with `phones: ["invalid"]`). Each period then also gets `phones`: the part of its orders placed with each of those phones, in local form, only the phones that have orders in it, ordered by phone. Those orders stay in the period's own figures too, so a console that charges them another commission takes them off. With `bands`, each phone's part is split the same way. Without `phones` a period's `phones` is `null`.
+
+```json
+{ "start": "2030-01-01", "orders": 4, "sales": 1200.00, "deliveryFees": 15.00, "tips": 10.00,
+  "phones": [
+    { "phone": "0501234567", "orders": 2, "sales": 700.00, "deliveryFees": 15.00, "tips": 10.00, "bands": null }
   ] }
 ```
 
@@ -120,12 +131,13 @@ The cancelled orders with the admin's cancellation reason and the order's genera
     "isPaid": false,
     "total": 80.00,
     "deliveryFee": 10.00,
-    "items": [{ "dishName": "קוסקוס", "optionLabel": null, "quantity": 2, "lineTotal": 70.00 }]
+    "items": [{ "dishName": "קוסקוס", "optionLabel": null, "quantity": 2, "lineTotal": 70.00 }],
+    "placedByOwner": false
   }]
 }
 ```
 
-- `address` is `null` for a pickup. `total` includes the delivery fee, like `summary`'s `sales`.
+- `placedByOwner` is `true` for an order the owner placed for a client. `address` is `null` for a pickup. `total` includes the delivery fee, like `summary`'s `sales`.
 
 ### `GET /api/ops/usage?from=&to=`
 

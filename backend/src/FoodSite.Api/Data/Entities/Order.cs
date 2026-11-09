@@ -95,6 +95,12 @@ public class Order
     public decimal Total { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>
+    /// The business owner placed the order for the client (from the admin, as that client), not the client themselves.
+    /// Reported on its own so the console can bill such orders at a different commission.
+    /// </summary>
+    public bool PlacedByOwner { get; set; }
+
     public List<OrderItem> Items { get; set; } = [];
 
     /// <summary>The one-time price list discounts this order used up.</summary>

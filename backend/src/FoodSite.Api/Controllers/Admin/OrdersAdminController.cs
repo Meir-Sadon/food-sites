@@ -59,6 +59,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         bool DepositRequired = false,
         bool DepositPaid = false,
         decimal Tip = 0m,
+        bool PlacedByOwner = false,
         TimeOnly? DeliveryHourEnd = null);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
@@ -419,6 +420,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.DepositRequired,
         o.DepositPaid,
         o.Tip,
+        o.PlacedByOwner,
         o.DeliveryHourEnd);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>

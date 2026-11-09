@@ -32,6 +32,7 @@ export function prepReport(order: AdminOrder, t: TFunction): string {
 
   const delivery = order.fulfillmentMethod === 'Delivery'
   const alerts = [
+    ...(order.placedByOwner ? [t('admin.orders.report.placedByOwner')] : []),
     ...(order.needsReview ? [t('admin.orders.report.needsReview')] : []),
     ...(order.hourFull ? [t('admin.orders.report.hourFull')] : []),
   ]
