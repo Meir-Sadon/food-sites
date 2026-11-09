@@ -23,7 +23,7 @@ const profile: Profile = {
   city: 'חיפה',
   street: 'הרצל',
   houseNumber: '1',
-  apartment: '',
+  apartment: '', buildingType: '',
   address: 'הרצל 1, חיפה',
   email: null,
   birthday: null,

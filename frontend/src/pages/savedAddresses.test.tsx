@@ -7,12 +7,12 @@ import { menu, menuDish, publicApi, site } from '../test/catalogData'
 import { fakeApi } from '../test/fakeApi'
 import { renderAt } from '../test/render'
 
-const home: SavedAddress = { id: 1, label: 'בית', city: 'אשקלון', street: 'הרצל', houseNumber: '1', apartment: '', address: 'הרצל 1, אשקלון', isDefault: true }
-const work: SavedAddress = { id: 2, label: 'עבודה', city: 'אשקלון', street: 'ויצמן', houseNumber: '9', apartment: '3', address: 'ויצמן 9, דירה 3, אשקלון', isDefault: false }
+const home: SavedAddress = { id: 1, label: 'בית', city: 'אשקלון', street: 'הרצל', houseNumber: '1', apartment: '', buildingType: '', address: 'הרצל 1, אשקלון', isDefault: true }
+const work: SavedAddress = { id: 2, label: 'עבודה', city: 'אשקלון', street: 'ויצמן', houseNumber: '9', apartment: '3', buildingType: '', address: 'ויצמן 9, דירה 3, אשקלון', isDefault: false }
 
 const profile: Profile = {
   id: 1, phone: '0501234567', fullName: 'דנה כהן', city: home.city, street: home.street, houseNumber: home.houseNumber,
-  apartment: '', address: home.address, email: null, birthday: null, ethnicBackground: null, addresses: [home, work],
+  apartment: '', buildingType: '', address: home.address, email: null, birthday: null, ethnicBackground: null, addresses: [home, work],
 }
 
 const confirmation: Confirmation = {
@@ -141,7 +141,7 @@ describe('The order page', () => {
     await user.click(within(dialog).getByRole('button', { name: 'כן, לשמור' }))
 
     expect(api.sent('POST', '/api/account/remember')[0].body).toEqual({
-      orderId: 7, phone: '0501234567', name: 'דנה', city: 'אשקלון', street: 'הרצל', houseNumber: '1', apartment: '',
+      orderId: 7, phone: '0501234567', name: 'דנה', city: 'אשקלון', street: 'הרצל', houseNumber: '1', apartment: '', buildingType: '',
     })
     expect(await within(dialog).findByText(/בפעם הבאה שתתחברו עם המספר הזה/)).toBeInTheDocument()
   })

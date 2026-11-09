@@ -144,7 +144,7 @@ describe('Reviews on the recommendations and profile pages', () => {
       ...publicApi,
       'GET /api/site': () => site({ features: ['reviews'] }),
       'GET /api/account/me': () => ({
-        id: 1, phone: '0501234567', fullName: 'דנה כהן', city: 'חיפה', street: 'הרצל', houseNumber: '1', apartment: '',
+        id: 1, phone: '0501234567', fullName: 'דנה כהן', city: 'חיפה', street: 'הרצל', houseNumber: '1', apartment: '', buildingType: '',
         address: 'הרצל 1, חיפה', email: null, birthday: null, ethnicBackground: null, addresses: [],
       }),
       'GET /api/account/orders': () => [],

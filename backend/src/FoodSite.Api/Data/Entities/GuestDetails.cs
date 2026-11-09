@@ -13,5 +13,7 @@ public class GuestDetails
     public string Street { get; set; } = "";
     public string HouseNumber { get; set; } = "";
     public string Apartment { get; set; } = "";
+    /// <summary>"Building" or "PrivateHouse" when the client said which; empty when not set (see <c>AddressFormat</c>).</summary>
+    public string BuildingType { get; set; } = "";
     public DateTimeOffset SavedAt { get; set; }
 }

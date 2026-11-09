@@ -684,6 +684,10 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("BuildingType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1845,6 +1849,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateOnly?>("Birthday")
                         .HasColumnType("date");
 
+                    b.Property<string>("BuildingType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1902,6 +1910,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Apartment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BuildingType")
                         .IsRequired()
                         .HasColumnType("text");
 

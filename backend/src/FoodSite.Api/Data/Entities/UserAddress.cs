@@ -19,6 +19,8 @@ public class UserAddress
     public required string Street { get; set; }
     public required string HouseNumber { get; set; }
     public string Apartment { get; set; } = "";
+    /// <summary>"Building" or "PrivateHouse" when the client said which; empty when not set (see <c>AddressFormat</c>).</summary>
+    public string BuildingType { get; set; } = "";
 
     /// <summary>The parts joined (see <c>AddressFormat</c>); what orders and messages show.</summary>
     public required string Address { get; set; }

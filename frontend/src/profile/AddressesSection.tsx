@@ -19,7 +19,7 @@ interface Draft extends AddressParts {
 
 const draftOf = (address?: SavedAddress): Draft =>
   address
-    ? { label: address.label ?? '', city: address.city, street: address.street, houseNumber: address.houseNumber, apartment: address.apartment, makeDefault: address.isDefault }
+    ? { label: address.label ?? '', city: address.city, street: address.street, houseNumber: address.houseNumber, apartment: address.apartment, buildingType: address.buildingType, makeDefault: address.isDefault }
     : { label: '', ...emptyAddress(), makeDefault: false }
 
 /** The client's saved addresses (home, work...): add, edit, delete and pick the default, which the order page offers first. */
@@ -68,6 +68,7 @@ export function AddressesSection({ user, onSaved }: Props) {
       street: draft.street.trim(),
       houseNumber: draft.houseNumber.trim(),
       apartment: draft.apartment.trim(),
+      buildingType: draft.buildingType,
       makeDefault: draft.makeDefault,
     }
     return run(() => (editing ? accountApi.updateAddress(editing, input) : accountApi.addAddress(input)))
