@@ -14,6 +14,7 @@ import { fieldErrorsOf, useErrorMessage, useFormErrorMessage, useLoad } from '..
 import { useDirty, useUnsavedChanges } from '../unsaved'
 import { ConfirmRemove, FieldError, Info, Loading, Section, Status } from '../ui'
 import { PLACEHOLDERS } from './compose'
+import { RestrictedMessageSection } from './RestrictedMessageSection'
 
 const empty: MessageTemplateInput = { name: '', text: '', includeReviewLink: false, forStatus: null }
 
@@ -86,6 +87,7 @@ export function MessagesPage() {
           )}
         </div>
       )}
+      <RestrictedMessageSection />
     </>
   )
 }

@@ -33,3 +33,16 @@ describe('Restricted clients', () => {
     expect(link.getAttribute('href')).toBe(`https://wa.me/972501234567?text=${encodeURIComponent('שלום דנה, לשלם ל-050-1111111')}`)
   })
 })
+
+describe('Prepayment message location', () => {
+  it('is edited on the WhatsApp messages screen, not in the settings', async () => {
+    fakeApi({
+      ...adminSession,
+      'GET /api/admin/message-templates': () => [],
+      'GET /api/admin/restricted-clients': () => ({ message: 'שלום {name}', phones: [] }),
+      'GET /api/admin/settings': () => ({}),
+    })
+    renderAt('/admin/messages')
+    expect(await screen.findByRole('textbox', { name: 'הודעת בקשת תשלום מראש' })).toHaveValue('שלום {name}')
+  })
+})
