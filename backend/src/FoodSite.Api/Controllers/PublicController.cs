@@ -141,7 +141,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     public async Task<SiteDto> GetSite()
     {
         var s = await db.Settings.AsNoTracking().SingleAsync();
-        var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Phone).ToListAsync();
+        var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.DisplayOrder).ThenBy(p => p.Id).Select(p => p.Phone).ToListAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
             s.KashrutText, s.PaymentPhone, s.BitEnabled && PaymentOn(s), s.PayBoxEnabled && PaymentOn(s), s.MinimumOrderAmount, s.MinimumOrderAppliesToPickup,

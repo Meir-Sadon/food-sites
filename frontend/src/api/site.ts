@@ -493,6 +493,8 @@ export const contactsApi = {
     apiJson<NotifyPhone>('/api/admin/notify-phones', send('POST', { phone, name, pushoverKey, pushoverSound })),
   updateNotifyPhone: (id: number, phone: string, name: string, pushoverKey = '', pushoverSound = '') =>
     apiJson<NotifyPhone>(`/api/admin/notify-phones/${id}`, send('PUT', { phone, name, pushoverKey, pushoverSound })),
+  /** Sets the order of all the numbers; the first is listed first. */
+  reorderNotifyPhones: (phoneIds: number[]) => apiJson<NotifyPhone[]>('/api/admin/notify-phones/order', send('PUT', { phoneIds })),
   testNotifyPhone: (id: number) => apiJson<void>(`/api/admin/notify-phones/${id}/test`, send('POST')),
   removeNotifyPhone: (id: number) => apiJson<void>(`/api/admin/notify-phones/${id}`, send('DELETE')),
 }

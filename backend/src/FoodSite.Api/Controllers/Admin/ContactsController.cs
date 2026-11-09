@@ -57,7 +57,7 @@ public partial class ContactsController(
 
     [HttpGet("notify-phones")]
     public async Task<IEnumerable<NotifyPhoneDto>> GetNotifyPhones() =>
-        await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id)
+        await db.NotifyPhones.AsNoTracking().OrderBy(p => p.DisplayOrder).ThenBy(p => p.Id)
             .Select(p => new NotifyPhoneDto(p.Id, p.Phone, p.Name, p.PushoverKey, p.PushoverSound)).ToListAsync();
 
     [HttpPost("notify-phones")]
@@ -69,7 +69,8 @@ public partial class ContactsController(
         if (await db.NotifyPhones.AnyAsync(p => p.Phone == phone))
             return Invalid(nameof(input.Phone), "duplicate");
 
-        var entity = new NotifyPhone { Phone = phone!, Name = Clean(input.Name), PushoverKey = key, PushoverSound = key is null ? null : sound };
+        var next = await db.NotifyPhones.AnyAsync() ? await db.NotifyPhones.MaxAsync(p => p.DisplayOrder) + 1 : 0;
+        var entity = new NotifyPhone { DisplayOrder = next, Phone = phone!, Name = Clean(input.Name), PushoverKey = key, PushoverSound = key is null ? null : sound };
         db.NotifyPhones.Add(entity);
         await db.SaveChangesAsync();
         return ToDto(entity);
@@ -94,6 +95,21 @@ public partial class ContactsController(
         entity.PushoverSound = key is null ? null : sound;
         await db.SaveChangesAsync();
         return ToDto(entity);
+    }
+
+    /// <summary>The numbers in the order the admin wants them (all of them, or 409 listChanged); the first is listed first.</summary>
+    public record NotifyPhoneOrderInput(List<int>? PhoneIds);
+
+    [HttpPut("notify-phones/order")]
+    public async Task<ActionResult<IEnumerable<NotifyPhoneDto>>> ReorderNotifyPhones(NotifyPhoneOrderInput input)
+    {
+        var phones = await db.NotifyPhones.ToListAsync();
+        if (!Ordering.SameIds(phones.Select(p => p.Id), input.PhoneIds))
+            return Conflict("listChanged");
+
+        Ordering.Renumber(input.PhoneIds!.Select(id => phones.Single(p => p.Id == id)).ToList(), (p, n) => p.DisplayOrder = n);
+        await db.SaveChangesAsync();
+        return Ok(phones.OrderBy(p => p.DisplayOrder).Select(ToDto).ToList());
     }
 
     private static NotifyPhoneDto ToDto(NotifyPhone p) => new(p.Id, p.Phone, p.Name, p.PushoverKey, p.PushoverSound);

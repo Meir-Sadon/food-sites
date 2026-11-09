@@ -111,11 +111,13 @@ describe('Admin Contacts', () => {
     })
   })
 
-  it('edits a phone\'s Pushover key and sound without removing it', async () => {
+  it("edits a phone's Pushover key and sound without removing it", async () => {
     const api = fakeApi({
       ...base,
       'GET /api/site': () => site({ features: ['phoneAlerts'] }),
-      'GET /api/admin/notify-phones': () => [{ id: 1, phone: '0521111111', name: 'דוד', pushoverKey: 'k'.repeat(30), pushoverSound: 'siren' }],
+      'GET /api/admin/notify-phones': () => [
+        { id: 1, phone: '0521111111', name: 'דוד', pushoverKey: 'k'.repeat(30), pushoverSound: 'siren' },
+      ],
       'PUT /api/admin/notify-phones/1': (_, body) => ({ id: 1, ...(body as object) }),
     })
     renderAt('/admin/contacts')
@@ -136,6 +138,30 @@ describe('Admin Contacts', () => {
       pushoverKey: 'n'.repeat(30),
       pushoverSound: 'alien',
     })
+  })
+
+  it('moves a number up with the move buttons and saves the order', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/notify-phones': () => [
+        { id: 1, phone: '0521111111', name: 'דוד' },
+        { id: 2, phone: '0522222222', name: 'יעל' },
+      ],
+      'PUT /api/admin/notify-phones/order': (_, body) => {
+        const ids = (body as { phoneIds: number[] }).phoneIds
+        return ids.map((id) => ({ id, phone: id === 1 ? '0521111111' : '0522222222', name: id === 1 ? 'דוד' : 'יעל' }))
+      },
+    })
+    renderAt('/admin/contacts')
+    const user = userEvent.setup()
+    const list = await section("מספרים להתראות ולצ'אט בוואטסאפ")
+
+    await user.click(within(list).getByRole('button', { name: 'העברה למעלה: 0522222222' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/notify-phones/order')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/notify-phones/order')[0].body).toEqual({ phoneIds: [2, 1] })
+    const rows = within(list).getAllByRole('listitem')
+    expect(within(rows[0]).getByText('0522222222')).toBeInTheDocument()
   })
 
   it('sends a test alert to a phone that has a Pushover key', async () => {

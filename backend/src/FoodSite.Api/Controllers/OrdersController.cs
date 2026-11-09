@@ -316,7 +316,7 @@ public class OrdersController(
     {
         await ownerMail.NewOrderAsync(ownerEmail, order, hourFull, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}",
             await features.IsEnabledAsync(Features.PriceLists, ct));
-        var recipients = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.Id).ToListAsync(CancellationToken.None);
+        var recipients = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.DisplayOrder).ThenBy(p => p.Id).ToListAsync(CancellationToken.None);
         await pushNotifier.NewOrderAsync(recipients, order, site.Value.Name, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}");
         var messages = recipients.Select(p => p.Phone)
             .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name, hourFull)))
