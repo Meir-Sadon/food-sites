@@ -408,6 +408,28 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
             </select>
             <FieldError errors={errors} field="pickupSlotMinutes" id="settings-pickupSlotMinutes-error" />
           </span>
+          {settings.pickupSlotMinutes > 0 && settings.pickupSlotMinutes < settings.slotMinutes && (
+            <span className="field">
+              <span className="with-info">
+                <label htmlFor="settings-ordersPerPickupWindow">{t('admin.settings.ordersPerPickupWindow')}</label>
+                <Info text={t('admin.settings.ordersPerPickupWindowHint')} about={t('admin.settings.ordersPerPickupWindow')} />
+              </span>
+              <input
+                id="settings-ordersPerPickupWindow"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                dir="ltr"
+                className="input-narrow"
+                value={settings.ordersPerPickupWindow || ''}
+                aria-describedby="settings-ordersPerPickupWindow-error"
+                // Empty is sent as 0, which clears the limit (a missing value would keep it).
+                onChange={(e) => change({ ordersPerPickupWindow: e.target.value === '' ? 0 : Number(e.target.value) })}
+              />
+              <FieldError errors={errors} field="ordersPerPickupWindow" id="settings-ordersPerPickupWindow-error" />
+            </span>
+          )}
           {(['delivery', 'pickup'] as const).map((way) => {
             const field = `${way}LeadMinutes` as const
             return (

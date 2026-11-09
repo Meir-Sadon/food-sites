@@ -70,7 +70,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         decimal? DepositMinOrder = null,
         string RectPicture = "end",
         string MobileCards = "standard",
-        bool TipsEnabled = false);
+        bool TipsEnabled = false,
+        int? OrdersPerPickupWindow = null);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -117,7 +118,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         int? DeliveryLeadMinutes = null,
         int? PickupLeadMinutes = null,
         decimal? DepositMinOrder = null,
-        bool? TipsEnabled = null);
+        bool? TipsEnabled = null,
+        int? OrdersPerPickupWindow = null);
 
     public record InactiveAfterInput(int? Amount, string? Unit);
 
@@ -154,6 +156,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.OrdersPerHourDelivery), "invalid");
         if (input.OrdersPerHourPickup is < 0 or > MaxOrdersPerHour)
             errors.Add(nameof(input.OrdersPerHourPickup), "invalid");
+        if (input.OrdersPerPickupWindow is < 0 or > MaxOrdersPerHour)
+            errors.Add(nameof(input.OrdersPerPickupWindow), "invalid");
         if (input.SlotMinutes is { } slotMinutes && !SlotTiming.AllowedMinutes.Contains(slotMinutes))
             errors.Add(nameof(input.SlotMinutes), "invalid");
         // 0 is "the same as the slot length"; a value not finer than the slot length is ignored (see SlotTiming).
@@ -251,6 +255,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Missing (an older client) keeps the slot timing.
         if (input.SlotMinutes is { } minutes) settings.SlotMinutes = minutes;
         if (input.PickupSlotMinutes is { } pickupMinutes) settings.PickupSlotMinutes = pickupMinutes == 0 ? null : pickupMinutes;
+        // Missing (an older client) keeps the limit; zero means no limit of its own.
+        if (input.OrdersPerPickupWindow is { } perWindow) settings.OrdersPerPickupWindow = perWindow > 0 ? perWindow : null;
         if (input.AlignSlots is { } align) settings.AlignSlots = align;
         if (input.DeliveryLeadMinutes is { } deliveryLead) settings.DeliveryLeadMinutes = deliveryLead;
         if (input.PickupLeadMinutes is { } pickupLead) settings.PickupLeadMinutes = pickupLead;
@@ -475,7 +481,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         s.DepositMinOrder,
         Finish.EffectiveRectPicture(s.RectPicture),
         Finish.EffectiveMobileCards(s.MobileCards),
-        s.TipsEnabled);
+        s.TipsEnabled,
+        s.OrdersPerPickupWindow);
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

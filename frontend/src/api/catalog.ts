@@ -54,6 +54,8 @@ export interface Settings {
   slotMinutes: number
   /** How finely a pickup time is picked (15, 30 or 60, finer than the slot length); 0 means the same slots as delivery. */
   pickupSlotMinutes: number
+  /** The most pickups one finer pickup time takes, on top of the hourly limits; null means none. It counts only while `pickupSlotMinutes` is set. Send 0 to clear it (a missing value keeps it). */
+  ordersPerPickupWindow: number | null
   /** Slots start on round marks of the slot length (a range opening at 20:07 starts at 20:30). */
   alignSlots: boolean
   /** Minutes before a slot's start that a delivery for it can no longer be ordered; 0 means none. */

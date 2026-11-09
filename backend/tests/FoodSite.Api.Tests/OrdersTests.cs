@@ -1004,6 +1004,47 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_finer_pickup_time_can_have_a_limit_of_its_own()
+    {
+        await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        var saved = await (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { SlotMinutes = 60, PickupSlotMinutes = 15, OrdersPerPickupWindow = 1 })).Read<SettingsDto>();
+        Assert.Equal(1, saved.OrdersPerPickupWindow);
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        async Task<ConfirmationDto> PlaceAt(string method, string hour) =>
+            await (await Place(await ValidOrder(o => { o["deliveryHour"] = hour; o["fulfillmentMethod"] = method; }))).Read<ConfirmationDto>();
+        async Task<HourAvailabilityDto> Availability(string hour) =>
+            await _client.GetAsync($"/api/hour-availability?date={date}&hour={hour}").Read<HourAvailabilityDto>();
+
+        // No hourly limit: only each quarter's own one. One pickup fills its quarter, not the next one, and deliveries are not counted.
+        Assert.False((await Availability("08:15")).PickupFull);
+        Assert.False((await PlaceAt("Pickup", "08:15")).HourFull);
+        Assert.Equal((false, false, true), ((await Availability("08:15")).Full, (await Availability("08:15")).DeliveryFull, (await Availability("08:15")).PickupFull));
+        Assert.False((await Availability("08:30")).PickupFull);
+        Assert.False((await PlaceAt("Delivery", "08:00")).HourFull);
+        Assert.False((await PlaceAt("Delivery", "08:00")).HourFull);
+        Assert.False((await PlaceAt("Pickup", "08:00")).HourFull);
+        // A full quarter is still taken (the client was told), and the admin sees it marked.
+        var late = await PlaceAt("Pickup", "08:15");
+        Assert.True(late.HourFull);
+        var admin = await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>();
+        Assert.Equal([late.Id], admin.Where(o => o.HourFull).Select(o => o.Id));
+
+        // The hourly limits still hold on top of it: with 2 pickups an hour, the third quarter is full though it is empty.
+        (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerHourDelivery = 2, OrdersPerHourPickup = 2 })).EnsureSuccessStatusCode();
+        Assert.False((await PlaceAt("Pickup", "09:00")).HourFull);
+        Assert.False((await PlaceAt("Pickup", "09:15")).HourFull);
+        Assert.True((await Availability("09:30")).PickupFull);
+
+        // Without finer pickup times the limit does nothing; 0 clears it, and a negative one is invalid.
+        (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { PickupSlotMinutes = 0 })).EnsureSuccessStatusCode();
+        Assert.False((await PlaceAt("Pickup", "10:00")).HourFull);
+        Assert.False((await PlaceAt("Pickup", "10:00")).HourFull);
+        Assert.Null((await (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerPickupWindow = 0 })).Read<SettingsDto>()).OrdersPerPickupWindow);
+        await (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerPickupWindow = -1 })).AssertInvalid("OrdersPerPickupWindow", "invalid");
+    }
+
+    [Fact]
     public async Task Without_a_limit_no_hour_is_ever_full()
     {
         await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);

@@ -100,6 +100,13 @@ public class Settings
     /// </summary>
     public int? PickupSlotMinutes { get; set; }
 
+    /// <summary>
+    /// How many pickups one pickup time of <see cref="PickupSlotMinutes"/> takes (for example one pickup each quarter hour);
+    /// null means no limit of its own. It counts only while pickup times are finer than <see cref="SlotMinutes"/>, and on top of
+    /// the slot's own limits: like them it is soft (see <c>HourCapacity</c>).
+    /// </summary>
+    public int? OrdersPerPickupWindow { get; set; }
+
     /// <summary>Slots start on round marks of <see cref="SlotMinutes"/> (a range opening at 20:07 starts at 20:30), instead of at the range's own start.</summary>
     public bool AlignSlots { get; set; }
 

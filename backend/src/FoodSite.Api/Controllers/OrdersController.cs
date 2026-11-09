@@ -208,6 +208,9 @@ public class OrdersController(
         {
             var (deliveries, pickups) = await HourCapacity.CountAsync(db.Orders.AsNoTracking(), supplyDate, chosenSlot?.Group ?? slot, ct);
             hourFull = HourCapacity.IsFull(HourCapacity.LimitsOf(settings), input.FulfillmentMethod, deliveries, pickups);
+            // A pickup at a finer time also has the limit of its own time, if the site set one.
+            if (!hourFull && chosenSlot?.Group is not null && HourCapacity.PickupWindowLimit(settings) is { } perWindow)
+                hourFull = await HourCapacity.CountPickupWindowAsync(db.Orders.AsNoTracking(), supplyDate, slot, ct) >= perWindow;
         }
 
         // The order is added to that phone's account, if there is one.

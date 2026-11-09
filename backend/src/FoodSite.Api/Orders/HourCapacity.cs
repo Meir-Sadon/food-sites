@@ -41,6 +41,21 @@ public static class HourCapacity
             : limits.Pickup is { } p && pickups >= p;
     }
 
+    /// <summary>
+    /// The most pickups one pickup time takes (<see cref="Settings.OrdersPerPickupWindow"/>), on top of the slot's own limits;
+    /// null when there is none, or when pickup times are not finer than the slot length (a pickup time is then the slot itself).
+    /// </summary>
+    public static int? PickupWindowLimit(Settings settings) =>
+        SlotTiming.Of(settings).SeparateGrids ? settings.OrdersPerPickupWindow : null;
+
+    /// <summary>
+    /// The pickups at the finer pickup time that starts at <paramref name="hour"/>: those saved with a <see cref="Order.CapacityHour"/>,
+    /// which only a pickup picked on the finer times has. Cancelled orders take no place.
+    /// </summary>
+    public static Task<int> CountPickupWindowAsync(IQueryable<Order> orders, DateOnly date, TimeOnly hour, CancellationToken ct = default) =>
+        orders.CountAsync(o => o.SupplyDate == date && o.DeliveryHour == hour && o.CapacityHour != null
+            && o.FulfillmentMethod != FulfillmentMethod.Delivery && o.Status != OrderStatus.Cancelled, ct);
+
     /// <summary>The orders of a slot by way of receiving.</summary>
     public static async Task<(int Deliveries, int Pickups)> CountAsync(IQueryable<Order> orders, DateOnly date, TimeOnly hour, CancellationToken ct = default)
     {

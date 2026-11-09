@@ -126,14 +126,20 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     /// </summary>
     private async Task<HashSet<int>> OverbookedAsync(List<DateOnly> dates)
     {
-        var limits = HourCapacity.LimitsOf(await db.Settings.AsNoTracking().SingleAsync());
-        if (limits == new HourLimits(null, null, null) || dates.Count == 0)
+        var settings = await db.Settings.AsNoTracking().SingleAsync();
+        var limits = HourCapacity.LimitsOf(settings);
+        var perWindow = HourCapacity.PickupWindowLimit(settings);
+        if ((limits == new HourLimits(null, null, null) && perWindow is null) || dates.Count == 0)
             return [];
         var slotted = await db.Orders.AsNoTracking()
             .Where(o => dates.Contains(o.SupplyDate) && o.DeliveryHour != null && o.Status != OrderStatus.Cancelled)
-            .Select(o => new { o.Id, o.SupplyDate, Hour = o.CapacityHour ?? o.DeliveryHour, o.CreatedAt, o.FulfillmentMethod })
+            .Select(o => new { o.Id, o.SupplyDate, o.DeliveryHour, o.CapacityHour, Hour = o.CapacityHour ?? o.DeliveryHour, o.CreatedAt, o.FulfillmentMethod })
             .ToListAsync();
         var overbooked = new HashSet<int>();
+        // A pickup at a finer time also has the limit of its own time: the ones past it, in the order they came.
+        if (perWindow is { } most)
+            foreach (var window in slotted.Where(o => o.CapacityHour != null && o.FulfillmentMethod != FulfillmentMethod.Delivery).GroupBy(o => (o.SupplyDate, o.DeliveryHour)))
+                overbooked.UnionWith(window.OrderBy(o => o.CreatedAt).ThenBy(o => o.Id).Skip(most).Select(o => o.Id));
         // A pickup at a finer time counts in the slot of the site's length that holds it.
         foreach (var slot in slotted.GroupBy(o => (o.SupplyDate, o.Hour)))
         {

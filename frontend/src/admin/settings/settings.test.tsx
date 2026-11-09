@@ -364,6 +364,7 @@ describe('General settings', () => {
       ordersPerHourPickup: null,
       slotMinutes: 60,
       pickupSlotMinutes: 0,
+      ordersPerPickupWindow: null,
       alignSlots: false,
       deliveryLeadMinutes: 0,
       pickupLeadMinutes: 0,
@@ -387,6 +388,27 @@ describe('General settings', () => {
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ slotMinutes: 60, pickupSlotMinutes: 15 })
+  })
+
+  it('limits each finer pickup time only while pickup is finer than the slot length', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    expect(within(form).queryByLabelText('הזמנות לכל זמן איסוף')).not.toBeInTheDocument()
+    await user.selectOptions(within(form).getByLabelText('דיוק זמן באיסוף עצמי'), 'רבע שעה')
+    const perWindow = within(form).getByLabelText('הזמנות לכל זמן איסוף')
+    await user.type(perWindow, '1')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ pickupSlotMinutes: 15, ordersPerPickupWindow: 1 })
+
+    // Emptying the field clears the limit.
+    await user.clear(perWindow)
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    await vi.waitFor(() => expect(api.sent('PUT', '/api/admin/settings')).toHaveLength(2))
+    expect(api.sent('PUT', '/api/admin/settings')[1].body).toMatchObject({ ordersPerPickupWindow: 0 })
   })
 
   it('saves the owner mail address', async () => {
