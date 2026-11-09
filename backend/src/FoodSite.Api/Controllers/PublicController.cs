@@ -59,7 +59,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string? GoogleClientId = null,
         string RectPicture = "end",
         string MobileCards = "standard",
-        EmergencyDto? Emergency = null);
+        EmergencyDto? Emergency = null,
+        bool TipsEnabled = false);
 
     /// <summary>Present only in emergency mode: no orders are taken, clients phone instead. A null message means the default text.</summary>
     public record EmergencyDto(string Phone, string? Message);
@@ -179,7 +180,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             google.Value.IsConfigured ? google.Value.ClientId!.Trim() : null,
             Finish.EffectiveRectPicture(s.RectPicture),
             Finish.EffectiveMobileCards(s.MobileCards),
-            Admin.EmergencyController.ForClient(s));
+            Admin.EmergencyController.ForClient(s),
+            s.TipsEnabled);
     }
 
     [HttpGet("menu")]

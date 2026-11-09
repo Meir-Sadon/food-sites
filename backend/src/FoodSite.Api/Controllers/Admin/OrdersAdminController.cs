@@ -57,7 +57,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         decimal MinimumTopUp = 0m,
         bool Restricted = false,
         bool DepositRequired = false,
-        bool DepositPaid = false);
+        bool DepositPaid = false,
+        decimal Tip = 0m);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -345,7 +346,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         // A client who agreed to the minimum still pays at least what the dishes plus the top-up came to, until the dishes pass it.
         var dishesTotal = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal);
         order.MinimumTopUp = Math.Max(0m, billedBefore - dishesTotal);
-        order.Total = dishesTotal + order.MinimumTopUp + order.DeliveryFee;
+        order.Total = dishesTotal + order.MinimumTopUp + order.DeliveryFee + order.Tip;
 
         // An account holds the orders of its own phone: a changed phone follows the matching account, or none.
         order.UserId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync();
@@ -404,7 +405,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.MinimumTopUp,
         restricted.Contains(o.Phone),
         o.DepositRequired,
-        o.DepositPaid);
+        o.DepositPaid,
+        o.Tip);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

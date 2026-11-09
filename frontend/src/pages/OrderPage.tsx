@@ -69,6 +69,7 @@ import {
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
+import { TipPicker, noTip, tipAmount, type TipState } from '../order/TipPicker'
 import { HourFullDialog } from '../order/HourFullDialog'
 import { siteLogo } from '../site/config'
 import { marketingForOrder, trackMarketing } from '../tracking/marketing'
@@ -209,8 +210,12 @@ export function OrderPage() {
   const feeDiscount = deliveryDiscount(site, itemsTotal, fullFee)
   const deliveryFee = round2(fullFee - feeDiscount)
   const noDelivery = zonesOn && quoted?.status === 'blocked'
-  const total = round2(itemsTotal + deliveryFee)
   const count = itemCount(state.selections)
+  // A tip for the courier, offered on deliveries only while the admin has tips on.
+  const [tipPicked, setTipPicked] = useState<TipState>(noTip)
+  const tipsOn = !!site?.tipsEnabled && delivering
+  const tip = tipsOn && count > 0 ? tipAmount(tipPicked) : 0
+  const total = round2(itemsTotal + deliveryFee + tip)
   const drinksCategoryIds = useMemo(
     () => new Set((menu?.categories ?? []).filter((c) => c.name === DRINKS_CATEGORY_NAME).map((c) => c.id)),
     [menu],
@@ -514,6 +519,7 @@ export function OrderPage() {
 
   function reset() {
     setSources([])
+    setTipPicked(noTip)
     setState((current) => ({
       ...emptyOrder(),
       name: current.name,
@@ -671,6 +677,7 @@ export function OrderPage() {
         items: toLines(state.selections, dishes),
         marketing: marketingForOrder(site?.tracking),
         ...(acceptTopUp ? { acceptMinimumTopUp: true } : {}),
+        ...(tip > 0 ? { tip } : {}),
       })
       clearDraft()
       serverCart.sent()
@@ -1115,9 +1122,11 @@ export function OrderPage() {
                     {t('order.zones.needAddress')}
                   </p>
                 )}
+                {tipsOn && count > 0 && <TipPicker tip={tipPicked} onChange={setTipPicked} />}
                 <OrderSummary
                   selections={state.selections}
                   dishes={dishes}
+                  tip={tip}
                   delivery={
                     fulfillment !== 'Delivery'
                       ? undefined

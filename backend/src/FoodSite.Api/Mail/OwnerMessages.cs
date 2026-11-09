@@ -150,6 +150,8 @@ public static class OwnerMessages
             dishes.Add($"השלמה למינימום הזמנה – ₪{Money(order.MinimumTopUp)}");
         if (order.DeliveryFee > 0 || order.DeliveryDiscount > 0)
             dishes.Add($"דמי משלוח{(string.IsNullOrEmpty(order.DeliveryZoneName) ? "" : $" ({order.DeliveryZoneName})")} – {OrderMessages.FeeText(order)}");
+        if (order.Tip > 0)
+            dishes.Add($"טיפ לשליח – ₪{Money(order.Tip)}");
         sections.Add(new("המנות שהוזמנו", dishes));
 
         if (!string.IsNullOrWhiteSpace(order.Notes))

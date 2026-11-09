@@ -79,6 +79,7 @@ export function prepReport(order: AdminOrder, t: TFunction): string {
     ...prices,
     ...(saved > 0 ? [`${t('admin.priceLists.orderTotalDiscount')}: ${formatMoney(saved)}`] : []),
     ...(order.deliveryDiscount ? [`${t('order.deliveryFee')}: ${formatMoney(order.deliveryFee ?? 0)} (${t('order.deliveryDiscount.partial', { amount: formatMoney(order.deliveryDiscount) })})`] : []),
+    ...(order.tip ? [`${t('order.tip.line')}: ${formatMoney(order.tip)}`] : []),
     `${t('admin.orders.report.total')}: ${formatMoney(order.total)}`,
   ].join('\n')
 }
