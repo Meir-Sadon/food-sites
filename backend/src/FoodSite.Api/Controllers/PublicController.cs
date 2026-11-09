@@ -274,13 +274,16 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     {
         var settings = await db.Settings.AsNoTracking().SingleAsync();
         var limits = HourCapacity.LimitsOf(settings);
-        if (limits == new HourLimits(null, null, null))
+        if (limits == new HourLimits(null, null, null) && settings.OrdersPerPickupSlot is null)
             return new HourAvailabilityDto(false, false, false);
         // A pickup at a finer time is counted in the slot of the site's length it falls in, which is where both ways are asked about.
-        var group = (await OpenDatesAsync()).FirstOrDefault(d => d.Date == date)?.Hours.FirstOrDefault(h => h.From == hour && h.Date is null && h.Group is not null)?.Group ?? hour;
+        var fineSlot = (await OpenDatesAsync()).FirstOrDefault(d => d.Date == date)?.Hours.FirstOrDefault(h => h.From == hour && h.Date is null && h.Group is not null);
+        var group = fineSlot?.Group ?? hour;
         var (deliveries, pickups) = await HourCapacity.CountAsync(db.Orders.AsNoTracking(), date, group);
         var delivery = HourCapacity.IsFull(limits, FulfillmentMethod.Delivery, deliveries, pickups);
-        var pickup = HourCapacity.IsFull(limits, FulfillmentMethod.Pickup, deliveries, pickups);
+        var pickup = HourCapacity.IsFull(limits, FulfillmentMethod.Pickup, deliveries, pickups)
+            // The finer pickup slot also holds only so many pickups of its own.
+            || (fineSlot is not null && HourCapacity.IsFineFull(settings.OrdersPerPickupSlot, await HourCapacity.CountFineAsync(db.Orders.AsNoTracking(), date, hour)));
         // "Full" is for both ways, which is what the single limit gives; a page that knows the two asks for the way it needs.
         return new HourAvailabilityDto(delivery && pickup, delivery, pickup);
     }

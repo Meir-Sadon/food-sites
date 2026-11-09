@@ -100,6 +100,12 @@ public class Settings
     /// </summary>
     public int? PickupSlotMinutes { get; set; }
 
+    /// <summary>
+    /// The most pickups one finer pickup slot (<see cref="PickupSlotMinutes"/>) takes; null means no limit of its own. It is
+    /// never above the pickup limit of the whole slot (see <c>HourCapacity.PickupCap</c>), which still counts every pickup in it.
+    /// </summary>
+    public int? OrdersPerPickupSlot { get; set; }
+
     /// <summary>Slots start on round marks of <see cref="SlotMinutes"/> (a range opening at 20:07 starts at 20:30), instead of at the range's own start.</summary>
     public bool AlignSlots { get; set; }
 
