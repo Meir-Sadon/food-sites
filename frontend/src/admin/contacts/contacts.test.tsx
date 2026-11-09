@@ -111,6 +111,33 @@ describe('Admin Contacts', () => {
     })
   })
 
+  it('edits a phone\'s Pushover key and sound without removing it', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/site': () => site({ features: ['phoneAlerts'] }),
+      'GET /api/admin/notify-phones': () => [{ id: 1, phone: '0521111111', name: 'דוד', pushoverKey: 'k'.repeat(30), pushoverSound: 'siren' }],
+      'PUT /api/admin/notify-phones/1': (_, body) => ({ id: 1, ...(body as object) }),
+    })
+    renderAt('/admin/contacts')
+    const user = userEvent.setup()
+    const list = await section("מספרים להתראות ולצ'אט בוואטסאפ")
+
+    await user.click(await within(list).findByRole('button', { name: 'עריכה' }))
+    const key = within(list).getByLabelText('מפתח Pushover (לא חובה)', { selector: '#edit-1-key' })
+    await user.clear(key)
+    await user.type(key, 'n'.repeat(30))
+    await user.selectOptions(within(list).getByLabelText('צליל ההתראה', { selector: '#edit-1-sound' }), 'alien')
+    await user.click(within(list).getByRole('button', { name: 'שמירה' }))
+
+    await waitFor(() => expect(within(list).queryByRole('button', { name: 'שמירה' })).not.toBeInTheDocument())
+    expect(api.sent('PUT', '/api/admin/notify-phones/1')[0].body).toEqual({
+      phone: '0521111111',
+      name: 'דוד',
+      pushoverKey: 'n'.repeat(30),
+      pushoverSound: 'alien',
+    })
+  })
+
   it('sends a test alert to a phone that has a Pushover key', async () => {
     const api = fakeApi({
       ...base,

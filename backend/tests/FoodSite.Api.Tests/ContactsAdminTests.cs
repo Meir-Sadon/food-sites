@@ -29,6 +29,7 @@ public sealed class ContactsAdminTests(PostgresFixture postgres) : IAsyncLifetim
     [InlineData("PUT", "/api/admin/contact")]
     [InlineData("GET", "/api/admin/notify-phones")]
     [InlineData("POST", "/api/admin/notify-phones")]
+    [InlineData("PUT", "/api/admin/notify-phones/1")]
     [InlineData("POST", "/api/admin/notify-phones/1/test")]
     [InlineData("DELETE", "/api/admin/notify-phones/1")]
     public async Task Contacts_endpoints_need_an_admin_session(string method, string path)
@@ -56,6 +57,28 @@ public sealed class ContactsAdminTests(PostgresFixture postgres) : IAsyncLifetim
         await (await _admin.PutAsJsonAsync("/api/admin/contact", Contact(phone: null))).AssertInvalid("Phone", "required");
         await (await _admin.PutAsJsonAsync("/api/admin/contact", Contact(phone: "12"))).AssertInvalid("Phone", "phone");
         await (await _admin.PutAsJsonAsync("/api/admin/contact", Contact(email: "not-an-email"))).AssertInvalid("Email", "email");
+    }
+
+    [Fact]
+    public async Task A_notify_phone_can_be_edited_in_place()
+    {
+        var key = new string('a', 30);
+        var other = new string('b', 30);
+        var added = await (await _admin.PostAsJsonAsync("/api/admin/notify-phones",
+            new { phone = "0501234567", name = "דוד", pushoverKey = key, pushoverSound = "siren" })).Read<NotifyPhoneDto>();
+        await AddPhone("0502222222");
+
+        var edited = await (await _admin.PutAsJsonAsync($"/api/admin/notify-phones/{added.Id}",
+            new { phone = "0501234567", name = "דוד כהן", pushoverKey = other, pushoverSound = "bugle" })).Read<NotifyPhoneDto>();
+        Assert.Equal((added.Id, "דוד כהן", other, "bugle"), (edited.Id, edited.Name, edited.PushoverKey, edited.PushoverSound));
+
+        var cleared = await (await _admin.PutAsJsonAsync($"/api/admin/notify-phones/{added.Id}",
+            new { phone = "0501234567", name = "דוד כהן", pushoverKey = "", pushoverSound = "bugle" })).Read<NotifyPhoneDto>();
+        Assert.Equal((null, null), (cleared.PushoverKey, cleared.PushoverSound));
+
+        await (await _admin.PutAsJsonAsync($"/api/admin/notify-phones/{added.Id}", new { phone = "0502222222" })).AssertInvalid("Phone", "duplicate");
+        await (await _admin.PutAsJsonAsync($"/api/admin/notify-phones/{added.Id}", new { phone = "0501234567", pushoverKey = "short" })).AssertInvalid("PushoverKey", "pushoverKey");
+        Assert.Equal(HttpStatusCode.NotFound, (await _admin.PutAsJsonAsync("/api/admin/notify-phones/9999", new { phone = "0501234567" })).StatusCode);
     }
 
     [Fact]

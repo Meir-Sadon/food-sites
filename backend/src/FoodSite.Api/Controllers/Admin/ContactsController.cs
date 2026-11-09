@@ -63,6 +63,43 @@ public partial class ContactsController(
     [HttpPost("notify-phones")]
     public async Task<ActionResult<NotifyPhoneDto>> AddNotifyPhone(NotifyPhoneInput input)
     {
+        var (phone, key, sound, errors) = Validate(input);
+        if (errors.Any)
+            return Invalid(errors);
+        if (await db.NotifyPhones.AnyAsync(p => p.Phone == phone))
+            return Invalid(nameof(input.Phone), "duplicate");
+
+        var entity = new NotifyPhone { Phone = phone!, Name = Clean(input.Name), PushoverKey = key, PushoverSound = key is null ? null : sound };
+        db.NotifyPhones.Add(entity);
+        await db.SaveChangesAsync();
+        return ToDto(entity);
+    }
+
+    /// <summary>Edits a number in place: its name, Pushover key (blank turns the phone alert off) and sound.</summary>
+    [HttpPut("notify-phones/{id:int}")]
+    public async Task<ActionResult<NotifyPhoneDto>> UpdateNotifyPhone(int id, NotifyPhoneInput input)
+    {
+        var entity = await db.NotifyPhones.FindAsync(id);
+        if (entity is null)
+            return NotFound();
+        var (phone, key, sound, errors) = Validate(input);
+        if (errors.Any)
+            return Invalid(errors);
+        if (await db.NotifyPhones.AnyAsync(p => p.Phone == phone && p.Id != id))
+            return Invalid(nameof(input.Phone), "duplicate");
+
+        entity.Phone = phone!;
+        entity.Name = Clean(input.Name);
+        entity.PushoverKey = key;
+        entity.PushoverSound = key is null ? null : sound;
+        await db.SaveChangesAsync();
+        return ToDto(entity);
+    }
+
+    private static NotifyPhoneDto ToDto(NotifyPhone p) => new(p.Id, p.Phone, p.Name, p.PushoverKey, p.PushoverSound);
+
+    private static (string? Phone, string? Key, string? Sound, Errors Errors) Validate(NotifyPhoneInput input)
+    {
         var errors = new Errors();
         errors.Text(nameof(input.Name), input.Name, NameMaxLength);
         var phone = PhoneNumber.Normalize(input.Phone);
@@ -76,15 +113,7 @@ public partial class ContactsController(
         var sound = Clean(input.PushoverSound);
         if (sound is not null && !PushoverSounds.IsKnown(sound))
             errors.Add(nameof(input.PushoverSound), "invalid");
-        if (errors.Any)
-            return Invalid(errors);
-        if (await db.NotifyPhones.AnyAsync(p => p.Phone == phone))
-            return Invalid(nameof(input.Phone), "duplicate");
-
-        var entity = new NotifyPhone { Phone = phone!, Name = Clean(input.Name), PushoverKey = key, PushoverSound = key is null ? null : sound };
-        db.NotifyPhones.Add(entity);
-        await db.SaveChangesAsync();
-        return new NotifyPhoneDto(entity.Id, entity.Phone, entity.Name, entity.PushoverKey, entity.PushoverSound);
+        return (phone, key, sound, errors);
     }
 
     /// <summary>Sends one alert to the phone, with its own sound, so the admin can hear what a new order will do.</summary>
