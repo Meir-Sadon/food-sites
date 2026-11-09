@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ClosedDatesSection } from './ClosedDatesSection'
 import { ConsoleTokenSection } from './ConsoleTokenSection'
+import { EmergencySection } from './EmergencySection'
 import { GeneralSection } from './GeneralSection'
 import { InactiveAfterSection } from './InactiveAfterSection'
 import { RestrictedClientsSection } from './RestrictedClientsSection'
@@ -20,6 +21,9 @@ export function SettingsPage() {
   return (
     <SectionGroup>
       <h1>{t('admin.settings.title')}</h1>
+      <SectionSlot>
+        <EmergencySection />
+      </SectionSlot>
       <SectionSlot>
         <SupplyDaysSection />
       </SectionSlot>

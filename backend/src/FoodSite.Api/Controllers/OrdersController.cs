@@ -84,6 +84,13 @@ public class OrdersController(
         var errors = new Errors();
         var settings = await db.Settings.AsNoTracking().SingleAsync(ct);
 
+        // In emergency mode the site takes no orders: clients phone instead.
+        if (settings.EmergencyEnabled)
+        {
+            errors.Add("emergency", "emergencyMode");
+            return Invalid(errors);
+        }
+
         errors.Text(nameof(input.Name), input.Name, NameMaxLength, required: true);
         errors.Text(nameof(input.Notes), input.Notes, NotesMaxLength);
         var phone = PhoneNumber.Normalize(input.Phone);

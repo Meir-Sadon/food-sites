@@ -5,6 +5,7 @@ import { OrderSignalsProvider } from '../order/orderSignals'
 import { AccessibilityMenu } from '../accessibility/AccessibilityMenu'
 import { CartNavProvider } from './CartNavProvider'
 import { InstallPrompt } from '../pwa/InstallPrompt'
+import { EmergencyDialog } from './EmergencyDialog'
 import { EntryPopup } from './EntryPopup'
 import { Footer } from './Footer'
 import { WhatsAppButton } from './WhatsAppButton'
@@ -87,6 +88,7 @@ function Shell() {
       </main>
       <Footer />
       <AccessibilityMenu />
+      <EmergencyDialog />
       <EntryPopup />
       <InstallPrompt />
       <div className="fabs">
