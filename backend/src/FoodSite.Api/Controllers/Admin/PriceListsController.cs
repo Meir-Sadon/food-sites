@@ -19,6 +19,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
 {
     public const decimal MaxPrice = DishesController.MaxAddOnPrice;
     public const int MaxPhones = 1000;
+    public const int MaxDiscountOrders = 10000;
 
     /// <summary>Name is null for the default list. BaseListId null means the default list (and is the default list's own).</summary>
     public record PriceListDto(
@@ -34,7 +35,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
     /// The clients a list is for by status: registered within NewClientsAmount NewClientsUnits (null is off), with no
     /// order that was not cancelled, in the middle of an order, or with an open order above OpenOrderAbove (null is off).
     /// </summary>
-    public record StatusesDto(int? NewClientsAmount, string? NewClientsUnit, bool NoOrders, bool MidOrder, decimal? OpenOrderAbove);
+    public record StatusesDto(int? NewClientsAmount, string? NewClientsUnit, int? MaxOrders, bool MidOrder, decimal? OpenOrderAbove, bool MatchAll = false, bool NextOrderOnly = false);
 
     /// <summary>Discount null keeps the list's general discount.</summary>
     public record PriceListInput(string? Name, int? BaseListId, DiscountDto? Discount = null);
@@ -278,7 +279,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
 
     private static PriceListDto ToDto(PriceList l) =>
         new(l.Id, l.Name, l.IsDefault, l.BaseListId, l.Phones.Select(p => p.Phone).Order().ToList(),
-            new StatusesDto(l.NewClientsAmount, l.NewClientsAmount is null ? null : l.NewClientsUnit, l.ForNoOrders, l.ForMidOrder, l.OpenOrderAbove),
+            new StatusesDto(l.NewClientsAmount, l.NewClientsAmount is null ? null : l.NewClientsUnit, l.StatusesMaxOrders, l.ForMidOrder, l.OpenOrderAbove, l.StatusesMatchAll, l.DiscountNextOrderOnly),
             new DiscountDto(l.DiscountPercent, l.DiscountFrom, l.DiscountTo, l.DiscountRule));
 
     private static void SetDiscount(PriceList list, DiscountDto? discount)
@@ -297,7 +298,7 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
         if (list is null)
             return NotFound();
         if (list.IsDefault)
-            return Invalid(nameof(input.NoOrders), "isDefault");
+            return Invalid(nameof(input.MaxOrders), "isDefault");
         var errors = new Errors();
         if (input.NewClientsAmount is { } amount)
         {
@@ -306,6 +307,8 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
             if (input.NewClientsUnit is null || !ItemBadges.Units.Contains(input.NewClientsUnit))
                 errors.Add(nameof(input.NewClientsUnit), "invalid");
         }
+        if (input.MaxOrders is { } maxOrders && (maxOrders < 1 || maxOrders > MaxDiscountOrders))
+            errors.Add(nameof(input.MaxOrders), "invalid");
         if (input.OpenOrderAbove is { } above && (above < 0 || above >= MaxPrice))
             errors.Add(nameof(input.OpenOrderAbove), "invalid");
         if (errors.Any)
@@ -313,7 +316,9 @@ public class PriceListsController(AppDbContext db) : AdminControllerBase
 
         list.NewClientsAmount = input.NewClientsAmount;
         list.NewClientsUnit = input.NewClientsAmount is null ? null : input.NewClientsUnit;
-        list.ForNoOrders = input.NoOrders;
+        list.StatusesMaxOrders = input.MaxOrders;
+        list.StatusesMatchAll = input.MatchAll;
+        list.DiscountNextOrderOnly = input.NextOrderOnly;
         list.ForMidOrder = input.MidOrder;
         list.OpenOrderAbove = input.OpenOrderAbove is { } value ? decimal.Round(value, 2) : null;
         await db.SaveChangesAsync();

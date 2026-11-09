@@ -33,18 +33,24 @@ export interface PriceListDiscount {
 
 export const noDiscount: PriceListDiscount = { percent: null, from: null, to: null, rule: 'dish' }
 
-/** Any one is enough: registered within the period, no order that was not cancelled, dishes in the saved cart, an open order above the amount. */
+/**
+ * Registered within the period, fewer than `maxOrders` orders that were not cancelled (1 = none yet), dishes in the saved
+ * cart, an open order above the amount. Any one is enough, or all of them that are on when `matchAll`.
+ * `nextOrderOnly` gives the list's general discount once per client; a cancelled order gives it back.
+ */
 export interface PriceListStatuses {
   newClientsAmount: number | null
   newClientsUnit: BadgeNewUnit | null
-  noOrders: boolean
+  maxOrders: number | null
   midOrder: boolean
   openOrderAbove: number | null
+  matchAll: boolean
+  nextOrderOnly: boolean
 }
 
-export const hasStatuses = (s: PriceListStatuses) => s.newClientsAmount !== null || s.noOrders || s.midOrder || s.openOrderAbove !== null
+export const hasStatuses = (s: PriceListStatuses) => s.newClientsAmount !== null || s.maxOrders !== null || s.midOrder || s.openOrderAbove !== null
 
-export const noStatuses: PriceListStatuses = { newClientsAmount: null, newClientsUnit: null, noOrders: false, midOrder: false, openOrderAbove: null }
+export const noStatuses: PriceListStatuses = { newClientsAmount: null, newClientsUnit: null, maxOrders: null, midOrder: false, openOrderAbove: null, matchAll: false, nextOrderOnly: false }
 
 /** A dish in a list. `inList` is false for a dish added after the list was made, shown at its base list's price until saved. */
 export interface PriceListDish {

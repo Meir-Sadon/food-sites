@@ -544,6 +544,17 @@ label {
   min-inline-size: 0;
 }
 
+.section-look-quick {
+  flex-basis: 100%;
+}
+
+.section-look-quick__fields {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .dish-thumb {
   flex: none;
   align-self: center;
@@ -562,6 +573,17 @@ label {
   border-radius: var(--radius-pill);
   background: var(--color-soft);
   font-size: 0.8125rem;
+}
+
+/* An order from a restricted client: stands out in the admin's list (admin-only). */
+.badge--warning {
+  margin-inline-start: 0.5rem;
+  background: var(--color-error);
+  color: #fff;
+}
+
+.restricted-notice {
+  border-inline-start: 4px solid var(--color-error);
 }
 
 /* "On sale", "new" and "almost out" marks beside a dish's name. */
@@ -1286,6 +1308,31 @@ label {
   }
 }
 
+/* Settings → imageSize (<html data-image-size>): 1 is the size the pictures had before the setting existed. */
+:root {
+  --image-scale: 0.75;
+}
+
+[data-image-size='tiny'] {
+  --image-scale: 0.5;
+}
+
+[data-image-size='small'] {
+  --image-scale: 0.75;
+}
+
+[data-image-size='medium'] {
+  --image-scale: 1;
+}
+
+[data-image-size='large'] {
+  --image-scale: 1.25;
+}
+
+[data-image-size='huge'] {
+  --image-scale: 1.5;
+}
+
 .dish--group > .carousel {
   position: sticky;
   inset-block-start: calc(var(--top-bar-height) + 1.25rem);
@@ -1298,7 +1345,7 @@ label {
   .dish--group > .carousel {
     inset-block-start: calc(var(--top-bar-height) + 0.75rem);
     inline-size: 100%;
-    max-block-size: 9rem;
+    max-block-size: calc(9rem * var(--image-scale));
     overflow: hidden;
   }
 
@@ -1339,7 +1386,7 @@ label {
 
 /* A variant's own pictures are a small thumbnail beside its details, much smaller than the card's. */
 .dish-variant .carousel {
-  max-inline-size: 7rem;
+  max-inline-size: calc(7rem * var(--image-scale));
 }
 
 .dish-variant .carousel img {
@@ -1692,7 +1739,15 @@ label {
   }
 
   .dish > .carousel {
-    flex: 0 0 16rem;
+    flex: 0 0 calc(16rem * var(--image-scale));
+  }
+}
+
+/* On a phone the picture is as wide as the card at most; a smaller size centres it above the details. */
+@media (max-width: 39.99rem) {
+  .dish > .carousel {
+    inline-size: calc(100% * min(1, var(--image-scale)));
+    align-self: center;
   }
 }
 
@@ -3265,6 +3320,16 @@ label {
   border-radius: calc(0.5rem * var(--corner-scale));
 }
 
+.style-option__preview--rect {
+  grid-template-columns: 1fr;
+}
+
+.style-option__preview--rect > span:not(:first-child) {
+  block-size: 1.25rem;
+  border: var(--line-width, 1px) solid var(--color-border);
+  border-radius: calc(0.5rem * var(--corner-scale));
+}
+
 /* A tiny drawing of each corner choice: a picture, a line of text and a button. */
 .corners-preview {
   grid-column: 1 / -1;
@@ -3835,6 +3900,19 @@ label {
   font-size: 0.9rem;
 }
 
+.price-note--list {
+  align-self: flex-start;
+  padding: 0 0.5rem;
+  border-radius: var(--radius);
+  background: var(--color-badge);
+  color: var(--color-badge-text);
+  font-weight: 700;
+}
+
+.price-note--discount {
+  color: var(--color-success);
+}
+
 .cart-row__price {
   color: var(--color-accent);
   font-size: 1.125rem;
@@ -4238,10 +4316,14 @@ label {
   display: block;
   inline-size: calc(100% + 3rem);
   max-inline-size: none;
-  aspect-ratio: 16 / 9;
+  /* The whole picture at its own proportions; a tall one is scaled down to fit the window, never cropped. */
+  block-size: auto;
+  max-block-size: 55vh;
+  max-block-size: 55dvh;
   margin-inline: -1.5rem;
   margin-block-end: 0.5rem;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--color-soft);
 }
 
 .entry-popup--large .entry-popup__image {
@@ -4264,6 +4346,35 @@ label {
 
 .entry-popup:not(.entry-popup--picture) .modal__title--with-close {
   padding-inline: 2.75rem;
+}
+
+.emergency-dialog__body {
+  margin: 0;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.emergency-dialog .modal__title--with-close {
+  padding-inline: 2.75rem;
+  text-align: center;
+  color: var(--color-error);
+}
+
+.emergency-dialog__call {
+  align-self: center;
+  min-inline-size: 60%;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.emergency-dialog__dismiss {
+  align-self: center;
+  border-color: transparent;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-decoration: underline;
 }
 
 .entry-popup__button {
@@ -4937,7 +5048,6 @@ label {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.125rem;
 }
 
 /* A colour of its own (the gold accent where the site has one), so it stands apart from the grey navigation icons. */
@@ -4958,6 +5068,10 @@ label {
 }
 
 .install-button__hint {
+  /* A badge on the button's top corner (the end side, so the left in Hebrew), overlapping it. */
+  position: absolute;
+  inset-block-start: -0.25rem;
+  inset-inline-end: -0.25rem;
   display: grid;
   place-items: center;
   inline-size: 1.25rem;
@@ -4973,6 +5087,13 @@ label {
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
+}
+
+/* Keeps a comfortable tap area around the small badge. */
+.install-button__hint::after {
+  content: '';
+  position: absolute;
+  inset: -0.375rem;
 }
 
 .install-button__tip {
@@ -5065,4 +5186,36 @@ label {
   font-size: 0.9rem;
   font-weight: 400;
   text-decoration: underline;
+}
+
+.price-notes {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The tip for the courier: the amounts and "another amount" on one row. */
+.tip-picker {
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 0.75rem;
+}
+
+.tip-picker__options {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+}
+
+.tip-picker__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.tip-picker__custom {
+  max-width: 12rem;
 }

@@ -2,7 +2,7 @@ import { availablePayment, isTransfer, paymentKey, transferChoices } from '../or
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ordersApi, siteApi, type HourAvailability, type Confirmation, type Menu, type MenuDish, type Fulfillment, type Payment } from '../api/site'
+import { ordersApi, siteApi, type HourAvailability, type Confirmation, type Menu, type MenuDish, type Fulfillment, type Payment, type SectionLook } from '../api/site'
 import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
@@ -17,7 +17,8 @@ import { useToast } from '../components/toast'
 import { scrollBehavior } from '../components/motion'
 import { bringIntoView, holdScroll } from '../components/scrollToInvalid'
 import { Modal } from '../components/Modal'
-import { useFeature, useOrderLayout, useSite, useSiteFailed } from '../site/useSite'
+import { useFeature, useOrderLayout, useSite, useSiteFailed, useSiteStyle } from '../site/useSite'
+import { DishLayoutContext, sectionAttributes } from '../order/dishLayout'
 import { CategorySteps, CategoryStepsFooter } from '../order/CategorySteps'
 import { DishSearch } from '../order/DishSearch'
 import { SearchQueryContext } from '../order/searchQuery'
@@ -68,6 +69,7 @@ import {
 import { normalizePhone } from '../order/phone'
 import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
+import { TipPicker, noTip, tipAmount, type TipState } from '../order/TipPicker'
 import { HourFullDialog } from '../order/HourFullDialog'
 import { siteLogo } from '../site/config'
 import { marketingForOrder, trackMarketing } from '../tracking/marketing'
@@ -144,6 +146,7 @@ export function OrderPage() {
   const [keptFull, setKeptFull] = useState<string[]>([])
   // The admin's order layout: where the total sits, and whether the menu is paged one category at a time.
   const { totalPosition, flow } = useOrderLayout()
+  const siteStyle = useSiteStyle()
   const steps = flow === 'steps'
   // Whole menu on one page, with the order details behind a button until the client is done choosing.
   const deferred = flow === 'continue'
@@ -207,8 +210,12 @@ export function OrderPage() {
   const feeDiscount = deliveryDiscount(site, itemsTotal, fullFee)
   const deliveryFee = round2(fullFee - feeDiscount)
   const noDelivery = zonesOn && quoted?.status === 'blocked'
-  const total = round2(itemsTotal + deliveryFee)
   const count = itemCount(state.selections)
+  // A tip for the courier, offered on deliveries only while the admin has tips on.
+  const [tipPicked, setTipPicked] = useState<TipState>(noTip)
+  const tipsOn = !!site?.tipsEnabled && delivering
+  const tip = tipsOn && count > 0 ? tipAmount(tipPicked) : 0
+  const total = round2(itemsTotal + deliveryFee + tip)
   const drinksCategoryIds = useMemo(
     () => new Set((menu?.categories ?? []).filter((c) => c.name === DRINKS_CATEGORY_NAME).map((c) => c.id)),
     [menu],
@@ -392,6 +399,11 @@ export function OrderPage() {
   const results = searching ? searchDishes(menu, query, categories.flatMap((group) => group.dishes)) : []
   const shownCategories = steps ? categories.slice(currentStep, currentStep + 1) : categories
 
+  /** One category's or group's dishes, laid out the way it asked for (else the site's). */
+  function renderSection(look: SectionLook | undefined, list: MenuDish[]) {
+    return <DishLayoutContext.Provider value={sectionAttributes(look, siteStyle).layout}><div className="category__dishes">{list.map(renderDish)}</div></DishLayoutContext.Provider>
+  }
+
   function renderDish(dish: MenuDish) {
     const variants = variantsOf(dish, menu!)
     return variants.length > 0 ? (
@@ -507,6 +519,7 @@ export function OrderPage() {
 
   function reset() {
     setSources([])
+    setTipPicked(noTip)
     setState((current) => ({
       ...emptyOrder(),
       name: current.name,
@@ -620,6 +633,11 @@ export function OrderPage() {
     setMinimumAsked(false)
     setErrors({})
     setSubmitError(null)
+    // In emergency mode the site takes no orders: nothing is sent, the client is told to phone.
+    if (site?.emergency) {
+      setSubmitError(t('emergency.orderBlocked', { phone: site.emergency.phone }))
+      return
+    }
     // The dishes come before the form, so a dish still waiting for the client is the first thing to fix.
     const unanswered = unansweredDishes(state.selections, dishes)
     if (unadjusted.length > 0 || unanswered.length > 0) {
@@ -659,6 +677,7 @@ export function OrderPage() {
         items: toLines(state.selections, dishes),
         marketing: marketingForOrder(site?.tracking),
         ...(acceptTopUp ? { acceptMinimumTopUp: true } : {}),
+        ...(tip > 0 ? { tip } : {}),
       })
       clearDraft()
       serverCart.sent()
@@ -668,6 +687,11 @@ export function OrderPage() {
       setRemember(rememberOffer(result.id, normalizedPhone))
     } catch (err) {
       const fieldErrors = fieldErrorsOf(err)
+      if (fieldErrors.emergency) {
+        // Emergency mode started after the page loaded: the server refused the order.
+        setSubmitError(t('errors.emergencyMode'))
+        return
+      }
       setErrors(fieldErrors)
       openBlocksWith(fieldErrors)
       if (addressFirst && Object.keys(fieldErrors).some((field) => CONTACT_FIELDS.includes(field) || field === 'fulfillmentmethod')) setAddressDone(false)
@@ -902,7 +926,7 @@ export function OrderPage() {
               </div>
             )}
             {searching && (
-              <section className="category dish-results" aria-labelledby="dish-results-title">
+              <section className="category dish-results" aria-labelledby="dish-results-title" {...sectionAttributes(undefined, siteStyle).attrs}>
                 <h2 id="dish-results-title" className="dish-results__title">
                   {results.length === 0 ? t('order.search.noResults') : t('order.search.results', { count: results.length })}
                 </h2>
@@ -912,27 +936,25 @@ export function OrderPage() {
                   </p>
                 ) : (
                   <SearchQueryContext.Provider value={query}>
-                    <div className="category__dishes">{results.map(renderDish)}</div>
+                    {renderSection(undefined, results)}
                   </SearchQueryContext.Provider>
                 )}
               </section>
             )}
             {!searching && (!steps || currentStep === 0) && groups.map(({ group, dishes: list }) => (
-              <details key={`group-${group.id}`} id={groupSectionId(group.id)} open className="category category--group">
+              <details key={`group-${group.id}`} id={groupSectionId(group.id)} open className="category category--group" {...sectionAttributes(group, siteStyle).attrs}>
                 <summary>
                   <h2>{group.name}</h2>
                 </summary>
-                <div className="category__dishes">{list.map(renderDish)}</div>
+                {renderSection(group, list)}
               </details>
             ))}
             {!searching && shownCategories.map(({ category, dishes: list }) => (
-              <details key={category.id} id={categorySectionId(category.id)} open className="category">
+              <details key={category.id} id={categorySectionId(category.id)} open className="category" {...sectionAttributes(category, siteStyle).attrs}>
                 <summary>
                   <h2>{category.name}</h2>
                 </summary>
-                <div className="category__dishes">
-                  {list.map(renderDish)}
-                </div>
+                {renderSection(category, list)}
               </details>
             ))}
             {steps && !searching && currentStep < detailsStep && <CategoryStepsFooter current={currentStep} last={detailsStep - 1} onChange={goToStep} />}
@@ -1100,9 +1122,11 @@ export function OrderPage() {
                     {t('order.zones.needAddress')}
                   </p>
                 )}
+                {tipsOn && count > 0 && <TipPicker tip={tipPicked} onChange={setTipPicked} />}
                 <OrderSummary
                   selections={state.selections}
                   dishes={dishes}
+                  tip={tip}
                   delivery={
                     fulfillment !== 'Delivery'
                       ? undefined

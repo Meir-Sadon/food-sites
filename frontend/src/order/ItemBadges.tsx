@@ -10,7 +10,10 @@ import { isAlmostOut } from './model'
  * also shows what its variants carry, since the variants have no card of their own in the tiles style.
  * A dish sold only at set times also carries a clock; hovering it shows when (the dish card and the tile's dialog spell it out).
  */
-export function ItemBadges({ dish, variants = [], date, className = '' }: { dish: MenuDish; variants?: MenuDish[]; date?: string; className?: string }) {
+type Mark = 'onSale' | 'new' | 'almostOut'
+
+/** `only` shows just those marks (and no clock); `except` leaves those out, for a card that shows them elsewhere. */
+export function ItemBadges({ dish, variants = [], date, className = '', only, except }: { dish: MenuDish; variants?: MenuDish[]; date?: string; className?: string; only?: Mark[]; except?: Mark[] }) {
   const { t } = useTranslation()
   const badges = useSite()?.badges
   const all = [dish, ...variants]
@@ -18,8 +21,10 @@ export function ItemBadges({ dish, variants = [], date, className = '' }: { dish
     all.some((d) => d.onSale) && 'onSale',
     all.some((d) => d.isNew) && 'new',
     all.some((d) => isAlmostOut(d, date, badges)) && 'almostOut',
-  ].filter((mark): mark is 'onSale' | 'new' | 'almostOut' => !!mark)
-  const times = dish.availability?.length ? availabilityLines(dish.availability, t) : []
+  ]
+    .filter((mark): mark is Mark => !!mark)
+    .filter((mark) => (!only || only.includes(mark)) && !except?.includes(mark))
+  const times = !only && dish.availability?.length ? availabilityLines(dish.availability, t) : []
   if (marks.length === 0 && times.length === 0) return null
   return (
     <ul className={`item-badges${className ? ` ${className}` : ''}`} aria-label={t('order.badges.label', { name: dish.name })}>

@@ -50,8 +50,8 @@ public sealed class PriceListStatusTests(PostgresFixture postgres) : IAsyncLifet
         return await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses", statuses, TestFiles.Json).Read<PriceListDto>();
     }
 
-    private static StatusesDto Statuses(int? newDays = null, bool noOrders = false, bool midOrder = false, decimal? openAbove = null) =>
-        new(newDays, newDays is null ? null : "day", noOrders, midOrder, openAbove);
+    private static StatusesDto Statuses(int? newDays = null, bool noOrders = false, bool midOrder = false, decimal? openAbove = null, int? maxOrders = null, bool matchAll = false) =>
+        new(newDays, newDays is null ? null : "day", noOrders ? 1 : maxOrders, midOrder, openAbove, matchAll);
 
     private async Task<HttpClient> LoggedIn()
     {
@@ -127,6 +127,43 @@ public sealed class PriceListStatusTests(PostgresFixture postgres) : IAsyncLifet
     }
 
     [Fact]
+    public async Task A_client_with_few_orders_gets_the_list_until_they_pass_the_limit_and_a_cancelled_order_does_not_count()
+    {
+        await ListFor("ראשונה", 50, Statuses(maxOrders: 2));
+        var client = await LoggedIn();
+        Assert.Equal(50, await ChickenPrice(client));
+        var first = await Order(client);
+        Assert.Equal(50, await ChickenPrice(client)); // one order is within the limit
+        await Order(client);
+        Assert.Equal(70, await ChickenPrice(client)); // two are not
+        Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync($"/api/admin/orders/{first.Id}/status",
+            new { status = "Cancelled", cancelReason = "test" })).StatusCode);
+        Assert.Equal(50, await ChickenPrice(client));
+        await (await _admin.PutAsJsonAsync($"{Lists}/{(await _admin.GetAsync(Lists).Read<List<PriceListDto>>()).Single(l => !l.IsDefault).Id}/statuses",
+            Statuses(maxOrders: 0), TestFiles.Json)).AssertInvalid("MaxOrders", "invalid");
+    }
+
+    [Fact]
+    public async Task The_statuses_combine_with_or_by_default_and_with_and_when_asked()
+    {
+        // The client has registered just now (a new client) but has an order, so only one of the two statuses holds.
+        var list = await ListFor("שניהם", 50, Statuses(newDays: 3, noOrders: true));
+        var client = await LoggedIn();
+        await Order(client);
+        Assert.Equal(50, await ChickenPrice(client)); // or: new client is enough
+        Assert.False(list.Statuses.MatchAll);
+
+        var both = await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses", Statuses(newDays: 3, noOrders: true, matchAll: true), TestFiles.Json)
+            .Read<PriceListDto>();
+        Assert.True(both.Statuses.MatchAll);
+        Assert.Equal(70, await ChickenPrice(client)); // and: no orders fails
+
+        (await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses", Statuses(newDays: 3, maxOrders: 5, matchAll: true), TestFiles.Json))
+            .EnsureSuccessStatusCode();
+        Assert.Equal(50, await ChickenPrice(client)); // and: both hold
+    }
+
+    [Fact]
     public async Task A_new_client_gets_the_list_within_the_period()
     {
         await ListFor("חדשים", 55, Statuses(newDays: 3));
@@ -182,16 +219,16 @@ public sealed class PriceListStatusTests(PostgresFixture postgres) : IAsyncLifet
     public async Task Statuses_are_checked_saved_and_shown()
     {
         var list = await ListFor("ראשונה", 50, Statuses(newDays: 2, midOrder: true, openAbove: 120));
-        Assert.Equal(new StatusesDto(2, "day", false, true, 120), list.Statuses);
-        await (await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses", new StatusesDto(0, "year", false, false, -1), TestFiles.Json))
+        Assert.Equal(new StatusesDto(2, "day", null, true, 120), list.Statuses);
+        await (await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses", new StatusesDto(0, "year", null, false, -1), TestFiles.Json))
             .AssertInvalid("NewClientsAmount", "invalid");
-        var response = await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses", new StatusesDto(2, "year", false, false, -1), TestFiles.Json);
+        var response = await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses", new StatusesDto(2, "year", null, false, -1), TestFiles.Json);
         await response.AssertInvalid("NewClientsUnit", "invalid");
         await response.AssertInvalid("OpenOrderAbove", "invalid");
 
         var defaultList = (await _admin.GetAsync(Lists).Read<List<PriceListDto>>()).Single(l => l.IsDefault);
         await (await _admin.PutAsJsonAsync($"{Lists}/{defaultList.Id}/statuses", Statuses(noOrders: true), TestFiles.Json))
-            .AssertInvalid("NoOrders", "isDefault");
-        Assert.Equal(new StatusesDto(null, null, false, false, null), defaultList.Statuses);
+            .AssertInvalid("MaxOrders", "isDefault");
+        Assert.Equal(new StatusesDto(null, null, null, false, null), defaultList.Statuses);
     }
 }

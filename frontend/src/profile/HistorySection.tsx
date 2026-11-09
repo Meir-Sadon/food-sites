@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { MAX_FAVORITE_NAME_LENGTH, type HistoryItem, type HistoryOrder } from '../api/account'
 import { FieldError, Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
+import { DeliveryFeePrice, DiscountedPrice, orderSaving } from '../order/DiscountedPrice'
 import { formatMoney, formatSupplyDate } from '../order/format'
 import type { FieldErrors } from '../api/client'
 import { useToast } from '../components/toast'
@@ -74,10 +75,28 @@ function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
           {order.items.map((item) => (
             <li key={item.id} className={item.parentItemId !== null ? 'summary__addon' : undefined}>
               <span>{itemText(item)}</span>
-              <span className="numeric">{formatMoney(item.lineTotal)}</span>
+              <span className="numeric">
+                <DiscountedPrice before={item.regularUnitPrice ? item.regularUnitPrice * item.quantity : null} price={item.lineTotal} />
+              </span>
             </li>
           ))}
         </ul>
+        {!!order.deliveryFee || !!order.deliveryDiscount ? (
+          <p className="muted">
+            {t('order.deliveryFee')}:{' '}
+            <span className="numeric">
+              <DeliveryFeePrice fee={order.deliveryFee ?? 0} discount={order.deliveryDiscount} />
+            </span>
+          </p>
+        ) : null}
+        {order.tip ? (
+          <p className="muted">
+            {t('order.tip.line')}: <span className="numeric">{formatMoney(order.tip)}</span>
+          </p>
+        ) : null}
+        {orderSaving(order.items, order.deliveryDiscount) > 0 && (
+          <p className="muted">{t('order.youSaved', { amount: formatMoney(orderSaving(order.items, order.deliveryDiscount)) })}</p>
+        )}
 
         {naming ? (
           <form className="row row--end" onSubmit={save} noValidate>

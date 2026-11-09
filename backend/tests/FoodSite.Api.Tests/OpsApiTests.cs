@@ -175,6 +175,26 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_summary_keeps_tips_out_of_the_sales_and_reports_them_on_their_own()
+    {
+        await using (var db = _factory.CreateDbContext())
+        {
+            db.Orders.AddRange(
+                new Order { Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = new(2031, 1, 6), Total = 110, Tip = 10, Status = OrderStatus.New, CreatedAt = DateTimeOffset.UtcNow },
+                new Order { Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = new(2031, 1, 7), Total = 50, Status = OrderStatus.New, CreatedAt = DateTimeOffset.UtcNow });
+            await db.SaveChangesAsync();
+        }
+        var console = await ConsoleAsync();
+
+        var summary = await console.GetAsync("/api/ops/summary?from=2031-01-01&to=2031-01-31").Read<SummaryDto>();
+
+        Assert.Equal(2, summary.Orders);
+        Assert.Equal(150, summary.Sales);
+        Assert.Equal(10, summary.Tips);
+        Assert.Equal(10, summary.Periods[0].Tips);
+    }
+
+    [Fact]
     public async Task The_summary_counts_every_order_but_cancelled_per_period_and_each_status_on_its_own()
     {
         await using (var db = _factory.CreateDbContext())
@@ -230,6 +250,40 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
             weeks.Periods);
 
         await (await console.GetAsync("/api/ops/summary?from=2030-02-01&to=2030-01-01")).AssertInvalid("from", "invalidRange");
+    }
+
+    [Fact]
+    public async Task The_summary_splits_each_period_by_the_orders_totals_when_asked_for_bands()
+    {
+        await using (var db = _factory.CreateDbContext())
+        {
+            Order Make(DateOnly date, decimal total, decimal fee = 0) => new()
+            {
+                Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = date, Total = total, DeliveryFee = fee,
+                Status = OrderStatus.New, CreatedAt = DateTimeOffset.UtcNow,
+            };
+            db.Orders.AddRange(
+                Make(new(2030, 1, 6), 100),
+                Make(new(2030, 1, 7), 350, fee: 20),
+                Make(new(2030, 1, 8), 350.01m, fee: 20),
+                Make(new(2030, 1, 9), 1200),
+                Make(new(2030, 2, 3), 500));
+            await db.SaveChangesAsync();
+        }
+        var console = await ConsoleAsync();
+
+        var months = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-02-28&bands=350,500").Read<SummaryDto>();
+        // An order of exactly 350 is in the band up to 350; the first band starts at 0.
+        Assert.Equal(
+            [new BandDto(0, 2, 450, 20), new BandDto(350, 1, 350.01m, 20), new BandDto(500, 1, 1200, 0)],
+            months.Periods[0].Bands);
+        Assert.Equal([new BandDto(0, 0, 0, 0), new BandDto(350, 1, 500, 0), new BandDto(500, 0, 0, 0)], months.Periods[1].Bands);
+        Assert.Equal((4, 2000.01m), (months.Periods[0].Orders, months.Periods[0].Sales));
+
+        // Without bands nothing is split.
+        Assert.Null((await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-02-28").Read<SummaryDto>()).Periods[0].Bands);
+        foreach (var bad in new[] { "500,350", "0,100", "350,350", "abc", "-5" })
+            await (await console.GetAsync($"/api/ops/summary?bands={bad}")).AssertInvalid("bands", "invalid");
     }
 
     [Fact]

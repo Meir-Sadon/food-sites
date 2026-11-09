@@ -9,10 +9,11 @@
     "newOrderTemplate": "hummus_el_masri_new_order"
   },
   "features": {
-    "recommendations": true,
     "favorites": true,
     "reviews": true,
-    "advancedDishes": true
+    "advancedDishes": true,
+    "priceLists": true,
+    "phoneAlerts": true
   },
   "settings": {
     "contactName": "דניאל",

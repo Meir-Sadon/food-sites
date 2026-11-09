@@ -38,6 +38,7 @@ public static class OrderMessages
     public static string AdminNotification(Order order, string? siteName = null, bool hourFull = false) =>
         $"{Heading(siteName)}הזמנה חדשה #{order.Id}\n{Details(order)}"
         + (order.PlacedByOwner ? "\nההזמנה הוזנה על ידי בעל העסק עבור הלקוח." : "")
+        + (order.DepositRequired && !order.DepositPaid ? "\nההזמנה גדולה: ממתינה לתשלום מקדמה ולאישור שלך." : "")
         + (order.NeedsReview ? "\nהכתובת לא אומתה (מחוץ לאזור השירות או שלא נמצאה): חויבו דמי משלוח מינימליים וההזמנה ממתינה לאישור שלך. יש להתקשר ללקוח ולעדכן אם יש תשלום נוסף על המשלוח." : "")
         + (hourFull ? "\nהשעה שנבחרה כבר מלאה: כדאי לתאם שעה אחרת עם הלקוח." : "");
 
@@ -69,9 +70,18 @@ public static class OrderMessages
             lines.Add($"השלמה למינימום הזמנה: ₪{Money(order.MinimumTopUp)}");
         if (order.DeliveryFee > 0 || order.DeliveryDiscount > 0)
             lines.Add($"דמי משלוח: {FeeText(order)}");
+        if (order.Tip > 0)
+            lines.Add($"טיפ לשליח: ₪{Money(order.Tip)}");
         lines.Add($"סה״כ: ₪{Money(order.Total)}");
         return string.Join('\n', lines);
     }
+
+    /// <summary>The name shown for the regular prices (the default price list) once a site uses price lists.</summary>
+    public const string DefaultPriceListName = "מחירון ברירת מחדל";
+
+    /// <summary>What a line cost less than its regular price in all its units; zero when no discount applied.</summary>
+    public static decimal ListSaving(OrderItem item) =>
+        item.RegularUnitPrice is { } regular && regular > item.UnitPrice ? decimal.Round((regular - item.UnitPrice) * item.Quantity, 2) : 0m;
 
     /// <summary>The delivery fee, with why it is not the regular one when a discount applied.</summary>
     public static string FeeText(Order order) =>

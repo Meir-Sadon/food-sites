@@ -29,13 +29,14 @@ const dish = (dishId: number, name: string, patch: Partial<PriceListDish> = {}):
 
 const categories = { 'GET /api/admin/categories': () => [{ id: 5, name: 'עופות', displayOrder: 0, dishCount: 2 }] }
 
-// The admin's tabs follow the site's site.json, where the template site leaves price lists off.
-const features = siteConfig.features
+// The admin's tabs follow the site's site.json; `features` here is the build without price lists.
+const features = { ...siteConfig.features, priceLists: false }
+const original = siteConfig.features
 beforeEach(() => {
-  siteConfig.features = { ...features, priceLists: true }
+  siteConfig.features = { ...original, priceLists: true }
 })
 afterEach(() => {
-  siteConfig.features = features
+  siteConfig.features = original
 })
 
 describe('price lists', () => {
@@ -190,6 +191,33 @@ describe('price lists', () => {
     // 15% off 70 is 59.5, rounded up to 60. The schnitzel's own 45 is the smaller discount next to 15% off 50 (42.5, so 43).
     expect(await screen.findByText('לקוח במחירון משלם היום: ₪60')).toBeInTheDocument()
     expect(screen.getByText('לקוח במחירון משלם היום: ₪43')).toBeInTheDocument()
+  })
+
+  it('saves the order limit, how the statuses combine and the one-time discount with the customer statuses', async () => {
+    const api = fakeApi({
+      ...withLists,
+      ...categories,
+      'GET /api/admin/price-lists': () => [defaultList, vip],
+      'GET /api/admin/price-lists/2/dishes': () => [],
+      'PUT /api/admin/price-lists/2/statuses': () => vip,
+    })
+    const user = userEvent.setup()
+    renderAt('/admin/price-lists/2')
+
+    expect(await screen.findByLabelText('לקוחות עם פחות מ-X הזמנות (הזמנה שבוטלה לא נחשבת)')).toBeInTheDocument()
+    expect(screen.queryByLabelText('X: מספר הזמנות (1 = עוד לא הזמינו)')).not.toBeInTheDocument()
+    await user.click(screen.getByLabelText('לקוחות עם פחות מ-X הזמנות (הזמנה שבוטלה לא נחשבת)'))
+    await user.clear(screen.getByLabelText('X: מספר הזמנות (1 = עוד לא הזמינו)'))
+    await user.type(screen.getByLabelText('X: מספר הזמנות (1 = עוד לא הזמינו)'), '2')
+    await user.click(screen.getByLabelText('לקוחות באמצע הזמנה: יש להם מנות בעגלה'))
+    await user.selectOptions(screen.getByLabelText('כשסימנתי כמה מצבים'), 'וגם: כל המצבים יחד')
+    await user.click(screen.getByLabelText('ההנחה הכללית רק להזמנה הקרובה של כל לקוח'))
+    await user.click(screen.getByRole('button', { name: 'שמירת המצבים' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/price-lists/2/statuses')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/price-lists/2/statuses')[0].body).toEqual({
+      newClientsAmount: null, newClientsUnit: null, maxOrders: 2, midOrder: true, openOrderAbove: null, matchAll: true, nextOrderOnly: true,
+    })
   })
 
   it('names a refused discount next to its field', async () => {
@@ -359,11 +387,11 @@ describe('price lists', () => {
     await user.click(screen.getByRole('button', { name: 'שמירת המצבים' }))
 
     expect(api.sent('PUT', '/api/admin/price-lists/2/statuses')[0].body).toEqual({
-      newClientsAmount: 400, newClientsUnit: 'day', noOrders: false, midOrder: true, openOrderAbove: 150,
+      newClientsAmount: 400, newClientsUnit: 'day', maxOrders: null, midOrder: true, openOrderAbove: 150, matchAll: false, nextOrderOnly: false,
     })
     expect(await screen.findByText('ערך לא תקין.', { selector: '.field-error' })).toBeInTheDocument()
 
-    const statuses = { newClientsAmount: 30, newClientsUnit: 'day' as const, noOrders: false, midOrder: true, openOrderAbove: 150 }
+    const statuses = { newClientsAmount: 30, newClientsUnit: 'day' as const, maxOrders: null, midOrder: true, openOrderAbove: 150, matchAll: false, nextOrderOnly: false }
     reply = { ...vip, statuses }
     await user.clear(amount)
     await user.type(amount, '30')
@@ -375,7 +403,7 @@ describe('price lists', () => {
   it('shows on the lists page which lists are by status', async () => {
     fakeApi({
       ...withLists,
-      'GET /api/admin/price-lists': () => [defaultList, { ...vip, statuses: { ...noStatuses, noOrders: true } }],
+      'GET /api/admin/price-lists': () => [defaultList, { ...vip, statuses: { ...noStatuses, maxOrders: 1 } }],
     })
     renderAt('/admin/price-lists')
     expect(await screen.findByText('טלפונים', { exact: false })).toHaveTextContent('לפי מצב')

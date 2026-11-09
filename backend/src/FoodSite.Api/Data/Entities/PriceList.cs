@@ -31,8 +31,14 @@ public class PriceList
     /// <summary>day, week or month (<c>Sites.ItemBadges.Units</c>).</summary>
     public string? NewClientsUnit { get; set; }
 
-    /// <summary>Clients with no order that was not cancelled.</summary>
+    /// <summary>Legacy: replaced by <see cref="StatusesMaxOrders"/> (0 = no orders yet); no longer read. Dropped in a later migration.</summary>
     public bool ForNoOrders { get; set; }
+
+    /// <summary>Clients with fewer than this many orders that were not cancelled (1 = none yet); null is off.</summary>
+    public int? StatusesMaxOrders { get; set; }
+
+    /// <summary>All the statuses that are on must hold (and); false means any one is enough (or).</summary>
+    public bool StatusesMatchAll { get; set; }
 
     /// <summary>Clients whose order in progress, saved on the server, is not empty (<see cref="SavedCart"/>).</summary>
     public bool ForMidOrder { get; set; }
@@ -40,7 +46,7 @@ public class PriceList
     /// <summary>Clients with an order not yet delivered or cancelled whose total is above this; null is off.</summary>
     public decimal? OpenOrderAbove { get; set; }
 
-    public bool HasStatuses => NewClientsAmount is not null || ForNoOrders || ForMidOrder || OpenOrderAbove is not null;
+    public bool HasStatuses => NewClientsAmount is not null || StatusesMaxOrders is not null || ForMidOrder || OpenOrderAbove is not null;
 
     // A discount on the whole menu, off each price's base and rounded up to a whole shekel (Orders.PriceBook.Discounted).
 
@@ -54,11 +60,33 @@ public class PriceList
     /// <summary>Which wins where a dish has a discount of its own: a <see cref="DiscountRules"/> value.</summary>
     public string DiscountRule { get; set; } = DiscountRules.Dish;
 
+    /// <summary>Legacy, no longer read: the limit moved to <see cref="StatusesMaxOrders"/>.</summary>
+    public int? DiscountMaxOrders { get; set; }
+
+    /// <summary>
+    /// The general discount is given once per client: on the first order placed with it (<see cref="PriceListDiscountUse"/>).
+    /// Cancelling that order gives it back.
+    /// </summary>
+    public bool DiscountNextOrderOnly { get; set; }
+
     public bool DiscountActiveOn(DateOnly day) =>
         DiscountPercent is not null && (DiscountFrom is null || DiscountFrom <= day) && (DiscountTo is null || DiscountTo >= day);
 
     public List<PriceListDish> Dishes { get; set; } = [];
     public List<PriceListPhone> Phones { get; set; } = [];
+}
+
+/// <summary>An order that was priced with the general discount of a list that is for one order per client (<see cref="PriceList.DiscountNextOrderOnly"/>).</summary>
+public class PriceListDiscountUse
+{
+    public int OrderId { get; set; }
+    public Order? Order { get; set; }
+
+    public int PriceListId { get; set; }
+    public PriceList? PriceList { get; set; }
+
+    /// <summary>The client whose session got the discount.</summary>
+    public int UserId { get; set; }
 }
 
 /// <summary>Where a dish of a list has a discount of its own and the list a general one, which price the client gets.</summary>

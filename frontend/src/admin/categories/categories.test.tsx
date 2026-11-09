@@ -59,6 +59,20 @@ describe('Categories', () => {
     expect(api.sent('POST', '/move')[0].body).toEqual({ direction: 'Up' })
   })
 
+  it('gives a category its own layout and picture size from two lists', async () => {
+    const api = fakeApi({ ...adminSession, 'GET /api/admin/categories': () => list, 'PUT /api/admin/categories/2': () => undefined })
+    renderAt('/admin/categories')
+    const user = userEvent.setup()
+    const row = (await rows())[1]
+
+    // The two lists are on the row itself and save as soon as one changes.
+    await user.selectOptions(within(row).getByLabelText('סוג עיצוב'), 'מלבנים')
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/categories/2')).toHaveLength(1))
+    await user.selectOptions(within(row).getByLabelText('גודל תמונה'), 'גדול')
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/categories/2')).toHaveLength(2))
+    expect(api.sent('PUT', '/api/admin/categories/2')[0].body).toMatchObject({ layout: 'rect' })
+  })
+
   it('renames a category', async () => {
     let name = 'תוספות'
     const api = fakeApi({
@@ -80,7 +94,7 @@ describe('Categories', () => {
     await user.click(screen.getByRole('button', { name: 'שמירה' }))
 
     expect(await screen.findByText('תוספות חמות')).toBeInTheDocument()
-    expect(api.sent('PUT', '/api/admin/categories/2')[0].body).toEqual({ name: 'תוספות חמות' })
+    expect(api.sent('PUT', '/api/admin/categories/2')[0].body).toEqual({ name: 'תוספות חמות', layout: null, imageSize: null })
   })
 
   it('asks before removing, and explains when the category still has dishes', async () => {

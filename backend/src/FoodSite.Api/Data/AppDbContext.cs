@@ -32,6 +32,7 @@ public class AppDbContext(
     public DbSet<PriceList> PriceLists => Set<PriceList>();
     public DbSet<PriceListDish> PriceListDishes => Set<PriceListDish>();
     public DbSet<PriceListPhone> PriceListPhones => Set<PriceListPhone>();
+    public DbSet<PriceListDiscountUse> PriceListDiscountUses => Set<PriceListDiscountUse>();
     public DbSet<DishQuestion> DishQuestions => Set<DishQuestion>();
     public DbSet<DishAvailabilityRule> DishAvailabilityRules => Set<DishAvailabilityRule>();
     public DbSet<User> Users => Set<User>();
@@ -45,6 +46,7 @@ public class AppDbContext(
     public DbSet<Feedback> Feedback => Set<Feedback>();
     public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
     public DbSet<NotifyPhone> NotifyPhones => Set<NotifyPhone>();
+    public DbSet<RestrictedClient> RestrictedClients => Set<RestrictedClient>();
     public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
     public DbSet<MessageTemplate> MessageTemplates => Set<MessageTemplate>();
     public DbSet<Review> Reviews => Set<Review>();
@@ -134,6 +136,9 @@ public class AppDbContext(
             e.Property(s => s.ShadowStrength).HasMaxLength(Sites.Finish.MaxLength);
             e.Property(s => s.Spacing).HasMaxLength(Sites.Finish.MaxLength);
             e.Property(s => s.TileGroups).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.ImageSize).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.RectPicture).HasMaxLength(Sites.Finish.MaxLength);
+            e.Property(s => s.MobileCards).HasMaxLength(Sites.Finish.MaxLength);
             e.HasData(new Settings { Id = Entities.Settings.SingletonId });
         });
 
@@ -152,6 +157,8 @@ public class AppDbContext(
         model.Entity<Category>(e =>
         {
             e.Property(c => c.Name).IsRequired();
+            e.Property(c => c.Layout).HasMaxLength(Sites.SectionLook.MaxLength);
+            e.Property(c => c.ImageSize).HasMaxLength(Sites.SectionLook.MaxLength);
         });
 
         model.Entity<Dish>(e =>
@@ -179,6 +186,7 @@ public class AppDbContext(
             e.Property(s => s.DeliveryFeeAmount).HasPrecision(10, 2);
             e.Property(s => s.DeliveryBaseFee).HasPrecision(10, 2);
             e.Property(s => s.DeliveryDiscountMinOrder).HasPrecision(10, 2);
+            e.Property(s => s.DepositMinOrder).HasPrecision(10, 2);
         });
 
         model.Entity<DeliveryZone>(e =>
@@ -211,6 +219,8 @@ public class AppDbContext(
         model.Entity<DishGroup>(e =>
         {
             e.Property(g => g.Name).HasMaxLength(DishGroup.NameMaxLength).IsRequired();
+            e.Property(g => g.Layout).HasMaxLength(Sites.SectionLook.MaxLength);
+            e.Property(g => g.ImageSize).HasMaxLength(Sites.SectionLook.MaxLength);
         });
 
         model.Entity<DishGroupDish>(e =>
@@ -246,6 +256,14 @@ public class AppDbContext(
             e.Property(x => x.Phone).HasMaxLength(20);
             e.HasIndex(x => x.Phone);
             e.HasOne(x => x.PriceList).WithMany(l => l.Phones).HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<PriceListDiscountUse>(e =>
+        {
+            e.HasKey(x => new { x.OrderId, x.PriceListId });
+            e.HasIndex(x => new { x.UserId, x.PriceListId });
+            e.HasOne(x => x.Order).WithMany(o => o.DiscountUses).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.PriceList).WithMany().HasForeignKey(x => x.PriceListId).OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<AddOnGroup>(e =>
@@ -399,6 +417,11 @@ public class AppDbContext(
         model.Entity<NotifyPhone>(e =>
         {
             e.HasIndex(p => p.Phone).IsUnique();
+        });
+
+        model.Entity<RestrictedClient>(e =>
+        {
+            e.HasIndex(c => c.Phone).IsUnique();
         });
 
         model.Entity<LoginCode>(e =>

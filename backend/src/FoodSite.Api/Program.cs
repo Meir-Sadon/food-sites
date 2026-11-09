@@ -70,6 +70,7 @@ builder.Services.PostConfigure<WhatsAppOptions>(o => o.UseSiteDefaults(site));
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<FoodSite.Api.Audit.AuditActor>();
+builder.Services.AddScoped<FoodSite.Api.Seo.SeoHead>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(config.GetConnectionString("Default")));
 
@@ -96,6 +97,13 @@ else if (mailOptions?.IsConfigured == true)
 else
     builder.Services.AddSingleton<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.NoopMailer>();
 builder.Services.AddScoped<FoodSite.Api.Mail.OwnerNotifier>();
+// Phone alerts for new orders go out through Pushover once Pushover__AppToken is set; without it nothing is sent.
+builder.Services.Configure<FoodSite.Api.Push.PushoverOptions>(config.GetSection(FoodSite.Api.Push.PushoverOptions.Section));
+if (config.GetSection(FoodSite.Api.Push.PushoverOptions.Section).Get<FoodSite.Api.Push.PushoverOptions>()?.IsConfigured == true)
+    builder.Services.AddHttpClient<FoodSite.Api.Push.IPushSender, FoodSite.Api.Push.PushoverSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
+else
+    builder.Services.AddSingleton<FoodSite.Api.Push.IPushSender, FoodSite.Api.Push.NoopPushSender>();
+builder.Services.AddScoped<FoodSite.Api.Push.PushNotifier>();
 builder.Services.AddHttpClient<FoodSite.Api.Marketing.IMetaConversionsSender, FoodSite.Api.Marketing.MetaConversionsSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
 builder.Services.AddScoped<FoodSite.Api.Marketing.MarketingNotifier>();
 builder.Services.AddSingleton<FoodSite.Api.Mail.ChangeDigest>();
@@ -265,11 +273,14 @@ app.UseAuthorization();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT") }));
 app.MapControllers();
 
+app.MapGet("/robots.txt", (HttpRequest request, FoodSite.Api.Seo.SeoHead seo) => Results.Text(seo.RobotsTxt(request)));
+app.MapGet("/sitemap.xml", async (HttpRequest request, FoodSite.Api.Seo.SeoHead seo) =>
+    Results.Text(await seo.SitemapXml(request), "application/xml"));
+
 // The production image (Dockerfile at the repo root) puts the built frontend in wwwroot,
 // so one service serves the site and the API on the same origin.
 if (Directory.Exists(app.Environment.WebRootPath))
 {
-    app.UseDefaultFiles();
     // The service worker and manifest are always revalidated, so a deploy reaches installed apps at once.
     app.UseStaticFiles(new StaticFileOptions
     {
@@ -279,8 +290,15 @@ if (Directory.Exists(app.Environment.WebRootPath))
                 ctx.Context.Response.Headers.CacheControl = "no-cache";
         },
     });
-    // Client-side routes (/login, /admin, ...) load the app; files and unknown /api paths stay 404.
-    app.MapFallbackToFile("{*path:nonfile:regex(^(?!api(/|$)).*$)}", "index.html");
+    // Client-side routes (/, /login, /admin, ...) load the app, with the page's search engine tags (Seo/SeoHead.cs);
+    // files and unknown /api paths stay 404.
+    static async Task<IResult> App(HttpContext context, FoodSite.Api.Seo.SeoHead seo)
+    {
+        context.Response.Headers.CacheControl = "no-cache";
+        return Results.Content(await seo.IndexHtml(context.Request), "text/html; charset=utf-8");
+    }
+    app.MapGet("/", App);
+    app.MapFallback("{*path:nonfile:regex(^(?!api(/|$)).*$)}", App);
 }
 
 await DatabaseInitializer.InitializeAsync(

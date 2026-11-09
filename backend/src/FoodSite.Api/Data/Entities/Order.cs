@@ -39,6 +39,15 @@ public class Order
     /// and its dishes are not taken out of the quantity left for the supply date.
     /// </summary>
     public bool NeedsReview { get; set; }
+
+    /// <summary>
+    /// The order total passed the site's deposit threshold: the order waits, unapproved, until the admin marks the deposit paid.
+    /// Admin-only: the client is never told (no message, mail or page reads this).
+    /// </summary>
+    public bool DepositRequired { get; set; }
+
+    /// <summary>The admin marked the deposit as paid; the order then takes its quantities like any approved order.</summary>
+    public bool DepositPaid { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.New;
 
     /// <summary>Why the admin cancelled the order; required to cancel, empty while the order is not cancelled.</summary>
@@ -70,6 +79,9 @@ public class Order
     /// <summary>What was added to the dishes so the order reached the site's minimum, when the client agreed to be charged it (part of <see cref="Total"/>). Zero when none.</summary>
     public decimal MinimumTopUp { get; set; }
 
+    /// <summary>The tip for the courier the client added (part of <see cref="Total"/>). Zero when none. Not a sale: no commission is charged on it.</summary>
+    public decimal Tip { get; set; }
+
     /// <summary>The order's total to pay, the delivery fee and any minimum top-up included.</summary>
     public decimal Total { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
@@ -81,4 +93,7 @@ public class Order
     public bool PlacedByOwner { get; set; }
 
     public List<OrderItem> Items { get; set; } = [];
+
+    /// <summary>The one-time price list discounts this order used up.</summary>
+    public List<PriceListDiscountUse> DiscountUses { get; set; } = [];
 }

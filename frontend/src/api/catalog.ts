@@ -1,5 +1,5 @@
 import { apiJson, send } from './client'
-import type { ColorSet, InactiveAfter, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
+import type { SectionLook, ColorSet, InactiveAfter, ItemBadges, TrackingIds, DeliveryPricing, Corners, FontPair, OrderFlow, Palette, Shadows, Spacing, TileGroups, ImageSize, MobileCards, RectPicture, OrderTotalPosition, QuestionKind, SiteStyle } from './site'
 
 export type Weekday = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
 export const weekdays: Weekday[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -27,6 +27,8 @@ export interface Settings {
   deliveryBaseFee: number | null
   /** From this dishes total (₪) the delivery fee is discounted; null means never. */
   deliveryDiscountMinOrder: number | null
+  /** An order whose total is above this (₪) waits, unapproved, until the admin marks its deposit paid; null means never (admin-only). */
+  depositMinOrder?: number | null
   kashrutText: string | null
   paymentPhone: string | null
   bitEnabled: boolean
@@ -39,6 +41,8 @@ export interface Settings {
   minimumOrderAppliesToPickup: boolean
   /** The order page first asks delivery or pickup and the address, then shows the dishes. */
   addressFirst: boolean
+  /** The order page offers the client a tip for the courier. */
+  tipsEnabled: boolean
   /** Comma-separated, e.g. "אשקלון, אשדוד"; empty means every city is served. */
   serviceCities: string
   /** How many orders can be supplied in one hour; null means no limit. */
@@ -82,6 +86,9 @@ export interface Settings {
   spacing: Spacing
   /** How the tiles style shows a category. */
   tileGroups: TileGroups
+  imageSize: ImageSize
+  rectPicture: RectPicture
+  mobileCards: MobileCards
   /** `simple` until the admin picks `zones`. */
   deliveryPricing: DeliveryPricing
   /** The marketing tools' ids; saved by `settingsApi.saveTracking`, never by `save`. */
@@ -92,8 +99,8 @@ export interface Settings {
   inactiveAfter: InactiveAfter
 }
 /** Leaving out the style, the order layout, the corners or the colours keeps them: each has its own section, and saving one never pins the others' defaults. */
-export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing' | 'tracking' | 'badges' | 'inactiveAfter'> &
-  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'deliveryPricing'>>
+export type SettingsInput = Omit<Settings, 'backgroundImageUrl' | 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'imageSize' | 'rectPicture' | 'mobileCards' | 'deliveryPricing' | 'tracking' | 'badges' | 'inactiveAfter'> &
+  Partial<Pick<Settings, 'style' | 'orderTotalPosition' | 'orderFlow' | 'corners' | 'palette' | 'customColors' | 'lineWidth' | 'font' | 'shadows' | 'spacing' | 'tileGroups' | 'imageSize' | 'rectPicture' | 'mobileCards' | 'deliveryPricing'>>
 
 /** Saved on its own (`settingsApi.saveTracking`); a missing id keeps that tool, an empty one turns it off. */
 export type TrackingInput = Partial<Omit<TrackingIds, 'metaServerEvents'>> & {
@@ -132,7 +139,7 @@ export interface ClosedDate {
   reason: string | null
 }
 
-export interface Category {
+export interface Category extends SectionLook {
   id: number
   name: string
   displayOrder: number
@@ -391,14 +398,14 @@ export const closedDatesApi = {
 
 export const categoriesApi = {
   get: () => apiJson<Category[]>(`${admin}/categories`),
-  add: (name: string) => apiJson<Category>(`${admin}/categories`, send('POST', { name })),
-  rename: (id: number, name: string) => apiJson<void>(`${admin}/categories/${id}`, send('PUT', { name })),
+  add: (name: string, look: SectionLook = {}) => apiJson<Category>(`${admin}/categories`, send('POST', { name, ...look })),
+  rename: (id: number, name: string, look: SectionLook = {}) => apiJson<void>(`${admin}/categories/${id}`, send('PUT', { name, layout: look.layout ?? null, imageSize: look.imageSize ?? null })),
   move: (id: number, direction: Direction) =>
     apiJson<Category[]>(`${admin}/categories/${id}/move`, send('POST', { direction })),
   remove: (id: number) => apiJson<void>(`${admin}/categories/${id}`, send('DELETE')),
 }
 
-export interface DishGroup {
+export interface DishGroup extends SectionLook {
   id: number
   name: string
   displayOrder: number
@@ -424,9 +431,9 @@ export const deliveryZonesApi = {
 
 export const dishGroupsApi = {
   get: () => apiJson<DishGroup[]>(`${admin}/dish-groups`),
-  add: (name: string, dishIds: number[]) => apiJson<DishGroup>(`${admin}/dish-groups`, send('POST', { name, dishIds })),
-  update: (id: number, name: string, dishIds: number[]) =>
-    apiJson<DishGroup>(`${admin}/dish-groups/${id}`, send('PUT', { name, dishIds })),
+  add: (name: string, dishIds: number[], look: SectionLook = {}) => apiJson<DishGroup>(`${admin}/dish-groups`, send('POST', { name, dishIds, ...look })),
+  update: (id: number, name: string, dishIds: number[], look: SectionLook = {}) =>
+    apiJson<DishGroup>(`${admin}/dish-groups/${id}`, send('PUT', { name, dishIds, layout: look.layout ?? null, imageSize: look.imageSize ?? null })),
   move: (id: number, direction: Direction) =>
     apiJson<DishGroup[]>(`${admin}/dish-groups/${id}/move`, send('POST', { direction })),
   remove: (id: number) => apiJson<void>(`${admin}/dish-groups/${id}`, send('DELETE')),

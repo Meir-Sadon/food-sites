@@ -1,6 +1,6 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { groupedMenu, menu, menuDish, site } from '../test/catalogData'
 import { fakeApi } from '../test/fakeApi'
 import { renderAt } from '../test/render'
@@ -39,8 +39,10 @@ describe('The tiles style', () => {
     expect(within(tile).getByRole('group', { name: 'חומוס פשוט' })).toBeInTheDocument()
     // The stepper sits on the picture; there is no remove or adjust button, and 0 takes the dish out of the order.
     expect(within(tile).queryByRole('button', { name: /התאמת המנה|הסרה מההזמנה/ })).not.toBeInTheDocument()
+    // Only the number shows (no unit name); the minus slides shut before the dish leaves the order.
+    expect(within(tile).getByRole('group', { name: 'חומוס פשוט' })).toHaveTextContent(/^−1$/)
     await user.click(within(tile).getByRole('button', { name: 'הפחתה: חומוס פשוט' }))
-    expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument()
+    await waitFor(() => expect(within(tile).queryByRole('group', { name: 'חומוס פשוט' })).not.toBeInTheDocument())
     expect(within(tile).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' })).toBeInTheDocument()
   })
 
@@ -157,5 +159,83 @@ describe('The tiles style', () => {
     await user.click(within(dialog).getByRole('button', { name: 'סגירה' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(within(tile).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' })).toBeInTheDocument()
+  })
+})
+
+describe('The rectangles style', () => {
+  it('shows each dish as a card with the add button on the picture, and sets the size on <html>', async () => {
+    fakeApi({ 'GET /api/site': () => site({ style: 'rect', imageSize: 'large' }), 'GET /api/menu': () => tilesMenu() })
+    renderAt('/')
+    const user = userEvent.setup()
+    const card = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('article')!
+    expect(card).toHaveClass('dish--tile')
+    expect(card.querySelector('.tile__media .tile__add')).not.toBeNull()
+    expect(card.querySelector('.tile__body')).toHaveTextContent('חומוס פשוט')
+    expect(document.documentElement.dataset.style).toBe('rect')
+    expect(document.documentElement.dataset.imageSize).toBe('large')
+
+    await user.click(within(card).getByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
+    expect(within(card).getByRole('group', { name: 'חומוס פשוט' })).toBeInTheDocument()
+  })
+})
+
+describe('A section with its own layout', () => {
+  it('shows a category as rectangles on a site in the regular style, and the rest as before', async () => {
+    const data = tilesMenu()
+    data.categories = [{ id: 1, name: 'עופות', layout: 'rect', imageSize: 'huge' }, { id: 2, name: 'בשרים' }]
+    fakeApi({ 'GET /api/site': () => site({ style: 'classic' }), 'GET /api/menu': () => data })
+    renderAt('/')
+    const chicken = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('details')!
+    expect(chicken).toHaveAttribute('data-layout', 'rect')
+    expect(chicken).toHaveAttribute('data-image-size', 'huge')
+    expect(within(chicken).getAllByRole('article')[0]).toHaveClass('dish--tile')
+    const meat = (await screen.findByRole('heading', { level: 3, name: 'בשר טחון' })).closest('details')!
+    expect(meat).toHaveAttribute('data-layout', 'list')
+    expect(meat).not.toHaveAttribute('data-image-size')
+    expect(within(meat).getAllByRole('article')[0]).not.toHaveClass('dish--tile')
+  })
+
+  it('shows a group in its own layout', async () => {
+    const data = tilesMenu()
+    data.groups = [{ id: 7, name: 'מומלצות', dishIds: [4], layout: 'tiles' }]
+    fakeApi({ 'GET /api/site': () => site({ style: 'classic' }), 'GET /api/menu': () => data })
+    renderAt('/')
+    const group = (await screen.findByRole('heading', { level: 2, name: 'מומלצות' })).closest('details')!
+    expect(group).toHaveAttribute('data-layout', 'tiles')
+    expect(within(group).getByRole('article')).toHaveClass('dish--tile')
+  })
+
+  it('in rectangles, shows the sale mark by the name and keeps the allergens to one line', async () => {
+    const data = tilesMenu()
+    data.dishes = data.dishes.map((d) => (d.id === 4 ? { ...d, onSale: true, allergenInfo: 'גלוטן חלב ביצים סומסום סויה בוטנים שקדים אגוזים' } : d))
+    fakeApi({ 'GET /api/site': () => site({ style: 'rect' }), 'GET /api/menu': () => data })
+    renderAt('/')
+    const card = (await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })).closest('article')!
+    expect(card.querySelector('.tile__title .item-badge--onSale')).not.toBeNull()
+    expect(card.querySelector('.tile__media .item-badge--onSale')).toBeNull()
+    expect(card.querySelector('.tile__media .tile__allergen')).toBeNull()
+    // One line in the card; a long list shows whole in a tooltip instead of a show-all button.
+    expect(card.querySelector('.tile__allergens')).toHaveStyle('--lines: 1')
+    expect(within(card).queryByRole('button', { name: 'הצג הכל' })).not.toBeInTheDocument()
+  })
+
+  describe('text that does not fit', () => {
+    afterEach(() => {
+      delete (HTMLElement.prototype as { scrollHeight?: number }).scrollHeight
+    })
+
+    it('shows the whole text in a tooltip on a tap, and Escape closes it', async () => {
+      // jsdom has no layout: pretend every clamped text is taller than its box.
+      Object.defineProperty(HTMLElement.prototype, 'scrollHeight', { configurable: true, get: () => 100 })
+      fakeApi({ 'GET /api/site': () => site({ style: 'tiles' }), 'GET /api/menu': () => tilesMenu() })
+      renderAt('/')
+      const user = userEvent.setup()
+      const name = await screen.findByRole('heading', { level: 3, name: 'חומוס פשוט' })
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+      await user.click(name)
+      expect(screen.getByRole('tooltip')).toHaveTextContent('חומוס פשוט')
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    })
   })
 })

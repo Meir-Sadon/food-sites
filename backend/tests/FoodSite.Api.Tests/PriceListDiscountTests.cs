@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using static FoodSite.Api.Controllers.Admin.CategoriesController;
 using static FoodSite.Api.Controllers.Admin.DishesController;
@@ -156,5 +157,39 @@ public sealed class PriceListDiscountTests(PostgresFixture postgres) : IAsyncLif
             new PriceListInput("חדש", null, new DiscountDto(null, null, null, DiscountRules.Dish)), TestFiles.Json).Read<PriceListDto>();
         Assert.Null(off.Discount.Percent);
         Assert.Equal(70, Whole(await MenuDish(await LoggedIn(), _chicken)));
+    }
+
+    private async Task<int> Order(HttpClient client)
+    {
+        var menu = await client.GetAsync("/api/menu").Read<MenuDto>();
+        var order = await client.PostAsJsonAsync("/api/orders", new
+        {
+            phone = Phone, name = "דנה", city = "חיפה", street = "הרצל", houseNumber = "1",
+            supplyDate = menu.SupplyDates[0].Date.ToString("yyyy-MM-dd"), fulfillmentMethod = "Pickup", paymentMethod = "OnDelivery",
+            items = new object[] { new { dishId = _chicken, optionId = (int?)null, quantity = 1m, addOns = Array.Empty<object>() } },
+        }, TestFiles.Json).Read<ConfirmationDto>();
+        return order.Id;
+    }
+
+    [Fact]
+    public async Task A_one_time_discount_is_used_up_by_an_order_and_given_back_when_it_is_cancelled()
+    {
+        var list = await ListWith(new DiscountDto(10, null, null, DiscountRules.Dish));
+        var saved = await _admin.PutAsJsonAsync($"{Lists}/{list.Id}/statuses",
+            new StatusesDto(null, null, null, false, null, false, true), TestFiles.Json).Read<PriceListDto>();
+        Assert.True(saved.Statuses.NextOrderOnly);
+        var client = await LoggedIn();
+        Assert.Equal(63, Whole(await MenuDish(client, _chicken)));
+
+        var first = await Order(client);
+        Assert.Equal(70, Whole(await MenuDish(client, _chicken)));
+        var second = await Order(client); // priced regularly, and uses nothing up
+
+        Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync($"/api/admin/orders/{second}/status",
+            new { status = "Cancelled", cancelReason = "test" })).StatusCode);
+        Assert.Equal(70, Whole(await MenuDish(client, _chicken)));
+        Assert.Equal(HttpStatusCode.NoContent, (await _admin.PutAsJsonAsync($"/api/admin/orders/{first}/status",
+            new { status = "Cancelled", cancelReason = "test" })).StatusCode);
+        Assert.Equal(63, Whole(await MenuDish(client, _chicken)));
     }
 }

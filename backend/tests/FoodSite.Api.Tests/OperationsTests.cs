@@ -5,6 +5,7 @@ using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Reports;
 using FoodSite.Api.Sites;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using static FoodSite.Api.Controllers.Admin.CategoriesController;
 using static FoodSite.Api.Controllers.Admin.DishesController;
@@ -307,6 +308,29 @@ public sealed class OperationsTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal(2, (await _admin.GetAsync($"/api/admin/dishes/{_chicken}/affected-orders").Read<AffectedOrdersDto>()).Count);
         Assert.Equal(1, (await _admin.GetAsync($"/api/admin/dishes/{_thigh}/affected-orders").Read<AffectedOrdersDto>()).Count);
         Assert.Equal(HttpStatusCode.NotFound, (await _admin.GetAsync("/api/admin/dishes/9999/affected-orders")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Report_shows_regular_sales_and_the_price_lists_of_discounted_lines()
+    {
+        var id = await SeedOrder(Sunday, withAddOn: false);
+        await using (var db = _factory.CreateDbContext())
+        {
+            var line = await db.OrderItems.SingleAsync(i => i.OrderId == id);
+            line.PriceListName = "קבועים";
+            line.UnitPrice = 60;
+            line.LineTotal = 120;
+            line.RegularUnitPrice = 70;
+            await db.SaveChangesAsync();
+        }
+
+        var report = await _admin.GetAsync("/api/admin/reports").Read<ReportDto>();
+        Assert.Equal((120m, 20m), (report.Sales, report.ListDiscount));
+        var dish = report.Dishes.Single();
+        Assert.Equal((120m, 140m), (dish.Sales, dish.RegularSales));
+        Assert.Equal(["קבועים"], dish.PriceLists);
+        var list = report.Lists.Single();
+        Assert.Equal(("קבועים", 2m, 120m, 140m), (list.Name, list.Quantity, list.Sales, list.RegularSales));
     }
 
     [Fact]

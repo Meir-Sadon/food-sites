@@ -70,7 +70,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     setErrors({})
     try {
       // The style, the order layout, the corners and the colours are saved by their own sections; leaving them out keeps them.
-      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, tracking: _tr, badges: _bd, inactiveAfter: _ia, ...input } = settings
+      const { backgroundImageUrl: _, style: __, orderTotalPosition: ___, orderFlow: ____, corners: _____, palette: _p, customColors: _c, lineWidth: _l, font: _f, shadows: _sh, spacing: _sp, tileGroups: _tg, imageSize: _is, rectPicture: _rp, mobileCards: _mc, tracking: _tr, badges: _bd, inactiveAfter: _ia, ...input } = settings
       const result = await settingsApi.save(input)
       setData(result)
       markSaved(result)
@@ -86,7 +86,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
     }
   }
 
-  const money = (field: 'deliveryBaseFee' | 'deliveryDiscountMinOrder') => {
+  const money = (field: 'deliveryBaseFee' | 'deliveryDiscountMinOrder' | 'depositMinOrder') => {
     const id = `settings-${field}`
     return (
       <span className="field">
@@ -156,6 +156,15 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
               <Info text={t('admin.settings.addressFirstHint')} about={t('admin.settings.addressFirst')} />
             </span>
           </span>
+          <span className="field">
+            <span className="with-info">
+              <label className="checkbox">
+                <input type="checkbox" checked={settings.tipsEnabled} onChange={(e) => change({ tipsEnabled: e.target.checked })} />
+                {t('admin.settings.tipsEnabled')}
+              </label>
+              <Info text={t('admin.settings.tipsEnabledHint')} about={t('admin.settings.tipsEnabled')} />
+            </span>
+          </span>
           {settings.deliveryEnabled && (
             <fieldset className="field" aria-labelledby="settings-pricing-legend">
               <span className="with-info">
@@ -223,6 +232,7 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
               {money('deliveryDiscountMinOrder')}
             </>
           )}
+          {money('depositMinOrder')}
           {text('kashrutText', t('admin.settings.kashrut'))}
           <fieldset className="field" aria-labelledby="settings-payments-legend">
             <legend id="settings-payments-legend">{t('admin.settings.payments')}</legend>

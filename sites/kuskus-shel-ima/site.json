@@ -9,11 +9,11 @@
     "newOrderTemplate": "kuskus_new_order"
   },
   "features": {
-    "recommendations": true,
     "favorites": true,
     "reviews": true,
     "advancedDishes": true,
-    "priceLists": true
+    "priceLists": true,
+    "phoneAlerts": true
   },
   "seed": ["../_shared/seed/drinks.json"]
 }

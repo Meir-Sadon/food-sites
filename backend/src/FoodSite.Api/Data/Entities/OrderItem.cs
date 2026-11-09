@@ -38,6 +38,12 @@ public class OrderItem
 
     /// <summary>The price list the line was priced from (feature <c>priceLists</c>), for the admin; null for regular prices.</summary>
     public string? PriceListName { get; set; }
+
+    /// <summary>
+    /// The unit price before any discount (the dish's regular price, or the price it was struck from) when the line cost less;
+    /// null when no discount applied. <see cref="UnitPrice"/> is what was charged.
+    /// </summary>
+    public decimal? RegularUnitPrice { get; set; }
 }
 
 /// <summary>A dish question and the client's answer, both as shown (e.g. "כן", "חריף, בינוני", "25/12/2026").</summary>

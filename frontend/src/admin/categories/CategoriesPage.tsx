@@ -2,9 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, type Category } from '../../api/catalog'
 import type { FieldErrors } from '../../api/client'
+import type { SectionLook } from '../../api/site'
 import { ConfirmRemove, FieldError, Loading, MoveButtons, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
 import { useUnsavedChanges } from '../unsaved'
+import { SectionLookQuick, lookChoiceOf, lookOf } from '../SectionLookFields'
 
 export function CategoriesPage() {
   const { t } = useTranslation()
@@ -54,8 +56,8 @@ export function CategoriesPage() {
                   first={index === 0}
                   last={index === categories.length - 1}
                   onMove={(direction) => act(async () => setData(await categoriesApi.move(category.id, direction)))}
-                  onRename={async (name) => {
-                    await categoriesApi.rename(category.id, name)
+                  onRename={async (name, look) => {
+                    await categoriesApi.rename(category.id, name, look)
                     reload()
                   }}
                   onRemove={() =>
@@ -103,7 +105,7 @@ function CategoryRow({
   first: boolean
   last: boolean
   onMove: (direction: 'Up' | 'Down') => void
-  onRename: (name: string) => Promise<void>
+  onRename: (name: string, look: SectionLook) => Promise<void>
   onRemove: () => Promise<void>
 }) {
   const { t } = useTranslation()
@@ -122,7 +124,7 @@ function CategoryRow({
     if (!name.trim()) return false
     setErrors({})
     try {
-      await onRename(name)
+      await onRename(name, lookOf(lookChoiceOf(category)))
       setEditing(false)
       return true
     } catch (err) {
@@ -161,6 +163,7 @@ function CategoryRow({
       <span className="list__main">
         <strong>{category.name}</strong>
         <span className="muted">{t('admin.categories.dishCount', { count: category.dishCount })}</span>
+        <SectionLookQuick idPrefix={`category-${category.id}`} look={category} onSave={(next) => onRename(category.name, next)} />
       </span>
       <span className="row">
         <MoveButtons name={category.name} first={first} last={last} onMove={onMove} />

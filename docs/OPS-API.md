@@ -45,13 +45,13 @@ The site owner gets `403 { code: "masterOnly" }` on all three.
 - `migration`: the last migration applied to the site's database.
 - `pendingMigrations`: migrations this build has and the database lacks (empty once the site migrated on startup).
 
-### `GET /api/ops/summary?from=&to=&period=&statuses=`
+### `GET /api/ops/summary?from=&to=&period=&statuses=&bands=`
 
 Orders and their totals per period, by **supply date**.
 
 - `from`, `to`: dates, both included. Without them: the first of the month 11 months ago up to today. At most 731 days; `from` after `to` or a longer range is `400` with `from: ["invalidRange"]`. An order for a supply date after `to` is not in the answer, so a console that wants upcoming orders sends a `to` in the future.
 - `period`: `Day`, `Week` (Sunday to Saturday) or `Month` (default).
-- `statuses`: comma-separated states to count (case-insensitive): `New`, `Confirmed`, `Ready`, `Delivered`, `WaitingApproval` (a delivery outside the service area that the admin has not approved yet) and `Cancelled`. Without it everything but `Cancelled` counts. An unknown name is `400` with `statuses: ["invalid"]`.
+- `statuses`: comma-separated states to count (case-insensitive): `New`, `Confirmed`, `Ready`, `Delivered`, `WaitingApproval` (an order the admin has not approved yet: a delivery outside the service area, or a big order whose deposit is not marked paid) and `Cancelled`. Without it everything but `Cancelled` counts. An unknown name is `400` with `statuses: ["invalid"]`.
 
 ```json
 {
@@ -61,11 +61,12 @@ Orders and their totals per period, by **supply date**.
   "orders": 4,
   "sales": 250.00,
   "deliveryFees": 30.00,
+  "tips": 12.00,
   "ownerOrders": 1,
   "ownerSales": 70.00,
   "periods": [
-    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00, "ownerOrders": 0, "ownerSales": 0 },
-    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0, "ownerOrders": 1, "ownerSales": 70.00 }
+    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00, "tips": 12.00, "ownerOrders": 0, "ownerSales": 0 },
+    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0, "tips": 0, "ownerOrders": 1, "ownerSales": 70.00 }
   ],
   "statuses": ["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"],
   "byStatus": [
@@ -79,7 +80,18 @@ Orders and their totals per period, by **supply date**.
 }
 ```
 
-`sales` is the sum of the orders' totals in shekels, delivery fees included; `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. `ownerOrders` and `ownerSales` (on the whole range and on each period) are the part of `orders` and `sales` that the business owner placed for a client from the admin (`Order.PlacedByOwner`); they are still inside `orders` and `sales`, and the site names no rate, so a console that bills such orders at a different commission subtracts them. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
+`sales` is the sum of the orders' totals in shekels, delivery fees included but **tips for the courier excluded**; `tips` (on the whole range, each period and each band) is the sum of those tips, reported separately because a tip belongs to the courier, not to the business's sales, so a console must not charge a commission on it (the customer paid `sales` + `tips`); `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. `ownerOrders` and `ownerSales` (on the whole range and on each period, not per band) are the part of `orders` and `sales` that the business owner placed for a client from the admin (`Order.PlacedByOwner`); they are still inside `orders`, `sales` and the bands, and the site names no rate, so a console that bills such orders at a different commission subtracts them. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
+
+`bands` (optional): comma-separated order totals in shekels, ascending and above 0, at most 20 (anything else is `400` with `bands: ["invalid"]`). Each period then also gets `bands`, one per threshold plus one from 0, splitting the period's orders by their total (delivery fee included): a band holds the orders above its `above` and up to the next band's (the first also holds an order of 0). A console uses it to charge a commission that depends on the order's size. Without `bands` a period's `bands` is `null`.
+
+```json
+{ "start": "2030-01-01", "orders": 3, "sales": 900.00, "deliveryFees": 30.00,
+  "bands": [
+    { "above": 0, "orders": 1, "sales": 100.00, "deliveryFees": 15.00 },
+    { "above": 350, "orders": 1, "sales": 400.00, "deliveryFees": 15.00 },
+    { "above": 500, "orders": 1, "sales": 400.00, "deliveryFees": 0 }
+  ] }
+```
 
 ### `GET /api/ops/cancellations?from=&to=`
 

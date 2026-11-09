@@ -13,20 +13,38 @@ const siteId = process.env.SITE || '_template'
 const siteDir = fileURLToPath(new URL(`../sites/${siteId}`, import.meta.url))
 if (!existsSync(`${siteDir}/site.json`)) throw new Error(`SITE=${siteId}: sites/${siteId}/site.json does not exist.`)
 
-/** Sets <title> to the site's name: its own i18n override, else the shared text. */
-function siteTitle(): Plugin {
-  const nameIn = (path: string): string | undefined =>
-    existsSync(path) ? (JSON.parse(readFileSync(path, 'utf8')) as { app?: { name?: string } }).app?.name : undefined
-  const name = nameIn(`${siteDir}/i18n/he.json`) ?? nameIn(fileURLToPath(new URL('src/i18n/he.json', import.meta.url))) ?? ''
-  const escaped = name.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+/**
+ * The head search engines and link previews read before the app runs: <title> is the site's name and the
+ * description is its tagline (`order.hero.tagline`), each from its own i18n override, else the shared text.
+ * The server adds what depends on the address and the admin's settings (see backend Seo/SeoHead.cs).
+ */
+function siteHead(): Plugin {
+  type Texts = { app?: { name?: string }; order?: { hero?: { tagline?: string } } }
+  const read = (path: string): Texts => (existsSync(path) ? (JSON.parse(readFileSync(path, 'utf8')) as Texts) : {})
+  const own = read(`${siteDir}/i18n/he.json`)
+  const shared = read(fileURLToPath(new URL('src/i18n/he.json', import.meta.url)))
+  const name = own.app?.name ?? shared.app?.name ?? ''
+  const tagline = own.order?.hero?.tagline ?? shared.order?.hero?.tagline ?? ''
+  const escape = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+  const meta = (attr: 'name' | 'property', key: string, content: string) => ({ tag: 'meta', attrs: { [attr]: key, content: escape(content) }, injectTo: 'head' as const })
   return {
-    name: 'site-title',
-    transformIndexHtml: (html) => html.replace(/<title>.*<\/title>/, `<title>${escaped}</title>`),
+    name: 'site-head',
+    transformIndexHtml: (html) => ({
+      html: html.replace(/<title>.*<\/title>/, `<title>${escape(name)}</title>`),
+      tags: [
+        meta('name', 'description', tagline),
+        meta('property', 'og:type', 'website'),
+        meta('property', 'og:locale', 'he_IL'),
+        meta('property', 'og:site_name', name),
+        meta('property', 'og:title', name),
+        meta('property', 'og:description', tagline),
+      ],
+    }),
   }
 }
 
 export default defineConfig({
-  plugins: [react(), siteTitle(), sitePwa(siteDir, fileURLToPath(new URL('src/i18n/he.json', import.meta.url)))],
+  plugins: [react(), siteHead(), sitePwa(siteDir, fileURLToPath(new URL('src/i18n/he.json', import.meta.url)))],
   resolve: {
     alias: { '@site': siteDir },
   },

@@ -108,8 +108,16 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ImageSize")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Layout")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -389,6 +397,14 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ImageSize")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Layout")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -770,11 +786,20 @@ namespace FoodSite.Api.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
                     b.Property<string>("Phone")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PushoverKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PushoverSound")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -837,6 +862,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("DeliveryZoneName")
                         .HasColumnType("text");
 
+                    b.Property<bool>("DepositPaid")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("DepositRequired")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("FulfillmentMethod")
                         .IsRequired()
                         .HasColumnType("text");
@@ -884,6 +915,10 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<DateOnly>("SupplyDate")
                         .HasColumnType("date");
+
+                    b.Property<decimal>("Tip")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal>("Total")
                         .HasPrecision(10, 2)
@@ -939,6 +974,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<decimal>("Quantity")
                         .HasPrecision(10, 3)
                         .HasColumnType("numeric(10,3)");
+
+                    b.Property<decimal?>("RegularUnitPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(10, 2)
@@ -1039,6 +1078,12 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateOnly?>("DiscountFrom")
                         .HasColumnType("date");
 
+                    b.Property<int?>("DiscountMaxOrders")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("DiscountNextOrderOnly")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal?>("DiscountPercent")
                         .HasPrecision(5, 2)
                         .HasColumnType("numeric(5,2)");
@@ -1077,6 +1122,12 @@ namespace FoodSite.Api.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<bool>("StatusesMatchAll")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("StatusesMaxOrders")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BaseListId");
@@ -1086,6 +1137,26 @@ namespace FoodSite.Api.Data.Migrations
                         .HasFilter("\"IsDefault\"");
 
                     b.ToTable("PriceLists");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDiscountUse", b =>
+                {
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PriceListId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("OrderId", "PriceListId");
+
+                    b.HasIndex("PriceListId");
+
+                    b.HasIndex("UserId", "PriceListId");
+
+                    b.ToTable("PriceListDiscountUses");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDish", b =>
@@ -1168,6 +1239,29 @@ namespace FoodSite.Api.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Recommendations");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.RestrictedClient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.ToTable("RestrictedClients");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Review", b =>
@@ -1378,6 +1472,19 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
 
+                    b.Property<decimal?>("DepositMinOrder")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<bool>("EmergencyEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("EmergencyMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyPhone")
+                        .HasColumnType("text");
+
                     b.Property<string>("FontPair")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -1393,6 +1500,10 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<string>("GoogleTagManagerId")
                         .HasColumnType("text");
+
+                    b.Property<string>("ImageSize")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int?>("InactiveAfterAmount")
                         .HasColumnType("integer");
@@ -1418,6 +1529,10 @@ namespace FoodSite.Api.Data.Migrations
 
                     b.Property<bool>("MinimumOrderAppliesToPickup")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("MobileCards")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTimeOffset?>("OpsTokenCreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1504,6 +1619,13 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int?>("PortionsPerSupplyDate")
                         .HasColumnType("integer");
 
+                    b.Property<string>("RectPicture")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("RestrictedClientMessage")
+                        .HasColumnType("text");
+
                     b.Property<string>("ServiceCities")
                         .HasColumnType("text");
 
@@ -1535,6 +1657,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<bool>("TipsEnabled")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.ToTable("Settings");
@@ -1550,6 +1675,7 @@ namespace FoodSite.Api.Data.Migrations
                             BitEnabled = false,
                             DeliveryEnabled = true,
                             DeliveryLeadMinutes = 0,
+                            EmergencyEnabled = false,
                             MinimumOrderAppliesToPickup = true,
                             OwnerChangeMails = false,
                             PayBoxEnabled = false,
@@ -1557,7 +1683,8 @@ namespace FoodSite.Api.Data.Migrations
                             PickupLeadMinutes = 0,
                             PopupEnabled = false,
                             SiteDefaultsApplied = false,
-                            SlotMinutes = 60
+                            SlotMinutes = 60,
+                            TipsEnabled = false
                         });
                 });
 
@@ -2106,6 +2233,25 @@ namespace FoodSite.Api.Data.Migrations
                     b.Navigation("BaseList");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDiscountUse", b =>
+                {
+                    b.HasOne("FoodSite.Api.Data.Entities.Order", "Order")
+                        .WithMany("DiscountUses")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodSite.Api.Data.Entities.PriceList", "PriceList")
+                        .WithMany()
+                        .HasForeignKey("PriceListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("PriceList");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.PriceListDish", b =>
                 {
                     b.HasOne("FoodSite.Api.Data.Entities.Dish", "Dish")
@@ -2273,6 +2419,8 @@ namespace FoodSite.Api.Data.Migrations
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Order", b =>
                 {
+                    b.Navigation("DiscountUses");
+
                     b.Navigation("Items");
                 });
 

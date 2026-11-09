@@ -23,6 +23,13 @@ export function priceBeforeDiscount(dish: MenuDish): number | null {
   return before !== null && before > unitPrice(dish, null) ? before : null
 }
 
+/** A dish's line before the admin's discount (its main price only), or null when it has none. */
+export function lineBeforeDiscount(dish: MenuDish, optionId: number | null, quantity: number): number | null {
+  const before = priceBeforeDiscount(dish)
+  const main = dish.choiceMode === 'Free' || optionId === null || optionId === defaultOption(dish)?.id
+  return before !== null && main ? Math.round(before * quantity * 100) / 100 : null
+}
+
 /** "יום שישי, 09/10/2026" for "2026-10-09". Parsed as a local date so time zones cannot shift it. */
 export function formatSupplyDate(iso: string, t: TFunction): string {
   const [y, m, d] = iso.split('-').map(Number)

@@ -9,10 +9,11 @@
     "newOrderTemplate": "kubbeh_biss_new_order"
   },
   "features": {
-    "recommendations": true,
     "favorites": true,
     "reviews": true,
-    "advancedDishes": true
+    "advancedDishes": true,
+    "priceLists": true,
+    "phoneAlerts": true
   },
   "settings": {
     "contactName": "מאי",

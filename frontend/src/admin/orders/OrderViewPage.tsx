@@ -5,12 +5,14 @@ import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
 import { ordersAdminApi, type AdminOrder } from '../../api/operations'
 import { ItemAnswers } from '../../components/ItemAnswers'
+import { DeliveryFeePrice } from '../../order/DiscountedPrice'
 import { DeliveryFeeNote } from '../../order/DeliveryFeeNote'
 import { formatMoney, formatTime } from '../../order/format'
 import { formatDate, formatNumber } from '../format'
 import { whatsAppShareUrl } from '../messages/compose'
 import { Loading } from '../ui'
 import { OrderCard } from './OrderCard'
+import { listSaving, PriceNote } from './PriceNote'
 import { usePrintOrders } from './usePrintOrders'
 import { orderLines, prepReport } from './report'
 
@@ -95,7 +97,7 @@ export function OrderViewPage() {
                     {formatNumber(item.quantity)} × {formatMoney(item.unitPrice)}
                     {item.optionLabel ? ` · ${item.optionLabel}` : ''}
                   </span>
-                  {item.priceListName && <span className="muted cart-row__unit">{t('admin.priceLists.orderLine', { name: item.priceListName })}</span>}
+                  <PriceNote item={item} />
                 </div>
                 <strong className="cart-row__price numeric">{formatMoney(item.lineTotal)}</strong>
               </div>
@@ -108,12 +110,14 @@ export function OrderViewPage() {
                   )}
                   <ItemAnswers answers={item.answers} />
                   {addOns.map((addOn) => (
-                    <p key={addOn.id}>
-                      + {formatNumber(addOn.quantity)} × {addOn.dishName}
-                      {addOn.optionLabel ? ` (${addOn.optionLabel})` : ''}
-                      {addOn.lineTotal > 0 ? ` · ${formatMoney(addOn.lineTotal)}` : ''}
-                      {addOn.priceListName ? ` · ${t('admin.priceLists.orderLine', { name: addOn.priceListName })}` : ''}
-                    </p>
+                    <div key={addOn.id}>
+                      <p>
+                        + {formatNumber(addOn.quantity)} × {addOn.dishName}
+                        {addOn.optionLabel ? ` (${addOn.optionLabel})` : ''}
+                        {addOn.lineTotal > 0 ? ` · ${formatMoney(addOn.lineTotal)}` : ''}
+                      </p>
+                      <PriceNote item={addOn} />
+                    </div>
                   ))}
                 </div>
               )}
@@ -132,7 +136,19 @@ export function OrderViewPage() {
               {order.deliveryZoneName ? ` (${order.deliveryZoneName})` : ''}
               <DeliveryFeeNote discount={order.deliveryDiscount} free={!order.deliveryFee} />
             </span>{' '}
-            <strong className="numeric">{order.deliveryFee ? formatMoney(order.deliveryFee) : t('order.deliveryDiscount.freePrice')}</strong>
+            <strong className="numeric">
+              <DeliveryFeePrice fee={order.deliveryFee ?? 0} discount={order.deliveryDiscount} />
+            </strong>
+          </p>
+        )}
+        {!!order.tip && (
+          <p className="cart-sheet__total">
+            <span>{t('order.tip.line')}</span> <strong className="numeric">{formatMoney(order.tip)}</strong>
+          </p>
+        )}
+        {listSaving(order.items) > 0 && (
+          <p className="cart-sheet__total">
+            <span>{t('admin.priceLists.orderTotalDiscount')}</span> <strong className="numeric">{formatMoney(listSaving(order.items))}</strong>
           </p>
         )}
         <p className="cart-sheet__total">

@@ -57,6 +57,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string Shadows,
         string Spacing,
         string TileGroups,
+        string ImageSize,
         string DeliveryPricing,
         decimal? DeliveryFeeAmount,
         decimal? DeliveryBaseFee,
@@ -64,7 +65,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool AddressFirst,
         Tracking.Ids Tracking,
         ItemBadges.Effective Badges,
-        ClientActivity.Period InactiveAfter);
+        ClientActivity.Period InactiveAfter,
+        decimal? DepositMinOrder = null,
+        string RectPicture = "end",
+        string MobileCards = "standard",
+        bool TipsEnabled = false);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -93,6 +98,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         string? Shadows = null,
         string? Spacing = null,
         string? TileGroups = null,
+        string? ImageSize = null,
+        string? RectPicture = null,
+        string? MobileCards = null,
         bool? BitEnabled = null,
         bool? PayBoxEnabled = null,
         string? BitLink = null,
@@ -105,7 +113,9 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         int? SlotMinutes = null,
         bool? AlignSlots = null,
         int? DeliveryLeadMinutes = null,
-        int? PickupLeadMinutes = null);
+        int? PickupLeadMinutes = null,
+        decimal? DepositMinOrder = null,
+        bool? TipsEnabled = null);
 
     public record InactiveAfterInput(int? Amount, string? Unit);
 
@@ -178,6 +188,12 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.Spacing), "invalid");
         if (input.TileGroups is not null && !Finish.IsKnownTileGroups(input.TileGroups))
             errors.Add(nameof(input.TileGroups), "invalid");
+        if (input.ImageSize is not null && !Finish.IsKnownImageSize(input.ImageSize))
+            errors.Add(nameof(input.ImageSize), "invalid");
+        if (input.RectPicture is not null && !Finish.IsKnownRectPicture(input.RectPicture))
+            errors.Add(nameof(input.RectPicture), "invalid");
+        if (input.MobileCards is not null && !Finish.IsKnownMobileCards(input.MobileCards))
+            errors.Add(nameof(input.MobileCards), "invalid");
         if (input.OwnerEmail is not null && !string.IsNullOrWhiteSpace(input.OwnerEmail) && !OwnerRecipients.IsValid(input.OwnerEmail, OwnerEmailMaxLength))
             errors.Add(nameof(input.OwnerEmail), "email");
         if (input.DeliveryPricing is not null && !Delivery.DeliveryPricing.IsKnown(input.DeliveryPricing))
@@ -188,6 +204,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             errors.Add(nameof(input.DeliveryBaseFee), "invalid");
         if (input.DeliveryDiscountMinOrder is < 0m or > Delivery.DeliveryZones.MaxFee * 100)
             errors.Add(nameof(input.DeliveryDiscountMinOrder), "invalid");
+        if (input.DepositMinOrder is < 0m or > Delivery.DeliveryZones.MaxFee * 100)
+            errors.Add(nameof(input.DepositMinOrder), "invalid");
         if (errors.Any)
             return Invalid(errors);
 
@@ -201,6 +219,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Zero (or empty) means no discount.
         settings.DeliveryBaseFee = input.DeliveryBaseFee is > 0m ? decimal.Round(input.DeliveryBaseFee.Value, 2) : null;
         settings.DeliveryDiscountMinOrder = input.DeliveryDiscountMinOrder is > 0m ? decimal.Round(input.DeliveryDiscountMinOrder.Value, 2) : null;
+        // Zero (or empty) means no deposit is ever required.
+        settings.DepositMinOrder = input.DepositMinOrder is > 0m ? decimal.Round(input.DepositMinOrder.Value, 2) : null;
         settings.KashrutText = Clean(input.KashrutText);
         settings.PaymentPhone = Clean(input.PaymentPhone);
         settings.BitEnabled = bitOn;
@@ -212,6 +232,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Missing (an older client) keeps the current choice.
         if (input.AddressFirst is { } addressFirst)
             settings.AddressFirst = addressFirst;
+        if (input.TipsEnabled is { } tipsEnabled)
+            settings.TipsEnabled = tipsEnabled;
         if (input.MinimumOrderAppliesToPickup is { } appliesToPickup)
             settings.MinimumOrderAppliesToPickup = appliesToPickup;
         // Zero (or empty) means no limit. Separate limits for delivery and pickup replace the single one: it is then kept as
@@ -256,6 +278,12 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
             settings.Spacing = input.Spacing;
         if (input.TileGroups is not null)
             settings.TileGroups = input.TileGroups;
+        if (input.ImageSize is not null)
+            settings.ImageSize = input.ImageSize;
+        if (input.RectPicture is not null)
+            settings.RectPicture = input.RectPicture;
+        if (input.MobileCards is not null)
+            settings.MobileCards = input.MobileCards;
         // Missing (an older client) keeps the address; an empty one turns the mails off.
         if (input.OwnerEmail is not null)
             settings.OwnerEmail = Clean(OwnerRecipients.Normalize(input.OwnerEmail));
@@ -429,6 +457,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         Finish.Effective(s.ShadowStrength, Finish.IsKnownShadows),
         Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
         Finish.EffectiveTileGroups(s.TileGroups),
+        Finish.EffectiveImageSize(s.ImageSize),
         s.DeliveryPricing ?? Delivery.DeliveryPricing.Simple,
         s.DeliveryFeeAmount,
         s.DeliveryBaseFee,
@@ -436,7 +465,11 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         s.AddressFirst,
         Sites.Tracking.Of(s),
         ItemBadges.Of(s),
-        ClientActivity.Of(s));
+        ClientActivity.Of(s),
+        s.DepositMinOrder,
+        Finish.EffectiveRectPicture(s.RectPicture),
+        Finish.EffectiveMobileCards(s.MobileCards),
+        s.TipsEnabled);
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

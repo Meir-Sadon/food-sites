@@ -5,6 +5,8 @@ import type { FieldErrors } from '../../api/client'
 import { ConfirmRemove, FieldError, Info, Loading, MoveButtons, Status } from '../ui'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
 import { useDirty, useUnsavedChanges } from '../unsaved'
+import type { SectionLook } from '../../api/site'
+import { SectionLookFields, SectionLookQuick, lookChoiceOf, lookOf, type LookChoice } from '../SectionLookFields'
 
 /** The dishes a group can hold: ordered on their own, not removed. */
 const groupable = (dish: Dish) => !dish.isHidden && !dish.isAddOnOnly && dish.mainDishId === null
@@ -55,8 +57,8 @@ export function DishGroupsPage() {
                     const groups = await dishGroupsApi.move(group.id, direction)
                     setData((current) => current && { ...current, groups })
                   })}
-                  onSave={async (name, dishIds) => {
-                    await dishGroupsApi.update(group.id, name, dishIds)
+                  onSave={async (name, dishIds, look) => {
+                    await dishGroupsApi.update(group.id, name, dishIds, look)
                     reload()
                   }}
                   onRemove={() =>
@@ -78,10 +80,11 @@ export function DishGroupsPage() {
               dishes={data.dishes}
               initialName=""
               initialDishIds={[]}
+              initialLook={{}}
               submitLabel={t('admin.add')}
               resetOnSave
-              onSave={async (name, dishIds) => {
-                await dishGroupsApi.add(name, dishIds)
+              onSave={async (name, dishIds, look) => {
+                await dishGroupsApi.add(name, dishIds, look)
                 reload()
               }}
             />
@@ -108,7 +111,7 @@ function GroupRow({
   first: boolean
   last: boolean
   onMove: (direction: 'Up' | 'Down') => void
-  onSave: (name: string, dishIds: number[]) => Promise<void>
+  onSave: (name: string, dishIds: number[], look: SectionLook) => Promise<void>
   onRemove: () => Promise<void>
 }) {
   const { t } = useTranslation()
@@ -123,9 +126,10 @@ function GroupRow({
           dishes={dishes}
           initialName={group.name}
           initialDishIds={group.dishIds}
+          initialLook={group}
           submitLabel={t('admin.save')}
-          onSave={async (name, dishIds) => {
-            await onSave(name, dishIds)
+          onSave={async (name, dishIds, look) => {
+            await onSave(name, dishIds, look)
             setEditing(false)
           }}
           onCancel={() => setEditing(false)}
@@ -138,6 +142,7 @@ function GroupRow({
       <span className="list__main">
         <strong>{group.name}</strong>
         <span className="muted">{t('admin.dishGroups.dishCount', { count: group.dishIds.length })}</span>
+        <SectionLookQuick idPrefix={`group-${group.id}`} look={group} onSave={(next) => onSave(group.name, group.dishIds, next)} />
       </span>
       <span className="row">
         <MoveButtons name={group.name} first={first} last={last} onMove={onMove} />
@@ -157,6 +162,7 @@ function GroupForm({
   dishes,
   initialName,
   initialDishIds,
+  initialLook,
   submitLabel,
   resetOnSave,
   onSave,
@@ -167,9 +173,10 @@ function GroupForm({
   dishes: Dish[]
   initialName: string
   initialDishIds: number[]
+  initialLook: SectionLook
   submitLabel: string
   resetOnSave?: boolean
-  onSave: (name: string, dishIds: number[]) => Promise<void>
+  onSave: (name: string, dishIds: number[], look: SectionLook) => Promise<void>
   onCancel?: () => void
 }) {
   const { t } = useTranslation()
@@ -179,7 +186,8 @@ function GroupForm({
   const errorMessage = useErrorMessage()
   const [error, setError] = useState<string | null>(null)
   const inputId = `${idPrefix}-name`
-  const current = { name, dishIds: [...picked].sort((a, b) => a - b) }
+  const [look, setLook] = useState<LookChoice>(lookChoiceOf(initialLook))
+  const current = { name, dishIds: [...picked].sort((a, b) => a - b), layout: look.layout, imageSize: look.imageSize }
   const { dirty, markSaved } = useDirty(current)
   useUnsavedChanges(dirty, save)
 
@@ -193,10 +201,11 @@ function GroupForm({
     setErrors({})
     setError(null)
     try {
-      await onSave(name, [...picked])
+      await onSave(name, [...picked], lookOf(look))
       if (resetOnSave) {
         setName('')
         setPicked(new Set())
+        setLook(lookChoiceOf({}))
       } else markSaved(current)
       return true
     } catch (err) {
@@ -223,6 +232,8 @@ function GroupForm({
         <input id={inputId} value={name} maxLength={60} onChange={(e) => setName(e.target.value)} aria-describedby={`${inputId}-error`} />
         <FieldError errors={errors} field="name" id={`${inputId}-error`} />
       </span>
+      {/* An existing group's look is changed on its row; only a new group asks for it here. */}
+      {resetOnSave && <SectionLookFields idPrefix={idPrefix} value={look} onChange={setLook} />}
       <fieldset className="stack">
         <legend>{t('admin.dishGroups.dishes')}</legend>
         {dishes.length === 0 && <p className="muted">{t('admin.dishGroups.noDishes')}</p>}

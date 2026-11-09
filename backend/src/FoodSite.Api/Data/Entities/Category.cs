@@ -12,5 +12,11 @@ public class Category
     /// </summary>
     public bool IsHidden { get; set; }
 
+    /// <summary>This category's dish layout (see <c>SectionLook.Layouts</c>); null means the site's own.</summary>
+    public string? Layout { get; set; }
+
+    /// <summary>This category's picture size (see <c>Finish.ImageSizes</c>); null means the site's own.</summary>
+    public string? ImageSize { get; set; }
+
     public List<Dish> Dishes { get; set; } = [];
 }

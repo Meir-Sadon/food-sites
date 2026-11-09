@@ -59,6 +59,28 @@ public sealed class DishGroupsTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_category_and_a_group_can_have_their_own_layout_and_picture_size()
+    {
+        var category = await AddCategory("בשרים");
+        var dish = await Dish("קבב", category.Id);
+        var group = await AddGroup("מומלצות", dish.Id);
+
+        (await _admin.PutAsJsonAsync($"/api/admin/categories/{category.Id}", new { name = "בשרים", layout = "rect", imageSize = "large" })).EnsureSuccessStatusCode();
+        (await _admin.PutAsJsonAsync($"/api/admin/dish-groups/{group.Id}", new { name = "מומלצות", dishIds = new[] { dish.Id }, layout = "tiles", imageSize = "tiny" })).EnsureSuccessStatusCode();
+
+        var menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        Assert.Equal(("rect", "large"), (menu.Categories[0].Layout, menu.Categories[0].ImageSize));
+        Assert.Equal(("tiles", "tiny"), (menu.Groups![0].Layout, menu.Groups![0].ImageSize));
+
+        // Empty means the site's own look again; unknown values are refused.
+        (await _admin.PutAsJsonAsync($"/api/admin/categories/{category.Id}", new { name = "בשרים", layout = "", imageSize = "" })).EnsureSuccessStatusCode();
+        menu = await (await _admin.GetAsync("/api/menu")).Read<FoodSite.Api.Controllers.PublicController.MenuDto>();
+        Assert.Equal((null, null), (menu.Categories[0].Layout, menu.Categories[0].ImageSize));
+        await (await _admin.PutAsJsonAsync($"/api/admin/categories/{category.Id}", new { name = "בשרים", layout = "grid" })).AssertInvalid("layout", "invalid");
+        await (await _admin.PutAsJsonAsync($"/api/admin/dish-groups/{group.Id}", new { name = "מומלצות", imageSize = "gigantic" })).AssertInvalid("imageSize", "invalid");
+    }
+
+    [Fact]
     public async Task A_group_is_renamed_reselected_moved_and_removed()
     {
         var category = await AddCategory("בשרים");

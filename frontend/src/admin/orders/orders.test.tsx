@@ -64,6 +64,7 @@ describe('Admin Orders', () => {
       ],
     })
     renderAt('/admin/orders')
+    await userEvent.setup().click(await screen.findByRole('checkbox', { name: 'נמסרה' }))
     const report = await screen.findByRole('group', { name: 'דיווח השליח' })
     expect(within(report).getByText(/^השליח מסר ב־.* · הערת השליח: הושאר אצל שכן$/)).toBeInTheDocument()
     expect(within(report).getByRole('img', { name: 'תמונה מהמסירה של הזמנה #7' })).toHaveAttribute('src', 'https://images.test/p.jpg')
@@ -84,6 +85,27 @@ describe('Admin Orders', () => {
 
     await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/approve')).toHaveLength(1))
     expect(within(card).queryByText(/ממתינה לאישור המנהל/)).not.toBeInTheDocument()
+  })
+
+  it('marks a big order as waiting for its deposit, approves it when the deposit is paid, and filters big orders', async () => {
+    const api = fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [order({ depositRequired: true, depositPaid: false }), order({ id: 8, name: 'יעל', total: 20 })],
+      'PUT /api/admin/orders/7/deposit': () => undefined,
+    })
+    renderAt('/admin/orders')
+    const card = await screen.findByRole('article', { name: 'הזמנה #7' })
+    expect(within(card).getByText(/נדרשת מקדמה/)).toBeInTheDocument()
+
+    const user = userEvent.setup()
+    await user.selectOptions(screen.getByLabelText('תצוגה'), 'large')
+    expect(screen.queryByRole('article', { name: 'הזמנה #8' })).not.toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('תצוגה'), '')
+
+    await user.click(within(card).getByRole('button', { name: /המקדמה שולמה/ }))
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/orders/7/deposit')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/orders/7/deposit')[0].body).toEqual({ paid: true })
+    expect(within(card).getByText(/המקדמה שולמה וההזמנה מאושרת/)).toBeInTheDocument()
   })
 
   it('lists orders by supply day and links the tab', async () => {
@@ -123,6 +145,29 @@ describe('Admin Orders', () => {
     for (const text of ['הזמנה #7', 'חיפה', '0501234567', 'להגיע בשקט', 'סביח', 'בלי חצילים', 'טחינה', 'ביצה'])
       expect(within(sheet).getAllByText(new RegExp(text)).length).toBeGreaterThan(0)
     vi.unstubAllGlobals()
+  })
+
+  it('hides delivered and cancelled orders until their status is ticked, and allows several statuses together', async () => {
+    fakeApi({
+      ...adminSession,
+      'GET /api/admin/orders.*': () => [
+        order({ id: 1, name: 'חדשה', status: 'New' }),
+        order({ id: 2, name: 'נמסרה', status: 'Delivered' }),
+        order({ id: 3, name: 'מבוטלת', status: 'Cancelled', cancelReason: 'בדיקה' }),
+      ],
+    })
+    renderAt('/admin/orders')
+    expect(await screen.findByRole('article', { name: 'הזמנה #1' })).toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'הזמנה #2' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'הזמנה #3' })).not.toBeInTheDocument()
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('checkbox', { name: 'נמסרה' }))
+    expect(screen.getByRole('article', { name: 'הזמנה #2' })).toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'הזמנה #3' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('checkbox', { name: 'בוטלה' }))
+    expect(screen.getByRole('article', { name: 'הזמנה #3' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'הזמנה #1' })).toBeInTheDocument()
   })
 
   it('changes the status', async () => {
@@ -368,6 +413,29 @@ describe('Admin Reports', () => {
       renderAt('/admin/orders/7')
       const basket = await screen.findByRole('region', { name: 'הזמנה כפי שהלקוח רואה בסל' })
       expect(within(basket).getByText('מחירון: לקוחות קבועים')).toBeInTheDocument()
+    })
+
+    it('shows the price list and the saving in the orders list too', async () => {
+      const listed = {
+        ...detailed,
+        items: detailed.items.map((i) => (i.id === 1 ? { ...i, priceListName: 'לקוחות קבועים', unitPrice: 40, regularUnitPrice: 50, quantity: 2 } : i)),
+      }
+      fakeApi({ ...adminSession, 'GET /api/admin/orders.*': () => [listed] })
+      renderAt('/admin/orders')
+      expect(await screen.findByText('מחירון: לקוחות קבועים')).toBeInTheDocument()
+      expect(screen.getByText(/מחיר רגיל ₪50, אחרי הנחה ₪40 ליחידה/)).toBeInTheDocument()
+    })
+
+    it('shows the regular price and what was saved when a line cost less', async () => {
+      const listed = {
+        ...detailed,
+        items: detailed.items.map((i) => (i.id === 1 ? { ...i, priceListName: 'לקוחות קבועים', unitPrice: 40, regularUnitPrice: 50, quantity: 2 } : i)),
+      }
+      fakeApi({ ...adminSession, 'GET /api/admin/orders/7': () => ({ body: listed }) })
+      renderAt('/admin/orders/7')
+      const basket = await screen.findByRole('region', { name: 'הזמנה כפי שהלקוח רואה בסל' })
+      expect(within(basket).getByText(/מחיר רגיל ₪50, אחרי הנחה ₪40 ליחידה \(חיסכון ₪20\)/)).toBeInTheDocument()
+      expect(within(basket).getByText('סה״כ הנחות במחירון')).toBeInTheDocument()
     })
 
     it('shares the preparation report on WhatsApp: what to prepare, then the other details', async () => {

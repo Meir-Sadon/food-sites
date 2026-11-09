@@ -6,6 +6,7 @@ import './index.css'
 // The looks a site can pick (Settings → style); each applies only under its <html data-style>.
 import './styles/street.css'
 import './styles/tiles.css'
+import './styles/rect.css'
 import './styles/finish.css'
 // The accessibility menu and what its choices change; last, so they win over the looks above.
 import './styles/accessibility.css'

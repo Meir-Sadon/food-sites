@@ -14,6 +14,7 @@ const base = {
   'GET /api/admin/shabbat-rules': () => shabbatRules(),
   'GET /api/admin/closed-dates': () => [{ id: 1, date: '2026-10-14', reason: 'סוכות' }],
   'GET /api/admin/social-links': () => [],
+  'GET /api/admin/emergency': () => ({ enabled: false, phone: null, message: null, effectivePhone: '050-111-2222' }),
   'GET /api/admin/popups': () => ({ body: [popup({ slot: 1 }), popup({ slot: 2 }), popup({ slot: 3 })] }),
 }
 
@@ -232,6 +233,72 @@ describe('Tiles groups', () => {
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'tiles', tileGroups: 'minimal' })
   })
+
+  it('offers the same minimal look for rectangles', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    await user.click(within(form).getByRole('radio', { name: /מלבנים/ }))
+    await user.click(within(form).getByRole('radio', { name: /מינימלי/ }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'rect', tileGroups: 'minimal' })
+  })
+})
+
+describe('Mobile cards and rectangle picture side', () => {
+  it('saves the picture side for rectangles and full-width cards for a phone', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    expect(within(form).queryByRole('radio', { name: /תמונה בימין/ })).not.toBeInTheDocument()
+    await user.click(within(form).getByRole('radio', { name: /מלבנים/ }))
+    await user.click(within(form).getByRole('radio', { name: /תמונה בימין/ }))
+    await user.click(within(form).getByRole('radio', { name: /שורה מלאה/ }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'rect', rectPicture: 'start', mobileCards: 'full' })
+  })
+})
+
+describe('Image size', () => {
+  it('saves the rectangles style with a size, and names the size after the rectangles', async () => {
+    let saved = settings()
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => saved,
+      'PUT /api/admin/settings': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/appearance')
+    const user = userEvent.setup()
+    const form = await section('סגנון האתר')
+
+    expect(within(form).getByRole('radio', { name: /קטן \(ברירת מחדל\)/ })).toBeChecked()
+    expect(within(form).getByText('גודל התמונות')).toBeInTheDocument()
+    await user.click(within(form).getByRole('radio', { name: /מלבנים/ }))
+    expect(within(form).getByText('גודל המלבנים')).toBeInTheDocument()
+    await user.click(within(form).getByRole('radio', { name: 'גדול מאוד' }))
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ style: 'rect', imageSize: 'huge' })
+  })
 })
 
 describe('Finish', () => {
@@ -290,6 +357,7 @@ describe('General settings', () => {
       minimumOrderAmount: null,
       minimumOrderAppliesToPickup: true,
       addressFirst: false,
+      tipsEnabled: false,
       serviceCities: 'אשקלון',
       ordersPerHour: null,
       ordersPerHourDelivery: null,
@@ -992,5 +1060,28 @@ describe('Inactive client period', () => {
     await waitFor(() => expect(api.sent('PUT', '/api/admin/settings/inactive-after')).toHaveLength(1))
     expect(api.sent('PUT', '/api/admin/settings/inactive-after')[0].body).toEqual({ amount: 6, unit: 'week' })
     expect(await within(form).findByText('נשמר.')).toBeInTheDocument()
+  })
+})
+
+describe('Emergency mode', () => {
+  it('saves the switch, the phone and the message on its own, showing the main contact phone as the default', async () => {
+    let saved = { enabled: false, phone: null as string | null, message: null as string | null, effectivePhone: '050-111-2222' }
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/emergency': () => saved,
+      'PUT /api/admin/emergency': (_, body) => (saved = { ...saved, ...(body as object) }),
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('מצב חירום')
+
+    expect(within(form).getByText(/050-111-2222/)).toBeInTheDocument()
+    expect(within(form).getByRole('button', { name: 'שמירה' })).toBeDisabled()
+    await user.click(within(form).getByLabelText('מצב חירום פעיל (האתר לא מקבל הזמנות)'))
+    await user.type(within(form).getByLabelText('ההודעה ללקוחות'), 'סגורים')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/emergency')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/emergency')[0].body).toEqual({ enabled: true, phone: '', message: 'סגורים' })
   })
 })

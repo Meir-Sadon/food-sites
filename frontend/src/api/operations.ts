@@ -38,6 +38,8 @@ export interface AdminOrderItem {
   imageUrl?: string | null
   /** The price list the line was priced from (feature priceLists); absent for regular prices. */
   priceListName?: string | null
+  /** The unit price before a discount (the regular price, or the price it was struck from) when the line cost less; absent otherwise. */
+  regularUnitPrice?: number | null
 }
 
 export interface AdminOrder {
@@ -80,6 +82,14 @@ export interface AdminOrder {
   deliveryDiscount?: number
   /** What was added so the order reached the site's minimum (already inside `total`); 0 for none. */
   minimumTopUp?: number
+  /** The tip for the courier in ₪ (already inside `total`; 0 for none). */
+  tip?: number
+  /** The client is marked as restricted (admin-only): ask for payment in advance. */
+  restricted?: boolean
+  /** The order total passed the deposit threshold (admin-only; the client is never told). */
+  depositRequired?: boolean
+  /** The admin marked the deposit as paid, which approves the order. */
+  depositPaid?: boolean
   deliveryZoneName?: string | null
 }
 
@@ -125,6 +135,19 @@ export interface DishSales {
   dishName: string
   quantity: number
   sales: number
+  /** What the same units cost at their regular prices; above sales when a discount applied. */
+  regularSales?: number
+  /** The price lists the sales came from; null is the default list. */
+  priceLists?: (string | null)[]
+}
+
+/** Sales by price list; a null name is the default list. */
+export interface ListSales {
+  name: string | null
+  orders: number
+  quantity: number
+  sales: number
+  regularSales: number
 }
 
 export interface Report {
@@ -132,6 +155,11 @@ export interface Report {
   sales: number
   weeks: { weekStart: string; orders: number; sales: number; dishes: DishSales[] }[]
   dishes: DishSales[]
+  lists?: ListSales[]
+  /** Total taken off by price lists and the dishes' own discounts. */
+  listDiscount?: number
+  /** Total taken off delivery fees by the large-order discount. */
+  deliveryDiscount?: number
 }
 
 export interface ReportFilter {
@@ -160,6 +188,8 @@ export const ordersAdminApi = {
   /** Cancelling needs a reason (the business pays no sales commission on a cancelled order). */
   cancel: (id: number, cancelReason: string) => apiJson<void>(`${orders}/${id}/status`, send('PUT', { status: 'Cancelled', cancelReason })),
   approve: (id: number) => apiJson<void>(`${orders}/${id}/approve`, send('PUT')),
+  /** Marks the deposit of a big order as paid (which approves it), or takes the mark back. */
+  setDeposit: (id: number, paid: boolean) => apiJson<void>(`${orders}/${id}/deposit`, send('PUT', { paid })),
   setPaid: (id: number, input: PaidInput) => apiJson<void>(`${orders}/${id}/paid`, send('PUT', input)),
   update: (id: number, input: AdminOrderInput) => apiJson<AdminOrder>(`${orders}/${id}`, send('PUT', input)),
 }

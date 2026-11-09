@@ -12,12 +12,15 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists'
+export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
-export type SiteStyle = 'classic' | 'street' | 'tiles'
+export type SiteStyle = 'classic' | 'street' | 'tiles' | 'rect'
 
-export const SITE_STYLES: readonly SiteStyle[] = ['classic', 'street', 'tiles']
+export const SITE_STYLES: readonly SiteStyle[] = ['classic', 'street', 'tiles', 'rect']
+
+/** The styles that show a dish as a tile (a picture with the add button on it): `DishTile` renders both. */
+export const isTileStyle = (style: SiteStyle) => style === 'tiles' || style === 'rect'
 
 /** Where the order total sits (FoodSite.Api `OrderLayout`): a bar at the bottom, or on a wide screen a panel at the side. */
 export type OrderTotalPosition = 'bottom' | 'side'
@@ -61,6 +64,18 @@ export type Spacing = (typeof SPACINGS)[number]
 /** How the tiles style shows a category: in a framed block, or minimal (a plain heading with the tiles under it). */
 export const TILE_GROUPS = ['framed', 'minimal'] as const
 export type TileGroups = (typeof TILE_GROUPS)[number]
+
+/** How big the dishes' pictures are on the order page (the rectangles of the rect style); `small` is the default, `medium` the old size. */
+export const IMAGE_SIZES = ['tiny', 'small', 'medium', 'large', 'huge'] as const
+export type ImageSize = (typeof IMAGE_SIZES)[number]
+
+/** Which side of a rectangle (the rect style) the picture with its add button is on: `end` is the left in Hebrew (default), `start` the right. */
+export const RECT_PICTURES = ['end', 'start'] as const
+export type RectPicture = (typeof RECT_PICTURES)[number]
+
+/** Tiles and rectangles on a phone: `standard`, or `full` (each one takes the whole row, edge to edge, one after another). */
+export const MOBILE_CARDS = ['standard', 'full'] as const
+export type MobileCards = (typeof MOBILE_CARDS)[number]
 
 /** The ids of the marketing tools the owner connected; an empty string means that tool is off. */
 export interface TrackingIds {
@@ -111,6 +126,8 @@ export interface Site {
   minimumOrderAppliesToPickup: boolean
   /** The order page first asks delivery or pickup and the address, then shows the dishes. */
   addressFirst: boolean
+  /** The order page offers a tip for the courier (5, 10, 15, 20 ₪ or another amount). */
+  tipsEnabled?: boolean
   contact: Contact
   /** The phones that can be chatted with on WhatsApp (the admin's notify list). */
   whatsAppPhones: string[]
@@ -118,6 +135,8 @@ export interface Site {
   serviceCities: string[]
   /** The features that are on for this site. */
   features: Feature[]
+  /** Present only in emergency mode: no orders are taken and clients are told to phone `phone`. A null `message` means the default text. */
+  emergency?: { phone: string; message: string | null } | null
   /** The admin's choice, else the site's default from site.json. */
   style: SiteStyle
   /** The admin's choice, else the site's default from site.json. */
@@ -137,6 +156,9 @@ export interface Site {
   spacing: Spacing
   /** Only the tiles style uses it. */
   tileGroups: TileGroups
+  imageSize: ImageSize
+  rectPicture: RectPicture
+  mobileCards: MobileCards
   /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
   deliveryPricing: DeliveryPricing
   /** The buttons on the About page: Facebook, Instagram, TikTok, then the custom links. Empty: none. */
@@ -291,7 +313,17 @@ export interface MenuAddOnGroup {
   maxUnits: number | null
 }
 
-export interface MenuCategory {
+/** A dish layout a category or group can ask for: the site's regular cards (`list`), tiles or rectangles. */
+export const DISH_LAYOUTS = ['list', 'tiles', 'rect'] as const
+export type DishLayout = (typeof DISH_LAYOUTS)[number]
+
+/** A category's or group's own look; null means the site's. */
+export interface SectionLook {
+  layout?: DishLayout | null
+  imageSize?: ImageSize | null
+}
+
+export interface MenuCategory extends SectionLook {
   id: number
   name: string
 }
@@ -317,7 +349,7 @@ export interface SupplyDate {
 }
 
 /** A custom group of dishes (such as "מומלצות"), shown as its own section above the categories; dishes in menu order. */
-export interface MenuGroup {
+export interface MenuGroup extends SectionLook {
   id: number
   name: string
   dishIds: number[]
@@ -376,6 +408,8 @@ export interface OrderInput {
   marketing?: { fbp?: string; fbc?: string; sourceUrl?: string }
   /** The client agreed to be charged the site's minimum for an order under it. */
   acceptMinimumTopUp?: boolean
+  /** A tip for the courier in ₪ (only while the site has tips on). */
+  tip?: number
 }
 
 export interface Confirmation {
@@ -398,6 +432,8 @@ export interface Confirmation {
     isAddOn: boolean
     /** The dish's allergens as the business wrote them; null when it has none. */
     allergenInfo?: string | null
+    /** The unit price before a discount, when the line cost less. */
+    regularUnitPrice?: number | null
   }[]
   deliveryHour?: string | null
   /** The picked hour was already full: the admin may call to move it. */
@@ -408,6 +444,8 @@ export interface Confirmation {
   deliveryDiscount?: number
   /** What was added so the order reached the minimum (already inside `total`; 0 for none). */
   minimumTopUp?: number
+  /** The tip for the courier in ₪ (already inside `total`; 0 for none). */
+  tip?: number
 }
 
 /** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */
@@ -459,8 +497,13 @@ export const contactsApi = {
   get: () => apiJson<Contact>('/api/admin/contact'),
   save: (contact: Contact) => apiJson<Contact>('/api/admin/contact', send('PUT', contact)),
   notifyPhones: () => apiJson<NotifyPhone[]>('/api/admin/notify-phones'),
-  addNotifyPhone: (phone: string, name: string) =>
-    apiJson<NotifyPhone>('/api/admin/notify-phones', send('POST', { phone, name })),
+  addNotifyPhone: (phone: string, name: string, pushoverKey = '', pushoverSound = '') =>
+    apiJson<NotifyPhone>('/api/admin/notify-phones', send('POST', { phone, name, pushoverKey, pushoverSound })),
+  updateNotifyPhone: (id: number, phone: string, name: string, pushoverKey = '', pushoverSound = '') =>
+    apiJson<NotifyPhone>(`/api/admin/notify-phones/${id}`, send('PUT', { phone, name, pushoverKey, pushoverSound })),
+  /** Sets the order of all the numbers; the first is listed first. */
+  reorderNotifyPhones: (phoneIds: number[]) => apiJson<NotifyPhone[]>('/api/admin/notify-phones/order', send('PUT', { phoneIds })),
+  testNotifyPhone: (id: number) => apiJson<void>(`/api/admin/notify-phones/${id}/test`, send('POST')),
   removeNotifyPhone: (id: number) => apiJson<void>(`/api/admin/notify-phones/${id}`, send('DELETE')),
 }
 
@@ -468,7 +511,13 @@ export interface NotifyPhone {
   id: number
   phone: string
   name: string | null
+  /** Pushover user key: the phone also gets a loud alert that repeats until acknowledged. */
+  pushoverKey?: string | null
+  pushoverSound?: string | null
 }
+
+/** The Pushover sounds the admin can pick for the new-order alert (the first is the default). */
+export const pushoverSounds = ['siren', 'alien', 'persistent', 'echo', 'updown', 'climb', 'bugle', 'cosmic', 'falling', 'pushover'] as const
 
 /** Who answers accessibility requests, and the limits the business knows of (the accessibility statement). */
 export interface AccessibilityInfo {

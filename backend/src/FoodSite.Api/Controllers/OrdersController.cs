@@ -7,6 +7,7 @@ using FoodSite.Api.Messaging;
 using FoodSite.Api.Marketing;
 using FoodSite.Api.Orders;
 using FoodSite.Api.Phones;
+using FoodSite.Api.Push;
 using FoodSite.Api.Sites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -25,6 +26,7 @@ public class OrdersController(
     ISmsSender sms,
     IOptions<SmsOptions> smsOptions,
     OwnerNotifier ownerMail,
+    PushNotifier pushNotifier,
     MarketingNotifier marketing,
     IOptions<SiteOptions> site,
     DeliveryQuoter deliveryQuoter,
@@ -33,6 +35,9 @@ public class OrdersController(
 {
     public const int NameMaxLength = 100;
     public const int NotesMaxLength = 500;
+
+    /// <summary>The most a client may tip on one order (₪).</summary>
+    public const decimal MaxTip = 1000m;
 
     public record OrderInput(
         string? Phone,
@@ -49,10 +54,12 @@ public class OrdersController(
         TimeOnly? DeliveryHour = null,
         DateOnly? DeliveryHourDate = null,
         MarketingInput? Marketing = null,
-        bool AcceptMinimumTopUp = false);
+        bool AcceptMinimumTopUp = false,
+        decimal? Tip = null);
 
     public record ConfirmationItemDto(
-        string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null);
+        string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null,
+        decimal? RegularUnitPrice = null);
 
     public record ConfirmationDto(
         int Id,
@@ -68,13 +75,21 @@ public class OrdersController(
         bool HourFull = false,
         decimal DeliveryFee = 0m,
         decimal DeliveryDiscount = 0m,
-        decimal MinimumTopUp = 0m);
+        decimal MinimumTopUp = 0m,
+        decimal Tip = 0m);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
     {
         var errors = new Errors();
         var settings = await db.Settings.AsNoTracking().SingleAsync(ct);
+
+        // In emergency mode the site takes no orders: clients phone instead.
+        if (settings.EmergencyEnabled)
+        {
+            errors.Add("emergency", "emergencyMode");
+            return Invalid(errors);
+        }
 
         errors.Text(nameof(input.Name), input.Name, NameMaxLength, required: true);
         errors.Text(nameof(input.Notes), input.Notes, NotesMaxLength);
@@ -149,6 +164,17 @@ public class OrdersController(
         var minimumApplies = input.FulfillmentMethod == FulfillmentMethod.Delivery || settings.MinimumOrderAppliesToPickup;
         // An order under the minimum is only sent when the client agreed to be charged the minimum.
         var minimumTopUp = 0m;
+        // A tip is the client's own choice, only while the admin has tips on; the amount is never negative.
+        var tip = 0m;
+        if (input.Tip is { } tipInput && tipInput != 0m)
+        {
+            if (!settings.TipsEnabled)
+                errors.Add(nameof(input.Tip), "tipUnavailable");
+            else if (tipInput < 0m || tipInput > MaxTip)
+                errors.Add(nameof(input.Tip), "invalid");
+            else
+                tip = decimal.Round(tipInput, 2);
+        }
         if (!errors.Any && minimumApplies && settings.MinimumOrderAmount is { } minimum && OrderBuilder.Total(items) < minimum)
         {
             if (input.AcceptMinimumTopUp)
@@ -213,15 +239,23 @@ public class OrdersController(
                 && (quote is null or { Status: DeliveryQuote.Outside or DeliveryQuote.Unknown } or { Approximate: true }),
             DeliveryFee = fee - discount,
             DeliveryDiscount = discount,
+            // Admin-only: a big order waits for its deposit and the client is told nothing about it.
+            DepositRequired = settings.DepositMinOrder is > 0m && dishesTotal + minimumTopUp + fee - discount > settings.DepositMinOrder,
             DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
             MinimumTopUp = minimumTopUp,
-            Total = dishesTotal + minimumTopUp + fee - discount,
+            Tip = tip,
+            Total = dishesTotal + minimumTopUp + fee - discount + tip,
             CreatedAt = DateTimeOffset.UtcNow,
             PlacedByOwner = await SessionOpenedByOwnerAsync(),
         };
         foreach (var item in items)
             order.Items.Add(item);
         db.Orders.Add(order);
+        // A one-time discount that priced this order is now used up (until the order is cancelled).
+        if (await SessionUserIdAsync() is { } discountUserId)
+            foreach (var listId in await PriceBook.OneTimeDiscountsUsedAsync(
+                db, discountUserId, clock.Today(), items.SelectMany(i => i.AddOnItems.Prepend(i)).Select(i => i.PriceListName), ct))
+                order.DiscountUses.Add(new PriceListDiscountUse { PriceListId = listId, UserId = discountUserId });
         // The order in progress the client kept on the server is now sent.
         if (await SessionUserIdAsync() is { } sessionUserId
             && await db.SavedCarts.SingleOrDefaultAsync(c => c.UserId == sessionUserId, ct) is { } cart)
@@ -239,13 +273,14 @@ public class OrdersController(
             order.PaymentMethod switch { PaymentMethod.Bit => settings.BitLink, PaymentMethod.PayBox => settings.PayBoxLink, _ => null },
             order.NeedsReview,
             order.Items
-                .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null, i.Dish?.AllergenInfo))
+                .Select(i => new ConfirmationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.ParentItem is not null, i.Dish?.AllergenInfo, i.RegularUnitPrice))
                 .ToList(),
             order.DeliveryHour,
             hourFull,
             order.DeliveryFee,
             order.DeliveryDiscount,
-            order.MinimumTopUp);
+            order.MinimumTopUp,
+            order.Tip);
     }
 
     /// <summary>A manual payment needs the business's number and that service switched on.</summary>
@@ -270,7 +305,7 @@ public class OrdersController(
             return;
 
         var taken = await db.OrderItems.AsNoTracking()
-            .Where(i => limited.Contains(i.DishId) && i.Order!.SupplyDate == supplyDate && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
+            .Where(i => limited.Contains(i.DishId) && i.Order!.SupplyDate == supplyDate && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview && !(i.Order.DepositRequired && !i.Order.DepositPaid))
             .GroupBy(i => i.DishId)
             .Select(g => new { DishId = g.Key, Quantity = g.Sum(i => i.Quantity) })
             .ToDictionaryAsync(g => g.DishId, g => g.Quantity, ct);
@@ -307,9 +342,11 @@ public class OrdersController(
     private async Task NotifyAsync(
         Order order, string? paymentPhone, string? ownerEmail, IReadOnlyList<string> serviceCities, bool hourFull, CancellationToken ct)
     {
-        await ownerMail.NewOrderAsync(ownerEmail, order, hourFull, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}");
-        var admins = await db.NotifyPhones.AsNoTracking().Select(p => p.Phone).ToListAsync(CancellationToken.None);
-        var messages = admins
+        await ownerMail.NewOrderAsync(ownerEmail, order, hourFull, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}",
+            await features.IsEnabledAsync(Features.PriceLists, ct));
+        var recipients = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.DisplayOrder).ThenBy(p => p.Id).ToListAsync(CancellationToken.None);
+        await pushNotifier.NewOrderAsync(recipients, order, site.Value.Name, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}");
+        var messages = recipients.Select(p => p.Phone)
             .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name, hourFull)))
             .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone, site.Value.Name, serviceCities, hourFull)));
         foreach (var (phone, template, text) in messages)

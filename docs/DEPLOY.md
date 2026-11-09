@@ -98,6 +98,7 @@ Pick a long passphrase for the master password (four or five random words). The 
    | `Sms__Username`, `Sms__Token`, `Sms__Source` | From a TextMe account (textme.co.il): user name, API token, and the verified sender name the client sees (up to 11 English letters or digits). All three set turns on an SMS order confirmation to the client; empty: SMS is only logged. Optional `Sms__ConfirmationTemplate`: this site's text, with `{siteName} {name} {orderId} {date} {time} {method} {total}` |
 | `Mail__ResendApiKey` | A Resend API key (resend.com, free: about 100 mails a day), or leave it empty (no mail to the owner). Optional `Mail__From`: the sender address, `onboarding@resend.dev` by default, which Resend lets send only to your own Resend account address; to mail the business owner at another address, verify a domain in Resend and set e.g. `Mail__From=orders@your-domain.com` |
 | `Google__ClientId` | Turns on "Sign in with Google" for customers on this site: the OAuth **web client id** from Google Cloud Console (APIs & Services → Credentials → Create OAuth client ID → Web application; one per site, or one shared by several). Under **Authorized JavaScript origins** add the site's address (`https://<site-domain>`, and `http://localhost:5173` to try it locally); no redirect URI and no client secret are needed, because the browser gets a signed ID token from Google and the API verifies it. The consent screen must be published ("In production") for customers outside the test list. Empty: the button is hidden and only phone login is offered |
+| `Pushover__AppToken` | Optional phone alerts for new orders (the `phoneAlerts` feature is already on in every `site.json`): an application token from pushover.net (create an application per business). Each person on the notify list installs the Pushover app and gives the admin their user key. Leave empty for no phone alerts. |
 | `Mail__BrevoApiKey` | Alternative to Resend that needs no domain: a Brevo API key (brevo.com, free: 300 mails a day), used instead of Resend when set. Set `Mail__From` to a sender address you verified in Brevo (Senders & IP). Free-mail senders such as gmail.com may be replaced by Brevo or filtered to spam, so a domain you own is still the better sender |
 
    Render generates the login-signing secret (`Jwt__Secret`) itself. The `SITE` value in `render.yaml` picks the folder under `sites/` the service is built from; Render passes it to the `Dockerfile` as a build argument.
@@ -118,3 +119,15 @@ Pick a long passphrase for the master password (four or five random words). The 
 1. Buy the domain from any registrar (for example `kuskus.co.il`).
 2. On Render, open the service, then **Settings → Custom Domains**, and add the domain.
 3. Render shows the DNS records to add at your registrar. HTTPS is set up automatically once they work.
+4. Set `Site__PublicUrl` on the service to the new address (e.g. `https://kuskus.co.il`), so search engines list that address and not the `onrender.com` one (it is the canonical address and the one in `sitemap.xml`).
+
+## Getting found on Google
+
+Each site serves `/robots.txt` and `/sitemap.xml` and tells Google the business's name, tagline, phone, address and delivery cities (see "Search engines and link previews" in `docs/ARCHITECTURE.md`). Google still has to learn the site exists:
+
+1. Open [Google Search Console](https://search.google.com/search-console), add the site's address as a property and verify it (a DNS record on your own domain; on `onrender.com`, the HTML-tag method).
+2. Under **Sitemaps**, submit `sitemap.xml`. Under **URL inspection**, enter the home page and choose **Request indexing**.
+3. Create a [Google Business Profile](https://business.google.com) for the business with the site as its website. For a local business this is what puts it on Google Maps and in "near me" searches.
+4. Link the site from the business's Facebook, Instagram and WhatsApp Business profile.
+
+Indexing a new site usually takes days to a few weeks.

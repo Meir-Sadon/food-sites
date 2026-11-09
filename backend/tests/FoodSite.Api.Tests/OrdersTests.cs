@@ -395,6 +395,38 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
                 m => m.StartsWith(ApiFactory.SiteName + "\n") && m.Contains($"הזמנה חדשה #{confirmation.Id}") && m.Contains("₪311"));
     }
 
+    private const string PushKeyA = "uQiRzpo4DXghDmr9QzzfQu27cmVRsG";
+    private const string PushKeyB = "gznej3rKEVAvPUhteTCB6mxWa8DWI4";
+
+    [Fact]
+    public async Task Every_admin_phone_with_a_pushover_key_gets_an_emergency_alert_with_its_sound()
+    {
+        (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0521111111", pushoverKey = PushKeyA, pushoverSound = "alien" })).EnsureSuccessStatusCode();
+        (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0522222222" })).EnsureSuccessStatusCode();
+
+        var confirmation = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+
+        var alert = Assert.Single(_factory.Push.Sent);
+        Assert.Equal((PushKeyA, "alien"), (alert.UserKey, alert.Sound));
+        Assert.Contains($"#{confirmation.Id}", alert.Message);
+        Assert.Contains(ApiFactory.SiteName, alert.Title);
+        Assert.EndsWith($"/admin/orders/{confirmation.Id}", alert.Url);
+    }
+
+    [Fact]
+    public async Task Order_is_saved_and_the_other_alerts_still_go_when_one_pushover_alert_fails()
+    {
+        (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0521111111", pushoverKey = PushKeyA })).EnsureSuccessStatusCode();
+        (await _admin.PostAsJsonAsync("/api/admin/notify-phones", new { phone = "0522222222", pushoverKey = PushKeyB })).EnsureSuccessStatusCode();
+        _factory.Push.FailFor.Add(PushKeyA);
+
+        Assert.Equal(HttpStatusCode.OK, (await Place(await ValidOrder())).StatusCode);
+
+        Assert.Equal(PushKeyB, Assert.Single(_factory.Push.Sent).UserKey);
+        await using var db = _factory.CreateDbContext();
+        Assert.Equal(1, await db.Orders.CountAsync());
+    }
+
     [Fact]
     public async Task Order_is_saved_even_when_whatsapp_fails()
     {
@@ -573,6 +605,32 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_tip_is_added_to_the_total_as_its_own_amount_only_while_tips_are_on()
+    {
+        async Task SetTips(bool on) =>
+            (await _admin.PutAsJsonAsync("/api/admin/settings", new
+            {
+                deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+                kashrutText = (string?)null, paymentPhone = (string?)null, tipsEnabled = on,
+            })).EnsureSuccessStatusCode();
+
+        var plain = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+
+        // Tips are off by default: a tip is refused.
+        await (await Place(await ValidOrder(o => o["tip"] = 10m))).AssertInvalid("tip", "tipUnavailable");
+
+        await SetTips(true);
+        var tipped = await (await Place(await ValidOrder(o => o["tip"] = 15.5m))).Read<ConfirmationDto>();
+        Assert.Equal(15.5m, tipped.Tip);
+        Assert.Equal(plain.Total + 15.5m, tipped.Total);
+        Assert.Equal(0m, (await (await Place(await ValidOrder())).Read<ConfirmationDto>()).Tip);
+
+        // Never negative, and not absurdly large.
+        await (await Place(await ValidOrder(o => o["tip"] = -1m))).AssertInvalid("tip", "invalid");
+        await (await Place(await ValidOrder(o => o["tip"] = 100000m))).AssertInvalid("tip", "invalid");
+    }
+
+    [Fact]
     public async Task The_minimum_can_apply_to_deliveries_only()
     {
         async Task SetMinimum(bool appliesToPickup) =>
@@ -732,6 +790,42 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         var haifa = await (await Place(await ValidOrder(o => o["city"] = "חיפה"))).Read<ConfirmationDto>();
         Assert.True(haifa.NeedsReview);
         Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("משלוחים רק באשקלון, אשדוד ושדרות"));
+    }
+
+    [Fact]
+    public async Task A_big_order_waits_for_its_deposit_and_the_client_is_told_nothing()
+    {
+        var dish = await (await _admin.GetAsync($"/api/admin/dishes/{_chicken}")).Read<DishDto>();
+        var input = new DishInput(
+            dish.Name, dish.CategoryId, null, null, dish.SellBy, dish.ChoiceMode, null, null, null, null, false, false,
+            dish.Options.Select(o => new OptionInput(o.Id, o.Label, o.Amount, o.Price, o.IsDefault)).ToList(), dish.ParentDishIds.ToList(),
+            MaxPerSupplyDate: 3);
+        (await _admin.PutAsJsonAsync($"/api/admin/dishes/{_chicken}", input, TestFiles.Json)).EnsureSuccessStatusCode();
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { DepositMinOrder = 1m })).EnsureSuccessStatusCode();
+
+        var big = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+        Assert.False(big.NeedsReview);
+        Assert.DoesNotContain(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("מקדמה"));
+        // Waiting for the deposit, it takes no quantities and is marked for the admin.
+        Assert.Equal(3m, (await Menu()).Dishes.Single(d => d.Id == _chicken).Remaining![date]);
+        var waiting = await _admin.GetAsync($"/api/admin/orders/{big.Id}").Read<OrderDto>();
+        Assert.True(waiting.DepositRequired);
+        Assert.False(waiting.DepositPaid);
+
+        // Marking the deposit paid approves it.
+        (await _admin.PutAsJsonAsync($"/api/admin/orders/{big.Id}/deposit", new DepositInput(true))).EnsureSuccessStatusCode();
+        Assert.Equal(1m, (await Menu()).Dishes.Single(d => d.Id == _chicken).Remaining![date]);
+
+        // Without a threshold nothing is flagged, and an order that needs no deposit cannot be marked.
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { DepositMinOrder = null })).EnsureSuccessStatusCode();
+        var otherDate = (await Menu()).SupplyDates[1].Date.ToString("yyyy-MM-dd");
+        var small = await (await Place(await ValidOrder(o => o["supplyDate"] = otherDate))).Read<ConfirmationDto>();
+        var plain = await _admin.GetAsync($"/api/admin/orders/{small.Id}").Read<OrderDto>();
+        Assert.False(plain.DepositRequired);
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await _admin.PutAsJsonAsync($"/api/admin/orders/{small.Id}/deposit", new DepositInput(true))).StatusCode);
     }
 
     // ---------- Supply hours ----------

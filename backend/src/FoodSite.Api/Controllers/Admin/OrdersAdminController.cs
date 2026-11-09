@@ -21,7 +21,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     public record ItemDto(
         int Id, int? ParentItemId, string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, string? Note = null,
-        IReadOnlyList<AnswerDto>? Answers = null, string? ImageUrl = null, string? PriceListName = null);
+        IReadOnlyList<AnswerDto>? Answers = null, string? ImageUrl = null, string? PriceListName = null,
+        decimal? RegularUnitPrice = null);
 
     /// <summary>A dish question and the client's answer, as shown.</summary>
     public record AnswerDto(string Question, string Answer);
@@ -54,6 +55,10 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         string? CancelReason = null,
         DateTimeOffset? CancelledAt = null,
         decimal MinimumTopUp = 0m,
+        bool Restricted = false,
+        bool DepositRequired = false,
+        bool DepositPaid = false,
+        decimal Tip = 0m,
         bool PlacedByOwner = false);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
@@ -64,6 +69,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
 
     /// <summary>Marking an order paid takes how it was paid (Unknown is only for old orders) and an optional comment.</summary>
     public record PaidInput(bool IsPaid, PaidWith? PaidWith = null, string? PaymentComment = null);
+
+    public record DepositInput(bool Paid);
 
     public record ItemInput(int Id, decimal Quantity);
 
@@ -102,13 +109,14 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         var orders = await query.OrderBy(o => o.SupplyDate).ThenBy(o => o.CreatedAt).ThenBy(o => o.Id).ToListAsync();
         var overbooked = await OverbookedAsync(orders.Select(o => o.SupplyDate).Distinct().ToList());
         var pictures = await PicturesAsync(orders);
-        return orders.Select(o => ToDto(o, overbooked, pictures));
+        var restricted = await RestrictedAsync(orders);
+        return orders.Select(o => ToDto(o, overbooked, pictures, restricted));
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<OrderDto>> Get(int id) =>
         await db.Orders.AsNoTracking().Include(o => o.Items).SingleOrDefaultAsync(o => o.Id == id) is { } order
-            ? ToDto(order, await OverbookedAsync([order.SupplyDate]), await PicturesAsync([order]))
+            ? ToDto(order, await OverbookedAsync([order.SupplyDate]), await PicturesAsync([order]), await RestrictedAsync([order]))
             : NotFound();
 
     /// <summary>
@@ -145,11 +153,11 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     public async Task<SummaryDto> Summary(DateOnly date)
     {
         var orders = await db.Orders.AsNoTracking()
-            .Where(o => o.SupplyDate == date && o.Status != OrderStatus.Cancelled && !o.NeedsReview)
+            .Where(o => o.SupplyDate == date && o.Status != OrderStatus.Cancelled && !o.NeedsReview && !(o.DepositRequired && !o.DepositPaid))
             .Select(o => new { o.FulfillmentMethod })
             .ToListAsync();
         var lines = await db.OrderItems.AsNoTracking()
-            .Where(i => i.Order!.SupplyDate == date && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview)
+            .Where(i => i.Order!.SupplyDate == date && i.Order.Status != OrderStatus.Cancelled && !i.Order.NeedsReview && !(i.Order.DepositRequired && !i.Order.DepositPaid))
             .Select(i => new
             {
                 i.DishId, i.DishName, i.OptionLabel, i.Quantity, i.OrderId,
@@ -216,6 +224,23 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         if (order is null)
             return NotFound();
         order.NeedsReview = false;
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    /// <summary>
+    /// The admin received the deposit of a big order (or takes the mark back): a paid deposit approves the order, so it takes
+    /// its quantities. Admin-only: the client is never told.
+    /// </summary>
+    [HttpPut("{id:int}/deposit")]
+    public async Task<ActionResult> SetDeposit(int id, DepositInput input)
+    {
+        var order = await db.Orders.FindAsync(id);
+        if (order is null)
+            return NotFound();
+        if (!order.DepositRequired)
+            return Invalid(nameof(input.Paid), "invalid");
+        order.DepositPaid = input.Paid;
         await db.SaveChangesAsync();
         return NoContent();
     }
@@ -322,7 +347,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         // A client who agreed to the minimum still pays at least what the dishes plus the top-up came to, until the dishes pass it.
         var dishesTotal = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal);
         order.MinimumTopUp = Math.Max(0m, billedBefore - dishesTotal);
-        order.Total = dishesTotal + order.MinimumTopUp + order.DeliveryFee;
+        order.Total = dishesTotal + order.MinimumTopUp + order.DeliveryFee + order.Tip;
 
         // An account holds the orders of its own phone: a changed phone follows the matching account, or none.
         order.UserId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync();
@@ -330,7 +355,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
         var saved = await db.Orders.AsNoTracking().Include(o => o.Items).SingleAsync(o => o.Id == id);
-        return ToDto(saved, await OverbookedAsync([input.SupplyDate]), await PicturesAsync([saved]));
+        return ToDto(saved, await OverbookedAsync([input.SupplyDate]), await PicturesAsync([saved]), await RestrictedAsync([saved]));
     }
 
     /// <summary>The first picture of each ordered dish (a variant without one shows its main dish's), by dish id.</summary>
@@ -354,13 +379,20 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         return result;
     }
 
-    private static OrderDto ToDto(Order o, HashSet<int> overbooked, Dictionary<int, string> pictures) => new(
+    /// <summary>The phones among these orders that the admin marked as restricted. Admin-only: no client endpoint reads this.</summary>
+    private async Task<HashSet<string>> RestrictedAsync(IEnumerable<Order> orders)
+    {
+        var phones = orders.Select(o => o.Phone).Distinct().ToList();
+        return (await db.RestrictedClients.AsNoTracking().Where(c => phones.Contains(c.Phone)).Select(c => c.Phone).ToListAsync()).ToHashSet();
+    }
+
+    private static OrderDto ToDto(Order o, HashSet<int> overbooked, Dictionary<int, string> pictures, HashSet<string> restricted) => new(
         o.Id, o.Phone, o.Name, o.Address, o.SupplyDate, o.FulfillmentMethod, o.Notes, o.PaymentMethod, o.IsPaid,
         o.PaidWith, o.PaymentComment, o.Status, o.Total, o.CreatedAt, o.UserId is null, o.NeedsReview,
         o.Items.OrderBy(i => i.Id)
             .Select(i => new ItemDto(i.Id, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.Note,
                 (i.Answers ?? []).Select(a => new AnswerDto(a.Question, a.Answer)).ToList(),
-                pictures.GetValueOrDefault(i.DishId), i.PriceListName))
+                pictures.GetValueOrDefault(i.DishId), i.PriceListName, i.RegularUnitPrice))
             .ToList(),
         o.DeliveryHour,
         overbooked.Contains(o.Id),
@@ -372,6 +404,10 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.CancelReason,
         o.CancelledAt,
         o.MinimumTopUp,
+        restricted.Contains(o.Phone),
+        o.DepositRequired,
+        o.DepositPaid,
+        o.Tip,
         o.PlacedByOwner);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>

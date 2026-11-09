@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { clientsApi, listClients, type NewClientInput, type RegisteredClient } from '../../api/admin'
+import { clientsApi, listClients, restrictedApi, type NewClientInput, type RegisteredClient } from '../../api/admin'
 import { normalizeSearchText } from '../../order/search'
 import { firstName, whatsAppUrl } from '../messages/compose'
 import { fieldErrorsOf, useErrorMessage, useFormErrorMessage, useLoad } from '../hooks'
@@ -77,7 +77,7 @@ export function ClientsPage() {
   const { t } = useTranslation()
   const errorMessage = useErrorMessage()
   const navigate = useNavigate()
-  const { data, failed, reload } = useLoad(() => listClients())
+  const { data, setData, failed, reload } = useLoad(() => listClients())
   const [query, setQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -88,6 +88,19 @@ export function ClientsPage() {
       navigate('/')
     } catch (err) {
       setError(errorMessage(err))
+    }
+  }
+
+  /** Marks or clears a client as restricted (admin-only); the list follows at once. */
+  async function toggle(client: RegisteredClient) {
+    try {
+      if (client.restricted) await restrictedApi.remove(client.phone)
+      else await restrictedApi.add(client.phone)
+      setData((current) =>
+        current && { ...current, clients: current.clients.map((c) => (c.id === client.id ? { ...c, restricted: !client.restricted } : c)) },
+      )
+    } catch {
+      // The mark stays as it was; the admin can try again.
     }
   }
 
@@ -128,6 +141,7 @@ export function ClientsPage() {
                   <li key={client.id} className="list__row">
                     <span className="list__main">
                       <strong>{client.fullName}</strong>
+                      {client.restricted && <span className="badge badge--warning">{t('admin.restricted.badge')}</span>}
                       <br />
                       <bdi dir="ltr">{client.phone}</bdi>
                       {client.email && (
@@ -149,6 +163,11 @@ export function ClientsPage() {
                     </span>
                     <button type="button" onClick={() => void orderFor(client)} aria-label={`${t('admin.clients.orderFor')} ${client.fullName}`}>
                       {t('admin.clients.orderFor')}
+                    </button>
+                    <button type="button" className="button-quiet" onClick={() => void toggle(client)} aria-pressed={!!client.restricted}
+                      aria-label={`${t(client.restricted ? 'admin.restricted.unmark' : 'admin.restricted.mark')}: ${client.fullName}`}
+                    >
+                      {t(client.restricted ? 'admin.restricted.unmark' : 'admin.restricted.mark')}
                     </button>
                     {link && (
                       <a

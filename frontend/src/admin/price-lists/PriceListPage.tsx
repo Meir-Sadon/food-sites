@@ -154,28 +154,36 @@ interface StatusFields {
   newClients: boolean
   newClientsAmount: string
   newClientsUnit: BadgeNewUnit
-  noOrders: boolean
+  maxOrders: boolean
+  maxOrdersAmount: string
   midOrder: boolean
   openOrder: boolean
   openOrderAbove: string
+  matchAll: boolean
+  nextOrderOnly: boolean
 }
 
 const fieldsOf = (s: PriceListStatuses): StatusFields => ({
   newClients: s.newClientsAmount !== null,
   newClientsAmount: String(s.newClientsAmount ?? 1),
   newClientsUnit: s.newClientsUnit ?? 'week',
-  noOrders: s.noOrders,
+  maxOrders: s.maxOrders !== null,
+  maxOrdersAmount: String(s.maxOrders ?? 1),
   midOrder: s.midOrder,
   openOrder: s.openOrderAbove !== null,
   openOrderAbove: s.openOrderAbove === null ? '' : String(s.openOrderAbove),
+  matchAll: s.matchAll,
+  nextOrderOnly: s.nextOrderOnly,
 })
 
 const statusesOf = (f: StatusFields): PriceListStatuses => ({
   newClientsAmount: f.newClients ? Number(f.newClientsAmount) : null,
   newClientsUnit: f.newClients ? f.newClientsUnit : null,
-  noOrders: f.noOrders,
+  maxOrders: f.maxOrders ? Number(f.maxOrdersAmount) : null,
   midOrder: f.midOrder,
   openOrderAbove: f.openOrder ? Number(f.openOrderAbove) : null,
+  matchAll: f.matchAll,
+  nextOrderOnly: f.nextOrderOnly,
 })
 
 /** The clients the list is for by what they are doing: new on the site, no orders yet, mid-order, an open order above an amount. */
@@ -243,9 +251,17 @@ function StatusesForm({ list, onSaved }: { list: PriceList; onSaved: (list: Pric
         </div>
       )}
       <label className="checkbox">
-        <input type="checkbox" checked={fields.noOrders} onChange={(e) => set({ noOrders: e.target.checked })} />
-        {t('admin.priceLists.noOrders')}
+        <input type="checkbox" checked={fields.maxOrders} onChange={(e) => set({ maxOrders: e.target.checked })} />
+        {t('admin.priceLists.maxOrders')}
       </label>
+      {fields.maxOrders && (
+        <span className="field field--narrow">
+          <label htmlFor="price-list-max-orders">{t('admin.priceLists.maxOrdersAmount')}</label>
+          <input id="price-list-max-orders" type="number" min={1} step={1} inputMode="numeric" value={fields.maxOrdersAmount}
+            onChange={(e) => set({ maxOrdersAmount: e.target.value })} aria-describedby="price-list-max-orders-error" />
+          <FieldError errors={errors} field="maxOrders" id="price-list-max-orders-error" />
+        </span>
+      )}
       <label className="checkbox">
         <input type="checkbox" checked={fields.midOrder} onChange={(e) => set({ midOrder: e.target.checked })} />
         {t('admin.priceLists.midOrder')}
@@ -262,6 +278,23 @@ function StatusesForm({ list, onSaved }: { list: PriceList; onSaved: (list: Pric
           <FieldError errors={errors} field="openOrderAbove" id="price-list-open-above-error" />
         </span>
       )}
+      <span className="field">
+        <span className="with-info">
+          <label htmlFor="price-list-match">{t('admin.priceLists.matchMode')}</label>
+          <Info text={t('admin.priceLists.matchModeHint')} about={t('admin.priceLists.matchMode')} />
+        </span>
+        <select id="price-list-match" value={fields.matchAll ? 'all' : 'any'} onChange={(e) => set({ matchAll: e.target.value === 'all' })}>
+          <option value="any">{t('admin.priceLists.matchAny')}</option>
+          <option value="all">{t('admin.priceLists.matchAll')}</option>
+        </select>
+      </span>
+      <span className="with-info">
+        <label className="checkbox">
+          <input type="checkbox" checked={fields.nextOrderOnly} onChange={(e) => set({ nextOrderOnly: e.target.checked })} />
+          {t('admin.priceLists.discountNextOrderOnly')}
+        </label>
+        <Info text={t('admin.priceLists.discountNextOrderOnlyHint')} about={t('admin.priceLists.discountNextOrderOnly')} />
+      </span>
       {error && <Status message={error} error />}
       {saved && <Status message={t('admin.saved')} />}
       <span className="row">

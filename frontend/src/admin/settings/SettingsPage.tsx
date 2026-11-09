@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ClosedDatesSection } from './ClosedDatesSection'
 import { ConsoleTokenSection } from './ConsoleTokenSection'
+import { EmergencySection } from './EmergencySection'
 import { GeneralSection } from './GeneralSection'
 import { InactiveAfterSection } from './InactiveAfterSection'
+import { RestrictedClientsSection } from './RestrictedClientsSection'
 import { PasswordSection } from './PasswordSection'
 import { ShabbatRulesSection } from './ShabbatRulesSection'
 import { SupplyDaysSection } from './SupplyDaysSection'
@@ -20,6 +22,9 @@ export function SettingsPage() {
     <SectionGroup>
       <h1>{t('admin.settings.title')}</h1>
       <SectionSlot>
+        <EmergencySection />
+      </SectionSlot>
+      <SectionSlot>
         <SupplyDaysSection />
       </SectionSlot>
       <SectionSlot>
@@ -33,6 +38,9 @@ export function SettingsPage() {
       </SectionSlot>
       <SectionSlot>
         <InactiveAfterSection />
+      </SectionSlot>
+      <SectionSlot>
+        <RestrictedClientsSection />
       </SectionSlot>
       {pricing === 'zones' && (
         <SectionSlot>

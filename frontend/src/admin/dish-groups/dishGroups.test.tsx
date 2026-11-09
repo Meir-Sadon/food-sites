@@ -46,7 +46,7 @@ describe('Dish groups', () => {
     await user.click(screen.getByRole('button', { name: 'הוספה' }))
 
     await waitFor(() => expect(api.sent('POST', '/api/admin/dish-groups')).toHaveLength(1))
-    expect(api.sent('POST', '/api/admin/dish-groups')[0].body).toEqual({ name: 'מומלצות', dishIds: [1, 3] })
+    expect(api.sent('POST', '/api/admin/dish-groups')[0].body).toEqual({ name: 'מומלצות', dishIds: [1, 3], layout: null, imageSize: null })
   })
 
   it('shows a duplicate name error', async () => {
@@ -77,7 +77,23 @@ describe('Dish groups', () => {
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
 
     await waitFor(() => expect(api.sent('PUT', '/api/admin/dish-groups/1')).toHaveLength(1))
-    expect(api.sent('PUT', '/api/admin/dish-groups/1')[0].body).toEqual({ name: 'מומלצות', dishIds: [2] })
+    expect(api.sent('PUT', '/api/admin/dish-groups/1')[0].body).toEqual({ name: 'מומלצות', dishIds: [2], layout: null, imageSize: null })
+  })
+
+  it('gives a group its own layout from a list on its row, saved at once', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/dish-groups': () => [group(1, 'מומלצות', [1])],
+      'PUT /api/admin/dish-groups/1': () => group(1, 'מומלצות', [1]),
+    })
+    renderAt('/admin/dish-groups')
+    const user = userEvent.setup()
+
+    const row = (await screen.findByText('מומלצות')).closest('li')!
+    await user.selectOptions(within(row).getByLabelText('סוג עיצוב'), 'מלבנים')
+
+    await waitFor(() => expect(api.sent('PUT', '/api/admin/dish-groups/1')).toHaveLength(1))
+    expect(api.sent('PUT', '/api/admin/dish-groups/1')[0].body).toEqual({ name: 'מומלצות', dishIds: [1], layout: 'rect', imageSize: null })
   })
 
   it('moves a group up', async () => {

@@ -30,6 +30,12 @@ public class Settings
     /// <summary>The dishes total from which the delivery fee is discounted; null means never.</summary>
     public decimal? DeliveryDiscountMinOrder { get; set; }
 
+    /// <summary>
+    /// An order whose total is above this (₪) comes in unapproved until the admin marks its deposit paid; null means never.
+    /// Admin-only: never sent to the client.
+    /// </summary>
+    public decimal? DepositMinOrder { get; set; }
+
     public string? KashrutText { get; set; }
 
     /// <summary>The smallest order total (₪) a client may place; null means no minimum.</summary>
@@ -38,8 +44,17 @@ public class Settings
     /// <summary>Whether <see cref="MinimumOrderAmount"/> applies to pickup orders too, or only to deliveries.</summary>
     public bool MinimumOrderAppliesToPickup { get; set; } = true;
 
+    /// <summary>The order page offers the client to add a tip for the courier (5, 10, 15, 20 ₪ or another amount). Off by default.</summary>
+    public bool TipsEnabled { get; set; }
+
     /// <summary>The order page first asks delivery or pickup and the contact and address, then shows the dishes. Off keeps the usual page.</summary>
     public bool AddressFirst { get; set; }
+
+    /// <summary>
+    /// The WhatsApp message the admin sends by hand for an order of a restricted client, asking for payment in advance
+    /// (placeholders {name} {order} {date} {total} {paymentPhone}). Null means the built-in text. Never shown to clients.
+    /// </summary>
+    public string? RestrictedClientMessage { get; set; }
 
     /// <summary>Phone number for manual Bit/PayBox transfers.</summary>
     public string? PaymentPhone { get; set; }
@@ -145,6 +160,15 @@ public class Settings
     /// <summary>How the tiles style shows a category (see <c>Finish.TileGroups</c>); null means framed.</summary>
     public string? TileGroups { get; set; }
 
+    /// <summary>How big the dishes' pictures (the rectangles in the rect style) are on the order page (see <c>Finish.ImageSizes</c>); null means small.</summary>
+    public string? ImageSize { get; set; }
+
+    /// <summary>Which side of a rectangle the picture is on (see <c>Finish.RectPictures</c>); null means the end side.</summary>
+    public string? RectPicture { get; set; }
+
+    /// <summary>Whether tiles and rectangles take the whole row on a phone (see <c>Finish.MobileCards</c>); null means standard.</summary>
+    public string? MobileCards { get; set; }
+
     // Main contact
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }
@@ -196,6 +220,15 @@ public class Settings
 
     /// <summary>When the coordinator details or notes were last saved; shown as the statement's update date.</summary>
     public DateTimeOffset? AccessibilityUpdatedAt { get; set; }
+
+    /// <summary>Emergency mode: the site takes no orders and tells clients to phone instead.</summary>
+    public bool EmergencyEnabled { get; set; }
+
+    /// <summary>The number clients are told to call; null means the main contact's phone.</summary>
+    public string? EmergencyPhone { get; set; }
+
+    /// <summary>The message shown to clients; null means the default text.</summary>
+    public string? EmergencyMessage { get; set; }
 
     // Item badges (Sites/ItemBadges): "new" and "almost out" marks on dishes; both off until the admin turns them on.
     public bool BadgeNewEnabled { get; set; }

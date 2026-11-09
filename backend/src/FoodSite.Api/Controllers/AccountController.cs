@@ -94,7 +94,7 @@ public class AccountController(
 
     public record HistoryItemDto(
         int Id, int DishId, int? ParentItemId, string DishName, string? OptionLabel,
-        decimal Quantity, decimal UnitPrice, decimal LineTotal);
+        decimal Quantity, decimal UnitPrice, decimal LineTotal, decimal? RegularUnitPrice = null);
 
     public record HistoryOrderDto(
         int Id,
@@ -105,7 +105,10 @@ public class AccountController(
         bool IsPaid,
         decimal Total,
         DateTimeOffset CreatedAt,
-        IReadOnlyList<HistoryItemDto> Items);
+        IReadOnlyList<HistoryItemDto> Items,
+        decimal DeliveryFee = 0m,
+        decimal DeliveryDiscount = 0m,
+        decimal Tip = 0m);
 
     public record FavoriteInput(string? Name, int OrderId);
 
@@ -490,8 +493,9 @@ public class AccountController(
             o.Id, o.SupplyDate, o.Status, o.FulfillmentMethod, o.PaymentMethod, o.IsPaid, o.Total, o.CreatedAt,
             o.Items.OrderBy(i => i.Id)
                 .Select(i => new HistoryItemDto(
-                    i.Id, i.DishId, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal))
-                .ToList()))
+                    i.Id, i.DishId, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.RegularUnitPrice))
+                .ToList(),
+            o.DeliveryFee, o.DeliveryDiscount, o.Tip))
             .ToList();
     }
 
