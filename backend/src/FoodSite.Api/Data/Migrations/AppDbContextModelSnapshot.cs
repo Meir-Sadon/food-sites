@@ -1469,6 +1469,15 @@ namespace FoodSite.Api.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<bool>("EmergencyEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("EmergencyMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyPhone")
+                        .HasColumnType("text");
+
                     b.Property<string>("FontPair")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -1656,6 +1665,7 @@ namespace FoodSite.Api.Data.Migrations
                             BitEnabled = false,
                             DeliveryEnabled = true,
                             DeliveryLeadMinutes = 0,
+                            EmergencyEnabled = false,
                             MinimumOrderAppliesToPickup = true,
                             OwnerChangeMails = false,
                             PayBoxEnabled = false,

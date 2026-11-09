@@ -4348,6 +4348,35 @@ label {
   padding-inline: 2.75rem;
 }
 
+.emergency-dialog__body {
+  margin: 0;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.emergency-dialog .modal__title--with-close {
+  padding-inline: 2.75rem;
+  text-align: center;
+  color: var(--color-error);
+}
+
+.emergency-dialog__call {
+  align-self: center;
+  min-inline-size: 60%;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.emergency-dialog__dismiss {
+  align-self: center;
+  border-color: transparent;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-decoration: underline;
+}
+
 .entry-popup__button {
   align-self: center;
   min-inline-size: 60%;
