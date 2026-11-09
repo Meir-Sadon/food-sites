@@ -430,6 +430,7 @@ export interface Confirmation {
     regularUnitPrice?: number | null
   }[]
   deliveryHour?: string | null
+  deliveryHourEnd?: string | null
   /** The picked hour was already full: the admin may call to move it. */
   hourFull?: boolean
   /** The delivery fee in ₪ (already inside `total`). */

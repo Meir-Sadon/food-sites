@@ -50,6 +50,10 @@ export interface Settings {
   ordersPerHourPickup: number | null
   /** The length of one slot the client picks, in minutes: 15, 30 or 60. */
   slotMinutes: number
+  /** The length of a delivery slot when it differs from the general one; 0 means the same. */
+  deliverySlotMinutes: number
+  /** The same for pickup. */
+  pickupSlotMinutes: number
   /** Slots start on round marks of the slot length (a range opening at 20:07 starts at 20:30). */
   alignSlots: boolean
   /** Minutes before a slot's start that a delivery for it can no longer be ordered; 0 means none. */

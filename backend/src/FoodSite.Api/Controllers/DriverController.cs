@@ -53,7 +53,8 @@ public class DriverController(
         DeliveryOutcome? Outcome,
         DateTimeOffset? ReportedAt,
         string? DeliveryNote,
-        string? ProofUrl);
+        string? ProofUrl,
+        TimeOnly? DeliveryHourEnd = null);
 
     public record DriverRouteDto(DateOnly Date, DateOnly ValidThrough, IReadOnlyList<DriverStopDto> Stops);
 
@@ -221,6 +222,6 @@ public class DriverController(
                 (i.Answers ?? []).Select(a => new OrdersAdminController.AnswerDto(a.Question, a.Answer)).ToList())).ToList(),
             o.Total, o.PaymentMethod, o.IsPaid, o.PaidWith, o.PaidByDriver ? o.PaymentComment : null, o.PaidByDriver,
             o.Status == OrderStatus.Cancelled,
-            o.DeliveryOutcome, o.DeliveryReportedAt, o.DeliveryNote, o.DeliveryProofUrl);
+            o.DeliveryOutcome, o.DeliveryReportedAt, o.DeliveryNote, o.DeliveryProofUrl, o.DeliveryHourEnd);
     }
 }

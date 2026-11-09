@@ -110,6 +110,7 @@ The cancelled orders with the admin's cancellation reason and the order's genera
     "orderedAt": "2030-01-04T18:30:00+00:00",
     "supplyDate": "2030-01-06",
     "deliveryHour": "12:00:00",
+    "deliveryHourEnd": "13:00:00",
     "clientName": "דנה כהן",
     "phone": "0501234567",
     "fulfillmentMethod": "Delivery",

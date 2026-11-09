@@ -85,7 +85,7 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     public record CancellationDto(
         int OrderId, string? Reason, DateTimeOffset? CancelledAt, DateTimeOffset OrderedAt, DateOnly SupplyDate, TimeOnly? DeliveryHour,
         string ClientName, string Phone, FulfillmentMethod FulfillmentMethod, string? Address, PaymentMethod PaymentMethod, bool IsPaid,
-        decimal Total, decimal DeliveryFee, IReadOnlyList<CancellationItemDto> Items);
+        decimal Total, decimal DeliveryFee, IReadOnlyList<CancellationItemDto> Items, TimeOnly? DeliveryHourEnd = null);
 
     public record CancellationsDto(DateOnly From, DateOnly To, int Orders, decimal Total, IReadOnlyList<CancellationDto> Cancellations);
 
@@ -230,7 +230,7 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                 o.Id, o.CancelReason, o.CancelledAt, o.CreatedAt, o.SupplyDate, o.DeliveryHour, o.Name, o.Phone, o.FulfillmentMethod,
                 o.FulfillmentMethod == FulfillmentMethod.Delivery ? o.Address : null, o.PaymentMethod, o.IsPaid, o.Total, o.DeliveryFee,
                 o.Items.OrderBy(i => i.Id)
-                    .Select(i => new CancellationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.LineTotal)).ToList()))
+                    .Select(i => new CancellationItemDto(i.DishName, i.OptionLabel, i.Quantity, i.LineTotal)).ToList(), o.DeliveryHourEnd))
             .ToList();
         return new CancellationsDto(start, end, count, total, list);
     }

@@ -361,6 +361,8 @@ describe('General settings', () => {
       ordersPerHourDelivery: null,
       ordersPerHourPickup: null,
       slotMinutes: 60,
+      deliverySlotMinutes: 0,
+      pickupSlotMinutes: 0,
       alignSlots: false,
       deliveryLeadMinutes: 0,
       pickupLeadMinutes: 0,
@@ -368,6 +370,20 @@ describe('General settings', () => {
       ownerEmail: '',
       ownerChangeMails: false,
     })
+  })
+
+  it('gives delivery and pickup slot lengths of their own, the same as the general one by default', async () => {
+    const api = fakeApi({ ...base, 'PUT /api/admin/settings': (_, body) => ({ ...settings(), ...(body as object) }) })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    expect(within(form).getByLabelText('אורך חלון אספקה למשלוח')).toHaveValue('0')
+    expect(within(form).getByLabelText('אורך חלון אספקה לאיסוף עצמי')).toHaveValue('0')
+    await user.selectOptions(within(form).getByLabelText('אורך חלון אספקה לאיסוף עצמי'), 'רבע שעה')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await screen.findByText('נשמר.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ slotMinutes: 60, deliverySlotMinutes: 0, pickupSlotMinutes: 15 })
   })
 
   it('saves the owner mail address', async () => {

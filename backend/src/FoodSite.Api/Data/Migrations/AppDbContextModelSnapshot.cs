@@ -843,6 +843,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<TimeOnly?>("DeliveryHour")
                         .HasColumnType("time without time zone");
 
+                    b.Property<TimeOnly?>("DeliveryHourEnd")
+                        .HasColumnType("time without time zone");
+
                     b.Property<string>("DeliveryNote")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
@@ -1465,6 +1468,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("DeliveryPricing")
                         .HasColumnType("text");
 
+                    b.Property<int?>("DeliverySlotMinutes")
+                        .HasColumnType("integer");
+
                     b.Property<decimal?>("DepositMinOrder")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
@@ -1565,6 +1571,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int>("PickupLeadMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PickupSlotMinutes")
                         .HasColumnType("integer");
 
                     b.Property<string>("PopupBody")

@@ -19,6 +19,9 @@ public class Order
 
     /// <summary>The start of the hour slot the client asked for; empty when the supply day has no hours.</summary>
     public TimeOnly? DeliveryHour { get; set; }
+
+    /// <summary>The end of that slot (00:00 for a slot ending at midnight); empty on an order without an hour.</summary>
+    public TimeOnly? DeliveryHourEnd { get; set; }
     public FulfillmentMethod FulfillmentMethod { get; set; }
     public string? Notes { get; set; }
 

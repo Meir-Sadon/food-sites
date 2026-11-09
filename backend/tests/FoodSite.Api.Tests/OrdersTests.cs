@@ -798,7 +798,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal((new TimeOnly(9, 0), false), (placed.DeliveryHour, placed.HourFull));
         await using var db = _factory.CreateDbContext();
         Assert.Equal(new TimeOnly(9, 0), (await db.Orders.SingleAsync()).DeliveryHour);
-        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("09:00 · משלוח"));
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("09:00–10:00 · משלוח"));
     }
 
     [Fact]
@@ -871,6 +871,42 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         var single = await (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerHour = 6, OrdersPerHourDelivery = null, OrdersPerHourPickup = null })).Read<SettingsDto>();
         Assert.Equal((6, null, null), (single.OrdersPerHour, single.OrdersPerHourDelivery, single.OrdersPerHourPickup));
         await (await _admin.PutAsJsonAsync("/api/admin/settings", saved with { OrdersPerHourDelivery = -1 })).AssertInvalid("OrdersPerHourDelivery", "invalid");
+    }
+
+    [Fact]
+    public async Task Delivery_and_pickup_slots_of_different_lengths_keep_their_own_limits_and_show_their_range()
+    {
+        await SetHours(new TimeOnly(8, 0), new TimeOnly(12, 0), null);
+        var settings = await _admin.GetAsync("/api/admin/settings").Read<SettingsDto>();
+        (await _admin.PutAsJsonAsync("/api/admin/settings", settings with { OrdersPerHourDelivery = 2, OrdersPerHourPickup = 4, SlotMinutes = 60, DeliverySlotMinutes = 0, PickupSlotMinutes = 15 })).EnsureSuccessStatusCode();
+        var date = (await Menu()).SupplyDates[0].Date.ToString("yyyy-MM-dd");
+        var hours = (await Menu()).SupplyDates[0].Hours!;
+        Assert.Equal(4, hours.Count(h => h.DeliveryOk && !h.PickupOk));
+        Assert.Equal(16, hours.Count(h => h.PickupOk && !h.DeliveryOk));
+        async Task<ConfirmationDto> PlaceAt(string method, string hour = "08:00") =>
+            await (await Place(await ValidOrder(o => { o["deliveryHour"] = hour; o["fulfillmentMethod"] = method; }))).Read<ConfirmationDto>();
+        async Task<HourAvailabilityDto> Availability(string hour = "08:00") =>
+            await _client.GetAsync($"/api/hour-availability?date={date}&hour={hour}").Read<HourAvailabilityDto>();
+
+        for (var i = 0; i < 4; i++)
+            Assert.False((await PlaceAt("Pickup")).HourFull);
+        // Four pickups fill the quarter, not the hour: deliveries are not held back by them, and the next quarter is free.
+        Assert.Equal((false, true), ((await Availability()).DeliveryFull, (await Availability()).PickupFull));
+        Assert.False((await Availability("08:15")).PickupFull);
+        var first = await PlaceAt("Delivery");
+        Assert.Equal((new TimeOnly(8, 0), new TimeOnly(9, 0)), (first.DeliveryHour, first.DeliveryHourEnd));
+        Assert.False((await PlaceAt("Delivery")).HourFull);
+        Assert.True((await PlaceAt("Delivery")).HourFull);
+        var pickup = await PlaceAt("Pickup", "08:15");
+        Assert.Equal((new TimeOnly(8, 15), new TimeOnly(8, 30), false), (pickup.DeliveryHour, pickup.DeliveryHourEnd, pickup.HourFull));
+        // A pickup quarter is not offered to a delivery, nor a delivery hour that starts between the quarters to a pickup.
+        await (await Place(await ValidOrder(o => { o["deliveryHour"] = "08:15"; o["fulfillmentMethod"] = "Delivery"; }))).AssertInvalid("DeliveryHour", "deliveryHourUnavailable");
+
+        await using var db = _factory.CreateDbContext();
+        Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("08:00–08:15 · איסוף עצמי"));
+        var admin = await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>();
+        Assert.Contains(admin, o => o.Id == first.Id && o.DeliveryHourEnd == new TimeOnly(9, 0));
+        Assert.Single(admin.Where(o => o.HourFull && o.FulfillmentMethod == FulfillmentMethod.Delivery));
     }
 
     [Fact]

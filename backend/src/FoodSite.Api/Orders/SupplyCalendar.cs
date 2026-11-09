@@ -18,7 +18,7 @@ public static class SupplyCalendar
 
     public record OpenDate(DateOnly Date, DateTime Cutoff, IReadOnlyList<HourSlot> Hours);
 
-    /// <summary>The day's working hours, range by range, cut into one-hour slots; none when the day has no (valid) hours.</summary>
+    /// <summary>The day's working hours, range by range, cut into slots; none when the day has no (valid) hours.</summary>
     public static IReadOnlyList<HourSlot> HourSlots(SupplyDay day) =>
         HourSlots(RangesOf(day));
 
@@ -28,20 +28,37 @@ public static class SupplyCalendar
     public static IReadOnlyList<HourSlot> HourSlots(IEnumerable<ShabbatSchedule.HoursRange> ranges, SlotTiming? timing = null)
     {
         timing ??= SlotTiming.Default;
-        var step = TimeSpan.FromMinutes(timing.SlotMinutes);
+        var list = ranges.ToList();
+        if (!timing.SeparateGrids)
+            return Cut(list, timing.SlotMinutes, timing.Align, delivery: true, pickup: true);
+        // Delivery and pickup are cut to different lengths: each gets slots of its own, usable only for its own way.
+        return Cut(list, timing.DeliveryMinutes, timing.Align, delivery: true, pickup: false)
+            .Concat(Cut(list, timing.PickupMinutes, timing.Align, delivery: false, pickup: true))
+            .OrderBy(s => s.From).ThenBy(s => s.PickupOk).ToList();
+    }
+
+    /// <summary>The ranges cut into slots of <paramref name="minutes"/>, open for the ways of receiving that are asked for (and that the range allows).</summary>
+    private static List<HourSlot> Cut(List<ShabbatSchedule.HoursRange> ranges, int minutes, bool align, bool delivery, bool pickup)
+    {
+        var step = TimeSpan.FromMinutes(minutes);
         var slots = new List<HourSlot>();
         foreach (var range in ranges)
         {
+            var deliveryOk = delivery && range.DeliveryAllowed;
+            var pickupOk = pickup && range.PickupAllowed;
+            // With one grid a range that allows neither way still yields (unusable) slots, as it always has; a way's own grid skips it.
+            if (!deliveryOk && !pickupOk && !(delivery && pickup))
+                continue;
             var end = range.End;
-            var first = timing.Align ? RoundUp(range.From, step) : range.From;
+            var first = align ? RoundUp(range.From, step) : range.From;
             // TimeSpan, not TimeOnly, so that a range ending at midnight (24:00) does not wrap.
             for (var start = first; start < end; start += step)
             {
-                var slotEnd = timing.Align
+                var slotEnd = align
                     ? new[] { end, RoundUp(start + TimeSpan.FromTicks(1), step) }.Min()
                     : end - start <= step ? end : start + step;
                 slots.Add(new HourSlot(TimeOnly.FromTimeSpan(start), slotEnd >= TimeSpan.FromDays(1) ? TimeOnly.MinValue : TimeOnly.FromTimeSpan(slotEnd),
-                    DeliveryOk: range.DeliveryAllowed, PickupOk: range.PickupAllowed));
+                    DeliveryOk: deliveryOk, PickupOk: pickupOk));
             }
         }
         return slots;

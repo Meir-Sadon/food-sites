@@ -68,6 +68,8 @@ export interface AdminOrder {
   items: AdminOrderItem[]
   /** The start of the hour the client asked for, "HH:mm:ss", or null. */
   deliveryHour: string | null
+  /** The end of that hour, "HH:mm:ss" (00:00 is midnight); null on an order without one. */
+  deliveryHourEnd?: string | null
   /** The order came after its hour was already full: call the client to move it. */
   hourFull: boolean
   /** The payment was recorded by the driver through the driver's link. */

@@ -42,6 +42,10 @@ export function formatSupplyDate(iso: string, t: TFunction): string {
 /** "08:00" for "08:00:00". */
 export const formatTime = (time: string) => time.slice(0, 5)
 
+/** The window of an order: "08:00 עד 09:00", or just the start for an order saved without an end. */
+export const formatHourRange = (from: string, to: string | null | undefined, t: TFunction) =>
+  to ? t('order.hourRange', { from: formatTime(from), to: formatTime(to) }) : formatTime(from)
+
 /** "08:00 עד 09:00": words between the times, so right-to-left text keeps them in order. A slot after midnight adds its day and date. */
 export const formatSlot = (slot: HourSlot, t: TFunction) => {
   const range = t('order.hourRange', { from: formatTime(slot.from), to: formatTime(slot.to) })
