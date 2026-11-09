@@ -627,6 +627,11 @@ export function OrderPage() {
     setMinimumAsked(false)
     setErrors({})
     setSubmitError(null)
+    // In emergency mode the site takes no orders: nothing is sent, the client is told to phone.
+    if (site?.emergency) {
+      setSubmitError(t('emergency.orderBlocked', { phone: site.emergency.phone }))
+      return
+    }
     // The dishes come before the form, so a dish still waiting for the client is the first thing to fix.
     const unanswered = unansweredDishes(state.selections, dishes)
     if (unadjusted.length > 0 || unanswered.length > 0) {
@@ -675,6 +680,11 @@ export function OrderPage() {
       setRemember(rememberOffer(result.id, normalizedPhone))
     } catch (err) {
       const fieldErrors = fieldErrorsOf(err)
+      if (fieldErrors.emergency) {
+        // Emergency mode started after the page loaded: the server refused the order.
+        setSubmitError(t('errors.emergencyMode'))
+        return
+      }
       setErrors(fieldErrors)
       openBlocksWith(fieldErrors)
       if (addressFirst && Object.keys(fieldErrors).some((field) => CONTACT_FIELDS.includes(field) || field === 'fulfillmentmethod')) setAddressDone(false)

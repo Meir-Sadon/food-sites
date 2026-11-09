@@ -133,6 +133,8 @@ export interface Site {
   serviceCities: string[]
   /** The features that are on for this site. */
   features: Feature[]
+  /** Present only in emergency mode: no orders are taken and clients are told to phone `phone`. A null `message` means the default text. */
+  emergency?: { phone: string; message: string | null } | null
   /** The admin's choice, else the site's default from site.json. */
   style: SiteStyle
   /** The admin's choice, else the site's default from site.json. */
