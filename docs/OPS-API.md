@@ -45,7 +45,7 @@ The site owner gets `403 { code: "masterOnly" }` on all three.
 - `migration`: the last migration applied to the site's database.
 - `pendingMigrations`: migrations this build has and the database lacks (empty once the site migrated on startup).
 
-### `GET /api/ops/summary?from=&to=&period=&statuses=&bands=`
+### `GET /api/ops/summary?from=&to=&period=&statuses=&bands=&phones=`
 
 Orders and their totals per period, by **supply date**.
 
@@ -90,6 +90,15 @@ Orders and their totals per period, by **supply date**.
     { "above": 0, "orders": 1, "sales": 100.00, "deliveryFees": 15.00 },
     { "above": 350, "orders": 1, "sales": 400.00, "deliveryFees": 15.00 },
     { "above": 500, "orders": 1, "sales": 400.00, "deliveryFees": 0 }
+  ] }
+```
+
+`phones` (optional): comma-separated phone numbers, written any common way (`050-1234567`, `+972501234567`), at most 100 (anything else, or a number that is not a plausible Israeli phone, is `400` with `phones: ["invalid"]`). Each period then also gets `phones`: the part of its orders placed with each of those phones, in local form, only the phones that have orders in it, ordered by phone. Those orders stay in the period's own figures too, so a console that charges them another commission takes them off. With `bands`, each phone's part is split the same way. Without `phones` a period's `phones` is `null`.
+
+```json
+{ "start": "2030-01-01", "orders": 4, "sales": 1200.00, "deliveryFees": 15.00, "tips": 10.00,
+  "phones": [
+    { "phone": "0501234567", "orders": 2, "sales": 700.00, "deliveryFees": 15.00, "tips": 10.00, "bands": null }
   ] }
 ```
 
