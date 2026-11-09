@@ -82,7 +82,7 @@ function formatCutoff(iso: string) {
 }
 
 /** The fields of the contact and address block, as the server names them (lower-cased). */
-const CONTACT_FIELDS = ['name', 'phone', 'city', 'street', 'housenumber', 'apartment']
+const CONTACT_FIELDS = ['name', 'phone', 'city', 'street', 'housenumber', 'apartment', 'buildingtype']
 
 const slotKey = (date: string, hour: string) => `${date} ${hour}`
 
@@ -264,6 +264,7 @@ export function OrderPage() {
       street: current.street || user.street,
       houseNumber: current.houseNumber || user.houseNumber,
       apartment: current.apartment || user.apartment,
+      buildingType: current.buildingType || user.buildingType,
     }))
   }
 
@@ -528,6 +529,7 @@ export function OrderPage() {
       street: current.street,
       houseNumber: current.houseNumber,
       apartment: current.apartment,
+      buildingType: current.buildingType,
     }))
     setErrors({})
     setSubmitError(null)
@@ -772,7 +774,7 @@ export function OrderPage() {
       summary={[
         state.name.trim(),
         state.phone.trim(),
-        fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment })),
+        fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment }), (type) => t(`address.buildingTypes.${type}`)),
       ]
         .filter(Boolean)
         .join(' · ')}
@@ -1036,7 +1038,7 @@ export function OrderPage() {
                       {[
                         state.name.trim(),
                         state.phone.trim(),
-                        fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment })),
+                        fulfillment === 'Delivery' && formatAddress(state, (apartment) => t('address.apartmentShort', { apartment }), (type) => t(`address.buildingTypes.${type}`)),
                       ]
                         .filter(Boolean)
                         .join(' · ')}
