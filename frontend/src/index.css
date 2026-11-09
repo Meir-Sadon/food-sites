@@ -5202,8 +5202,9 @@ label {
 
 .tip-picker__options {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 0.25rem 0.75rem;
+  /* One row when it fits; on a narrow screen the options wrap onto two or three rows. */
+  flex-wrap: wrap;
+  gap: 0 1rem;
   align-items: center;
 }
 
