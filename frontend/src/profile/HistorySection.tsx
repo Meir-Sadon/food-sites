@@ -89,6 +89,11 @@ function HistoryEntry({ order, onReorder, onSaveFavorite }: EntryProps) {
             </span>
           </p>
         ) : null}
+        {order.tip ? (
+          <p className="muted">
+            {t('order.tip.line')}: <span className="numeric">{formatMoney(order.tip)}</span>
+          </p>
+        ) : null}
         {orderSaving(order.items, order.deliveryDiscount) > 0 && (
           <p className="muted">{t('order.youSaved', { amount: formatMoney(orderSaving(order.items, order.deliveryDiscount)) })}</p>
         )}

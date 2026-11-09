@@ -4348,6 +4348,35 @@ label {
   padding-inline: 2.75rem;
 }
 
+.emergency-dialog__body {
+  margin: 0;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.emergency-dialog .modal__title--with-close {
+  padding-inline: 2.75rem;
+  text-align: center;
+  color: var(--color-error);
+}
+
+.emergency-dialog__call {
+  align-self: center;
+  min-inline-size: 60%;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.emergency-dialog__dismiss {
+  align-self: center;
+  border-color: transparent;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-decoration: underline;
+}
+
 .entry-popup__button {
   align-self: center;
   min-inline-size: 60%;
@@ -5162,4 +5191,31 @@ label {
 .price-notes {
   display: flex;
   flex-direction: column;
+}
+
+/* The tip for the courier: the amounts and "another amount" on one row. */
+.tip-picker {
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 0.75rem;
+}
+
+.tip-picker__options {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+}
+
+.tip-picker__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.tip-picker__custom {
+  max-width: 12rem;
 }

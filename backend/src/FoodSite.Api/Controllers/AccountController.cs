@@ -54,14 +54,14 @@ public class AccountController(
     /// <summary>The client's session profile, and whether this login just made the account (the first time this phone came).</summary>
     public record LoginDto(ProfileDto Profile, bool IsNew);
 
-    public record AddressInput(string? Label, string? City, string? Street, string? HouseNumber, string? Apartment, bool MakeDefault = false);
+    public record AddressInput(string? Label, string? City, string? Street, string? HouseNumber, string? Apartment, bool MakeDefault = false, string? BuildingType = null);
 
     public record AddressDto(
-        int Id, string? Label, string City, string Street, string HouseNumber, string Apartment, string Address, bool IsDefault);
+        int Id, string? Label, string City, string Street, string HouseNumber, string Apartment, string Address, bool IsDefault, string BuildingType = "");
 
     /// <summary>What a client chose to keep after an order (<see cref="OrderId"/> is the order that was just placed).</summary>
     public record RememberInput(
-        int OrderId, string? Phone, string? Name, string? City, string? Street, string? HouseNumber, string? Apartment);
+        int OrderId, string? Phone, string? Name, string? City, string? Street, string? HouseNumber, string? Apartment, string? BuildingType = null);
 
     /// <summary>Whether the details were kept, and the profile when the client is logged in.</summary>
     public record RememberDto(bool Saved, ProfileDto? Profile);
@@ -85,11 +85,12 @@ public class AccountController(
         string? Apartment,
         string? Email,
         DateOnly? Birthday,
-        string? EthnicBackground);
+        string? EthnicBackground,
+        string? BuildingType = null);
 
     public record ProfileDto(
         int Id, string Phone, string FullName, string City, string Street, string HouseNumber, string Apartment,
-        string Address, string? Email, DateOnly? Birthday, string? EthnicBackground, IReadOnlyList<AddressDto> Addresses);
+        string Address, string? Email, DateOnly? Birthday, string? EthnicBackground, IReadOnlyList<AddressDto> Addresses, string BuildingType = "");
 
     public record HistoryItemDto(
         int Id, int DishId, int? ParentItemId, string DishName, string? OptionLabel,
@@ -106,7 +107,8 @@ public class AccountController(
         DateTimeOffset CreatedAt,
         IReadOnlyList<HistoryItemDto> Items,
         decimal DeliveryFee = 0m,
-        decimal DeliveryDiscount = 0m);
+        decimal DeliveryDiscount = 0m,
+        decimal Tip = 0m);
 
     public record FavoriteInput(string? Name, int OrderId);
 
@@ -293,7 +295,7 @@ public class AccountController(
 
         user.Phone = phone!;
         Apply(user, input);
-        AddAddress(user, null, input.City, input.Street, input.HouseNumber, input.Apartment, makeDefault: false, time.GetUtcNow());
+        AddAddress(user, null, input.City, input.Street, input.HouseNumber, input.Apartment, makeDefault: false, time.GetUtcNow(), input.BuildingType);
         try
         {
             await db.SaveChangesAsync(ct);
@@ -334,7 +336,7 @@ public class AccountController(
         if (user.Addresses.Any(a => a.Address == ComposeOf(input)))
             return Invalid(nameof(input.Street), "duplicate");
 
-        AddAddress(user, input.Label, input.City, input.Street, input.HouseNumber, input.Apartment, input.MakeDefault, time.GetUtcNow());
+        AddAddress(user, input.Label, input.City, input.Street, input.HouseNumber, input.Apartment, input.MakeDefault, time.GetUtcNow(), input.BuildingType);
         await db.SaveChangesAsync(ct);
         return ToDto(user);
     }
@@ -361,7 +363,8 @@ public class AccountController(
         address.Street = input.Street!.Trim();
         address.HouseNumber = input.HouseNumber!.Trim();
         address.Apartment = input.Apartment?.Trim() ?? "";
-        address.Address = AddressFormat.Compose(address.City, address.Street, address.HouseNumber, address.Apartment);
+        address.BuildingType = AddressFormat.CleanBuildingType(input.BuildingType);
+        address.Address = AddressFormat.Compose(address.City, address.Street, address.HouseNumber, address.Apartment, address.BuildingType);
         if (input.MakeDefault)
             SetDefault(user, address);
         SyncDefault(user);
@@ -427,6 +430,7 @@ public class AccountController(
         errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength);
         errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength);
         errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
+        if (!AddressFormat.IsBuildingType(input.BuildingType)) errors.Add(nameof(input.BuildingType), "invalid");
         var hasAddress = new[] { input.City, input.Street, input.HouseNumber }.All(p => !string.IsNullOrWhiteSpace(p));
         if (!hasAddress && new[] { input.City, input.Street, input.HouseNumber }.Any(p => !string.IsNullOrWhiteSpace(p)))
             errors.Add(nameof(input.Street), "required");
@@ -446,9 +450,9 @@ public class AccountController(
                 return new RememberDto(false, null);
             if (user.FullName == "" && Clean(input.Name) is { } name)
                 user.FullName = name.Length <= NameMaxLength ? name : name[..NameMaxLength];
-            if (hasAddress && !user.Addresses.Any(a => a.Address == AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment))
+            if (hasAddress && !user.Addresses.Any(a => a.Address == AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment, input.BuildingType))
                 && user.Addresses.Count < MaxAddresses)
-                AddAddress(user, null, input.City, input.Street, input.HouseNumber, input.Apartment, makeDefault: false, time.GetUtcNow());
+                AddAddress(user, null, input.City, input.Street, input.HouseNumber, input.Apartment, makeDefault: false, time.GetUtcNow(), input.BuildingType);
             await db.SaveChangesAsync(ct);
             return new RememberDto(true, ToDto(user));
         }
@@ -461,6 +465,7 @@ public class AccountController(
         guest.Street = hasAddress ? input.Street!.Trim() : "";
         guest.HouseNumber = hasAddress ? input.HouseNumber!.Trim() : "";
         guest.Apartment = hasAddress ? input.Apartment?.Trim() ?? "" : "";
+        guest.BuildingType = hasAddress ? AddressFormat.CleanBuildingType(input.BuildingType) : "";
         guest.SavedAt = time.GetUtcNow();
         try
         {
@@ -493,7 +498,7 @@ public class AccountController(
                 .Select(i => new HistoryItemDto(
                     i.Id, i.DishId, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.RegularUnitPrice))
                 .ToList(),
-            o.DeliveryFee, o.DeliveryDiscount))
+            o.DeliveryFee, o.DeliveryDiscount, o.Tip))
             .ToList();
     }
 
@@ -723,11 +728,11 @@ public class AccountController(
             if (user.FullName == "")
                 user.FullName = guest.FullName;
             if (guest.Street != "")
-                AddAddress(user, null, guest.City, guest.Street, guest.HouseNumber, guest.Apartment, makeDefault: false, now);
+                AddAddress(user, null, guest.City, guest.Street, guest.HouseNumber, guest.Apartment, makeDefault: false, now, guest.BuildingType);
             db.GuestDetails.Remove(guest);
         }
         if (profile is not null)
-            AddAddress(user, null, profile.City, profile.Street, profile.HouseNumber, profile.Apartment, makeDefault: true, now);
+            AddAddress(user, null, profile.City, profile.Street, profile.HouseNumber, profile.Apartment, makeDefault: true, now, profile.BuildingType);
 
         db.Users.Add(user);
         try
@@ -746,7 +751,7 @@ public class AccountController(
     }
 
     private static string ComposeOf(AddressInput input) =>
-        AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment);
+        AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment, input.BuildingType);
 
     private static IEnumerable<UserAddress> Sorted(IEnumerable<UserAddress> addresses) =>
         addresses.OrderByDescending(a => a.IsDefault).ThenBy(a => a.CreatedAt).ThenBy(a => a.Id);
@@ -768,22 +773,25 @@ public class AccountController(
         user.Street = chosen?.Street ?? "";
         user.HouseNumber = chosen?.HouseNumber ?? "";
         user.Apartment = chosen?.Apartment ?? "";
+        user.BuildingType = chosen?.BuildingType ?? "";
         user.Address = chosen?.Address ?? "";
     }
 
     /// <summary>Adds an address unless the user has it already (or the parts are empty); the first one is the default.</summary>
     private static void AddAddress(
-        User user, string? label, string? city, string? street, string? houseNumber, string? apartment, bool makeDefault, DateTimeOffset now)
+        User user, string? label, string? city, string? street, string? houseNumber, string? apartment, bool makeDefault, DateTimeOffset now,
+        string? buildingType = null)
     {
         if (string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(street) || string.IsNullOrWhiteSpace(houseNumber))
             return;
-        var composed = AddressFormat.Compose(city, street, houseNumber, apartment);
+        buildingType = AddressFormat.CleanBuildingType(buildingType);
+        var composed = AddressFormat.Compose(city, street, houseNumber, apartment, buildingType);
         var existing = user.Addresses.FirstOrDefault(a => a.Address == composed);
         if (existing is null)
         {
             existing = new UserAddress
             {
-                City = city.Trim(), Street = street.Trim(), HouseNumber = houseNumber.Trim(), Apartment = apartment?.Trim() ?? "",
+                City = city.Trim(), Street = street.Trim(), HouseNumber = houseNumber.Trim(), Apartment = apartment?.Trim() ?? "", BuildingType = buildingType,
                 Address = composed, Label = Clean(label), CreatedAt = now,
             };
             user.Addresses.Add(existing);
@@ -822,6 +830,7 @@ public class AccountController(
         errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength);
         errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength);
         errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
+        if (!AddressFormat.IsBuildingType(input.BuildingType)) errors.Add(nameof(input.BuildingType), "invalid");
         errors.Text(nameof(input.Email), input.Email, EmailMaxLength);
         errors.Text(nameof(input.EthnicBackground), input.EthnicBackground, EthnicBackgroundMaxLength);
         if (new[] { input.City, input.Street, input.HouseNumber, input.Apartment }.Any(p => !string.IsNullOrWhiteSpace(p)))
@@ -846,6 +855,7 @@ public class AccountController(
         errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength, required: true);
         errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength, required: true);
         errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
+        if (!AddressFormat.IsBuildingType(input.BuildingType)) errors.Add(nameof(input.BuildingType), "invalid");
         return errors;
     }
 
@@ -859,11 +869,11 @@ public class AccountController(
     }
 
     private static AddressDto ToDto(UserAddress a) =>
-        new(a.Id, a.Label, a.City, a.Street, a.HouseNumber, a.Apartment, a.Address, a.IsDefault);
+        new(a.Id, a.Label, a.City, a.Street, a.HouseNumber, a.Apartment, a.Address, a.IsDefault, a.BuildingType);
 
     private static ProfileDto ToDto(User u) =>
         new(u.Id, u.Phone, u.FullName, u.City, u.Street, u.HouseNumber, u.Apartment, u.Address, u.Email, u.Birthday, u.EthnicBackground,
-            Sorted(u.Addresses).Select(ToDto).ToList());
+            Sorted(u.Addresses).Select(ToDto).ToList(), u.BuildingType);
 
     private static FavoriteDto ToDto(FavoriteOrder f) =>
         new(f.Id, f.Name, f.Items.Select(i => new FavoriteItemDto(

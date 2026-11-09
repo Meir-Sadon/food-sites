@@ -1,3 +1,4 @@
+import { BUILDING_TYPES } from '../../account/addressParts'
 import { useEffect, useMemo, useState } from 'react'
 import { isTransfer } from '../../order/payment'
 import { useSearchParams } from 'react-router'
@@ -87,6 +88,7 @@ export function RoutePage() {
   }, [manual, suggested, chosen])
   const stops = schedule(route, kitchen, estimate, start ? toMinutes(start) : null)
   const apartmentPrefix = t('address.apartmentShort', { apartment: '' }).trim()
+  const buildingLabels = BUILDING_TYPES.map((type) => t(`address.buildingTypes.${type}`))
   const dayLinks = links?.date === date ? links.links : []
   // The message to the driver carries the newest link while it still has this route's stops.
   const sharedLink = dayLinks[0]?.orderIds.join(',') === stops.map((s) => s.order.id).join(',') ? dayLinks[0] : undefined
@@ -178,7 +180,7 @@ export function RoutePage() {
               {t('admin.route.print')}
             </button>
             {stops.length > 0 && (
-              <a className="button-quiet" href={shareUrl(stops, date, apartmentPrefix, t, sharedLink)} target="_blank" rel="noreferrer">
+              <a className="button-quiet" href={shareUrl(stops, date, apartmentPrefix, buildingLabels, t, sharedLink)} target="_blank" rel="noreferrer">
                 {t('admin.route.share')}
               </a>
             )}
@@ -210,6 +212,7 @@ export function RoutePage() {
                 index={index}
                 count={stops.length}
                 apartmentPrefix={apartmentPrefix}
+                buildingLabels={buildingLabels}
                 onMove={(direction) => move(index, direction)}
               />
             ))}
@@ -225,12 +228,14 @@ function StopCard({
   index,
   count,
   apartmentPrefix,
+  buildingLabels,
   onMove,
 }: {
   stop: Stop
   index: number
   count: number
   apartmentPrefix: string
+  buildingLabels: readonly string[]
   onMove: (direction: 'Up' | 'Down') => void
 }) {
   const { t } = useTranslation()
@@ -271,7 +276,7 @@ function StopCard({
         </a>
       </p>
       <p className="row no-print">
-        <a className="button-link" href={wazeUrl(navigationAddress(order.address, apartmentPrefix))} target="_blank" rel="noreferrer">
+        <a className="button-link" href={wazeUrl(navigationAddress(order.address, apartmentPrefix, buildingLabels))} target="_blank" rel="noreferrer">
           {t('admin.route.waze')}
           <span className="visually-hidden"> {name}</span>
         </a>
@@ -326,7 +331,7 @@ function DeliveryState({ order }: { order: AdminOrder }) {
  * The route as one WhatsApp message the admin sends the driver: every stop with its times and Waze link, and with
  * a driver link, the link to all the stops and to each stop's page for its report.
  */
-function shareUrl(stops: Stop[], date: string, apartmentPrefix: string, t: TFunction, link?: DriverLink) {
+function shareUrl(stops: Stop[], date: string, apartmentPrefix: string, buildingLabels: readonly string[], t: TFunction, link?: DriverLink) {
   const lines = [t('admin.route.titleFor', { date: formatDate(date) })]
   if (link) lines.push(t('admin.route.linkLine', { url: driverUrl(link.token) }))
   stops.forEach((stop, index) => {
@@ -342,7 +347,7 @@ function shareUrl(stops: Stop[], date: string, apartmentPrefix: string, t: TFunc
         ? t('admin.route.paid')
         : t(isTransfer(order.paymentMethod) ? 'admin.route.collectTransfer' : 'admin.route.collect', { total: formatMoney(order.total) }),
       ...(order.notes ? [`${t('admin.orders.notes')}: ${order.notes}`] : []),
-      wazeUrl(navigationAddress(order.address, apartmentPrefix)),
+      wazeUrl(navigationAddress(order.address, apartmentPrefix, buildingLabels)),
       ...(link ? [t('admin.route.driverPage', { url: driverUrl(link.token, order.id) })] : []),
     )
   })

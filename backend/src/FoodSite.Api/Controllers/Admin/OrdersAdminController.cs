@@ -58,6 +58,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         bool Restricted = false,
         bool DepositRequired = false,
         bool DepositPaid = false,
+        decimal Tip = 0m,
         TimeOnly? DeliveryHourEnd = null);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
@@ -343,7 +344,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         // A client who agreed to the minimum still pays at least what the dishes plus the top-up came to, until the dishes pass it.
         var dishesTotal = order.Items.Where(i => kept.ContainsKey(i.Id)).Sum(i => i.LineTotal);
         order.MinimumTopUp = Math.Max(0m, billedBefore - dishesTotal);
-        order.Total = dishesTotal + order.MinimumTopUp + order.DeliveryFee;
+        order.Total = dishesTotal + order.MinimumTopUp + order.DeliveryFee + order.Tip;
 
         // An account holds the orders of its own phone: a changed phone follows the matching account, or none.
         order.UserId = await db.Users.AsNoTracking().Where(u => u.Phone == phone).Select(u => (int?)u.Id).FirstOrDefaultAsync();
@@ -403,6 +404,7 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         restricted.Contains(o.Phone),
         o.DepositRequired,
         o.DepositPaid,
+        o.Tip,
         o.DeliveryHourEnd);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>

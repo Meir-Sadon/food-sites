@@ -61,9 +61,10 @@ Orders and their totals per period, by **supply date**.
   "orders": 4,
   "sales": 250.00,
   "deliveryFees": 30.00,
+  "tips": 12.00,
   "periods": [
-    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00 },
-    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0 }
+    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00, "tips": 12.00 },
+    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0, "tips": 0 }
   ],
   "statuses": ["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"],
   "byStatus": [
@@ -77,7 +78,7 @@ Orders and their totals per period, by **supply date**.
 }
 ```
 
-`sales` is the sum of the orders' totals in shekels, delivery fees included; `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
+`sales` is the sum of the orders' totals in shekels, delivery fees included but **tips for the courier excluded**; `tips` (on the whole range, each period and each band) is the sum of those tips, reported separately because a tip belongs to the courier, not to the business's sales, so a console must not charge a commission on it (the customer paid `sales` + `tips`); `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
 
 `bands` (optional): comma-separated order totals in shekels, ascending and above 0, at most 20 (anything else is `400` with `bands: ["invalid"]`). Each period then also gets `bands`, one per threshold plus one from 0, splitting the period's orders by their total (delivery fee included): a band holds the orders above its `above` and up to the next band's (the first also holds an order of 0). A console uses it to charge a commission that depends on the order's size. Without `bands` a period's `bands` is `null`.
 

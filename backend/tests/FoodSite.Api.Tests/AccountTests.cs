@@ -214,6 +214,25 @@ public sealed class AccountTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_saved_address_keeps_the_building_type_and_shows_it_in_the_line()
+    {
+        var client = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone }));
+
+        var profile = await (await client.PostAsJsonAsync("/api/account/addresses",
+            new { label = "בית", city = "חיפה", street = "הרצל", houseNumber = "3", apartment = "", buildingType = "PrivateHouse" })).Read<ProfileDto>();
+
+        var home = Assert.Single(profile.Addresses);
+        Assert.Equal("PrivateHouse", home.BuildingType);
+        Assert.Equal("PrivateHouse", profile.BuildingType);
+        Assert.Equal("הרצל 3, בית פרטי, חיפה", home.Address);
+
+        var cleared = await (await client.PutAsJsonAsync($"/api/account/addresses/{home.Id}",
+            new { label = "בית", city = "חיפה", street = "הרצל", houseNumber = "3", apartment = "", buildingType = "" })).Read<ProfileDto>();
+        Assert.Equal("", cleared.Addresses[0].BuildingType);
+        Assert.Equal("הרצל 3, חיפה", cleared.Addresses[0].Address);
+    }
+
+    [Fact]
     public async Task Several_addresses_one_default_that_can_change_and_be_deleted()
     {
         var client = WithSession(await _guest.PostAsJsonAsync("/api/account/login", new { phone = Phone }));

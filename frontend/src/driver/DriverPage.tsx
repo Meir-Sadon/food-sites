@@ -5,6 +5,7 @@ import { ApiError } from '../api/client'
 import { driverApi, type DriverRoute, type DriverStop } from '../api/driver'
 import { Loading } from '../admin/ui'
 import { formatDate } from '../admin/format'
+import { BUILDING_TYPES } from '../account/addressParts'
 import { formatMinutes, navigationAddress, toMinutes, wazeUrl, windowMinutes } from '../admin/route/plan'
 import { formatMoney, formatTime } from '../order/format'
 import { siteLogo } from '../site/config'
@@ -106,6 +107,7 @@ export function DriverStops() {
 function StopSummary({ stop, n, isNext }: { stop: DriverStop; n: number; isNext: boolean }) {
   const { t } = useTranslation()
   const apartmentPrefix = t('address.apartmentShort', { apartment: '' }).trim()
+  const buildingLabels = BUILDING_TYPES.map((type) => t(`address.buildingTypes.${type}`))
   const collect = toCollect(stop)
   return (
     <li
@@ -134,7 +136,7 @@ function StopSummary({ stop, n, isNext }: { stop: DriverStop; n: number; isNext:
         </Link>
         {isOpen(stop) && (
           <>
-            <a className="button-quiet" href={wazeUrl(navigationAddress(stop.address, apartmentPrefix))} target="_blank" rel="noreferrer">
+            <a className="button-quiet" href={wazeUrl(navigationAddress(stop.address, apartmentPrefix, buildingLabels))} target="_blank" rel="noreferrer">
               {t('driver.waze')}
               <span className="visually-hidden"> {stop.name}</span>
             </a>

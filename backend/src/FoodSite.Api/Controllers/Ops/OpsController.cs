@@ -43,11 +43,12 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     }
 
     /// <param name="DeliveryFees">The part of <paramref name="Sales"/> that is delivery fees.</param>
+    /// <param name="Tips">The tips for couriers on these orders. Not part of <paramref name="Sales"/>: no commission is charged on them.</param>
     /// <param name="Bands">The same orders split by their total, when the summary was asked for <c>bands</c>; null otherwise.</param>
-    public record PeriodDto(DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees, IReadOnlyList<BandDto>? Bands = null);
+    public record PeriodDto(DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees, decimal Tips = 0m, IReadOnlyList<BandDto>? Bands = null);
 
     /// <summary>The orders whose total is more than <paramref name="Above"/> and at most the next band's (0 for the first band, which also holds an order of 0).</summary>
-    public record BandDto(decimal Above, int Orders, decimal Sales, decimal DeliveryFees);
+    public record BandDto(decimal Above, int Orders, decimal Sales, decimal DeliveryFees, decimal Tips = 0m);
 
     /// <summary>The most thresholds a summary splits its periods by.</summary>
     public const int MaxBands = 20;
@@ -74,9 +75,10 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     /// <param name="Statuses">The states the totals and periods count.</param>
     /// <param name="ByStatus">Every state's orders and sales in the range, whatever <paramref name="Statuses"/> asks for.</param>
     /// <param name="DeliveryFees">The part of <paramref name="Sales"/> that is delivery fees.</param>
+    /// <param name="Tips">The tips for couriers, kept out of every sales figure.</param>
     public record SummaryDto(
         DateOnly From, DateOnly To, SummaryPeriod Period, int Orders, decimal Sales, IReadOnlyList<PeriodDto> Periods,
-        IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus, decimal DeliveryFees);
+        IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus, decimal DeliveryFees, decimal Tips = 0m);
 
     public record CancellationItemDto(string DishName, string? OptionLabel, decimal Quantity, decimal LineTotal);
 
@@ -164,28 +166,29 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
 
         var all = (await db.Orders.AsNoTracking()
                 .Where(o => o.SupplyDate >= start && o.SupplyDate <= end)
-                .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, o.Status, Held = o.NeedsReview || (o.DepositRequired && !o.DepositPaid) })
+                .Select(o => new { o.SupplyDate, Sale = o.Total - o.Tip, o.DeliveryFee, o.Tip, o.Status, Held = o.NeedsReview || (o.DepositRequired && !o.DepositPaid) })
                 .ToListAsync(ct))
-            .Select(o => new { o.SupplyDate, o.Total, o.DeliveryFee, State = OrderState.Of(o.Status, o.Held) })
+            .Select(o => new { o.SupplyDate, o.Sale, o.DeliveryFee, o.Tip, State = OrderState.Of(o.Status, o.Held) })
             .ToList();
         var orders = all.Where(o => counted.Contains(o.State)).ToList();
         var periods = orders
             .GroupBy(o => PeriodStart(o.SupplyDate, period))
             .OrderBy(g => g.Key)
-            .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Total), g.Sum(o => o.DeliveryFee), thresholds?
+            .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Sale), g.Sum(o => o.DeliveryFee), g.Sum(o => o.Tip), thresholds?
                 .Select(above => g
-                    .Where(o => thresholds.LastOrDefault(t => t < o.Total) == above)
+                    .Where(o => thresholds.LastOrDefault(t => t < o.Sale) == above)
                     .Aggregate(new BandDto(above, 0, 0, 0), (band, o) => band with
                     {
-                        Orders = band.Orders + 1, Sales = band.Sales + o.Total, DeliveryFees = band.DeliveryFees + o.DeliveryFee,
+                        Orders = band.Orders + 1, Sales = band.Sales + o.Sale, DeliveryFees = band.DeliveryFees + o.DeliveryFee,
+                        Tips = band.Tips + o.Tip,
                     }))
                 .ToList()))
             .ToList();
         var byStatus = OrderState.All
-            .Select(state => new StatusDto(state, all.Count(o => o.State == state), all.Where(o => o.State == state).Sum(o => o.Total)))
+            .Select(state => new StatusDto(state, all.Count(o => o.State == state), all.Where(o => o.State == state).Sum(o => o.Sale)))
             .ToList();
         return new SummaryDto(
-            start, end, period, orders.Count, orders.Sum(o => o.Total), periods, counted, byStatus, orders.Sum(o => o.DeliveryFee));
+            start, end, period, orders.Count, orders.Sum(o => o.Sale), periods, counted, byStatus, orders.Sum(o => o.DeliveryFee), orders.Sum(o => o.Tip));
     }
 
     /// <summary>

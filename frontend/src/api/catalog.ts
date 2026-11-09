@@ -41,6 +41,8 @@ export interface Settings {
   minimumOrderAppliesToPickup: boolean
   /** The order page first asks delivery or pickup and the address, then shows the dishes. */
   addressFirst: boolean
+  /** The order page offers the client a tip for the courier. */
+  tipsEnabled: boolean
   /** Comma-separated, e.g. "אשקלון, אשדוד"; empty means every city is served. */
   serviceCities: string
   /** How many orders can be supplied in one hour; null means no limit. */

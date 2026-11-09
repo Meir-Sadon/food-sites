@@ -131,12 +131,12 @@ function firstHour(route: AdminOrder[]): number | null {
   return hours.length > 0 ? Math.min(...hours) : null
 }
 
-/** The address as a navigation app should search it: the apartment part (e.g. "דירה 4") left out. */
-export function navigationAddress(address: string, apartmentPrefix: string): string {
+/** The address as a navigation app should search it: the apartment part (e.g. "דירה 4") and the building type ("בנין") left out. */
+export function navigationAddress(address: string, apartmentPrefix: string, buildingLabels: readonly string[] = []): string {
   return address
     .split(',')
     .map((p) => p.trim())
-    .filter((p) => p && !(apartmentPrefix && p.startsWith(`${apartmentPrefix} `)))
+    .filter((p) => p && !(apartmentPrefix && p.startsWith(`${apartmentPrefix} `)) && !buildingLabels.includes(p))
     .join(', ')
 }
 

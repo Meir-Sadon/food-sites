@@ -36,6 +36,9 @@ public class OrdersController(
     public const int NameMaxLength = 100;
     public const int NotesMaxLength = 500;
 
+    /// <summary>The most a client may tip on one order (₪).</summary>
+    public const decimal MaxTip = 1000m;
+
     public record OrderInput(
         string? Phone,
         string? Name,
@@ -51,7 +54,9 @@ public class OrdersController(
         TimeOnly? DeliveryHour = null,
         DateOnly? DeliveryHourDate = null,
         MarketingInput? Marketing = null,
-        bool AcceptMinimumTopUp = false);
+        bool AcceptMinimumTopUp = false,
+        decimal? Tip = null,
+        string? BuildingType = null);
 
     public record ConfirmationItemDto(
         string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null,
@@ -72,6 +77,7 @@ public class OrdersController(
         decimal DeliveryFee = 0m,
         decimal DeliveryDiscount = 0m,
         decimal MinimumTopUp = 0m,
+        decimal Tip = 0m,
         TimeOnly? DeliveryHourEnd = null);
 
     [HttpPost]
@@ -79,6 +85,13 @@ public class OrdersController(
     {
         var errors = new Errors();
         var settings = await db.Settings.AsNoTracking().SingleAsync(ct);
+
+        // In emergency mode the site takes no orders: clients phone instead.
+        if (settings.EmergencyEnabled)
+        {
+            errors.Add("emergency", "emergencyMode");
+            return Invalid(errors);
+        }
 
         errors.Text(nameof(input.Name), input.Name, NameMaxLength, required: true);
         errors.Text(nameof(input.Notes), input.Notes, NotesMaxLength);
@@ -95,6 +108,7 @@ public class OrdersController(
             errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength, required: true);
             errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength, required: true);
             errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
+            if (!AddressFormat.IsBuildingType(input.BuildingType)) errors.Add(nameof(input.BuildingType), "invalid");
         }
         else
         {
@@ -155,6 +169,17 @@ public class OrdersController(
         var minimumApplies = input.FulfillmentMethod == FulfillmentMethod.Delivery || settings.MinimumOrderAppliesToPickup;
         // An order under the minimum is only sent when the client agreed to be charged the minimum.
         var minimumTopUp = 0m;
+        // A tip is the client's own choice, only while the admin has tips on; the amount is never negative.
+        var tip = 0m;
+        if (input.Tip is { } tipInput && tipInput != 0m)
+        {
+            if (!settings.TipsEnabled)
+                errors.Add(nameof(input.Tip), "tipUnavailable");
+            else if (tipInput < 0m || tipInput > MaxTip)
+                errors.Add(nameof(input.Tip), "invalid");
+            else
+                tip = decimal.Round(tipInput, 2);
+        }
         if (!errors.Any && minimumApplies && settings.MinimumOrderAmount is { } minimum && OrderBuilder.Total(items) < minimum)
         {
             if (input.AcceptMinimumTopUp)
@@ -206,7 +231,7 @@ public class OrdersController(
             UserId = userId,
             Phone = phone!,
             Name = input.Name!.Trim(),
-            Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment),
+            Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment, input.BuildingType),
             SupplyDate = supplyDate,
             DeliveryHour = hour,
             DeliveryHourEnd = hour is null ? null : chosenSlot?.To,
@@ -226,7 +251,8 @@ public class OrdersController(
             DepositRequired = settings.DepositMinOrder is > 0m && dishesTotal + minimumTopUp + fee - discount > settings.DepositMinOrder,
             DeliveryZoneName = quote is { Status: DeliveryQuote.Ok } ? quote.ZoneName : null,
             MinimumTopUp = minimumTopUp,
-            Total = dishesTotal + minimumTopUp + fee - discount,
+            Tip = tip,
+            Total = dishesTotal + minimumTopUp + fee - discount + tip,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         foreach (var item in items)
@@ -259,6 +285,7 @@ public class OrdersController(
             order.DeliveryFee,
             order.DeliveryDiscount,
             order.MinimumTopUp,
+            order.Tip,
             order.DeliveryHourEnd);
     }
 

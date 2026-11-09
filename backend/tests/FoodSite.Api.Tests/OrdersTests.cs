@@ -513,6 +513,25 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Empty(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
     }
 
+    [Theory]
+    [InlineData("Building", "הרצל 1, דירה 4, בנין, אשקלון")]
+    [InlineData("PrivateHouse", "הרצל 1, דירה 4, בית פרטי, אשקלון")]
+    [InlineData("", "הרצל 1, דירה 4, אשקלון")]
+    public async Task The_building_type_is_kept_in_the_order_address_only_when_chosen(string buildingType, string expected)
+    {
+        var response = await Place(await ValidOrder(o => o["buildingType"] = buildingType));
+        response.EnsureSuccessStatusCode();
+        var order = Assert.Single(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
+        Assert.Equal(expected, order.Address);
+    }
+
+    [Fact]
+    public async Task An_unknown_building_type_is_refused()
+    {
+        var response = await Place(await ValidOrder(o => o["buildingType"] = "Castle"));
+        await response.AssertInvalid("BuildingType", "invalid");
+    }
+
     [Fact]
     public async Task A_delivery_sent_directly_with_no_address_fields_at_all_is_refused()
     {
@@ -560,6 +579,32 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         })).EnsureSuccessStatusCode();
         var plain = await (await Place(await ValidOrder(o => o["acceptMinimumTopUp"] = true))).Read<ConfirmationDto>();
         Assert.Equal(0m, plain.MinimumTopUp);
+    }
+
+    [Fact]
+    public async Task A_tip_is_added_to_the_total_as_its_own_amount_only_while_tips_are_on()
+    {
+        async Task SetTips(bool on) =>
+            (await _admin.PutAsJsonAsync("/api/admin/settings", new
+            {
+                deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+                kashrutText = (string?)null, paymentPhone = (string?)null, tipsEnabled = on,
+            })).EnsureSuccessStatusCode();
+
+        var plain = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+
+        // Tips are off by default: a tip is refused.
+        await (await Place(await ValidOrder(o => o["tip"] = 10m))).AssertInvalid("tip", "tipUnavailable");
+
+        await SetTips(true);
+        var tipped = await (await Place(await ValidOrder(o => o["tip"] = 15.5m))).Read<ConfirmationDto>();
+        Assert.Equal(15.5m, tipped.Tip);
+        Assert.Equal(plain.Total + 15.5m, tipped.Total);
+        Assert.Equal(0m, (await (await Place(await ValidOrder())).Read<ConfirmationDto>()).Tip);
+
+        // Never negative, and not absurdly large.
+        await (await Place(await ValidOrder(o => o["tip"] = -1m))).AssertInvalid("tip", "invalid");
+        await (await Place(await ValidOrder(o => o["tip"] = 100000m))).AssertInvalid("tip", "invalid");
     }
 
     [Fact]

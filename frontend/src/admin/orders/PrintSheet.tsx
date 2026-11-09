@@ -112,6 +112,11 @@ function PrintedOrder({ order }: { order: AdminOrder }) {
           <DeliveryFeeNote discount={order.deliveryDiscount} free={!order.deliveryFee} />
         </p>
       )}
+      {!!order.tip && (
+        <p className="print-order__fee">
+          {t('order.tip.line')}: <strong className="numeric">{formatMoney(order.tip)}</strong>
+        </p>
+      )}
       <p className="print-order__total">
         {t('admin.orders.view.total')}: <strong className="numeric">{formatMoney(order.total)}</strong>
       </p>

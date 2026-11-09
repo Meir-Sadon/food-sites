@@ -70,7 +70,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         ClientActivity.Period InactiveAfter,
         decimal? DepositMinOrder = null,
         string RectPicture = "end",
-        string MobileCards = "standard");
+        string MobileCards = "standard",
+        bool TipsEnabled = false);
 
     public record SettingsInput(
         bool DeliveryEnabled,
@@ -117,7 +118,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         bool? AlignSlots = null,
         int? DeliveryLeadMinutes = null,
         int? PickupLeadMinutes = null,
-        decimal? DepositMinOrder = null);
+        decimal? DepositMinOrder = null,
+        bool? TipsEnabled = null);
 
     public record InactiveAfterInput(int? Amount, string? Unit);
 
@@ -239,6 +241,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Missing (an older client) keeps the current choice.
         if (input.AddressFirst is { } addressFirst)
             settings.AddressFirst = addressFirst;
+        if (input.TipsEnabled is { } tipsEnabled)
+            settings.TipsEnabled = tipsEnabled;
         if (input.MinimumOrderAppliesToPickup is { } appliesToPickup)
             settings.MinimumOrderAppliesToPickup = appliesToPickup;
         // Zero (or empty) means no limit. Separate limits for delivery and pickup replace the single one: it is then kept as
@@ -475,7 +479,8 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         ClientActivity.Of(s),
         s.DepositMinOrder,
         Finish.EffectiveRectPicture(s.RectPicture),
-        Finish.EffectiveMobileCards(s.MobileCards));
+        Finish.EffectiveMobileCards(s.MobileCards),
+        s.TipsEnabled);
 
     private static bool IsHttpsLink(string value) =>
         value.Length <= LinkMaxLength

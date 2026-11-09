@@ -21,6 +21,7 @@ export const settings = (patch: Partial<Settings> = {}): Settings => ({
   minimumOrderAmount: null,
   minimumOrderAppliesToPickup: true,
   addressFirst: false,
+  tipsEnabled: false,
   serviceCities: 'אשקלון',
   ordersPerHour: null,
   ordersPerHourDelivery: null,

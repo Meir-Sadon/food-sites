@@ -69,6 +69,8 @@ public static class OrderMessages
             lines.Add($"השלמה למינימום הזמנה: ₪{Money(order.MinimumTopUp)}");
         if (order.DeliveryFee > 0 || order.DeliveryDiscount > 0)
             lines.Add($"דמי משלוח: {FeeText(order)}");
+        if (order.Tip > 0)
+            lines.Add($"טיפ לשליח: ₪{Money(order.Tip)}");
         lines.Add($"סה״כ: ₪{Money(order.Total)}");
         return string.Join('\n', lines);
     }

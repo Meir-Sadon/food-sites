@@ -1,6 +1,7 @@
 import { apiJson, send } from './client'
 import type { Payment } from './site'
 import type { ReviewStatus } from './reviews'
+import type { BuildingType } from '../account/addressParts'
 
 export interface Profile {
   id: number
@@ -11,6 +12,7 @@ export interface Profile {
   street: string
   houseNumber: string
   apartment: string
+  buildingType: BuildingType
   /** The parts above, joined into one line. */
   address: string
   email: string | null
@@ -29,6 +31,7 @@ export interface SavedAddress {
   street: string
   houseNumber: string
   apartment: string
+  buildingType: BuildingType
   /** The parts joined into one line. */
   address: string
   isDefault: boolean
@@ -40,6 +43,7 @@ export interface AddressInput {
   street: string
   houseNumber: string
   apartment: string
+  buildingType: BuildingType
   makeDefault: boolean
 }
 
@@ -58,6 +62,7 @@ export interface RememberInput {
   street: string
   houseNumber: string
   apartment: string
+  buildingType: BuildingType
 }
 
 /** `saved` without a profile: a guest, remembered by phone until they log in. Not saved: the phone has an account they are not logged in as. */
@@ -79,6 +84,7 @@ export interface ProfileInput {
   street: string
   houseNumber: string
   apartment: string
+  buildingType: BuildingType
   email: string
   birthday: string | null
   ethnicBackground: string
@@ -113,6 +119,8 @@ export interface HistoryOrder {
   /** The delivery fee paid, and what the large-order discount took off it. */
   deliveryFee?: number
   deliveryDiscount?: number
+  /** The tip for the courier (already inside `total`). */
+  tip?: number
 }
 
 export interface Favorite {
