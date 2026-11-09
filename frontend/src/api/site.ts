@@ -395,6 +395,8 @@ export interface OrderInput {
   street: string
   houseNumber: string
   apartment: string
+  /** "Building", "PrivateHouse" or empty when not set. */
+  buildingType: string
   supplyDate: string
   fulfillmentMethod: Fulfillment
   paymentMethod: Payment
