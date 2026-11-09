@@ -4,6 +4,7 @@ using FoodSite.Api.Controllers.Admin;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Ops;
 using FoodSite.Api.Orders;
+using FoodSite.Api.Phones;
 using FoodSite.Api.Sites;
 using FoodSite.Api.Usage;
 using Microsoft.AspNetCore.Authorization;
@@ -45,7 +46,17 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     /// <param name="DeliveryFees">The part of <paramref name="Sales"/> that is delivery fees.</param>
     /// <param name="Tips">The tips for couriers on these orders. Not part of <paramref name="Sales"/>: no commission is charged on them.</param>
     /// <param name="Bands">The same orders split by their total, when the summary was asked for <c>bands</c>; null otherwise.</param>
-    public record PeriodDto(DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees, decimal Tips = 0m, IReadOnlyList<BandDto>? Bands = null);
+    /// <param name="Phones">The part of these orders placed with each of the phones the summary was asked for (only phones with orders); null when it was not asked for <c>phones</c>.</param>
+    public record PeriodDto(
+        DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees, decimal Tips = 0m, IReadOnlyList<BandDto>? Bands = null,
+        IReadOnlyList<PhoneTotalsDto>? Phones = null);
+
+    /// <summary>A period's orders placed with one phone (local form, "0501234567"); they are counted in the period's own figures too.</summary>
+    /// <param name="Bands">Split by order total like the period's own, when the summary was asked for <c>bands</c>.</param>
+    public record PhoneTotalsDto(string Phone, int Orders, decimal Sales, decimal DeliveryFees, decimal Tips, IReadOnlyList<BandDto>? Bands = null);
+
+    /// <summary>The most phones a summary splits its periods by.</summary>
+    public const int MaxPhones = 100;
 
     /// <summary>The orders whose total is more than <paramref name="Above"/> and at most the next band's (0 for the first band, which also holds an order of 0).</summary>
     public record BandDto(decimal Above, int Orders, decimal Sales, decimal DeliveryFees, decimal Tips = 0m);
@@ -126,11 +137,13 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     /// admin's approval included. Every state's own count is returned in <c>byStatus</c> either way.
     /// Without dates: the last 12 months up to today. <paramref name="bands"/> (comma-separated order totals in shekels,
     /// ascending) splits each period by the orders' totals, so a console can charge a commission that depends on the order's size.
+    /// <paramref name="phones"/> (comma-separated) gives each period those phones' own part, so a console can charge their
+    /// orders another commission.
     /// </summary>
     [HttpGet("summary")]
     public async Task<ActionResult<SummaryDto>> Summary(
         DateOnly? from, DateOnly? to, SummaryPeriod period = SummaryPeriod.Month, string? statuses = null, string? bands = null,
-        CancellationToken ct = default)
+        string? phones = null, CancellationToken ct = default)
     {
         var end = to ?? clock.Today();
         var start = from ?? new DateOnly(end.Year, end.Month, 1).AddMonths(-11);
@@ -164,25 +177,49 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
             thresholds.Insert(0, 0);
         }
 
+        HashSet<string>? split = null;
+        if (phones is not null)
+        {
+            var parts = phones.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var normalized = parts.Select(PhoneNumber.Normalize).ToList();
+            if (parts.Length == 0 || parts.Length > MaxPhones || normalized.Any(p => p is null))
+                return ValidationProblem(new ValidationProblemDetails(
+                    new Admin.Errors().Add(nameof(phones), "invalid").ToDictionary()));
+            split = normalized.Select(p => p!).ToHashSet();
+        }
+
         var all = (await db.Orders.AsNoTracking()
                 .Where(o => o.SupplyDate >= start && o.SupplyDate <= end)
-                .Select(o => new { o.SupplyDate, Sale = o.Total - o.Tip, o.DeliveryFee, o.Tip, o.Status, Held = o.NeedsReview || (o.DepositRequired && !o.DepositPaid) })
+                .Select(o => new { o.SupplyDate, Sale = o.Total - o.Tip, o.DeliveryFee, o.Tip, o.Phone, o.Status, Held = o.NeedsReview || (o.DepositRequired && !o.DepositPaid) })
                 .ToListAsync(ct))
-            .Select(o => new { o.SupplyDate, o.Sale, o.DeliveryFee, o.Tip, State = OrderState.Of(o.Status, o.Held) })
+            .Select(o => new
+            {
+                o.SupplyDate, o.Sale, o.DeliveryFee, o.Tip, Phone = split is null ? null : PhoneNumber.Normalize(o.Phone),
+                State = OrderState.Of(o.Status, o.Held),
+            })
             .ToList();
         var orders = all.Where(o => counted.Contains(o.State)).ToList();
+        List<BandDto>? Bands(IEnumerable<(decimal Sale, decimal DeliveryFee, decimal Tip)> some) => thresholds?
+            .Select(above => some
+                .Where(o => thresholds.LastOrDefault(t => t < o.Sale) == above)
+                .Aggregate(new BandDto(above, 0, 0, 0), (band, o) => band with
+                {
+                    Orders = band.Orders + 1, Sales = band.Sales + o.Sale, DeliveryFees = band.DeliveryFees + o.DeliveryFee,
+                    Tips = band.Tips + o.Tip,
+                }))
+            .ToList();
         var periods = orders
             .GroupBy(o => PeriodStart(o.SupplyDate, period))
             .OrderBy(g => g.Key)
-            .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Sale), g.Sum(o => o.DeliveryFee), g.Sum(o => o.Tip), thresholds?
-                .Select(above => g
-                    .Where(o => thresholds.LastOrDefault(t => t < o.Sale) == above)
-                    .Aggregate(new BandDto(above, 0, 0, 0), (band, o) => band with
-                    {
-                        Orders = band.Orders + 1, Sales = band.Sales + o.Sale, DeliveryFees = band.DeliveryFees + o.DeliveryFee,
-                        Tips = band.Tips + o.Tip,
-                    }))
-                .ToList()))
+            .Select(g => new PeriodDto(g.Key, g.Count(), g.Sum(o => o.Sale), g.Sum(o => o.DeliveryFee), g.Sum(o => o.Tip),
+                Bands(g.Select(o => (o.Sale, o.DeliveryFee, o.Tip))),
+                split is null ? null : g
+                    .Where(o => o.Phone is not null && split.Contains(o.Phone))
+                    .GroupBy(o => o.Phone!)
+                    .OrderBy(p => p.Key, StringComparer.Ordinal)
+                    .Select(p => new PhoneTotalsDto(p.Key, p.Count(), p.Sum(o => o.Sale), p.Sum(o => o.DeliveryFee), p.Sum(o => o.Tip),
+                        Bands(p.Select(o => (o.Sale, o.DeliveryFee, o.Tip)))))
+                    .ToList()))
             .ToList();
         var byStatus = OrderState.All
             .Select(state => new StatusDto(state, all.Count(o => o.State == state), all.Where(o => o.State == state).Sum(o => o.Sale)))
