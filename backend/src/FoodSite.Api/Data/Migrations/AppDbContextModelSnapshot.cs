@@ -913,6 +913,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateOnly>("SupplyDate")
                         .HasColumnType("date");
 
+                    b.Property<decimal>("Tip")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<decimal>("Total")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
@@ -1641,6 +1645,9 @@ namespace FoodSite.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<bool>("TipsEnabled")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.ToTable("Settings");
@@ -1663,7 +1670,8 @@ namespace FoodSite.Api.Data.Migrations
                             PickupLeadMinutes = 0,
                             PopupEnabled = false,
                             SiteDefaultsApplied = false,
-                            SlotMinutes = 60
+                            SlotMinutes = 60,
+                            TipsEnabled = false
                         });
                 });
 

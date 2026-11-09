@@ -44,6 +44,9 @@ public class Settings
     /// <summary>Whether <see cref="MinimumOrderAmount"/> applies to pickup orders too, or only to deliveries.</summary>
     public bool MinimumOrderAppliesToPickup { get; set; } = true;
 
+    /// <summary>The order page offers the client to add a tip for the courier (5, 10, 15, 20 ₪ or another amount). Off by default.</summary>
+    public bool TipsEnabled { get; set; }
+
     /// <summary>The order page first asks delivery or pickup and the contact and address, then shows the dishes. Off keeps the usual page.</summary>
     public bool AddressFirst { get; set; }
 

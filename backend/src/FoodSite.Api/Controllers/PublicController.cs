@@ -58,7 +58,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         ClientActivity.Period? InactiveAfter = null,
         string? GoogleClientId = null,
         string RectPicture = "end",
-        string MobileCards = "standard");
+        string MobileCards = "standard",
+        bool TipsEnabled = false);
 
     public record MenuOptionDto(int Id, string Label, decimal Amount, decimal Price, bool IsDefault);
 
@@ -174,7 +175,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             ClientActivity.Of(s),
             google.Value.IsConfigured ? google.Value.ClientId!.Trim() : null,
             Finish.EffectiveRectPicture(s.RectPicture),
-            Finish.EffectiveMobileCards(s.MobileCards));
+            Finish.EffectiveMobileCards(s.MobileCards),
+            s.TipsEnabled);
     }
 
     [HttpGet("menu")]

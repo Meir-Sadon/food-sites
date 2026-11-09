@@ -79,6 +79,9 @@ public class Order
     /// <summary>What was added to the dishes so the order reached the site's minimum, when the client agreed to be charged it (part of <see cref="Total"/>). Zero when none.</summary>
     public decimal MinimumTopUp { get; set; }
 
+    /// <summary>The tip for the courier the client added (part of <see cref="Total"/>). Zero when none. Not a sale: no commission is charged on it.</summary>
+    public decimal Tip { get; set; }
+
     /// <summary>The order's total to pay, the delivery fee and any minimum top-up included.</summary>
     public decimal Total { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
