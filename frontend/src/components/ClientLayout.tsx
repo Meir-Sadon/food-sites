@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
-import { Outlet, useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { Outlet, useLocation, useNavigate } from 'react-router'
+import { useAccount } from '../account/useAccount'
 import { AccountProvider } from '../account/AccountContext'
 import { OrderSignalsProvider } from '../order/orderSignals'
 import { AccessibilityMenu } from '../accessibility/AccessibilityMenu'
@@ -69,6 +71,27 @@ function useMarketing() {
   }, [tracking, pathname])
 }
 
+/** Shown while the business owner orders as a client: who the order is for, and a way to stop. */
+function OwnerOrderBanner() {
+  const { t } = useTranslation()
+  const { user, logout } = useAccount()
+  const navigate = useNavigate()
+  if (!user?.openedByOwner) return null
+  return (
+    <div role="status" className="notice notice--warning owner-order-banner">
+      <span>{t('order.ownerBanner', { name: user.fullName || user.phone })}</span>{' '}
+      <button
+        type="button"
+        onClick={() => {
+          void logout().then(() => navigate('/admin/clients'))
+        }}
+      >
+        {t('order.ownerBannerDone')}
+      </button>
+    </div>
+  )
+}
+
 function Shell() {
   const background = useSite()?.backgroundImageUrl
   useStyleAttribute()
@@ -76,6 +99,7 @@ function Shell() {
   return (
     <div className="client-shell" style={background ? { backgroundImage: `url("${background}")` } : undefined}>
       <TopBar />
+      <OwnerOrderBanner />
       <main className="page">
         <Outlet />
       </main>

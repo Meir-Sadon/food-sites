@@ -63,6 +63,8 @@ export interface AdminOrder {
   isGuest: boolean
   /** Delivery outside the service city, waiting for the admin's approval. */
   needsReview: boolean
+  /** The business owner placed the order for the client; billed apart. */
+  placedByOwner?: boolean
   items: AdminOrderItem[]
   /** The start of the hour the client asked for, "HH:mm:ss", or null. */
   deliveryHour: string | null

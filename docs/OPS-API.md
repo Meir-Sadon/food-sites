@@ -61,9 +61,11 @@ Orders and their totals per period, by **supply date**.
   "orders": 4,
   "sales": 250.00,
   "deliveryFees": 30.00,
+  "ownerOrders": 1,
+  "ownerSales": 70.00,
   "periods": [
-    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00 },
-    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0 }
+    { "start": "2030-01-01", "orders": 3, "sales": 180.00, "deliveryFees": 30.00, "ownerOrders": 0, "ownerSales": 0 },
+    { "start": "2030-02-01", "orders": 1, "sales": 70.00, "deliveryFees": 0, "ownerOrders": 1, "ownerSales": 70.00 }
   ],
   "statuses": ["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"],
   "byStatus": [
@@ -77,7 +79,7 @@ Orders and their totals per period, by **supply date**.
 }
 ```
 
-`sales` is the sum of the orders' totals in shekels, delivery fees included; `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
+`sales` is the sum of the orders' totals in shekels, delivery fees included; `deliveryFees` (on the whole range and on each period) is the part of `sales` that is delivery fees, so a console can charge a commission on the dishes only. `ownerOrders` and `ownerSales` (on the whole range and on each period) are the part of `orders` and `sales` that the business owner placed for a client from the admin (`Order.PlacedByOwner`); they are still inside `orders` and `sales`, and the site names no rate, so a console that bills such orders at a different commission subtracts them. Periods with no orders are left out. `orders`, `sales` and `periods` count only the asked-for `statuses`; `byStatus` always lists every state in that order for the whole range, so a console can show cancelled orders next to the rest. (Before `statuses` existed, orders waiting for approval were left out of the counts.)
 
 ### `GET /api/ops/cancellations?from=&to=`
 
@@ -107,12 +109,13 @@ The cancelled orders with the admin's cancellation reason and the order's genera
     "isPaid": false,
     "total": 80.00,
     "deliveryFee": 10.00,
-    "items": [{ "dishName": "קוסקוס", "optionLabel": null, "quantity": 2, "lineTotal": 70.00 }]
+    "items": [{ "dishName": "קוסקוס", "optionLabel": null, "quantity": 2, "lineTotal": 70.00 }],
+    "placedByOwner": false
   }]
 }
 ```
 
-- `address` is `null` for a pickup. `total` includes the delivery fee, like `summary`'s `sales`.
+- `placedByOwner` is `true` for an order the owner placed for a client. `address` is `null` for a pickup. `total` includes the delivery fee, like `summary`'s `sales`.
 
 ### `GET /api/ops/usage?from=&to=`
 

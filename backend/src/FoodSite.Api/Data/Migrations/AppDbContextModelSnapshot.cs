@@ -18,7 +18,7 @@ namespace FoodSite.Api.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -874,6 +874,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("PlacedByOwner")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Status")
                         .IsRequired()

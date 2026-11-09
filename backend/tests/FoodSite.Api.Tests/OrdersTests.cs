@@ -85,6 +85,48 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
 
     private Task<HttpResponseMessage> Place(object order) => _client.PostAsJsonAsync("/api/orders", order, TestFiles.Json);
 
+    // ---------- Placed by the owner ----------
+
+    [Fact]
+    public async Task The_owner_registers_a_client_and_orders_as_them_and_the_order_is_flagged()
+    {
+        var created = await _admin.PostAsJsonAsync("/api/admin/clients",
+            new { fullName = "סבתא רחל", phone = "050-765-4321", city = "אשקלון", street = "הרצל", houseNumber = "9" });
+        var client = await created.Read<FoodSite.Api.Controllers.Admin.ClientsController.ClientDto>();
+        Assert.Equal("0507654321", client.Phone);
+        Assert.Equal(HttpStatusCode.Conflict,
+            (await _admin.PostAsJsonAsync("/api/admin/clients", new { fullName = "אחרת", phone = "0507654321" })).StatusCode);
+
+        // Only the admin can open a client's session.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _client.PostAsync($"/api/admin/clients/{client.Id}/order-session", null)).StatusCode);
+        var opened = await _admin.PostAsync($"/api/admin/clients/{client.Id}/order-session", null);
+        Assert.Equal(HttpStatusCode.NoContent, opened.StatusCode);
+        var session = opened.Headers.GetValues("Set-Cookie").Single().Split(';')[0];
+
+        var asClient = _factory.CreateApiClient();
+        asClient.DefaultRequestHeaders.Add("Cookie", session);
+        var me = await asClient.GetFromJsonAsync<FoodSite.Api.Controllers.AccountController.ProfileDto>("/api/account/me", TestFiles.Json);
+        Assert.True(me!.OpenedByOwner);
+        Assert.Equal("סבתא רחל", me.FullName);
+
+        var confirmation = await (await asClient.PostAsJsonAsync("/api/orders", await ValidOrder(o => o["phone"] = "0507654321"), TestFiles.Json)).Read<ConfirmationDto>();
+        await using var db = _factory.CreateDbContext();
+        var order = await db.Orders.SingleAsync(o => o.Id == confirmation.Id);
+        Assert.True(order.PlacedByOwner);
+        Assert.Equal(client.Id, order.UserId);
+
+        var listed = await _admin.GetFromJsonAsync<List<OrderDto>>($"/api/admin/orders?date={order.SupplyDate:yyyy-MM-dd}", TestFiles.Json);
+        Assert.True(listed!.Single(o => o.Id == confirmation.Id).PlacedByOwner);
+    }
+
+    [Fact]
+    public async Task An_order_a_client_places_themselves_is_not_flagged()
+    {
+        var confirmation = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+        await using var db = _factory.CreateDbContext();
+        Assert.False((await db.Orders.SingleAsync(o => o.Id == confirmation.Id)).PlacedByOwner);
+    }
+
     // ---------- Availability ----------
 
     [Fact]

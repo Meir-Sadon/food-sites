@@ -91,6 +91,8 @@ public static class OwnerMessages
         var alerts = new List<string>();
         if (order.NeedsReview)
             alerts.Add("הכתובת לא אומתה (מחוץ לאזור השירות או שלא נמצאה): חויבו דמי משלוח מינימליים וההזמנה ממתינה לאישור שלך. יש להתקשר ללקוח ולעדכן אם יש תשלום נוסף על המשלוח.");
+        if (order.PlacedByOwner)
+            alerts.Add("ההזמנה הוזנה על ידי בעל העסק עבור הלקוח (לא על ידי הלקוח באתר).");
         if (hourFull)
             alerts.Add("השעה שנבחרה כבר מלאה: כדאי לתאם שעה אחרת עם הלקוח.");
         if (alerts.Count > 0)

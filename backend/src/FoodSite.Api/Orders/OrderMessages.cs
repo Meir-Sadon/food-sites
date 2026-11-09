@@ -37,6 +37,7 @@ public static class OrderMessages
 
     public static string AdminNotification(Order order, string? siteName = null, bool hourFull = false) =>
         $"{Heading(siteName)}הזמנה חדשה #{order.Id}\n{Details(order)}"
+        + (order.PlacedByOwner ? "\nההזמנה הוזנה על ידי בעל העסק עבור הלקוח." : "")
         + (order.NeedsReview ? "\nהכתובת לא אומתה (מחוץ לאזור השירות או שלא נמצאה): חויבו דמי משלוח מינימליים וההזמנה ממתינה לאישור שלך. יש להתקשר ללקוח ולעדכן אם יש תשלום נוסף על המשלוח." : "")
         + (hourFull ? "\nהשעה שנבחרה כבר מלאה: כדאי לתאם שעה אחרת עם הלקוח." : "");
 

@@ -53,7 +53,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         decimal DeliveryDiscount = 0m,
         string? CancelReason = null,
         DateTimeOffset? CancelledAt = null,
-        decimal MinimumTopUp = 0m);
+        decimal MinimumTopUp = 0m,
+        bool PlacedByOwner = false);
 
     /// <summary>What the driver reported through the driver's link. A photo can come before the report.</summary>
     public record DeliveryReportDto(DeliveryOutcome? Outcome, DateTimeOffset? ReportedAt, string? Note, string? ProofUrl);
@@ -370,7 +371,8 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
         o.DeliveryDiscount,
         o.CancelReason,
         o.CancelledAt,
-        o.MinimumTopUp);
+        o.MinimumTopUp,
+        o.PlacedByOwner);
 
     private static DeliveryReportDto? DeliveryReport(Order o) =>
         o.DeliveryOutcome is null && o.DeliveryProofUrl is null

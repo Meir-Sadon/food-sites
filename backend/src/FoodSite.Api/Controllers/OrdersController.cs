@@ -217,6 +217,7 @@ public class OrdersController(
             MinimumTopUp = minimumTopUp,
             Total = dishesTotal + minimumTopUp + fee - discount,
             CreatedAt = DateTimeOffset.UtcNow,
+            PlacedByOwner = await SessionOpenedByOwnerAsync(),
         };
         foreach (var item in items)
             order.Items.Add(item);
@@ -228,7 +229,9 @@ public class OrdersController(
         await db.SaveChangesAsync(ct);
 
         await NotifyAsync(order, settings.PaymentPhone, settings.OwnerEmail, serviceCities, hourFull, ct);
-        await marketing.PurchaseAsync(settings, order, input.Marketing, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString(), CancellationToken.None);
+        // An order the owner keyed in for a client is not a purchase on the client's device: it stays out of ad conversions.
+        if (!order.PlacedByOwner)
+            await marketing.PurchaseAsync(settings, order, input.Marketing, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString(), CancellationToken.None);
 
         return new ConfirmationDto(
             order.Id, order.SupplyDate, order.FulfillmentMethod, order.PaymentMethod, order.Total,

@@ -89,7 +89,8 @@ public class AccountController(
 
     public record ProfileDto(
         int Id, string Phone, string FullName, string City, string Street, string HouseNumber, string Apartment,
-        string Address, string? Email, DateOnly? Birthday, string? EthnicBackground, IReadOnlyList<AddressDto> Addresses);
+        string Address, string? Email, DateOnly? Birthday, string? EthnicBackground, IReadOnlyList<AddressDto> Addresses,
+        bool OpenedByOwner = false);
 
     public record HistoryItemDto(
         int Id, int DishId, int? ParentItemId, string DishName, string? OptionLabel,
@@ -268,7 +269,7 @@ public class AccountController(
         var user = await CurrentUserAsync(ct);
         if (user is null)
             return Unauthorized();
-        return ToDto(user);
+        return ToDto(user) with { OpenedByOwner = await SessionOpenedByOwnerAsync() };
     }
 
     [HttpPut("me")]
