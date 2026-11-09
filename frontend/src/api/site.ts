@@ -126,6 +126,8 @@ export interface Site {
   minimumOrderAppliesToPickup: boolean
   /** The order page first asks delivery or pickup and the address, then shows the dishes. */
   addressFirst: boolean
+  /** The order page offers a tip for the courier (5, 10, 15, 20 ₪ or another amount). */
+  tipsEnabled?: boolean
   contact: Contact
   /** The phones that can be chatted with on WhatsApp (the admin's notify list). */
   whatsAppPhones: string[]
@@ -133,6 +135,8 @@ export interface Site {
   serviceCities: string[]
   /** The features that are on for this site. */
   features: Feature[]
+  /** Present only in emergency mode: no orders are taken and clients are told to phone `phone`. A null `message` means the default text. */
+  emergency?: { phone: string; message: string | null } | null
   /** The admin's choice, else the site's default from site.json. */
   style: SiteStyle
   /** The admin's choice, else the site's default from site.json. */
@@ -406,6 +410,8 @@ export interface OrderInput {
   marketing?: { fbp?: string; fbc?: string; sourceUrl?: string }
   /** The client agreed to be charged the site's minimum for an order under it. */
   acceptMinimumTopUp?: boolean
+  /** A tip for the courier in ₪ (only while the site has tips on). */
+  tip?: number
 }
 
 export interface Confirmation {
@@ -440,6 +446,8 @@ export interface Confirmation {
   deliveryDiscount?: number
   /** What was added so the order reached the minimum (already inside `total`; 0 for none). */
   minimumTopUp?: number
+  /** The tip for the courier in ₪ (already inside `total`; 0 for none). */
+  tip?: number
 }
 
 /** What the zones say about an address: a fee, no delivery there, or the address could not be placed on the map. */

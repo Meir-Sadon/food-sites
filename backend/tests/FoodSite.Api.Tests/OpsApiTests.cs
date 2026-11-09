@@ -175,6 +175,26 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_summary_keeps_tips_out_of_the_sales_and_reports_them_on_their_own()
+    {
+        await using (var db = _factory.CreateDbContext())
+        {
+            db.Orders.AddRange(
+                new Order { Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = new(2031, 1, 6), Total = 110, Tip = 10, Status = OrderStatus.New, CreatedAt = DateTimeOffset.UtcNow },
+                new Order { Phone = "0501234567", Name = "דנה", Address = "אשקלון", SupplyDate = new(2031, 1, 7), Total = 50, Status = OrderStatus.New, CreatedAt = DateTimeOffset.UtcNow });
+            await db.SaveChangesAsync();
+        }
+        var console = await ConsoleAsync();
+
+        var summary = await console.GetAsync("/api/ops/summary?from=2031-01-01&to=2031-01-31").Read<SummaryDto>();
+
+        Assert.Equal(2, summary.Orders);
+        Assert.Equal(150, summary.Sales);
+        Assert.Equal(10, summary.Tips);
+        Assert.Equal(10, summary.Periods[0].Tips);
+    }
+
+    [Fact]
     public async Task The_summary_counts_every_order_but_cancelled_per_period_and_each_status_on_its_own()
     {
         await using (var db = _factory.CreateDbContext())

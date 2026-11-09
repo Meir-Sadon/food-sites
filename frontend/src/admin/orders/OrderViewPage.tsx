@@ -141,6 +141,11 @@ export function OrderViewPage() {
             </strong>
           </p>
         )}
+        {!!order.tip && (
+          <p className="cart-sheet__total">
+            <span>{t('order.tip.line')}</span> <strong className="numeric">{formatMoney(order.tip)}</strong>
+          </p>
+        )}
         {listSaving(order.items) > 0 && (
           <p className="cart-sheet__total">
             <span>{t('admin.priceLists.orderTotalDiscount')}</span> <strong className="numeric">{formatMoney(listSaving(order.items))}</strong>

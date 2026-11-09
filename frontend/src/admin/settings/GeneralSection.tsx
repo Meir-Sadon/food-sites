@@ -156,6 +156,15 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
               <Info text={t('admin.settings.addressFirstHint')} about={t('admin.settings.addressFirst')} />
             </span>
           </span>
+          <span className="field">
+            <span className="with-info">
+              <label className="checkbox">
+                <input type="checkbox" checked={settings.tipsEnabled} onChange={(e) => change({ tipsEnabled: e.target.checked })} />
+                {t('admin.settings.tipsEnabled')}
+              </label>
+              <Info text={t('admin.settings.tipsEnabledHint')} about={t('admin.settings.tipsEnabled')} />
+            </span>
+          </span>
           {settings.deliveryEnabled && (
             <fieldset className="field" aria-labelledby="settings-pricing-legend">
               <span className="with-info">

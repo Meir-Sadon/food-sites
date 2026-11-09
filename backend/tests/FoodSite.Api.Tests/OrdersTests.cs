@@ -582,6 +582,32 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_tip_is_added_to_the_total_as_its_own_amount_only_while_tips_are_on()
+    {
+        async Task SetTips(bool on) =>
+            (await _admin.PutAsJsonAsync("/api/admin/settings", new
+            {
+                deliveryEnabled = true, pickupEnabled = true, deliveryAreaText = (string?)null, deliveryFeeText = (string?)null,
+                kashrutText = (string?)null, paymentPhone = (string?)null, tipsEnabled = on,
+            })).EnsureSuccessStatusCode();
+
+        var plain = await (await Place(await ValidOrder())).Read<ConfirmationDto>();
+
+        // Tips are off by default: a tip is refused.
+        await (await Place(await ValidOrder(o => o["tip"] = 10m))).AssertInvalid("tip", "tipUnavailable");
+
+        await SetTips(true);
+        var tipped = await (await Place(await ValidOrder(o => o["tip"] = 15.5m))).Read<ConfirmationDto>();
+        Assert.Equal(15.5m, tipped.Tip);
+        Assert.Equal(plain.Total + 15.5m, tipped.Total);
+        Assert.Equal(0m, (await (await Place(await ValidOrder())).Read<ConfirmationDto>()).Tip);
+
+        // Never negative, and not absurdly large.
+        await (await Place(await ValidOrder(o => o["tip"] = -1m))).AssertInvalid("tip", "invalid");
+        await (await Place(await ValidOrder(o => o["tip"] = 100000m))).AssertInvalid("tip", "invalid");
+    }
+
+    [Fact]
     public async Task The_minimum_can_apply_to_deliveries_only()
     {
         async Task SetMinimum(bool appliesToPickup) =>

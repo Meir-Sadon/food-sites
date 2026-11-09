@@ -80,6 +80,8 @@ export interface AdminOrder {
   deliveryDiscount?: number
   /** What was added so the order reached the site's minimum (already inside `total`); 0 for none. */
   minimumTopUp?: number
+  /** The tip for the courier in ₪ (already inside `total`; 0 for none). */
+  tip?: number
   /** The client is marked as restricted (admin-only): ask for payment in advance. */
   restricted?: boolean
   /** The order total passed the deposit threshold (admin-only; the client is never told). */

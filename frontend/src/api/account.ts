@@ -119,6 +119,8 @@ export interface HistoryOrder {
   /** The delivery fee paid, and what the large-order discount took off it. */
   deliveryFee?: number
   deliveryDiscount?: number
+  /** The tip for the courier (already inside `total`). */
+  tip?: number
 }
 
 export interface Favorite {

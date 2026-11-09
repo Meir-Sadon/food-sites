@@ -107,7 +107,8 @@ public class AccountController(
         DateTimeOffset CreatedAt,
         IReadOnlyList<HistoryItemDto> Items,
         decimal DeliveryFee = 0m,
-        decimal DeliveryDiscount = 0m);
+        decimal DeliveryDiscount = 0m,
+        decimal Tip = 0m);
 
     public record FavoriteInput(string? Name, int OrderId);
 
@@ -497,7 +498,7 @@ public class AccountController(
                 .Select(i => new HistoryItemDto(
                     i.Id, i.DishId, i.ParentItemId, i.DishName, i.OptionLabel, i.Quantity, i.UnitPrice, i.LineTotal, i.RegularUnitPrice))
                 .ToList(),
-            o.DeliveryFee, o.DeliveryDiscount))
+            o.DeliveryFee, o.DeliveryDiscount, o.Tip))
             .ToList();
     }
 

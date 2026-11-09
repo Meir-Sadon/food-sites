@@ -72,6 +72,11 @@ export function SuccessDialog({ confirmation, contactPhone, remember, onRemember
           <DeliveryFeeNote discount={confirmation.deliveryDiscount} free={!confirmation.deliveryFee} />
         </p>
       )}
+      {!!confirmation.tip && (
+        <p className="summary__total">
+          {t('order.tip.line')}: <strong className="numeric">{formatMoney(confirmation.tip)}</strong>
+        </p>
+      )}
       {orderSaving(confirmation.items, confirmation.deliveryDiscount) > 0 && (
         <p className="summary__total">{t('order.youSaved', { amount: formatMoney(orderSaving(confirmation.items, confirmation.deliveryDiscount)) })}</p>
       )}

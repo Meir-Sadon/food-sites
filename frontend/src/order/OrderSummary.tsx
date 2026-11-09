@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { MenuDish } from '../api/site'
 import { DeliveryFeeNote } from './DeliveryFeeNote'
 import { DeliveryFeePrice, DiscountedPrice } from './DiscountedPrice'
-import { amountText, lineBeforeDiscount } from './format'
+import { amountText, formatMoney, lineBeforeDiscount } from './format'
 import { lineTotal, summaryLines, type Selection, type SummaryLine } from './model'
 
 /** What the client adjusted or wrote on one dish, a unit per line. */
@@ -34,11 +34,14 @@ export function OrderSummary({
   selections,
   dishes,
   delivery,
+  tip = 0,
 }: {
   selections: Record<number, Selection>
   dishes: Map<number, MenuDish>
   /** The advanced delivery setting: the fee worked out from the address, or still waiting for it (`pending`). */
   delivery?: { fee: number; discount?: number; zoneName: string | null; pending: boolean }
+  /** The tip for the courier in ₪ (0 for none): its own line. */
+  tip?: number
 }) {
   const { t } = useTranslation()
   const [shown, setShown] = useState<Record<number, boolean>>({})
@@ -88,6 +91,14 @@ export function OrderSummary({
                 <DeliveryFeeNote discount={delivery.discount} free={delivery.fee <= 0} />
               </span>
               <span className="order-summary__price numeric">{delivery.pending ? '—' : <DeliveryFeePrice fee={delivery.fee} discount={delivery.discount} />}</span>
+            </div>
+          </li>
+        )}
+        {tip > 0 && (
+          <li className="order-summary__row">
+            <div className="order-summary__main">
+              <span className="order-summary__name">{t('order.tip.line')}</span>
+              <span className="order-summary__price numeric">{formatMoney(tip)}</span>
             </div>
           </li>
         )}
