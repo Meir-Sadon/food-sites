@@ -41,6 +41,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         int? OrdersPerHourPickup,
         int SlotMinutes,
         int PickupSlotMinutes,
+        int? OrdersPerPickupSlot,
         bool AlignSlots,
         int DeliveryLeadMinutes,
         int PickupLeadMinutes,
@@ -113,6 +114,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         decimal? DeliveryDiscountMinOrder = null,
         int? SlotMinutes = null,
         int? PickupSlotMinutes = null,
+        int? OrdersPerPickupSlot = null,
         bool? AlignSlots = null,
         int? DeliveryLeadMinutes = null,
         int? PickupLeadMinutes = null,
@@ -159,6 +161,17 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // 0 is "the same as the slot length"; a value not finer than the slot length is ignored (see SlotTiming).
         if (input.PickupSlotMinutes is { } pickupSlot && pickupSlot != 0 && !SlotTiming.AllowedMinutes.Contains(pickupSlot))
             errors.Add(nameof(input.PickupSlotMinutes), "invalid");
+        // The limit of a finer pickup slot is part of the pickup limit of the whole slot: it cannot be higher.
+        if (input.OrdersPerPickupSlot is < 0 or > MaxOrdersPerHour)
+            errors.Add(nameof(input.OrdersPerPickupSlot), "invalid");
+        else if (input.OrdersPerPickupSlot is > 0 and var fine
+            && HourCapacity.PickupCap(HourCapacity.LimitsOf(new Data.Entities.Settings
+            {
+                OrdersPerHour = input.OrdersPerHour is > 0 ? input.OrdersPerHour : null,
+                OrdersPerHourDelivery = input.OrdersPerHourDelivery is > 0 ? input.OrdersPerHourDelivery : null,
+                OrdersPerHourPickup = input.OrdersPerHourPickup is > 0 ? input.OrdersPerHourPickup : null,
+            })) is { } pickupCap && fine > pickupCap)
+            errors.Add(nameof(input.OrdersPerPickupSlot), "aboveWholeSlotLimit");
         if (input.DeliveryLeadMinutes is < 0 or > MaxLeadMinutes)
             errors.Add(nameof(input.DeliveryLeadMinutes), "invalid");
         if (input.PickupLeadMinutes is < 0 or > MaxLeadMinutes)
@@ -251,6 +264,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         // Missing (an older client) keeps the slot timing.
         if (input.SlotMinutes is { } minutes) settings.SlotMinutes = minutes;
         if (input.PickupSlotMinutes is { } pickupMinutes) settings.PickupSlotMinutes = pickupMinutes == 0 ? null : pickupMinutes;
+        settings.OrdersPerPickupSlot = input.OrdersPerPickupSlot is > 0 ? input.OrdersPerPickupSlot : null;
         if (input.AlignSlots is { } align) settings.AlignSlots = align;
         if (input.DeliveryLeadMinutes is { } deliveryLead) settings.DeliveryLeadMinutes = deliveryLead;
         if (input.PickupLeadMinutes is { } pickupLead) settings.PickupLeadMinutes = pickupLead;
@@ -449,7 +463,7 @@ public partial class SettingsController(AppDbContext db, IImageStore images, IOp
         s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled,
         s.DeliveryAreaText, s.DeliveryFeeText, s.KashrutText, s.PaymentPhone, s.BitEnabled, s.PayBoxEnabled, s.BitLink, s.PayBoxLink, s.MinimumOrderAmount,
         s.MinimumOrderAppliesToPickup, s.ServiceCities ?? "", s.OrdersPerHour, s.OrdersPerHourDelivery, s.OrdersPerHourPickup,
-        SlotTiming.Of(s).SlotMinutes, SlotTiming.Of(s).PickupSlotMinutes ?? 0, s.AlignSlots, s.DeliveryLeadMinutes, s.PickupLeadMinutes, s.PortionsPerSupplyDate,
+        SlotTiming.Of(s).SlotMinutes, SlotTiming.Of(s).PickupSlotMinutes ?? 0, s.OrdersPerPickupSlot, s.AlignSlots, s.DeliveryLeadMinutes, s.PickupLeadMinutes, s.PortionsPerSupplyDate,
         SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
         OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
         OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),

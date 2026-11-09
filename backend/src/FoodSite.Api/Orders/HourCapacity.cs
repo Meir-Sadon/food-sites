@@ -31,6 +31,18 @@ public static class HourCapacity
                 settings.OrdersPerHourPickup)
             : new HourLimits(settings.OrdersPerHour, null, null);
 
+    /// <summary>The pickup limit of a whole slot, which the limit of a finer pickup slot may not pass; null when pickups have none.</summary>
+    public static int? PickupCap(HourLimits limits) =>
+        limits.Delivery is not null || limits.Pickup is not null ? limits.Pickup : limits.Total;
+
+    /// <summary>Whether a finer pickup slot already holds its own limit of pickups.</summary>
+    public static bool IsFineFull(int? limit, int pickupsInFineSlot) => limit is { } l && pickupsInFineSlot >= l;
+
+    /// <summary>The pickups in the finer pickup slot starting at <paramref name="hour"/>, whatever else is in the whole slot.</summary>
+    public static Task<int> CountFineAsync(IQueryable<Order> orders, DateOnly date, TimeOnly hour, CancellationToken ct = default) =>
+        orders.CountAsync(o => o.SupplyDate == date && o.DeliveryHour == hour && o.CapacityHour != null
+            && o.FulfillmentMethod != FulfillmentMethod.Delivery && o.Status != OrderStatus.Cancelled, ct);
+
     /// <summary>Whether the slot has no room left for one more order of <paramref name="method"/>, given the orders already in it.</summary>
     public static bool IsFull(HourLimits limits, FulfillmentMethod method, int deliveries, int pickups)
     {

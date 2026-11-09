@@ -408,6 +408,23 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
             </select>
             <FieldError errors={errors} field="pickupSlotMinutes" id="settings-pickupSlotMinutes-error" />
           </span>
+          {settings.pickupSlotMinutes > 0 && (
+            <span className="field">
+              <span className="with-info">
+                <label htmlFor="settings-ordersPerPickupSlot">{t('admin.settings.ordersPerPickupSlot')}</label>
+                <Info text={t('admin.settings.ordersPerPickupSlotHint')} about={t('admin.settings.ordersPerPickupSlot')} />
+              </span>
+              <input
+                id="settings-ordersPerPickupSlot"
+                className="input-narrow"
+                type="number"
+                min={0}
+                value={settings.ordersPerPickupSlot ?? ''}
+                onChange={(e) => change({ ordersPerPickupSlot: e.target.value === '' ? null : Number(e.target.value) })}
+              />
+              <FieldError errors={errors} field="ordersPerPickupSlot" id="settings-ordersPerPickupSlot-error" />
+            </span>
+          )}
           {(['delivery', 'pickup'] as const).map((way) => {
             const field = `${way}LeadMinutes` as const
             return (

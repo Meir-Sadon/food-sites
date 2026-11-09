@@ -364,6 +364,7 @@ describe('General settings', () => {
       ordersPerHourPickup: null,
       slotMinutes: 60,
       pickupSlotMinutes: 0,
+      ordersPerPickupSlot: null,
       alignSlots: false,
       deliveryLeadMinutes: 0,
       pickupLeadMinutes: 0,
@@ -387,6 +388,29 @@ describe('General settings', () => {
     await user.click(within(form).getByRole('button', { name: 'שמירה' }))
     expect(await screen.findByText('נשמר.')).toBeInTheDocument()
     expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ slotMinutes: 60, pickupSlotMinutes: 15 })
+  })
+
+  it('has a limit for the finer pickup window only when a pickup precision is set, and shows the error above the whole-window limit', async () => {
+    const api = fakeApi({
+      ...base,
+      'GET /api/admin/settings': () => ({ ...settings(), pickupSlotMinutes: 15, ordersPerHourPickup: 4, ordersPerHourDelivery: 2, ordersPerHour: 4 }),
+      'PUT /api/admin/settings': () => invalid({ OrdersPerPickupSlot: ['aboveWholeSlotLimit'] }),
+    })
+    renderAt('/admin/settings')
+    const user = userEvent.setup()
+    const form = await section('משלוח, כשרות ותשלום')
+
+    await user.type(within(form).getByLabelText('איסופים בחלון המדויק'), '5')
+    await user.click(within(form).getByRole('button', { name: 'שמירה' }))
+    expect(await within(form).findByText('המספר גבוה מהמגבלה לאיסוף עצמי בחלון האספקה הכללי.')).toBeInTheDocument()
+    expect(api.sent('PUT', '/api/admin/settings')[0].body).toMatchObject({ pickupSlotMinutes: 15, ordersPerPickupSlot: 5 })
+  })
+
+  it('hides the finer pickup window limit while pickup uses the whole window', async () => {
+    fakeApi({ ...base })
+    renderAt('/admin/settings')
+    const form = await section('משלוח, כשרות ותשלום')
+    expect(within(form).queryByLabelText('איסופים בחלון המדויק')).not.toBeInTheDocument()
   })
 
   it('saves the owner mail address', async () => {

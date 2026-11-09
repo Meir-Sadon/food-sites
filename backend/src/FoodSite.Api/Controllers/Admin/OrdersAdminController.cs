@@ -126,25 +126,34 @@ public class OrdersAdminController(AppDbContext db) : AdminControllerBase
     /// </summary>
     private async Task<HashSet<int>> OverbookedAsync(List<DateOnly> dates)
     {
-        var limits = HourCapacity.LimitsOf(await db.Settings.AsNoTracking().SingleAsync());
-        if (limits == new HourLimits(null, null, null) || dates.Count == 0)
+        var settings = await db.Settings.AsNoTracking().SingleAsync();
+        var limits = HourCapacity.LimitsOf(settings);
+        var fineLimit = settings.OrdersPerPickupSlot;
+        if ((limits == new HourLimits(null, null, null) && fineLimit is null) || dates.Count == 0)
             return [];
         var slotted = await db.Orders.AsNoTracking()
             .Where(o => dates.Contains(o.SupplyDate) && o.DeliveryHour != null && o.Status != OrderStatus.Cancelled)
-            .Select(o => new { o.Id, o.SupplyDate, Hour = o.CapacityHour ?? o.DeliveryHour, o.CreatedAt, o.FulfillmentMethod })
+            .Select(o => new { o.Id, o.SupplyDate, Hour = o.CapacityHour ?? o.DeliveryHour, Own = o.DeliveryHour, Fine = o.CapacityHour != null, o.CreatedAt, o.FulfillmentMethod })
             .ToListAsync();
         var overbooked = new HashSet<int>();
         // A pickup at a finer time counts in the slot of the site's length that holds it.
         foreach (var slot in slotted.GroupBy(o => (o.SupplyDate, o.Hour)))
         {
             int deliveries = 0, pickups = 0;
+            var inFine = new Dictionary<TimeOnly, int>();
             // Every order takes a place, also one that came late, as when the order was placed.
             foreach (var order in slot.OrderBy(o => o.CreatedAt).ThenBy(o => o.Id))
             {
-                if (HourCapacity.IsFull(limits, order.FulfillmentMethod, deliveries, pickups))
+                var fineFull = order.Fine && order.FulfillmentMethod != FulfillmentMethod.Delivery
+                    && HourCapacity.IsFineFull(fineLimit, inFine.GetValueOrDefault(order.Own!.Value));
+                if (HourCapacity.IsFull(limits, order.FulfillmentMethod, deliveries, pickups) || fineFull)
                     overbooked.Add(order.Id);
                 if (order.FulfillmentMethod == FulfillmentMethod.Delivery) deliveries++;
-                else pickups++;
+                else
+                {
+                    pickups++;
+                    if (order.Fine) inFine[order.Own!.Value] = inFine.GetValueOrDefault(order.Own!.Value) + 1;
+                }
             }
         }
         return overbooked;

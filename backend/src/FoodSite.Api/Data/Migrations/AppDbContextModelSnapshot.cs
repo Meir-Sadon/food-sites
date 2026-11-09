@@ -1568,6 +1568,9 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<int?>("OrdersPerHourPickup")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("OrdersPerPickupSlot")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("OwnerChangeMails")
                         .HasColumnType("boolean");
 
