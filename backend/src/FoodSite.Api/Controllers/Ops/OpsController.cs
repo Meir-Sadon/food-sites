@@ -49,10 +49,16 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     /// <param name="Tips">The tips for couriers on these orders. Not part of <paramref name="Sales"/>: no commission is charged on them.</param>
     /// <param name="Bands">The same orders split by their total, when the summary was asked for <c>bands</c>; null otherwise.</param>
     /// <param name="Phones">The part of these orders placed with each of the phones the summary was asked for (only phones with orders); null when it was not asked for <c>phones</c>.</param>
+    /// <param name="OwnerPhones">How many different phones <paramref name="OwnerOrders"/> were placed for.</param>
+    /// <param name="Owner">The orders the owner placed, less those with a phone in <paramref name="Phones"/>, for billing them apart.</param>
     public record PeriodDto(
         DateOnly Start, int Orders, decimal Sales, decimal DeliveryFees, decimal Tips = 0m, IReadOnlyList<BandDto>? Bands = null,
         IReadOnlyList<PhoneTotalsDto>? Phones = null,
-        int OwnerOrders = 0, decimal OwnerSales = 0m);
+        int OwnerOrders = 0, decimal OwnerSales = 0m, int OwnerPhones = 0, OwnerTotalsDto? Owner = null);
+
+    /// <summary>A period's orders placed by the business owner for a client, apart from the asked phones' orders.</summary>
+    /// <param name="Bands">Split like the period's own when the summary was asked for bands.</param>
+    public record OwnerTotalsDto(int Orders, decimal Sales, decimal DeliveryFees, decimal Tips, IReadOnlyList<BandDto>? Bands = null);
 
     /// <summary>A period's orders placed with one phone (local form, "0501234567"); they are counted in the period's own figures too.</summary>
     /// <param name="Bands">Split by order total like the period's own, when the summary was asked for <c>bands</c>.</param>
@@ -92,10 +98,11 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
     /// <param name="Tips">The tips for couriers, kept out of every sales figure.</param>
     /// <param name="OwnerOrders">How many of <paramref name="Orders"/> the business owner placed for a client (billed apart; <paramref name="Orders"/> still counts them).</param>
     /// <param name="OwnerSales">The part of <paramref name="Sales"/> from those orders.</param>
+    /// <param name="OwnerPhones">How many different phones those orders were placed for in the whole range.</param>
     public record SummaryDto(
         DateOnly From, DateOnly To, SummaryPeriod Period, int Orders, decimal Sales, IReadOnlyList<PeriodDto> Periods,
         IReadOnlyList<string> Statuses, IReadOnlyList<StatusDto> ByStatus, decimal DeliveryFees, decimal Tips = 0m,
-        int OwnerOrders = 0, decimal OwnerSales = 0m);
+        int OwnerOrders = 0, decimal OwnerSales = 0m, int OwnerPhones = 0);
 
     public record CancellationItemDto(string DishName, string? OptionLabel, decimal Quantity, decimal LineTotal);
 
@@ -200,7 +207,8 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                 .ToListAsync(ct))
             .Select(o => new
             {
-                o.SupplyDate, o.Sale, o.DeliveryFee, o.Tip, o.PlacedByOwner, Phone = split is null ? null : PhoneNumber.Normalize(o.Phone),
+                o.SupplyDate, o.Sale, o.DeliveryFee, o.Tip, o.PlacedByOwner,
+                Phone = split is null && !o.PlacedByOwner ? null : PhoneNumber.Normalize(o.Phone) ?? o.Phone,
                 State = OrderState.Of(o.Status, o.Held),
             })
             .ToList();
@@ -214,6 +222,8 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                     Tips = band.Tips + o.Tip,
                 }))
             .ToList();
+        OwnerTotalsDto Owner(IReadOnlyCollection<(decimal Sale, decimal DeliveryFee, decimal Tip)> some) => new(
+            some.Count, some.Sum(o => o.Sale), some.Sum(o => o.DeliveryFee), some.Sum(o => o.Tip), Bands(some));
         var periods = orders
             .GroupBy(o => PeriodStart(o.SupplyDate, period))
             .OrderBy(g => g.Key)
@@ -226,14 +236,18 @@ public class OpsController(AppDbContext db, IOptions<SiteOptions> site, FeatureF
                     .Select(p => new PhoneTotalsDto(p.Key, p.Count(), p.Sum(o => o.Sale), p.Sum(o => o.DeliveryFee), p.Sum(o => o.Tip),
                         Bands(p.Select(o => (o.Sale, o.DeliveryFee, o.Tip)))))
                     .ToList(),
-                g.Count(o => o.PlacedByOwner), g.Where(o => o.PlacedByOwner).Sum(o => o.Sale)))
+                g.Count(o => o.PlacedByOwner), g.Where(o => o.PlacedByOwner).Sum(o => o.Sale),
+                g.Where(o => o.PlacedByOwner).Select(o => o.Phone).Distinct().Count(),
+                Owner(g.Where(o => o.PlacedByOwner && (split is null || !split.Contains(o.Phone!)))
+                    .Select(o => (o.Sale, o.DeliveryFee, o.Tip)).ToList())))
             .ToList();
         var byStatus = OrderState.All
             .Select(state => new StatusDto(state, all.Count(o => o.State == state), all.Where(o => o.State == state).Sum(o => o.Sale)))
             .ToList();
         return new SummaryDto(
             start, end, period, orders.Count, orders.Sum(o => o.Sale), periods, counted, byStatus, orders.Sum(o => o.DeliveryFee), orders.Sum(o => o.Tip),
-            orders.Count(o => o.PlacedByOwner), orders.Where(o => o.PlacedByOwner).Sum(o => o.Sale));
+            orders.Count(o => o.PlacedByOwner), orders.Where(o => o.PlacedByOwner).Sum(o => o.Sale),
+            orders.Where(o => o.PlacedByOwner).Select(o => o.Phone).Distinct().Count());
     }
 
     /// <summary>
