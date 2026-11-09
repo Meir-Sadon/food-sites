@@ -223,7 +223,10 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
         // The delivery fees are part of the sales, and also given on their own.
         Assert.Equal(40, months.DeliveryFees);
         Assert.Equal(
-            [new PeriodDto(new(2030, 1, 1), 3, 180, 15), new PeriodDto(new(2030, 2, 1), 2, 1069, 25)],
+            [
+                new PeriodDto(new(2030, 1, 1), 3, 180, 15, Owner: NoOwner),
+                new PeriodDto(new(2030, 2, 1), 2, 1069, 25, Owner: NoOwner),
+            ],
             months.Periods);
         Assert.Equal(["New", "Confirmed", "Ready", "Delivered", "WaitingApproval"], months.Statuses);
         Assert.Equal(
@@ -236,7 +239,7 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
         // Asking for states picks what the totals count; byStatus still shows them all.
         var cancelled = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-03-31&statuses=cancelled").Read<SummaryDto>();
         Assert.Equal((1, 999m, 20m), (cancelled.Orders, cancelled.Sales, cancelled.DeliveryFees));
-        Assert.Equal([new PeriodDto(new(2030, 2, 1), 1, 999, 20)], cancelled.Periods);
+        Assert.Equal([new PeriodDto(new(2030, 2, 1), 1, 999, 20, Owner: NoOwner)], cancelled.Periods);
         Assert.Equal(["Cancelled"], cancelled.Statuses);
         Assert.Equal(months.ByStatus, cancelled.ByStatus);
         var two = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-03-31&statuses=WaitingApproval,New").Read<SummaryDto>();
@@ -246,7 +249,7 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
         // Weeks start on Sunday: 2030-01-06 is one.
         var weeks = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-01-31&period=week").Read<SummaryDto>();
         Assert.Equal(
-            [new PeriodDto(new(2030, 1, 6), 2, 150, 15), new PeriodDto(new(2030, 1, 13), 1, 30, 0)],
+            [new PeriodDto(new(2030, 1, 6), 2, 150, 15, Owner: NoOwner), new PeriodDto(new(2030, 1, 13), 1, 30, 0, Owner: NoOwner)],
             weeks.Periods);
 
         await (await console.GetAsync("/api/ops/summary?from=2030-02-01&to=2030-01-01")).AssertInvalid("from", "invalidRange");
@@ -320,6 +323,44 @@ public sealed class OpsApiTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Null((await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-01-31").Read<SummaryDto>()).Periods[0].Phones);
         foreach (var bad in new[] { "abc", "123", "," })
             await (await console.GetAsync($"/api/ops/summary?phones={bad}")).AssertInvalid("phones", "invalid");
+    }
+
+    private static readonly OwnerTotalsDto NoOwner = new(0, 0, 0, 0);
+
+    [Fact]
+    public async Task The_summary_gives_the_owners_orders_apart_with_their_phones()
+    {
+        await using (var db = _factory.CreateDbContext())
+        {
+            Order Make(string phone, DateOnly date, decimal total, bool owner, decimal fee = 0, decimal tip = 0) => new()
+            {
+                Phone = phone, Name = "דנה", Address = "אשקלון", SupplyDate = date, Total = total, DeliveryFee = fee, Tip = tip,
+                Status = OrderStatus.New, CreatedAt = DateTimeOffset.UtcNow, PlacedByOwner = owner,
+            };
+            db.Orders.AddRange(
+                Make("050-1234567", new(2030, 1, 6), 110, owner: true, fee: 15, tip: 10),
+                Make("0501234567", new(2030, 1, 7), 600, owner: true),
+                Make("0521111111", new(2030, 1, 8), 200, owner: true),
+                Make("0539999999", new(2030, 1, 9), 300, owner: false),
+                Make("0521111111", new(2030, 2, 3), 100, owner: true));
+            await db.SaveChangesAsync();
+        }
+        var console = await ConsoleAsync();
+
+        var months = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-02-28&bands=500").Read<SummaryDto>();
+        Assert.Equal((4, 2), (months.OwnerOrders, months.OwnerPhones));
+        var january = months.Periods[0];
+        Assert.Equal((3, 2), (january.OwnerOrders, january.OwnerPhones));
+        Assert.Equal(new OwnerTotalsDto(3, 900, 15, 10, null), january.Owner! with { Bands = null });
+        Assert.Equal([new BandDto(0, 2, 300, 15, 10), new BandDto(500, 1, 600, 0)], january.Owner!.Bands);
+        Assert.Equal((1, 1, 1), (months.Periods[1].OwnerOrders, months.Periods[1].OwnerPhones, months.Periods[1].Owner!.Orders));
+
+        // An asked phone's orders stay in its own part and leave the owner's, so a console does not take them off twice.
+        var split = await console.GetAsync("/api/ops/summary?from=2030-01-01&to=2030-01-31&phones=0521111111").Read<SummaryDto>();
+        var period = Assert.Single(split.Periods);
+        Assert.Equal((3, 2), (period.OwnerOrders, period.OwnerPhones));
+        Assert.Equal((2, 700m), (period.Owner!.Orders, period.Owner.Sales));
+        Assert.Null(period.Owner.Bands);
     }
 
     [Fact]
