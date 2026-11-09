@@ -23,6 +23,7 @@ export const formFromProfile = (profile: Profile): ProfileForm => ({
   street: profile.street,
   houseNumber: profile.houseNumber,
   apartment: profile.apartment,
+  buildingType: profile.buildingType,
   email: profile.email ?? '',
   birthday: profile.birthday ?? '',
   ethnicBackground: profile.ethnicBackground ?? '',

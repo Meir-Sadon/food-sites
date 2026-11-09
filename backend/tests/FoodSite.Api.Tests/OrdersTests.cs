@@ -513,6 +513,25 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Empty(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
     }
 
+    [Theory]
+    [InlineData("Building", "הרצל 1, דירה 4, בנין, אשקלון")]
+    [InlineData("PrivateHouse", "הרצל 1, דירה 4, בית פרטי, אשקלון")]
+    [InlineData("", "הרצל 1, דירה 4, אשקלון")]
+    public async Task The_building_type_is_kept_in_the_order_address_only_when_chosen(string buildingType, string expected)
+    {
+        var response = await Place(await ValidOrder(o => o["buildingType"] = buildingType));
+        response.EnsureSuccessStatusCode();
+        var order = Assert.Single(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
+        Assert.Equal(expected, order.Address);
+    }
+
+    [Fact]
+    public async Task An_unknown_building_type_is_refused()
+    {
+        var response = await Place(await ValidOrder(o => o["buildingType"] = "Castle"));
+        await response.AssertInvalid("BuildingType", "invalid");
+    }
+
     [Fact]
     public async Task A_delivery_sent_directly_with_no_address_fields_at_all_is_refused()
     {

@@ -4,7 +4,7 @@ import type { FieldErrors } from '../api/client'
 import { FieldError } from '../admin/ui'
 import { deliveryApi, type LocatedAddress } from '../api/site'
 import { useSite } from '../site/useSite'
-import { formatCities, isServiceCity, type AddressParts } from './addressParts'
+import { BUILDING_TYPES, formatCities, isServiceCity, type AddressParts, type BuildingType } from './addressParts'
 
 interface Props {
   value: AddressParts
@@ -65,11 +65,11 @@ export function AddressFields({ value, onChange, errors, idPrefix, context, zone
     )
   }
 
-  const hasErrors = (['city', 'street', 'houseNumber', 'apartment'] as const).some((name) => (errors[name]?.length ?? 0) > 0)
+  const hasErrors = (['city', 'street', 'houseNumber', 'apartment', 'buildingType'] as const).some((name) => (errors[name]?.length ?? 0) > 0)
   const showFields = !zones || manual || hasErrors || value.street.trim() !== '' || value.houseNumber.trim() !== ''
 
   const field = (
-    name: keyof AddressParts,
+    name: Exclude<keyof AddressParts, 'buildingType'>,
     label: string,
     autoComplete: string,
     options: { required?: boolean; className: string; list?: string },
@@ -121,6 +121,25 @@ export function AddressFields({ value, onChange, errors, idPrefix, context, zone
           <div className="row row--end">
             {field('houseNumber', t('address.houseNumber'), 'off', { required: true, className: 'field--narrow' })}
             {field('apartment', t('address.apartment'), 'address-line2', { className: 'field--narrow' })}
+          </div>
+          <div className="row row--end">
+            <span className="field field--grow">
+              <label htmlFor={id('buildingType')}>{t('address.buildingType')}</label>
+              <select
+                id={id('buildingType')}
+                value={value.buildingType}
+                aria-describedby={id('buildingType-error')}
+                onChange={(e) => onChange({ buildingType: e.target.value as BuildingType })}
+              >
+                <option value="">{t('address.buildingTypes.notSet')}</option>
+                {BUILDING_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {t(`address.buildingTypes.${type}`)}
+                  </option>
+                ))}
+              </select>
+              <FieldError errors={errors} field="buildingType" id={id('buildingType-error')} />
+            </span>
           </div>
           {zones && (
             <div className="row">

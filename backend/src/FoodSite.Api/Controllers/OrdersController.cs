@@ -55,7 +55,8 @@ public class OrdersController(
         DateOnly? DeliveryHourDate = null,
         MarketingInput? Marketing = null,
         bool AcceptMinimumTopUp = false,
-        decimal? Tip = null);
+        decimal? Tip = null,
+        string? BuildingType = null);
 
     public record ConfirmationItemDto(
         string DishName, string? OptionLabel, decimal Quantity, decimal UnitPrice, decimal LineTotal, bool IsAddOn, string? AllergenInfo = null,
@@ -106,6 +107,7 @@ public class OrdersController(
             errors.Text(nameof(input.Street), input.Street, AddressFormat.PartMaxLength, required: true);
             errors.Text(nameof(input.HouseNumber), input.HouseNumber, AddressFormat.PartMaxLength, required: true);
             errors.Text(nameof(input.Apartment), input.Apartment, AddressFormat.PartMaxLength);
+            if (!AddressFormat.IsBuildingType(input.BuildingType)) errors.Add(nameof(input.BuildingType), "invalid");
         }
         else
         {
@@ -224,7 +226,7 @@ public class OrdersController(
             UserId = userId,
             Phone = phone!,
             Name = input.Name!.Trim(),
-            Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment),
+            Address = AddressFormat.Compose(input.City, input.Street, input.HouseNumber, input.Apartment, input.BuildingType),
             SupplyDate = supplyDate,
             DeliveryHour = hour,
             FulfillmentMethod = input.FulfillmentMethod,

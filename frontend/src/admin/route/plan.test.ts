@@ -82,6 +82,12 @@ describe('route plan', () => {
     ])
   })
 
+  it('leaves the building type out of the Waze link', () => {
+    const address = navigationAddress('הרצל 12, דירה 5, בנין, אשקלון', 'דירה', ['בנין', 'בית פרטי'])
+    expect(address).toBe('הרצל 12, אשקלון')
+    expect(navigationAddress('הרצל 12, בית פרטי, אשקלון', 'דירה', ['בנין', 'בית פרטי'])).toBe('הרצל 12, אשקלון')
+  })
+
   it('starts at nine when no order asks for an hour', () => {
     expect(formatMinutes(schedule([order(1, 'הרצל 1, אשקלון')], kitchen, defaultEstimate)[0].arrive)).toBe('09:00')
   })

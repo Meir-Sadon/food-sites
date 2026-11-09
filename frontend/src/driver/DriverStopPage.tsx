@@ -16,6 +16,7 @@ import { FieldError, Status } from '../admin/ui'
 import { formatNumber } from '../admin/format'
 import { fieldErrorsOf, useErrorMessage, useFormErrorMessage } from '../admin/hooks'
 import { firstName, whatsAppUrl } from '../admin/messages/compose'
+import { BUILDING_TYPES } from '../account/addressParts'
 import { navigationAddress, wazeUrl } from '../admin/route/plan'
 import { shrinkImage } from '../components/shrinkImage'
 import { useToast } from '../components/toast'
@@ -56,6 +57,7 @@ export function DriverStopPage() {
     )
 
   const apartmentPrefix = t('address.apartmentShort', { apartment: '' }).trim()
+  const buildingLabels = BUILDING_TYPES.map((type) => t(`address.buildingTypes.${type}`))
   const whatsApp = whatsAppUrl(stop.phone, t('driver.whatsAppText', { name: firstName(stop.name) }))
   const collect = toCollect(stop)
 
@@ -83,7 +85,7 @@ export function DriverStopPage() {
           {stop.phone}
         </p>
         <p className="row driver-actions">
-          <a className="button-link" href={wazeUrl(navigationAddress(stop.address, apartmentPrefix))} target="_blank" rel="noreferrer">
+          <a className="button-link" href={wazeUrl(navigationAddress(stop.address, apartmentPrefix, buildingLabels))} target="_blank" rel="noreferrer">
             {t('driver.waze')}
           </a>
           <a className="button-quiet" href={`tel:${stop.phone}`}>
