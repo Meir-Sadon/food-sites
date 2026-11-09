@@ -7,6 +7,9 @@ public class NotifyPhone
     public required string Phone { get; set; }
     public string? Name { get; set; }
 
+    /// <summary>Position in the admin's list (0 first); the list, the WhatsApp messages and the alerts follow it.</summary>
+    public int DisplayOrder { get; set; }
+
     /// <summary>The person's Pushover user key (30 letters and digits). Empty means no phone alert.</summary>
     public string? PushoverKey { get; set; }
 

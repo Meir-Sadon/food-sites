@@ -3,8 +3,108 @@ import { useTranslation } from 'react-i18next'
 import { contactsApi, pushoverSounds } from '../../api/site'
 import { useFeature } from '../../site/useSite'
 import type { FieldErrors } from '../../api/client'
-import { ConfirmRemove, FieldError, Loading, Section, Status } from '../ui'
+import type { NotifyPhone } from '../../api/site'
+import { ConfirmRemove, DragHandle, FieldError, Loading, MoveButtons, Section, Status } from '../ui'
+import { moved, useDragSort } from '../sortable'
 import { fieldErrorsOf, useErrorMessage, useLoad } from '../hooks'
+
+function EditPhone({
+  phone,
+  alerts,
+  onSaved,
+  onCancel,
+}: {
+  phone: NotifyPhone
+  alerts: boolean
+  onSaved: (p: NotifyPhone) => void
+  onCancel: () => void
+}) {
+  const { t } = useTranslation()
+  const errorMessage = useErrorMessage()
+  const [number, setNumber] = useState(phone.phone)
+  const [name, setName] = useState(phone.name ?? '')
+  const [pushKey, setPushKey] = useState(phone.pushoverKey ?? '')
+  const [sound, setSound] = useState<string>(phone.pushoverSound ?? pushoverSounds[0])
+  const [errors, setErrors] = useState<FieldErrors>({})
+  const [error, setError] = useState<string | null>(null)
+  const id = `edit-${phone.id}`
+
+  async function handleSave(event: FormEvent) {
+    event.preventDefault()
+    setErrors({})
+    setError(null)
+    try {
+      // An emptied key turns the phone alert off, so the sound goes with it.
+      const keyed = alerts ? pushKey.trim() : (phone.pushoverKey ?? '')
+      const saved = await contactsApi.updateNotifyPhone(
+        phone.id,
+        number,
+        name,
+        keyed,
+        keyed ? (alerts ? sound : (phone.pushoverSound ?? '')) : '',
+      )
+      onSaved(saved)
+    } catch (err) {
+      setErrors(fieldErrorsOf(err))
+      if (!Object.keys(fieldErrorsOf(err)).length) setError(errorMessage(err))
+    }
+  }
+
+  return (
+    <form onSubmit={handleSave} className="row row--end" noValidate>
+      <span className="field">
+        <label htmlFor={`${id}-phone`}>{t('admin.contacts.phone')}</label>
+        <input
+          id={`${id}-phone`}
+          type="tel"
+          dir="ltr"
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
+          aria-describedby={`${id}-phone-error`}
+        />
+        <FieldError errors={errors} field="phone" id={`${id}-phone-error`} />
+      </span>
+      <span className="field field--grow">
+        <label htmlFor={`${id}-name`}>{t('admin.contacts.notifyName')}</label>
+        <input id={`${id}-name`} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
+      </span>
+      {alerts && (
+        <>
+          <span className="field">
+            <label htmlFor={`${id}-key`}>{t('admin.contacts.pushKey')}</label>
+            <input
+              id={`${id}-key`}
+              dir="ltr"
+              value={pushKey}
+              maxLength={30}
+              autoComplete="off"
+              onChange={(e) => setPushKey(e.target.value)}
+              aria-describedby={`${id}-key-error`}
+            />
+            <FieldError errors={errors} field="pushoverKey" id={`${id}-key-error`} />
+          </span>
+          <span className="field">
+            <label htmlFor={`${id}-sound`}>{t('admin.contacts.pushSound')}</label>
+            <select id={`${id}-sound`} value={sound} onChange={(e) => setSound(e.target.value)}>
+              {pushoverSounds.map((value) => (
+                <option key={value} value={value}>
+                  {t(`admin.contacts.sounds.${value}`)}
+                </option>
+              ))}
+            </select>
+          </span>
+        </>
+      )}
+      <button type="submit" disabled={!number.trim()}>
+        {t('admin.save')}
+      </button>
+      <button type="button" className="button--secondary" onClick={onCancel}>
+        {t('admin.cancel')}
+      </button>
+      {error && <Status message={error} error />}
+    </form>
+  )
+}
 
 export function NotifyPhonesSection() {
   const { t } = useTranslation()
@@ -18,6 +118,8 @@ export function NotifyPhonesSection() {
   const [errors, setErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [editing, setEditing] = useState<number | null>(null)
+  const sort = useDragSort(phones ?? [], (p) => p.id, handleReorder)
 
   async function handleAdd(event: FormEvent) {
     event.preventDefault()
@@ -32,6 +134,20 @@ export function NotifyPhonesSection() {
     } catch (err) {
       setErrors(fieldErrorsOf(err))
       if (!Object.keys(fieldErrorsOf(err)).length) setError(errorMessage(err))
+    }
+  }
+
+  // Shows the new order at once; the saved list replaces it, or the old one comes back with an error.
+  async function handleReorder(ids: number[]) {
+    if (!phones) return
+    setError(null)
+    const byId = new Map(phones.map((p) => [p.id, p]))
+    setData(ids.map((id) => byId.get(id)!))
+    try {
+      setData(await contactsApi.reorderNotifyPhones(ids))
+    } catch (err) {
+      setData(phones)
+      setError(errorMessage(err))
     }
   }
 
@@ -65,19 +181,55 @@ export function NotifyPhonesSection() {
             <p>{t('admin.contacts.noNotify')}</p>
           ) : (
             <ul className="list">
-              {phones.map((p) => (
-                <li key={p.id} className="list__row">
-                  <span>
-                    <bdi className="numeric">{p.phone}</bdi>
-                    {p.name && ` · ${p.name}`}
-                    {p.pushoverKey && ` · ${t('admin.contacts.alertOn')}`}
-                  </span>
-                  {alerts && p.pushoverKey && (
-                    <button type="button" className="button--secondary" onClick={() => handleTest(p.id)}>
-                      {t('admin.contacts.pushTest')}
-                    </button>
+              {sort.items.map((p, index) => (
+                <li key={p.id} ref={sort.itemRef(p.id)} className={`list__row sortable-row${sort.dragging === p.id ? ' is-dragging' : ''}`}>
+                  {phones.length > 1 && editing !== p.id && (
+                    <span className="sortable-row__grip">
+                      <DragHandle {...sort.handleProps(p.id)} />
+                      <MoveButtons
+                        name={p.phone}
+                        first={index === 0}
+                        last={index === phones.length - 1}
+                        onMove={(direction) =>
+                          handleReorder(
+                            moved(
+                              phones.map((x) => x.id),
+                              index,
+                              direction,
+                            ),
+                          )
+                        }
+                      />
+                    </span>
                   )}
-                  <ConfirmRemove name={p.phone} onConfirm={() => handleRemove(p.id)} />
+                  {editing === p.id ? (
+                    <EditPhone
+                      phone={p}
+                      alerts={alerts}
+                      onCancel={() => setEditing(null)}
+                      onSaved={(saved) => {
+                        setData((current) => current && current.map((x) => (x.id === saved.id ? saved : x)))
+                        setEditing(null)
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span>
+                        <bdi className="numeric">{p.phone}</bdi>
+                        {p.name && ` · ${p.name}`}
+                        {p.pushoverKey && ` · ${t('admin.contacts.alertOn')}`}
+                      </span>
+                      {alerts && p.pushoverKey && (
+                        <button type="button" className="button--secondary" onClick={() => handleTest(p.id)}>
+                          {t('admin.contacts.pushTest')}
+                        </button>
+                      )}
+                      <button type="button" className="button--secondary" onClick={() => setEditing(p.id)}>
+                        {t('admin.edit')}
+                      </button>
+                      <ConfirmRemove name={p.phone} onConfirm={() => handleRemove(p.id)} />
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
