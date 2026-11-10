@@ -20,6 +20,7 @@ import { ReviewsPage } from './admin/reviews/ReviewsPage'
 import { RoutePage } from './admin/route/RoutePage'
 import { AppearancePage } from './admin/settings/AppearancePage'
 import { SocialPage } from './admin/settings/SocialPage'
+import { BannerPage } from './admin/settings/BannerPage'
 import { PopupPage } from './admin/settings/PopupPage'
 import { SettingsPage } from './admin/settings/SettingsPage'
 import { UsagePage } from './admin/usage/UsagePage'
@@ -92,6 +93,14 @@ export function App() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="appearance" element={<AppearancePage />} />
           <Route path="popup" element={<PopupPage />} />
+          <Route
+            path="banner"
+            element={
+              <RequireFeature feature="bannerAnimation" to="/admin/appearance">
+                <BannerPage />
+              </RequireFeature>
+            }
+          />
           <Route path="social" element={<SocialPage />} />
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="dish-groups" element={<DishGroupsPage />} />

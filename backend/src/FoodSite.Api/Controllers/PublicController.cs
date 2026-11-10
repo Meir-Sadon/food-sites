@@ -1,3 +1,4 @@
+using FoodSite.Api.Banners;
 using FoodSite.Api.Data;
 using FoodSite.Api.Data.Entities;
 using FoodSite.Api.Delivery;
@@ -60,7 +61,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string RectPicture = "end",
         string MobileCards = "standard",
         EmergencyDto? Emergency = null,
-        bool TipsEnabled = false);
+        bool TipsEnabled = false,
+        OrderBannerRules.Dto? Banner = null);
 
     /// <summary>Present only in emergency mode: no orders are taken, clients phone instead. A null message means the default text.</summary>
     public record EmergencyDto(string Phone, string? Message);
@@ -146,6 +148,10 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
     public async Task<SiteDto> GetSite()
     {
         var s = await db.Settings.AsNoTracking().SingleAsync();
+        var enabledFeatures = await features.EnabledAsync();
+        var banner = enabledFeatures.Contains(Features.BannerAnimation)
+            ? OrderBannerRules.ForClient(await db.OrderBanners.AsNoTracking().FirstOrDefaultAsync(), await db.BannerFrames.AsNoTracking().ToListAsync())
+            : null;
         var whatsAppPhones = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.DisplayOrder).ThenBy(p => p.Id).Select(p => p.Phone).ToListAsync();
         return new SiteDto(
             s.BackgroundImageUrl, s.DeliveryEnabled, s.PickupEnabled, s.DeliveryAreaText, s.DeliveryFeeText,
@@ -153,7 +159,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             new ContactDto(s.ContactName, s.ContactPhone, s.ContactAddress, s.ContactEmail, s.ContactOpeningHours),
             whatsAppPhones,
             ServiceArea.Parse(s.ServiceCities),
-            await features.EnabledAsync(),
+            enabledFeatures,
             SiteStyles.Effective(s.SiteStyle, site.Value.Settings.Style),
             OrderLayout.EffectiveTotalPosition(s.OrderTotalPosition, site.Value.Settings.OrderTotalPosition),
             OrderLayout.EffectiveFlow(s.OrderFlow, site.Value.Settings.OrderFlow),
@@ -181,7 +187,8 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Finish.EffectiveRectPicture(s.RectPicture),
             Finish.EffectiveMobileCards(s.MobileCards),
             Admin.EmergencyController.ForClient(s),
-            s.TipsEnabled);
+            s.TipsEnabled,
+            banner);
     }
 
     [HttpGet("menu")]
