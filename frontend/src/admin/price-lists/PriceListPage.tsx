@@ -137,7 +137,7 @@ function PhonesForm({ list, onSaved }: { list: PriceList; onSaved: (list: PriceL
       </span>
       <span className="field">
         <label htmlFor="price-list-phones-text">{t('admin.priceLists.phonesLabel')}</label>
-        <textarea id="price-list-phones-text" rows={4} dir="ltr" value={text} onChange={(e) => setText(e.target.value)} />
+        <textarea id="price-list-phones-text" rows={4} value={text} onChange={(e) => setText(e.target.value)} />
       </span>
       {error && <Status message={error} error />}
       {saved && <Status message={t('admin.saved')} />}

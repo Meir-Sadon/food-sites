@@ -120,7 +120,6 @@ export function RoutePage() {
         inputMode="numeric"
         min={0}
         max={240}
-        dir="ltr"
         className="input-narrow"
         value={estimate[field]}
         onChange={(e) => setEstimate({ ...estimate, [field]: Math.max(0, Number(e.target.value) || 0) })}

@@ -220,6 +220,14 @@ textarea {
   background: var(--color-surface);
 }
 
+/* Numbers and Hebrew text read right to left: digits start at the right edge. Only fields that must stay
+   Latin (email, URL, password, keys) opt out with dir="ltr". */
+input:not([dir='ltr']):not([type='email']):not([type='url']):not([type='password']):not([type='checkbox']):not([type='radio']),
+textarea:not([dir='ltr']) {
+  direction: rtl;
+  text-align: start;
+}
+
 /* Buttons are light: the site's button colour as the border and the text, on a faint tint of it. */
 button {
   --btn-main: var(--btn-bg, var(--color-accent));

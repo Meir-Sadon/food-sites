@@ -57,7 +57,6 @@ function EditPhone({
         <input
           id={`${id}-phone`}
           type="tel"
-          dir="ltr"
           value={number}
           onChange={(e) => setNumber(e.target.value)}
           aria-describedby={`${id}-phone-error`}
@@ -240,7 +239,6 @@ export function NotifyPhonesSection() {
               <input
                 id="notify-phone"
                 type="tel"
-                dir="ltr"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 aria-describedby="notify-phone-error"
