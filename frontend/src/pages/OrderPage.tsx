@@ -25,6 +25,7 @@ import { SearchQueryContext } from '../order/searchQuery'
 import { searchDishes, SEARCH_MIN_LENGTH, normalizeSearchText } from '../order/search'
 import { DetailsBlock } from '../order/DetailsBlock'
 import { CompleteDialog } from '../order/CompleteDialog'
+import { NoticeList, NoticeMark, orderNotices } from '../order/notices'
 import { anyMissing, type Missing } from '../order/missing'
 import { CartSheet } from '../order/CartSheet'
 import { OPEN_DISH_DIALOG } from '../order/DishCard'
@@ -357,6 +358,17 @@ export function OrderPage() {
   // The minimum is on the dishes, the delivery fee does not count towards it.
   const belowMinimum = count > 0 && itemsTotal < minimum
   const unadjusted = unadjustedDishes(state.selections, dishes)
+  const notices = orderNotices({
+    t,
+    submitError,
+    zones:
+      fulfillment === 'Delivery' && zonesOn
+        ? { quote: quote.state, status: quoted?.status, approximate: quoted?.approximate, hasDishes: count > 0 }
+        : null,
+    noDishes: count === 0,
+    unadjustedNames: unadjusted.map((d) => d.name),
+    belowMinimum: belowMinimum ? { minimum: formatMoney(minimum), missing: formatMoney(round2(minimum - itemsTotal)) } : null,
+  })
   const transfers = transferChoices(site)
   const payment: Payment = availablePayment(state.payment, site)
   const hours = slotsFor(supplyDate?.hours, fulfillment === 'Delivery')
@@ -1108,29 +1120,6 @@ export function OrderPage() {
                   </p>
                 )}
 
-                {submitError && (
-                  <p role="alert" className="form-error">
-                    {submitError}
-                  </p>
-                )}
-                {fulfillment === 'Delivery' && zonesOn && quote.state !== 'idle' && (
-                  <p role={noDelivery ? 'alert' : 'status'} className={noDelivery ? 'form-error' : 'hint'}>
-                    {noDelivery
-                      ? t('order.zones.blocked')
-                      : quote.state === 'loading'
-                        ? t('order.zones.loading')
-                        : quoted?.status === 'unknown' || quote.state === 'failed'
-                          ? t('order.zones.unknown')
-                          : quoted?.approximate
-                            ? t('order.zones.approximate')
-                            : null}
-                  </p>
-                )}
-                {fulfillment === 'Delivery' && zonesOn && quote.state === 'idle' && count > 0 && (
-                  <p role="status" className="hint">
-                    {t('order.zones.needAddress')}
-                  </p>
-                )}
                 {tipsOn && count > 0 && <TipPicker tip={tipPicked} onChange={setTipPicked} />}
                 <OrderSummary
                   selections={state.selections}
@@ -1150,31 +1139,17 @@ export function OrderPage() {
                   <button
                     ref={submitRef}
                     type="submit"
+                    aria-describedby={notices.length > 0 ? 'order-notices' : undefined}
                     disabled={submitting || count === 0 || !supplyDate || (fulfillment === 'Delivery' && noDelivery)}
                   >
-                    {belowMinimum && !submitting && <span aria-hidden="true">⚠️ </span>}
                     {submitting ? t('order.submitting') : t('order.submit')}
+                    {!submitting && <NoticeMark notices={notices} />}
                   </button>
                   <button type="button" className="button-quiet" onClick={reset}>
                     {t('order.reset')}
                   </button>
                 </div>
-                {count === 0 && <p className="hint">{t('order.chooseDishes')}</p>}
-                {unadjusted.length > 0 && (
-                  <p role="status" className="hint">
-                    {t('order.adjustRequired', {
-                      names: unadjusted.map((d) => d.name).join(', '),
-                    })}
-                  </p>
-                )}
-                {belowMinimum && (
-                  <p role="status" className="hint hint--warning">
-                    {t('order.belowMinimum', {
-                      minimum: formatMoney(minimum),
-                      missing: formatMoney(round2(minimum - itemsTotal)),
-                    })}
-                  </p>
-                )}
+                <NoticeList notices={notices} id="order-notices" />
               </form>
             )}
 
@@ -1238,6 +1213,7 @@ export function OrderPage() {
           }}
           onCalculate={() => setCalculations((n) => n + 1)}
           onPickup={site.pickupEnabled ? () => change({ fulfillment: 'Pickup' }) : undefined}
+          notices={notices}
           feePending={fulfillment === 'Delivery' && zonesOn && quote.state === 'loading'}
           blocked={fulfillment === 'Delivery' && noDelivery}
           feeText={

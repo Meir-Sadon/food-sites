@@ -4,6 +4,7 @@ import { Modal } from '../components/Modal'
 import { deliveryApi, type HourSlot, type LocatedAddress, type SupplyDate } from '../api/site'
 import { formatSlot, formatSupplyDate, slotId, slotsFor } from './format'
 import type { Missing } from './missing'
+import { NoticeList, NoticeMark, type OrderNotice } from './notices'
 
 type Step = 'hour' | 'contact' | 'address' | 'ready'
 type Locating = 'idle' | 'busy' | 'denied' | 'notFound' | 'failed'
@@ -28,6 +29,8 @@ interface Props {
   onCalculate: () => void
   /** Switches the order to pickup, which needs no address; left out when the site has no pickup. */
   onPickup?: () => void
+  /** The same notices, warnings and blocks the order form shows under its send button. */
+  notices: OrderNotice[]
   /** The delivery fee is still being worked out, or the address is one that cannot be delivered to. */
   feePending: boolean
   blocked: boolean
@@ -234,21 +237,18 @@ export function CompleteDialog(props: Props) {
     ready: (
       <>
         <h3>{t('order.fix.doneTitle')}</h3>
-        {props.blocked ? (
-          <p role="alert" className="form-error">
-            {t('order.zones.blocked')}
-          </p>
-        ) : props.feePending ? (
+        {props.feePending ? (
           <p role="status">{t('order.zones.loading')}</p>
         ) : (
           <>
-            <p role="status">{t('order.fix.doneHint')}</p>
+            {!props.blocked && <p role="status">{t('order.fix.doneHint')}</p>}
             {props.feeText && <p className="complete-dialog__fee">{props.feeText}</p>}
           </>
         )}
         <div className="modal__actions">
-          <button type="button" disabled={props.feePending || props.blocked || props.submitting || steps.some((s) => s !== 'ready' && !done(s))} onClick={props.onSend}>
+          <button type="button" aria-describedby={props.notices.length > 0 ? 'fix-notices' : undefined} disabled={props.feePending || props.blocked || props.submitting || steps.some((s) => s !== 'ready' && !done(s))} onClick={props.onSend}>
             {props.submitting ? t('order.submitting') : t('order.submit')}
+            {!props.submitting && <NoticeMark notices={props.notices} />}
           </button>
           <button type="button" className="button-quiet" onClick={props.onClose}>
             {t('order.fix.back')}
@@ -269,6 +269,7 @@ export function CompleteDialog(props: Props) {
           ))}
         </div>
       </div>
+      <NoticeList notices={props.notices} id="fix-notices" />
     </Modal>
   )
 }
