@@ -70,7 +70,6 @@ export function EmergencySection() {
               id="emergency-phone"
               type="tel"
               inputMode="tel"
-              dir="ltr"
               value={form.phone ?? ''}
               aria-describedby="emergency-phone-error emergency-phone-hint"
               onChange={(e) => set({ phone: e.target.value })}

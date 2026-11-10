@@ -100,7 +100,6 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
           inputMode="decimal"
           min={0}
           step="any"
-          dir="ltr"
           className="input-narrow"
           value={settings?.[field] ?? ''}
           aria-describedby={`${id}-error`}
@@ -215,7 +214,6 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
                   inputMode="decimal"
                   min={0}
                   step="any"
-                  dir="ltr"
                   className="input-narrow"
                   value={settings.deliveryFeeAmount ?? ''}
                   aria-describedby="settings-deliveryFeeAmount-error"
@@ -285,7 +283,6 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
                 inputMode="decimal"
                 min={0}
                 step="any"
-                dir="ltr"
                 value={settings.minimumOrderAmount ?? ''}
                 aria-describedby="settings-minimumOrderAmount-error"
                 onChange={(e) => change({ minimumOrderAmount: e.target.value === '' ? null : Number(e.target.value) })}
@@ -315,7 +312,6 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
                 inputMode="numeric"
                 min={0}
                 step={1}
-                dir="ltr"
                 className="input-narrow"
                 value={settings.ordersPerHour ?? ''}
                 readOnly={separateHours}
@@ -348,7 +344,6 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
                         inputMode="numeric"
                         min={0}
                         step={1}
-                        dir="ltr"
                         className="input-narrow"
                         value={settings[field] ?? ''}
                         aria-describedby={`settings-${field}-error`}
@@ -439,7 +434,6 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
                   inputMode="numeric"
                   min={0}
                   step={5}
-                  dir="ltr"
                   className="input-narrow"
                   value={settings[field]}
                   aria-describedby={`settings-${field}-error`}
@@ -460,7 +454,6 @@ export function GeneralSection({ onPricing }: { onPricing?: (pricing: DeliveryPr
               inputMode="numeric"
               min={0}
               step={1}
-              dir="ltr"
               className="input-narrow"
               value={settings.portionsPerSupplyDate ?? ''}
               aria-describedby="settings-portionsPerSupplyDate-error"
