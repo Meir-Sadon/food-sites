@@ -83,7 +83,7 @@ function formatCutoff(iso: string) {
 }
 
 /** The fields of the contact and address block, as the server names them (lower-cased). */
-const CONTACT_FIELDS = ['name', 'phone', 'city', 'street', 'housenumber', 'apartment', 'buildingtype']
+const CONTACT_FIELDS = ['name', 'phone', 'city', 'street', 'housenumber', 'apartment', 'buildingtype', 'buildingother']
 
 const slotKey = (date: string, hour: string) => `${date} ${hour}`
 
@@ -266,6 +266,7 @@ export function OrderPage() {
       houseNumber: current.houseNumber || user.houseNumber,
       apartment: current.apartment || user.apartment,
       buildingType: current.buildingType || user.buildingType,
+      buildingOther: current.buildingType ? current.buildingOther : user.buildingOther,
     }))
   }
 
@@ -549,6 +550,7 @@ export function OrderPage() {
       houseNumber: current.houseNumber,
       apartment: current.apartment,
       buildingType: current.buildingType,
+      buildingOther: current.buildingOther,
     }))
     setErrors({})
     setSubmitError(null)

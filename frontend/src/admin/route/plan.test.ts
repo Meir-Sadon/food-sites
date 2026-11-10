@@ -104,6 +104,7 @@ describe('route plan', () => {
     const address = navigationAddress('הרצל 12, דירה 5, בנין, אשקלון', 'דירה', ['בנין', 'בית פרטי'])
     expect(address).toBe('הרצל 12, אשקלון')
     expect(navigationAddress('הרצל 12, בית פרטי, אשקלון', 'דירה', ['בנין', 'בית פרטי'])).toBe('הרצל 12, אשקלון')
+    expect(navigationAddress('הרצל 12, אחר: חנות פרחים, אשקלון', 'דירה', ['משרד', 'אחר'])).toBe('הרצל 12, אשקלון')
   })
 
   it('starts at nine when no order asks for an hour', () => {

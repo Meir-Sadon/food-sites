@@ -15,5 +15,7 @@ public class GuestDetails
     public string Apartment { get; set; } = "";
     /// <summary>"Building" or "PrivateHouse" when the client said which; empty when not set (see <c>AddressFormat</c>).</summary>
     public string BuildingType { get; set; } = "";
+    /// <summary>What the client wrote when <see cref="BuildingType"/> is "Other"; empty otherwise.</summary>
+    public string BuildingOther { get; set; } = "";
     public DateTimeOffset SavedAt { get; set; }
 }

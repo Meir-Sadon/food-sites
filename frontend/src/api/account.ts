@@ -13,6 +13,8 @@ export interface Profile {
   houseNumber: string
   apartment: string
   buildingType: BuildingType
+  /** What the client wrote when `buildingType` is "Other". */
+  buildingOther: string
   /** The parts above, joined into one line. */
   address: string
   email: string | null
@@ -34,6 +36,7 @@ export interface SavedAddress {
   houseNumber: string
   apartment: string
   buildingType: BuildingType
+  buildingOther: string
   /** The parts joined into one line. */
   address: string
   isDefault: boolean
@@ -46,6 +49,7 @@ export interface AddressInput {
   houseNumber: string
   apartment: string
   buildingType: BuildingType
+  buildingOther: string
   makeDefault: boolean
 }
 
@@ -65,6 +69,7 @@ export interface RememberInput {
   houseNumber: string
   apartment: string
   buildingType: BuildingType
+  buildingOther: string
 }
 
 /** `saved` without a profile: a guest, remembered by phone until they log in. Not saved: the phone has an account they are not logged in as. */
@@ -87,6 +92,7 @@ export interface ProfileInput {
   houseNumber: string
   apartment: string
   buildingType: BuildingType
+  buildingOther: string
   email: string
   birthday: string | null
   ethnicBackground: string

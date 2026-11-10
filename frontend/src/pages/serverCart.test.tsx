@@ -10,7 +10,7 @@ import { renderAt } from '../test/render'
 
 const profile: Profile = {
   id: 1, phone: '0501234567', fullName: 'דנה כהן', city: 'אשקלון', street: 'הרצל', houseNumber: '1',
-  apartment: '', buildingType: '', address: 'הרצל 1, אשקלון', email: null, birthday: null, ethnicBackground: null, addresses: [],
+  apartment: '', buildingType: '', buildingOther: '', address: 'הרצל 1, אשקלון', email: null, birthday: null, ethnicBackground: null, addresses: [],
 }
 
 const confirmation: Confirmation = {
