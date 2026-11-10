@@ -277,15 +277,16 @@ export function OrderPage() {
       })
   }, [quickFills])
 
-  // Every press of a "to details and payment" button brings the client to the address and payment, also when the
-  // details are already open. They render in the same update as the press, so they are there by now.
+  // Every press of a "to details and payment" button brings the client to the top of the order details (its heading),
+  // so no field above the address (date, hour) is skipped. They render in the same update as the press, so they are there by now.
   useEffect(() => {
-    if (detailsMoves > 0) (addressRef.current ?? formRef.current)?.scrollIntoView?.({ behavior: scrollBehavior(), block: 'start' })
+    if (detailsMoves > 0) (formRef.current ?? addressRef.current)?.scrollIntoView?.({ behavior: scrollBehavior(), block: 'start' })
   }, [detailsMoves])
 
   useEffect(() => {
+    // The details step holds the form (its heading is the target); the form only renders on that step.
     if (stepMoves > 0)
-      stepsRef.current?.scrollIntoView?.({
+      (formRef.current ?? stepsRef.current)?.scrollIntoView?.({
         behavior: scrollBehavior(),
         block: 'start',
       })

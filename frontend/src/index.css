@@ -4034,7 +4034,8 @@ label {
   }
 }
 
-/* The "to details and payment" buttons scroll here: keep it clear of the pinned top bar. */
+/* The "to details and payment" buttons scroll to the form heading: keep it clear of the pinned top bar. */
+.order-form,
 .order-address {
   scroll-margin-block-start: calc(var(--top-bar-height) + 0.75rem);
 }
