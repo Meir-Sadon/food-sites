@@ -13,7 +13,8 @@
     "reviews": true,
     "advancedDishes": true,
     "priceLists": true,
-    "phoneAlerts": true
+    "phoneAlerts": true,
+    "bannerAnimation": true
   },
   "settings": {
     "contactName": "מאי",

@@ -23,6 +23,7 @@ export const sections: { key: string; tabs: Tab[] }[] = [
       { to: '/admin/price-lists', key: 'admin.nav.priceLists', feature: 'priceLists' },
       { to: '/admin/appearance', key: 'admin.nav.appearance' },
       { to: '/admin/popup', key: 'admin.nav.popup' },
+      { to: '/admin/banner', key: 'admin.nav.banner', feature: 'bannerAnimation' },
       { to: '/admin/contacts', key: 'admin.nav.contacts' },
       { to: '/admin/reviews', key: 'admin.nav.reviews', feature: 'reviews' },
     ],

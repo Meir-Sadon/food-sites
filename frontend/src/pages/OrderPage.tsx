@@ -7,6 +7,7 @@ import type { FieldErrors } from '../api/client'
 import { FieldError, Loading } from '../admin/ui'
 import { fieldErrorsOf, useErrorMessage } from '../admin/hooks'
 import { MapLinks } from '../components/MapLinks'
+import { OrderHero } from '../components/OrderHero'
 import { AddressFields } from '../account/AddressFields'
 import { addressOf, formatAddress, hasAddress, isServiceCity, noAddress, sameAddress, type AddressParts } from '../account/addressParts'
 import type { RememberInput } from '../api/account'
@@ -72,7 +73,6 @@ import { PhoneField } from '../order/PhoneField'
 import { SuccessDialog } from '../order/SuccessDialog'
 import { TipPicker, noTip, tipAmount, type TipState } from '../order/TipPicker'
 import { HourFullDialog } from '../order/HourFullDialog'
-import { siteLogo } from '../site/config'
 import { marketingForOrder, trackMarketing } from '../tracking/marketing'
 import { trackUsage } from '../usage/track'
 
@@ -871,16 +871,7 @@ export function OrderPage() {
   return (
     <div className="order-page" data-total={totalPosition}>
       {(!steps || currentStep === 0) && (
-        <header className="order-hero">
-          {siteLogo && <img className="order-hero__logo" src={siteLogo} alt="" />}
-          <h1>{t('pages.order.title')}</h1>
-          <p className="order-hero__tagline">{t('order.hero.tagline')}</p>
-          <ul className="order-hero__chips">
-            <li>{t('order.hero.fresh')}</li>
-            <li>{t('order.hero.homemade')}</li>
-            <li>{t('order.hero.kosher')}</li>
-          </ul>
-        </header>
+        <OrderHero />
       )}
       <div className="order-main">
         {removedNotice && (

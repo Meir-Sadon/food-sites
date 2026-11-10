@@ -5271,3 +5271,40 @@ label {
 .tip-picker__custom {
   max-width: 12rem;
 }
+
+/* The scroll animation under the order page's banner: a tall section whose pictures stay in place and fade into one
+   another while the page scrolls through it. */
+.scroll-animation {
+  position: relative;
+}
+
+.scroll-animation__stage {
+  position: sticky;
+  inset-block-start: var(--top-bar-height, 0px);
+  block-size: calc(100svh - var(--top-bar-height, 0px));
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.scroll-animation__stage img {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  will-change: opacity;
+}
+
+.scroll-animation--still img {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 70svh;
+  object-fit: cover;
+  border-radius: calc(var(--radius) * 1.5);
+}
+
+@media (min-width: 64rem) {
+  .order-page[data-total='side'] > .scroll-animation {
+    grid-column: 1 / -1;
+  }
+}

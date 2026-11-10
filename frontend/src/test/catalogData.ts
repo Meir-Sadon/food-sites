@@ -1,4 +1,5 @@
 import type { Category, Dish, Settings, ShabbatRulesResponse, SupplyDay } from '../api/catalog'
+import type { OrderBanner } from '../api/banner'
 import type { Popup } from '../api/popup'
 import type { Menu, MenuDish, Site } from '../api/site'
 import { weekdays } from '../api/catalog'
@@ -223,6 +224,21 @@ export const groupedMenu = (): Menu => ({
     menuDish(7, 'עוף', 1, { isAddOnOnly: true, options: [{ id: 70, label: 'יחידה', amount: 1, price: 12, isDefault: true }] }),
   ],
   supplyDates: [{ date: '2026-10-16', cutoff: '2026-10-14T20:00:00' }],
+})
+
+/** The order page banner as the admin sees it: off, with nothing filled in. */
+export const orderBanner = (overrides: Partial<OrderBanner> = {}): OrderBanner => ({
+  enabled: false,
+  title: null,
+  tagline: null,
+  chips: [],
+  background: null,
+  textColor: null,
+  logoUrl: null,
+  animationEnabled: false,
+  animationScreens: 4,
+  frames: [],
+  ...overrides,
 })
 
 /** The entry pop-up as the admin sees it: off, with nothing filled in. */
