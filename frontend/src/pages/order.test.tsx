@@ -816,7 +816,7 @@ describe('Order page', () => {
       street: 'הרצל',
       houseNumber: '1',
       apartment: '',
-      buildingType: '',
+      buildingType: '', buildingOther: '',
       supplyDate: '2026-10-09',
       deliveryHour: null,
       fulfillmentMethod: 'Delivery',

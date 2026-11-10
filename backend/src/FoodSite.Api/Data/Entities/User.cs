@@ -13,6 +13,8 @@ public class User
     public string Apartment { get; set; } = "";
     /// <summary>"Building" or "PrivateHouse" when the client said which; empty when not set (see <c>AddressFormat</c>).</summary>
     public string BuildingType { get; set; } = "";
+    /// <summary>What the client wrote when <see cref="BuildingType"/> is "Other"; empty otherwise.</summary>
+    public string BuildingOther { get; set; } = "";
     public string? Email { get; set; }
     /// <summary>Google's account id ("sub") once the client signed in with Google; the email alone is never the key.</summary>
     public string? GoogleSub { get; set; }

@@ -17,7 +17,7 @@ vi.mock('../account/GoogleSignInButton', () => ({
 
 const profile: Profile = {
   id: 1, phone: '0501234567', fullName: 'דנה כהן', city: 'חיפה', street: 'הרצל', houseNumber: '1',
-  apartment: '', buildingType: '', address: 'הרצל 1, חיפה', email: 'dana@gmail.com', birthday: null, ethnicBackground: null, addresses: [],
+  apartment: '', buildingType: '', buildingOther: '', address: 'הרצל 1, חיפה', email: 'dana@gmail.com', birthday: null, ethnicBackground: null, addresses: [],
 }
 
 const guest = { 'GET /api/account/me': () => ({ status: 401, body: {} }) }
