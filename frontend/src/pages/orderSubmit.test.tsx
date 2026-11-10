@@ -145,12 +145,12 @@ describe('The counts in the total bar', () => {
     const dialog = screen.getByRole('dialog', { name: 'לסיים את ההזמנה?' })
     await user.click(within(dialog).getByRole('button', { name: 'קפיצה לסיום ההזמנה' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(scrolled.at(-1)).toBe(screen.getByText('משלוח או איסוף').closest('fieldset'))
+    expect(scrolled.at(-1)).toBe(screen.getByRole('heading', { name: 'פרטי ההזמנה' }).closest('form'))
   })
 })
 
 describe('The "to details and payment" buttons', () => {
-  const addressFieldset = () => screen.getByText('משלוח או איסוף').closest('fieldset')!
+  const addressFieldset = () => screen.getByRole('heading', { name: 'פרטי ההזמנה' }).closest('form')!
   const press = (name = 'לפרטים ולתשלום') => userEvent.setup().click(within(screen.getByRole('region', { name: 'סיכום הזמנה' })).getByRole('button', { name }))
 
   it('scrolls to the address and payment on every press of the side total button', async () => {
