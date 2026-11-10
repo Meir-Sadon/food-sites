@@ -2,7 +2,7 @@
 
 One codebase for the Hebrew (RTL) ordering sites of several home food businesses: a React/Vite frontend (`frontend/`) and an ASP.NET Core (.NET 10) + EF Core + PostgreSQL API (`backend/`). Each business is deployed separately (its own Render service, Neon database and secrets) from the same code. Product spec: `docs/PLAN.md`; deployment: `docs/DEPLOY.md`; migration phases: `docs/MIGRATION-PLAN.md` (read first); per-area architecture notes: `docs/ARCHITECTURE.md`. Commit and PR text is in English; user-facing text is Hebrew.
 
-> **Every user-facing change updates the feature guide in the same PR.** A PR that adds, removes or changes anything a customer or the admin can see or do is not done until [`docs/food-sites-feature-guide.html`](docs/food-sites-feature-guide.html) describes it in Hebrew and English, with screenshots from demo data. If a PR has no guide impact, say why in the PR checklist. This applies to every feature PR, including ones started from a project thread or a skill. Rules: [Feature guide maintenance](#feature-guide-maintenance-required).
+> **Every user-facing change updates the feature guide in the same PR.** A PR that adds, removes or changes anything a customer or the admin can see or do is not done until the feature guide describes it in Hebrew and English, with screenshots from demo data. The guide is one file per topic in `docs/feature-guide/`, so edit only the topic file you need (this avoids merge conflicts between features built at the same time); `docs/food-sites-feature-guide.html` is the index that links them. If a PR has no guide impact, say why in the PR checklist. This applies to every feature PR, including ones started from a project thread or a skill. Rules: [Feature guide maintenance](#feature-guide-maintenance-required).
 
 ## Docs map (read the part you are about to change)
 
@@ -27,7 +27,7 @@ One codebase for the Hebrew (RTL) ordering sites of several home food businesses
 
 ## Feature guide maintenance (required)
 
-The catalog is [`docs/food-sites-feature-guide.html`](docs/food-sites-feature-guide.html): Hebrew default, RTL, complete English switch, standalone HTML. Full rules: [`docs/FEATURE-GUIDE.md`](docs/FEATURE-GUIDE.md). Essentials:
+The catalog is [`docs/food-sites-feature-guide.html`](docs/food-sites-feature-guide.html), an index that only navigates, plus one HTML file per topic in `docs/feature-guide/` (shared `guide.css` and `guide.js`, screenshots as files in `img/`): Hebrew default, RTL, complete English switch, no network resources. A new section goes into the topic file it belongs to and gets one link line in the index (the check fails if it is missing); a new topic is a new file, a new card in the index and an entry in `docs/FEATURE-GUIDE.md`. Full rules: [`docs/FEATURE-GUIDE.md`](docs/FEATURE-GUIDE.md). Essentials:
 
 - Update affected descriptions and screenshots (both languages) in every PR that changes customer/admin behavior, or state why there is no impact.
 - After a merge, review the merged changes against the guide; prepare a focused docs PR for gaps, never auto-merge it.
