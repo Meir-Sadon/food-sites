@@ -229,6 +229,32 @@ describe('Delivery fee by zones', () => {
     expect(await screen.findByText(/אשדוד\)/)).toBeInTheDocument()
   })
 
+  it('shows the same blocks and warnings inside the complete-order dialog, with an exclamation mark at the send button', async () => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (ok: (p: unknown) => void) => ok({ coords: { latitude: 31.8, longitude: 34.65 } }) },
+    })
+    fakeApi({
+      'GET /api/site': () => site({ deliveryPricing: 'zones' }),
+      'GET /api/menu': menuWithPlainDish,
+      'POST /api/delivery-quote/locate': () => ({
+        body: { found: true, city: 'אשדוד', street: 'הרצל', houseNumber: '5', quote: { status: 'blocked', fee: 0, zoneName: null } },
+      }),
+    })
+    renderAt('/')
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'הוספה להזמנה: חומוס פשוט' }))
+    await user.click(screen.getByRole('button', { name: 'שליחת ההזמנה' }))
+    const panel = await screen.findByRole('dialog', { name: 'עוד כמה פרטים להשלמת ההזמנה' })
+    await user.click(within(panel).getByRole('button', { name: /^אתרו אותי/ }))
+    await within(panel).findByRole('heading', { name: 'הכול מוכן' })
+
+    const send = within(panel).getByRole('button', { name: /שליחת ההזמנה/ })
+    expect(send).toBeDisabled()
+    expect(send).toHaveTextContent('!')
+    expect(within(panel).getByRole('alert')).toHaveTextContent(/אנחנו לא מבצעים משלוחים לכתובת הזו/)
+  })
+
   it('offers to switch to pickup under the locate button when the address is incomplete', async () => {
     const api = fakeApi({ 'GET /api/site': () => site({ deliveryPricing: 'zones' }), 'GET /api/menu': menuWithPlainDish })
     renderAt('/')

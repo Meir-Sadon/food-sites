@@ -675,6 +675,56 @@ label {
   --btn-main: var(--color-error);
 }
 
+/* The "!" beside the send button and the list of notices under it (order form and the complete-order dialog). */
+.notice-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.25em;
+  block-size: 1.25em;
+  margin-inline-start: 0.5em;
+  border-radius: 50%;
+  background: #fff7e6;
+  color: #6b4a0b;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.notice-mark--block {
+  background: #fff;
+  color: var(--color-error);
+}
+
+.notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notice-list__item {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-gold);
+  border-radius: calc(0.375rem * var(--corner-scale));
+  background: #fff7e6;
+  color: #6b4a0b;
+}
+
+.notice-list__item--block {
+  border-color: var(--color-error);
+  background: #fdecec;
+  color: var(--color-error);
+}
+
+.notice-list__item--info {
+  border-color: transparent;
+  background: transparent;
+  color: inherit;
+  padding-inline: 0;
+}
+
 /* A hint that warns (an order under the minimum): yellow, like the notices. */
 .hint--warning {
   padding: 0.5rem 0.75rem;

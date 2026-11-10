@@ -195,19 +195,19 @@ describe('Order page', () => {
   describe('an order under the minimum', () => {
     const underMinimum = () => openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }), 'POST /api/orders': () => confirmation })
 
-    it('keeps the send button pressable, with a warning sign and a yellow note under it', async () => {
+    it('keeps the send button pressable, with an exclamation mark and a yellow note under it', async () => {
       const { user } = await openOrderPage({ 'GET /api/site': () => site({ minimumOrderAmount: 100 }) })
       await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה להזמנה/ }))
       await confirmNoAdjustments(user)
 
       const send = screen.getByRole('button', { name: /שליחת ההזמנה/ })
       expect(send).toBeEnabled()
-      expect(send).toHaveTextContent('⚠️')
-      expect(screen.getByText(/המינימום להזמנה הוא ₪100\. חסרים עוד ₪30\./)).toHaveClass('hint--warning')
+      expect(send).toHaveTextContent('!')
+      expect(screen.getByText(/המינימום להזמנה הוא ₪100\. חסרים עוד ₪30\./)).toHaveClass('notice-list__item--warning')
 
       await user.click(within(dishCard('עוף בתנור')).getByRole('button', { name: /הוספה: עוף בתנור/ }))
       await confirmNoAdjustments(user)
-      expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).not.toHaveTextContent('⚠️')
+      expect(screen.getByRole('button', { name: 'שליחת ההזמנה' })).not.toHaveTextContent('!')
       expect(screen.queryByText(/המינימום להזמנה הוא/)).not.toBeInTheDocument()
     })
 
