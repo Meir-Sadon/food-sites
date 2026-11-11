@@ -1742,7 +1742,7 @@
     "buildingType": "סוג המקום (לא חובה)",
     "buildingTypes": {
       "notSet": "לא הוגדר",
-      "Building": "בנין",
+      "Building": "בניין",
       "PrivateHouse": "בית פרטי",
       "Office": "משרד",
       "Other": "אחר"

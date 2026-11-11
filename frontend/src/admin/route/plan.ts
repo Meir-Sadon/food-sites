@@ -131,12 +131,14 @@ function firstHour(route: AdminOrder[]): number | null {
   return hours.length > 0 ? Math.min(...hours) : null
 }
 
-/** The address as a navigation app should search it: the apartment part (e.g. "דירה 4") and the building type ("בנין", or "אחר: <text>") left out. */
+/** The address as a navigation app should search it: the apartment part (e.g. "דירה 4") and the building type ("בניין", or "אחר: <text>") left out. */
+const LEGACY_BUILDING_LABELS = ['בנין'] // spelling stored in orders placed before the fix
+
 export function navigationAddress(address: string, apartmentPrefix: string, buildingLabels: readonly string[] = []): string {
   return address
     .split(',')
     .map((p) => p.trim())
-    .filter((p) => p && !(apartmentPrefix && p.startsWith(`${apartmentPrefix} `)) && !buildingLabels.includes(p) && !buildingLabels.some((label) => p.startsWith(`${label}: `)))
+    .filter((p) => p && !(apartmentPrefix && p.startsWith(`${apartmentPrefix} `)) && !buildingLabels.includes(p) && !LEGACY_BUILDING_LABELS.includes(p) && !buildingLabels.some((label) => p.startsWith(`${label}: `)))
     .join(', ')
 }
 
