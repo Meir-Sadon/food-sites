@@ -5,7 +5,7 @@ import type { FieldErrors } from '../api/client'
 import { Status } from '../admin/ui'
 import { fieldErrorsOf, useFormErrorMessage } from '../admin/hooks'
 import { AddressFields } from '../account/AddressFields'
-import { emptyAddress, type AddressParts } from '../account/addressParts'
+import { addressOf, emptyAddress, type AddressParts } from '../account/addressParts'
 
 interface Props {
   user: Profile
@@ -19,7 +19,7 @@ interface Draft extends AddressParts {
 
 const draftOf = (address?: SavedAddress): Draft =>
   address
-    ? { label: address.label ?? '', city: address.city, street: address.street, houseNumber: address.houseNumber, apartment: address.apartment, buildingType: address.buildingType, makeDefault: address.isDefault }
+    ? { label: address.label ?? '', city: address.city, street: address.street, houseNumber: address.houseNumber, apartment: address.apartment, buildingType: address.buildingType, buildingOther: address.buildingOther, makeDefault: address.isDefault }
     : { label: '', ...emptyAddress(), makeDefault: false }
 
 /** The client's saved addresses (home, work...): add, edit, delete and pick the default, which the order page offers first. */
@@ -69,6 +69,7 @@ export function AddressesSection({ user, onSaved }: Props) {
       houseNumber: draft.houseNumber.trim(),
       apartment: draft.apartment.trim(),
       buildingType: draft.buildingType,
+      buildingOther: addressOf(draft).buildingOther,
       makeDefault: draft.makeDefault,
     }
     return run(() => (editing ? accountApi.updateAddress(editing, input) : accountApi.addAddress(input)))

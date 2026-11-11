@@ -558,6 +558,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     [Theory]
     [InlineData("Building", "הרצל 1, דירה 4, בניין, אשקלון")]
     [InlineData("PrivateHouse", "הרצל 1, דירה 4, בית פרטי, אשקלון")]
+    [InlineData("Office", "הרצל 1, דירה 4, משרד, אשקלון")]
     [InlineData("", "הרצל 1, דירה 4, אשקלון")]
     public async Task The_building_type_is_kept_in_the_order_address_only_when_chosen(string buildingType, string expected)
     {
@@ -565,6 +566,31 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
         response.EnsureSuccessStatusCode();
         var order = Assert.Single(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
         Assert.Equal(expected, order.Address);
+    }
+
+    [Fact]
+    public async Task The_other_building_type_keeps_what_the_client_wrote_without_commas()
+    {
+        var response = await Place(await ValidOrder(o => { o["buildingType"] = "Other"; o["buildingOther"] = " חנות פרחים, קומה 2 "; }));
+        response.EnsureSuccessStatusCode();
+        var order = Assert.Single(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
+        Assert.Equal("הרצל 1, דירה 4, אחר: חנות פרחים קומה 2, אשקלון", order.Address);
+    }
+
+    [Fact]
+    public async Task The_other_building_type_needs_its_text()
+    {
+        var response = await Place(await ValidOrder(o => o["buildingType"] = "Other"));
+        await response.AssertInvalid("BuildingOther", "required");
+    }
+
+    [Fact]
+    public async Task The_text_of_the_other_building_type_is_dropped_for_another_type()
+    {
+        var response = await Place(await ValidOrder(o => { o["buildingType"] = "Office"; o["buildingOther"] = "חנות"; }));
+        response.EnsureSuccessStatusCode();
+        var order = Assert.Single(await _admin.GetAsync("/api/admin/orders").Read<List<OrderDto>>());
+        Assert.Equal("הרצל 1, דירה 4, משרד, אשקלון", order.Address);
     }
 
     [Fact]

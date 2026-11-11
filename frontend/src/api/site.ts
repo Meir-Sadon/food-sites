@@ -1,5 +1,6 @@
 import { apiJson, send } from './client'
 import type { AvailabilityRule, ChoiceMode, SellBy } from './catalog'
+import type { OrderBanner } from './banner'
 import type { Popup } from './popup'
 import type { SocialLink } from './social'
 
@@ -12,7 +13,7 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts'
+export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts' | 'bannerAnimation'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
 export type SiteStyle = 'classic' | 'street' | 'tiles' | 'rect'
@@ -173,6 +174,8 @@ export interface Site {
   popups?: Popup[]
   /** After this long without an order a client counts as inactive. */
   inactiveAfter?: InactiveAfter
+  /** The order page's own banner and scroll animation; missing when the standard banner is shown (needs the `bannerAnimation` feature). */
+  banner?: OrderBanner | null
 }
 
 /** How delivery is priced (FoodSite.Api `DeliveryPricing`): the text only, or by the zones drawn on a map. */
@@ -395,8 +398,10 @@ export interface OrderInput {
   street: string
   houseNumber: string
   apartment: string
-  /** "Building", "PrivateHouse" or empty when not set. */
+  /** "Building", "PrivateHouse", "Office", "Other" or empty when not set. */
   buildingType: string
+  /** What the client wrote for "Other"; empty otherwise. */
+  buildingOther: string
   supplyDate: string
   fulfillmentMethod: Fulfillment
   paymentMethod: Payment

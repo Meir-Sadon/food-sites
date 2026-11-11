@@ -4,7 +4,7 @@ import type { FieldErrors } from '../api/client'
 import { FieldError } from '../admin/ui'
 import { deliveryApi, type LocatedAddress } from '../api/site'
 import { useSite } from '../site/useSite'
-import { BUILDING_TYPES, formatCities, isServiceCity, type AddressParts, type BuildingType } from './addressParts'
+import { BUILDING_TYPES, OTHER_MAX_LENGTH, formatCities, isServiceCity, type AddressParts, type BuildingType } from './addressParts'
 
 interface Props {
   value: AddressParts
@@ -65,11 +65,11 @@ export function AddressFields({ value, onChange, errors, idPrefix, context, zone
     )
   }
 
-  const hasErrors = (['city', 'street', 'houseNumber', 'apartment', 'buildingType'] as const).some((name) => (errors[name]?.length ?? 0) > 0)
+  const hasErrors = (['city', 'street', 'houseNumber', 'apartment', 'buildingType', 'buildingOther'] as const).some((name) => (errors[name]?.length ?? 0) > 0)
   const showFields = !zones || manual || hasErrors || value.street.trim() !== '' || value.houseNumber.trim() !== ''
 
   const field = (
-    name: Exclude<keyof AddressParts, 'buildingType'>,
+    name: Exclude<keyof AddressParts, 'buildingType' | 'buildingOther'>,
     label: string,
     autoComplete: string,
     options: { required?: boolean; className: string; list?: string },
@@ -140,6 +140,21 @@ export function AddressFields({ value, onChange, errors, idPrefix, context, zone
               </select>
               <FieldError errors={errors} field="buildingType" id={id('buildingType-error')} />
             </span>
+            {value.buildingType === 'Other' && (
+              <span className="field field--grow">
+                <label htmlFor={id('buildingOther')}>{t('address.buildingOther')}</label>
+                <input
+                  id={id('buildingOther')}
+                  maxLength={OTHER_MAX_LENGTH}
+                  required
+                  placeholder={t('address.buildingOtherPlaceholder')}
+                  value={value.buildingOther}
+                  aria-describedby={id('buildingOther-error')}
+                  onChange={(e) => onChange({ buildingOther: e.target.value })}
+                />
+                <FieldError errors={errors} field="buildingOther" id={id('buildingOther-error')} />
+              </span>
+            )}
           </div>
           {zones && (
             <div className="row">

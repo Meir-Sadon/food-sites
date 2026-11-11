@@ -97,6 +97,30 @@ namespace FoodSite.Api.Data.Migrations
                     b.ToTable("AuditEntries");
                 });
 
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.BannerFrame", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImagePublicId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BannerFrames");
+                });
+
             modelBuilder.Entity("FoodSite.Api.Data.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -684,6 +708,10 @@ namespace FoodSite.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("BuildingOther")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("BuildingType")
                         .IsRequired()
                         .HasColumnType("text");
@@ -944,6 +972,54 @@ namespace FoodSite.Api.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("FoodSite.Api.Data.Entities.OrderBanner", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AnimationEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("AnimationScreens")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Background")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<string>("Chips")
+                        .HasMaxLength(186)
+                        .HasColumnType("character varying(186)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LogoPublicId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tagline")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("TextColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrderBanners");
                 });
 
             modelBuilder.Entity("FoodSite.Api.Data.Entities.OrderItem", b =>
@@ -1882,6 +1958,10 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<DateOnly?>("Birthday")
                         .HasColumnType("date");
 
+                    b.Property<string>("BuildingOther")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("BuildingType")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1943,6 +2023,10 @@ namespace FoodSite.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Apartment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BuildingOther")
                         .IsRequired()
                         .HasColumnType("text");
 

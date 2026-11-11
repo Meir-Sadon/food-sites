@@ -13,7 +13,7 @@ Every business gets **its own deployment**: its own server, database, owner admi
 
 ## Features
 
-**[Bilingual feature guide with screenshots](docs/food-sites-feature-guide.html)** — download the HTML and open it in a browser (Hebrew/RTL by default; English is available). GitHub displays HTML source rather than executing it. See [maintenance and review status](docs/FEATURE-GUIDE.md).
+**[Bilingual feature guide with screenshots](docs/food-sites-feature-guide.html)** — an index page that links one file per topic (`docs/feature-guide/`). Download the `docs` folder and open the index in a browser (Hebrew/RTL by default; English is available). GitHub shows HTML source, not the rendered page.
 
 **Client site**
 - Order page with dishes grouped by category, weight/unit options and add-ons

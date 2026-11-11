@@ -67,7 +67,7 @@ export function AccessibilitySection() {
           </span>
           <span className="field">
             <label htmlFor={id('phone')}>{t('admin.contacts.accessibilityPhone')}</label>
-            <input id={id('phone')} type="tel" dir="ltr" maxLength={20} value={info.phone ?? ''} aria-describedby={`${id('phone')}-error`} onChange={(e) => change({ phone: e.target.value })} />
+            <input id={id('phone')} type="tel" maxLength={20} value={info.phone ?? ''} aria-describedby={`${id('phone')}-error`} onChange={(e) => change({ phone: e.target.value })} />
             <FieldError errors={errors} field="phone" id={`${id('phone')}-error`} />
           </span>
           <span className="field">

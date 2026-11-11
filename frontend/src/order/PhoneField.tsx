@@ -21,7 +21,6 @@ export function PhoneField({ phone, onPhoneChange, errors, id = 'order-phone' }:
         type="tel"
         inputMode="tel"
         autoComplete="tel"
-        dir="ltr"
         value={phone}
         aria-describedby={`${id}-error`}
         onChange={(e) => onPhoneChange(e.target.value)}

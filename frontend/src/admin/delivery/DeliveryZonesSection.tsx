@@ -96,7 +96,6 @@ export function DeliveryZonesSection() {
                               inputMode="decimal"
                               min={0}
                               step="any"
-                              dir="ltr"
                               value={zone.fee}
                               aria-describedby={`zone-${index}-fee-error`}
                               onChange={(e) => patch(index, { fee: Number(e.target.value) })}

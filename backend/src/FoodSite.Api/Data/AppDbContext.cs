@@ -28,6 +28,8 @@ public class AppDbContext(
     public DbSet<DeliveryZone> DeliveryZones => Set<DeliveryZone>();
     public DbSet<SocialLink> SocialLinks => Set<SocialLink>();
     public DbSet<PopupSlot> PopupSlots => Set<PopupSlot>();
+    public DbSet<OrderBanner> OrderBanners => Set<OrderBanner>();
+    public DbSet<BannerFrame> BannerFrames => Set<BannerFrame>();
     public DbSet<DishGroupDish> DishGroupDishes => Set<DishGroupDish>();
     public DbSet<PriceList> PriceLists => Set<PriceList>();
     public DbSet<PriceListDish> PriceListDishes => Set<PriceListDish>();
@@ -214,6 +216,21 @@ public class AppDbContext(
             e.Property(p => p.ButtonUrl).HasMaxLength(Popup.EntryPopup.ButtonUrlMaxLength);
             e.Property(p => p.MinTotal).HasPrecision(10, 2);
             e.Property(p => p.MaxTotal).HasPrecision(10, 2);
+        });
+
+        model.Entity<OrderBanner>(e =>
+        {
+            e.Property(b => b.Title).HasMaxLength(Banners.OrderBannerRules.TitleMaxLength);
+            e.Property(b => b.Tagline).HasMaxLength(Banners.OrderBannerRules.TaglineMaxLength);
+            e.Property(b => b.Chips).HasMaxLength(Banners.OrderBannerRules.MaxChips * (Banners.OrderBannerRules.ChipMaxLength + 1));
+            e.Property(b => b.Background).HasMaxLength(7);
+            e.Property(b => b.TextColor).HasMaxLength(7);
+        });
+
+        model.Entity<BannerFrame>(e =>
+        {
+            e.Property(f => f.ImageUrl).IsRequired();
+            e.Property(f => f.ImagePublicId).IsRequired();
         });
 
         model.Entity<DishGroup>(e =>

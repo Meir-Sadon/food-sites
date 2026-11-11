@@ -38,7 +38,13 @@ public static class Features
     /// </summary>
     public const string PhoneAlerts = "phoneAlerts";
 
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists, PhoneAlerts];
+    /// <summary>
+    /// The admin's own top banner on the order page (logo, colours, texts, ovals) and a scroll animation under it:
+    /// the admin Banner tab. Off, the order page keeps the standard banner.
+    /// </summary>
+    public const string BannerAnimation = "bannerAnimation";
+
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists, PhoneAlerts, BannerAnimation];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }

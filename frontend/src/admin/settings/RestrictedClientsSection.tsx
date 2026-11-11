@@ -43,7 +43,7 @@ export function RestrictedClientsSection() {
           <form className="stack" onSubmit={(event) => void add(event)}>
             <span className="field">
               <label htmlFor="restricted-phone">{t('admin.restricted.addPhone')}</label>
-              <input id="restricted-phone" type="tel" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} aria-describedby="restricted-phone-error" />
+              <input id="restricted-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} aria-describedby="restricted-phone-error" />
               <FieldError errors={phoneError} field="phone" id="restricted-phone-error" />
             </span>
             <div className="row">

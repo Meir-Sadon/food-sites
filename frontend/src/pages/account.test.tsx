@@ -14,12 +14,12 @@ const profile: Profile = {
   city: 'חיפה',
   street: 'הרצל',
   houseNumber: '1',
-  apartment: '', buildingType: '',
+  apartment: '', buildingType: '', buildingOther: '',
   address: 'הרצל 1, חיפה',
   email: null,
   birthday: null,
   ethnicBackground: null,
-  addresses: [{ id: 1, label: 'בית', city: 'חיפה', street: 'הרצל', houseNumber: '1', apartment: '', buildingType: '', address: 'הרצל 1, חיפה', isDefault: true }],
+  addresses: [{ id: 1, label: 'בית', city: 'חיפה', street: 'הרצל', houseNumber: '1', apartment: '', buildingType: '', buildingOther: '', address: 'הרצל 1, חיפה', isDefault: true }],
 }
 
 /** What a phone-only account looks like right after it was made. */
