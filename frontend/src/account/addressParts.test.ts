@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { emptyAddress, formatAddress, sameAddress } from './addressParts'
 
 const apartment = (a: string) => `דירה ${a}`
-const building = (type: string) => (type === 'Building' ? 'בנין' : 'בית פרטי')
+const building = (type: string) => (type === 'Building' ? 'בניין' : 'בית פרטי')
 const herzl = { ...emptyAddress(), city: 'חיפה', street: 'הרצל', houseNumber: '12', apartment: '5' }
 
 describe('formatAddress', () => {
   it('adds the building type after the apartment when it was chosen', () => {
-    expect(formatAddress({ ...herzl, buildingType: 'Building' }, apartment, building)).toBe('הרצל 12, דירה 5, בנין, חיפה')
+    expect(formatAddress({ ...herzl, buildingType: 'Building' }, apartment, building)).toBe('הרצל 12, דירה 5, בניין, חיפה')
     expect(formatAddress({ ...herzl, apartment: '', buildingType: 'PrivateHouse' }, apartment, building)).toBe('הרצל 12, בית פרטי, חיפה')
   })
 

@@ -37,7 +37,7 @@ export const addressOf = (source: AddressParts): AddressParts => ({
   buildingType: source.buildingType,
 })
 
-/** "הרצל 12, דירה 5, בנין, חיפה"; parts that were left empty are skipped (as the server's AddressFormat). */
+/** "הרצל 12, דירה 5, בניין, חיפה"; parts that were left empty are skipped (as the server's AddressFormat). */
 export const formatAddress = (
   source: AddressParts,
   apartmentLabel: (apartment: string) => string,

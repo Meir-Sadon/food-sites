@@ -22,7 +22,7 @@ public static class AddressFormat
         var parts = new List<string>();
         if (line.Length > 0) parts.Add(line);
         if (!string.IsNullOrWhiteSpace(apartment)) parts.Add($"דירה {apartment.Trim()}");
-        if (buildingType == Building) parts.Add("בנין");
+        if (buildingType == Building) parts.Add("בניין");
         else if (buildingType == PrivateHouse) parts.Add("בית פרטי");
         if (!string.IsNullOrWhiteSpace(city)) parts.Add(city.Trim());
         return string.Join(", ", parts);

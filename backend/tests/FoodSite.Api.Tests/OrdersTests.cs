@@ -556,7 +556,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("Building", "הרצל 1, דירה 4, בנין, אשקלון")]
+    [InlineData("Building", "הרצל 1, דירה 4, בניין, אשקלון")]
     [InlineData("PrivateHouse", "הרצל 1, דירה 4, בית פרטי, אשקלון")]
     [InlineData("", "הרצל 1, דירה 4, אשקלון")]
     public async Task The_building_type_is_kept_in_the_order_address_only_when_chosen(string buildingType, string expected)
