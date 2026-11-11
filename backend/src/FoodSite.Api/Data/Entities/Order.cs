@@ -43,6 +43,18 @@ public class Order
     /// <summary>The payment was recorded by the driver (through the driver's link), not by the admin.</summary>
     public bool PaidByDriver { get; set; }
 
+    /// <summary>The clearing company's id for the card payment page of this order (empty for other payment methods).</summary>
+    public string? CardTraceId { get; set; }
+
+    /// <summary>The clearing company's id of the successful card charge, kept for a refund (empty until paid).</summary>
+    public string? CardPaymentId { get; set; }
+
+    /// <summary>The approval number of the card charge (empty until paid).</summary>
+    public string? CardConfirmation { get; set; }
+
+    /// <summary>A card order is saved before the client pays; it only counts (messages, owner alerts) once <see cref="IsPaid"/>.</summary>
+    public bool AwaitsCardPayment => PaymentMethod == PaymentMethod.CreditCard && !IsPaid;
+
     /// <summary>
     /// A delivery outside the service city: the admin has to approve it. Until then it is not a safe order
     /// and its dishes are not taken out of the quantity left for the supply date.

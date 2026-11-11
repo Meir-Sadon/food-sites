@@ -23,6 +23,8 @@ public static class OrderMessages
             text += $"\nלהעברת ₪{Money(order.Total)} ב־{PaymentLabel(order.PaymentMethod)} למספר: {paymentPhone}";
         else if (order.PaymentMethod == PaymentMethod.OnDelivery)
             text += "\nהתשלום יבוצע במעמד מסירת המשלוח.";
+        else if (order.PaymentMethod == PaymentMethod.CreditCard && order.IsPaid)
+            text += $"\nהתשלום בכרטיס אשראי על סך ₪{Money(order.Total)} התקבל.";
         return text;
     }
 

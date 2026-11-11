@@ -25,6 +25,8 @@ public enum PaymentMethod
     Transfer,
     Bit,
     PayBox,
+    /// <summary>Paid online by credit card on the clearing company's hosted page (feature <c>cardPayments</c>).</summary>
+    CreditCard,
 }
 
 public static class PaymentMethods

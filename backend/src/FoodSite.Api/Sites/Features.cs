@@ -44,7 +44,13 @@ public static class Features
     /// </summary>
     public const string BannerAnimation = "bannerAnimation";
 
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists, PhoneAlerts, BannerAnimation];
+    /// <summary>
+    /// Paying for an order by credit card on Invoice4U's hosted page: the card choice on the order page and the return
+    /// page. Needs the business's own <c>Invoice4U__ApiKey</c> on the server; off, nothing about it shows.
+    /// </summary>
+    public const string CardPayments = "cardPayments";
+
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists, PhoneAlerts, BannerAnimation, CardPayments];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }

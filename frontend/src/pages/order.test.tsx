@@ -850,6 +850,32 @@ describe('Order page', () => {
     expect(within(dialog).queryByText('התשלום יבוצע במעמד מסירת המשלוח')).not.toBeInTheDocument()
   })
 
+  it('offers the credit card only while the site has it, and sends the client to the payment page', async () => {
+    await openOrderPage({})
+    expect(screen.queryByRole('radio', { name: 'כרטיס אשראי' })).not.toBeInTheDocument()
+  })
+
+  it('sends a credit card order and leaves for the clearing company page without the order dialog', async () => {
+    const assign = vi.fn()
+    const original = window.location
+    Object.defineProperty(window, 'location', { configurable: true, value: { ...original, assign } })
+    try {
+      const { api, user } = await openOrderPage({
+        'GET /api/site': () => site({ cardEnabled: true }),
+        'POST /api/orders': () => ({ ...confirmation, paymentMethod: 'CreditCard', payUrl: 'https://pay.example.test/page/7' }),
+      })
+      await user.click(screen.getByRole('radio', { name: 'כרטיס אשראי' }))
+      expect(screen.getByText(/תועברו לעמוד תשלום מאובטח/)).toBeInTheDocument()
+      await fillAndSubmit(user)
+
+      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ paymentMethod: 'CreditCard' })
+      await vi.waitFor(() => expect(assign).toHaveBeenCalledWith('https://pay.example.test/page/7'))
+      expect(screen.queryByRole('dialog', { name: 'ההזמנה התקבלה' })).not.toBeInTheDocument()
+    } finally {
+      Object.defineProperty(window, 'location', { configurable: true, value: original })
+    }
+  })
+
   it('offers only the payment services the admin switched on', async () => {
     await openOrderPage({ 'GET /api/site': () => site({ payBoxEnabled: false }) })
     expect(screen.getByRole('radio', { name: 'Bit' })).toBeInTheDocument()

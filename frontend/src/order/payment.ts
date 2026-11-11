@@ -13,8 +13,9 @@ export function transferChoices(site: Pick<Site, 'paymentPhone' | 'bitEnabled' |
 }
 
 /** What the client's remembered choice becomes when the admin no longer offers it. */
-export function availablePayment(payment: Payment, site: Pick<Site, 'paymentPhone' | 'bitEnabled' | 'payBoxEnabled'>): Payment {
+export function availablePayment(payment: Payment, site: Pick<Site, 'paymentPhone' | 'bitEnabled' | 'payBoxEnabled'> & { cardEnabled?: boolean }): Payment {
   if (payment === 'OnDelivery') return payment
+  if (payment === 'CreditCard') return site.cardEnabled ? payment : 'OnDelivery'
   const choices = transferChoices(site)
   if (payment === 'Transfer') return choices[0] ?? 'OnDelivery'
   return choices.includes(payment) ? payment : 'OnDelivery'

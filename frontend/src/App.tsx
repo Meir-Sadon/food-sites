@@ -34,6 +34,7 @@ import { DriverStopPage } from './driver/DriverStopPage'
 import { AboutPage } from './pages/AboutPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { AccessibilityStatementPage } from './pages/AccessibilityStatementPage'
+import { CardReturnPage } from './pages/CardReturnPage'
 import { LoginPage } from './pages/LoginPage'
 import { OrderPage } from './pages/OrderPage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -48,6 +49,7 @@ export function App() {
         <Route element={<ClientLayout />}>
           <Route index element={<OrderPage />} />
           <Route path="login" element={<LoginPage />} />
+          <Route path="order/card-return" element={<CardReturnPage />} />
           <Route
             path="recommendations"
             element={

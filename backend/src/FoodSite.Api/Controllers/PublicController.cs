@@ -13,7 +13,7 @@ namespace FoodSite.Api.Controllers;
 
 /// <summary>What the client site shows: site info, contact details, the enabled features, the menu and the open supply dates.</summary>
 [Route("api")]
-public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features, IOptions<SiteOptions> site, IOptions<Auth.GoogleOptions> google) : PublicControllerBase
+public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags features, IOptions<SiteOptions> site, IOptions<Auth.GoogleOptions> google, Payments.ICardGateway cardGateway) : PublicControllerBase
 {
     public record ContactDto(string? Name, string? Phone, string? Address, string? Email, string? OpeningHours);
 
@@ -47,6 +47,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
         string Spacing,
         string TileGroups,
         string ImageSize,
+        bool CardEnabled,
         string DeliveryPricing = "simple",
         decimal? DeliveryFeeAmount = null,
         decimal? DeliveryBaseFee = null,
@@ -172,6 +173,7 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             Finish.Effective(s.Spacing, Finish.IsKnownSpacing),
             Finish.EffectiveTileGroups(s.TileGroups),
             Finish.EffectiveImageSize(s.ImageSize),
+            cardGateway.IsConfigured && enabledFeatures.Contains(Features.CardPayments),
             DeliveryQuoter.Mode(s),
             s.DeliveryFeeAmount,
             s.DeliveryBaseFee,

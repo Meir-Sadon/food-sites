@@ -6,6 +6,7 @@ using FoodSite.Api.Mail;
 using FoodSite.Api.Messaging;
 using FoodSite.Api.Marketing;
 using FoodSite.Api.Orders;
+using FoodSite.Api.Payments;
 using FoodSite.Api.Phones;
 using FoodSite.Api.Push;
 using FoodSite.Api.Sites;
@@ -22,15 +23,12 @@ namespace FoodSite.Api.Controllers;
 public class OrdersController(
     AppDbContext db,
     SiteClock clock,
-    IWhatsAppSender whatsApp,
-    ISmsSender sms,
-    IOptions<SmsOptions> smsOptions,
-    OwnerNotifier ownerMail,
-    PushNotifier pushNotifier,
+    OrderNotifier notifier,
     MarketingNotifier marketing,
-    IOptions<SiteOptions> site,
     DeliveryQuoter deliveryQuoter,
     FeatureFlags features,
+    ICardGateway cardGateway,
+    CardLinks cardLinks,
     ILogger<OrdersController> logger) : PublicControllerBase
 {
     public const int NameMaxLength = 100;
@@ -79,7 +77,9 @@ public class OrdersController(
         decimal DeliveryDiscount = 0m,
         decimal MinimumTopUp = 0m,
         decimal Tip = 0m,
-        TimeOnly? DeliveryHourEnd = null);
+        TimeOnly? DeliveryHourEnd = null,
+        /// <summary>For a credit card order: the clearing company's payment page the client is sent to. The order only counts once it is paid.</summary>
+        string? PayUrl = null);
 
     [HttpPost]
     public async Task<ActionResult<ConfirmationDto>> Create(OrderInput input, CancellationToken ct)
@@ -123,6 +123,8 @@ public class OrdersController(
         if (!Enum.IsDefined(input.PaymentMethod))
             errors.Add(nameof(input.PaymentMethod), "invalid");
         else if (input.PaymentMethod.IsTransfer() && !TransferAvailable(settings, input.PaymentMethod))
+            errors.Add(nameof(input.PaymentMethod), "paymentUnavailable");
+        else if (input.PaymentMethod == PaymentMethod.CreditCard && !(cardGateway.IsConfigured && await features.IsEnabledAsync(Features.CardPayments, ct)))
             errors.Add(nameof(input.PaymentMethod), "paymentUnavailable");
 
         var days = await db.SupplyDays.AsNoTracking().Include(d => d.Hours).ToListAsync(ct);
@@ -267,15 +269,39 @@ public class OrdersController(
             foreach (var listId in await PriceBook.OneTimeDiscountsUsedAsync(
                 db, discountUserId, clock.Today(), items.SelectMany(i => i.AddOnItems.Prepend(i)).Select(i => i.PriceListName), ct))
                 order.DiscountUses.Add(new PriceListDiscountUse { PriceListId = listId, UserId = discountUserId });
-        // The order in progress the client kept on the server is now sent.
-        if (await SessionUserIdAsync() is { } sessionUserId
-            && await db.SavedCarts.SingleOrDefaultAsync(c => c.UserId == sessionUserId, ct) is { } cart)
-            db.SavedCarts.Remove(cart);
+        // The order in progress the client kept on the server is now sent (a card order: once the payment page is open).
+        var cardOrder = order.PaymentMethod == PaymentMethod.CreditCard;
+        if (!cardOrder)
+            await RemoveSavedCartAsync(ct);
         await db.SaveChangesAsync(ct);
 
-        await NotifyAsync(order, settings.PaymentPhone, settings.OwnerEmail, serviceCities, hourFull, ct);
+        // A card order is saved first (the clearing company needs its number) but nobody is told until it is paid.
+        string? payUrl = null;
+        if (cardOrder)
+        {
+            var origin = $"{Request.Scheme}://{Request.Host}";
+            try
+            {
+                var page = await cardGateway.CreatePageAsync(
+                    new CardPageRequest(order.Id, order.Total, order.Name, order.Phone, $"הזמנה #{order.Id}", cardLinks.ReturnUrl(origin, order.Id), cardLinks.CallbackUrl(origin, order.Id)), ct);
+                order.CardTraceId = page.TraceId;
+                payUrl = page.Url;
+            }
+            catch (CardGatewayException ex)
+            {
+                logger.LogError(ex, "Opening the card payment page for order {OrderId} failed", order.Id);
+                // Nothing was charged and the client was told nothing: the order is taken back so it is not left unpaid in the admin's list.
+                db.Orders.Remove(order);
+                await db.SaveChangesAsync(CancellationToken.None);
+                return Invalid(nameof(input.PaymentMethod), "cardPaymentFailed");
+            }
+            await RemoveSavedCartAsync(ct);
+            await db.SaveChangesAsync(ct);
+        }
+        else
+            await notifier.NotifyAsync(order, settings.PaymentPhone, settings.OwnerEmail, serviceCities, hourFull, $"{Request.Scheme}://{Request.Host}", ct);
         // An order the owner keyed in for a client is not a purchase on the client's device: it stays out of ad conversions.
-        if (!order.PlacedByOwner)
+        if (!order.PlacedByOwner && !cardOrder)
             await marketing.PurchaseAsync(settings, order, input.Marketing, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString(), CancellationToken.None);
 
         return new ConfirmationDto(
@@ -292,7 +318,15 @@ public class OrdersController(
             order.DeliveryDiscount,
             order.MinimumTopUp,
             order.Tip,
-            order.DeliveryHourEnd);
+            order.DeliveryHourEnd,
+            payUrl);
+    }
+
+    private async Task RemoveSavedCartAsync(CancellationToken ct)
+    {
+        if (await SessionUserIdAsync() is { } sessionUserId
+            && await db.SavedCarts.SingleOrDefaultAsync(c => c.UserId == sessionUserId, ct) is { } cart)
+            db.SavedCarts.Remove(cart);
     }
 
     /// <summary>A manual payment needs the business's number and that service switched on.</summary>
@@ -345,41 +379,5 @@ public class OrdersController(
         var taken = (await DailyPortions.TakenAsync(db, [supplyDate], ct)).GetValueOrDefault(supplyDate);
         if (taken + requested > portions)
             errors.Add("items", "portionLimitReached");
-    }
-
-    /// <summary>
-    /// Tells the client and everyone on the admin's list. A failed message never fails the
-    /// order: it is already saved and shows in the admin's Orders tab.
-    /// </summary>
-    private async Task NotifyAsync(
-        Order order, string? paymentPhone, string? ownerEmail, IReadOnlyList<string> serviceCities, bool hourFull, CancellationToken ct)
-    {
-        await ownerMail.NewOrderAsync(ownerEmail, order, hourFull, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}",
-            await features.IsEnabledAsync(Features.PriceLists, ct));
-        var recipients = await db.NotifyPhones.AsNoTracking().OrderBy(p => p.DisplayOrder).ThenBy(p => p.Id).ToListAsync(CancellationToken.None);
-        await pushNotifier.NewOrderAsync(recipients, order, site.Value.Name, $"{Request.Scheme}://{Request.Host}/admin/orders/{order.Id}");
-        var messages = recipients.Select(p => p.Phone)
-            .Select(phone => (phone, WhatsAppTemplate.NewOrder, text: OrderMessages.AdminNotification(order, site.Value.Name, hourFull)))
-            .Prepend((order.Phone, WhatsAppTemplate.OrderConfirmation, OrderMessages.ClientConfirmation(order, paymentPhone, site.Value.Name, serviceCities, hourFull)));
-        foreach (var (phone, template, text) in messages)
-        {
-            try
-            {
-                await whatsApp.SendAsync(phone, template, text, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "WhatsApp message for order {OrderId} to {Phone} failed", order.Id, phone);
-            }
-        }
-
-        try
-        {
-            await sms.SendAsync(order.Phone, SmsMessages.Confirmation(order, site.Value.Name, smsOptions.Value.ConfirmationTemplate), CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "SMS for order {OrderId} to {Phone} failed", order.Id, order.Phone);
-        }
     }
 }
