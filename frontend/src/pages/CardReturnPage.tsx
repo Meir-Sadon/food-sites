@@ -5,6 +5,7 @@ import { cardPaymentsApi } from '../api/site'
 import { useSite } from '../site/useSite'
 import { formatMoney } from '../order/format'
 import { trackMarketing } from '../tracking/marketing'
+import { clearDraft } from '../order/draft'
 
 const ATTEMPTS = 10
 const WAIT_MS = 3000
@@ -34,6 +35,8 @@ export function CardReturnPage() {
         if (cancelled) return
         if (status.paid) {
           setState({ phase: 'paid', total: status.total })
+          // The order page held what the client filled while the payment was open; it is an order now.
+          clearDraft()
           if (!reported.current) {
             reported.current = true
             trackMarketing({ name: 'Purchase', orderId: order, value: status.total })

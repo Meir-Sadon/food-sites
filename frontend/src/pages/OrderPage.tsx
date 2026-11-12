@@ -121,6 +121,7 @@ export function OrderPage() {
 
   const [state, setState] = useState<OrderState>(emptyOrder)
   const submitRef = useRef<HTMLButtonElement>(null)
+  const goingToPayment = useRef(false)
   // Bumped by a quick fill: once the filled order renders, the page scrolls to the submit button.
   const [quickFills, setQuickFills] = useState(0)
   // How the order got its dishes besides the client's own choosing; the entry pop-ups' conditions read it.
@@ -330,7 +331,10 @@ export function OrderPage() {
   })
   useEffect(() => {
     if (!dirty) return
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    const warn = (event: BeforeUnloadEvent) => {
+      // Going to the payment page on purpose is not "closing the tab".
+      if (!goingToPayment.current) event.preventDefault()
+    }
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
@@ -703,15 +707,18 @@ export function OrderPage() {
         ...(acceptTopUp ? { acceptMinimumTopUp: true } : {}),
         ...(tip > 0 ? { tip } : {}),
       })
-      clearDraft()
-      serverCart.sent()
-      trackUsage('OrderSubmitted')
-      // A credit card order is paid on the clearing company's page; the purchase is reported when the client comes back paid.
+      // A credit card order is paid on the clearing company's page. Until it is paid the order page keeps what the client
+      // filled (a client who comes back unpaid finds it as it was); the card return page clears it once paid.
       if (result.payUrl) {
         leaving = true
+        goingToPayment.current = true
+        saveDraft(state)
         window.location.assign(result.payUrl)
         return
       }
+      clearDraft()
+      serverCart.sent()
+      trackUsage('OrderSubmitted')
       trackMarketing({ name: 'Purchase', orderId: result.id, value: result.total })
       setConfirmation(result)
       setRemember(rememberOffer(result.id, normalizedPhone))

@@ -366,6 +366,9 @@ public class AppDbContext(
 
         model.Entity<Order>(e =>
         {
+            // A card order that is not paid yet is not an order: it stays out of the admin lists, reports, capacity and
+            // driver sheets. Only the payment code reads it, with IgnoreQueryFilters.
+            e.HasQueryFilter(o => o.PaymentMethod != PaymentMethod.CreditCard || o.IsPaid);
             e.HasIndex(o => o.SupplyDate);
             e.Property(o => o.DeliveryNote).HasMaxLength(Order.DeliveryNoteMaxLength);
             e.Property(o => o.CancelReason).HasMaxLength(Order.CancelReasonMaxLength);
