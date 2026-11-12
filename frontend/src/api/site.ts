@@ -13,7 +13,7 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts' | 'bannerAnimation' | 'cardPayments'
+export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts' | 'bannerAnimation' | 'cardPayments' | 'guestSignupOffer'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
 export type SiteStyle = 'classic' | 'street' | 'tiles' | 'rect'
@@ -485,9 +485,16 @@ export interface HourAvailability {
   pickupFull: boolean
 }
 
+/** Whether signing up now would give a guest lower prices, and the number of orders the discounts are limited to (null: not limited). */
+export interface GuestOffer {
+  available: boolean
+  maxOrders: number | null
+}
+
 export const siteApi = {
   get: () => apiJson<Site>('/api/site'),
   menu: () => apiJson<Menu>('/api/menu'),
+  guestOffer: () => apiJson<GuestOffer>('/api/guest-offer'),
   /** Whether an hour is already full, for deliveries and for pickups; asked only once the client picks it. */
   hourAvailability: (date: string, hour: string) =>
     apiJson<HourAvailability>(`/api/hour-availability?date=${date}&hour=${encodeURIComponent(hour)}`),

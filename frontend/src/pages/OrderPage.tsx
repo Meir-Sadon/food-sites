@@ -10,7 +10,7 @@ import { MapLinks } from '../components/MapLinks'
 import { OrderHero } from '../components/OrderHero'
 import { AddressFields } from '../account/AddressFields'
 import { addressOf, formatAddress, hasAddress, isServiceCity, noAddress, sameAddress, type AddressParts } from '../account/addressParts'
-import type { RememberInput } from '../api/account'
+import type { LoginResult, RememberInput } from '../api/account'
 import { SavedAddressPicker } from '../order/SavedAddressPicker'
 import { useAccount } from '../account/useAccount'
 import { useRegisterLeaveGuard } from '../components/leaveGuard'
@@ -42,6 +42,8 @@ import { useServerCart } from '../order/serverCart'
 import { availableMenu, pruneUnavailable, type When } from '../order/availability'
 import { formatMoney, formatSlot, formatTime, formatSupplyDate, parseSlotId, slotId, slotsFor } from '../order/format'
 import { LeaveDialog } from '../order/LeaveDialog'
+import { GuestOfferDialog } from '../order/GuestOfferDialog'
+import { guestOfferAsked, markGuestOfferAsked, pricesOf } from '../order/guestOffer'
 import { MinimumDialog } from '../order/MinimumDialog'
 import { QuickFill } from '../order/QuickFill'
 import { useReportOrderSignals, type OrderSource } from '../order/orderSignals'
@@ -113,11 +115,14 @@ export function OrderPage() {
   const siteFailed = useSiteFailed()
   const reviewsOn = useFeature('reviews')
   const priceListsOn = useFeature('priceLists')
+  const guestOfferOn = useFeature('guestSignupOffer') && priceListsOn
   const defaultCity = site?.serviceCities[0]
   const errorMessage = useErrorMessage()
   const toast = useToast()
   const [fullMenu, setMenu] = useState<Menu | null>(null)
   const [failed, setFailed] = useState(false)
+  // Set when a guest pressing send is offered to sign up first (their prices may be lower): how many orders the discounts last.
+  const [guestOffer, setGuestOffer] = useState<{ maxOrders: number | null } | null>(null)
 
   const [state, setState] = useState<OrderState>(emptyOrder)
   const submitRef = useRef<HTMLButtonElement>(null)
@@ -652,6 +657,21 @@ export function OrderPage() {
     setCalculations((n) => n + 1)
   }
 
+  /** The guest signed up (or logged in) in the offer: their prices are fetched again, and they check the total before sending. */
+  async function guestSignedUp({ profile, isNew }: LoginResult) {
+    setGuestOffer(null)
+    setUser(profile)
+    change({ phone: profile.phone })
+    const before = fullMenu
+    try {
+      const fresh = await siteApi.menu()
+      setMenu(fresh)
+      toast(!before || pricesOf(before) !== pricesOf(fresh) ? t(isNew ? 'guestOffer.updatedNew' : 'guestOffer.updatedExisting') : t('guestOffer.noChange'))
+    } catch {
+      toast(t('guestOffer.updatedExisting'))
+    }
+  }
+
   async function submit(acceptTopUp: boolean) {
     setMinimumAsked(false)
     setErrors({})
@@ -678,6 +698,15 @@ export function OrderPage() {
     }
     setFix(null)
     if (!normalizedPhone) return
+
+    // A guest is offered the registered clients' prices once per visit, before the minimum is judged (the prices may change).
+    if (!user && guestOfferOn && !guestOfferAsked()) {
+      const offer = await siteApi.guestOffer().catch(() => null)
+      if (offer?.available) {
+        setGuestOffer({ maxOrders: offer.maxOrders })
+        return
+      }
+    }
 
     // An order under the minimum is not blocked: the client is asked whether to add a dish or to pay the minimum.
     if (belowMinimum && !acceptTopUp) {
@@ -1273,6 +1302,19 @@ export function OrderPage() {
         />
       )}
 
+      {guestOffer && (
+        <GuestOfferDialog
+          phone={state.phone}
+          maxOrders={guestOffer.maxOrders}
+          onSignedUp={(result) => void guestSignedUp(result)}
+          onSkip={() => {
+            setGuestOffer(null)
+            markGuestOfferAsked()
+            void submit(false)
+          }}
+          onCancel={() => setGuestOffer(null)}
+        />
+      )}
       {minimumAsked && (
         <MinimumDialog
           minimum={minimum}
