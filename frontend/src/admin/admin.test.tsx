@@ -112,7 +112,10 @@ describe('admin layout', () => {
       'תצוגה באתר לקוח',
       'הגדרות אתר',
       'לדף הבית',
+      'מדריך יכולות',
     ])
+    expect(within(nav).getByRole('link', { name: 'מדריך יכולות' })).toHaveAttribute('href', '/api/admin/guide')
+    expect(within(nav).getByRole('link', { name: 'מדריך יכולות' })).toHaveAttribute('target', '_blank')
     expect(await within(nav).findByRole('link', { current: 'page' })).toHaveTextContent('הגדרות אתר')
     expect(within(nav).getByText('בעל העסק')).toBeInTheDocument()
     const pages = screen.getByRole('navigation', { name: 'הגדרות אתר' })

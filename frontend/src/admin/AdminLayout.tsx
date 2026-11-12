@@ -69,6 +69,12 @@ function AdminFrame() {
                 {t('admin.home')}
               </NavLink>
             </li>
+            <li>
+              {/* The API serves the feature guide to a signed-in admin; a plain link keeps the session cookie. */}
+              <a href="/api/admin/guide" target="_blank" rel="noopener" className="top-bar__link">
+                {t('admin.guide')}
+              </a>
+            </li>
             <li className="admin-bar__who">{t(`admin.actors.${session.actor}`)}</li>
             <li>
               <button type="button" className="button-quiet" onClick={() => leave(handleLogout)}>
