@@ -221,6 +221,34 @@ public sealed class PriceBook
         return lists.Where(l => !used.Contains(l.Id)).Select(l => l.Id).ToList();
     }
 
+    /// <summary>What a guest who signs up now would get: whether any list prices differently for a new client, and the order limit shown to them.</summary>
+    public record NewClientOffer(bool Available, int? MaxOrders);
+
+    /// <summary>
+    /// Whether signing up would give a guest better prices: a list assigned by status that takes in a brand-new client
+    /// (registered now, no orders, nothing saved) and that actually lowers a price today (a general discount in its dates, or
+    /// a dish row in its dates priced under its base). Lists for given phones never count, a guest's phone is unknown.
+    /// <see cref="NewClientOffer.MaxOrders"/> is set when every such list is limited to a number of orders (the biggest limit).
+    /// </summary>
+    public static async Task<NewClientOffer> NewClientOfferAsync(AppDbContext db, DateTimeOffset now, DateOnly today, CancellationToken ct = default)
+    {
+        var lists = await db.PriceLists.AsNoTracking()
+            .Where(l => !l.IsDefault && (l.NewClientsAmount != null || l.StatusesMaxOrders != null || l.ForMidOrder || l.OpenOrderAbove != null))
+            .ToListAsync(ct);
+        var fresh = new ClientStatus(now, 0, false, null);
+        var matching = lists.Where(l => Matches(l, fresh, now)).ToList();
+        var effective = new List<PriceList>();
+        foreach (var list in matching)
+        {
+            if (list.DiscountActiveOn(today)
+                || (await db.PriceListDishes.AsNoTracking().Where(r => r.PriceListId == list.Id && r.Price < r.BasePrice).ToListAsync(ct)).Any(r => r.IsActiveOn(today)))
+                effective.Add(list);
+        }
+        if (effective.Count == 0)
+            return new NewClientOffer(false, null);
+        return new NewClientOffer(true, effective.All(l => l.StatusesMaxOrders is not null) ? effective.Max(l => l.StatusesMaxOrders) : null);
+    }
+
     /// <summary>
     /// The book for a logged-in client on a day. A dish that a list assigned to the client's phone prices takes the
     /// lowest such price; otherwise the lowest among the lists whose statuses take the client in. A list prices a dish
