@@ -13,7 +13,7 @@ public sealed class GuestSignupOfferTests(PostgresFixture postgres) : IAsyncLife
 {
     private const string Lists = "/api/admin/price-lists";
 
-    private readonly ApiFactory _factory = new(postgres, new Dictionary<string, string?> { ["Site:Features:guestSignupOffer"] = "true" });
+    private readonly ApiFactory _factory = new(postgres);
     private HttpClient _admin = null!;
     private int _chicken;
 

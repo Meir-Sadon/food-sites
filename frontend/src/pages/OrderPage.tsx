@@ -115,7 +115,7 @@ export function OrderPage() {
   const siteFailed = useSiteFailed()
   const reviewsOn = useFeature('reviews')
   const priceListsOn = useFeature('priceLists')
-  const guestOfferOn = useFeature('guestSignupOffer') && priceListsOn
+  const guestOfferOn = priceListsOn
   const defaultCity = site?.serviceCities[0]
   const errorMessage = useErrorMessage()
   const toast = useToast()

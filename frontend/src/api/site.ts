@@ -13,7 +13,7 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts' | 'bannerAnimation' | 'cardPayments' | 'guestSignupOffer'
+export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts' | 'bannerAnimation' | 'cardPayments'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
 export type SiteStyle = 'classic' | 'street' | 'tiles' | 'rect'

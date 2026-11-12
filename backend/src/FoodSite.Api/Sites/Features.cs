@@ -50,13 +50,7 @@ public static class Features
     /// </summary>
     public const string CardPayments = "cardPayments";
 
-    /// <summary>
-    /// A guest pressing "send the order" is first offered to sign up (by phone, on the spot) for the registered clients'
-    /// prices, when a price list would give a new client a lower price. Needs <see cref="PriceLists"/>; off, orders go straight out.
-    /// </summary>
-    public const string GuestSignupOffer = "guestSignupOffer";
-
-    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists, PhoneAlerts, BannerAnimation, CardPayments, GuestSignupOffer];
+    public static readonly IReadOnlyList<string> All = [Recommendations, Favorites, Reviews, AdvancedDishes, PriceLists, PhoneAlerts, BannerAnimation, CardPayments];
 
     public static bool IsKnown(string name) => All.Contains(name);
 }

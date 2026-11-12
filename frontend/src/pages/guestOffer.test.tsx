@@ -22,7 +22,7 @@ const dishCard = (name: string) => screen.getByRole('article', { name })
 /** The chicken dish at the guest's price, or at the client's after the sign-up. */
 const discounted = () => menu({ dishes: menu().dishes.map((d) => (d.name === 'עוף בתנור' ? { ...d, options: d.options.map((o) => ({ ...o, price: 56 })) } : d)) })
 
-async function open(extra: Record<string, unknown> = {}, features = ['guestSignupOffer', 'priceLists']) {
+async function open(extra: Record<string, unknown> = {}, features = ['priceLists']) {
   let loggedIn = false
   const api = fakeApi({
     ...publicApi,
@@ -121,8 +121,8 @@ describe('the sign-up offer to a guest who sends an order', () => {
     expect(api.sent('POST', '/api/orders')).toHaveLength(1)
   })
 
-  it('does not even ask the server when the site does not have the feature', async () => {
-    const { api, user } = await open({}, ['priceLists'])
+  it('does not even ask the server when the site has no price lists', async () => {
+    const { api, user } = await open({}, [])
     await fillAndSend(user)
     expect(await screen.findByRole('dialog', { name: 'ההזמנה התקבלה' })).toBeInTheDocument()
     expect(api.sent('GET', '/api/guest-offer')).toHaveLength(0)
