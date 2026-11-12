@@ -556,7 +556,7 @@ public sealed class OrdersTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("Building", "הרצל 1, דירה 4, בנין, אשקלון")]
+    [InlineData("Building", "הרצל 1, דירה 4, בניין, אשקלון")]
     [InlineData("PrivateHouse", "הרצל 1, דירה 4, בית פרטי, אשקלון")]
     [InlineData("Office", "הרצל 1, דירה 4, משרד, אשקלון")]
     [InlineData("", "הרצל 1, דירה 4, אשקלון")]

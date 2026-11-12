@@ -6,5 +6,7 @@
 **/.env.*
 **/appsettings.Development.json
 .git
-docs
+docs/*
+!docs/food-sites-feature-guide.html
+!docs/feature-guide
 backend/tests

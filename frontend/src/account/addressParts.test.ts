@@ -2,17 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { addressOf, emptyAddress, formatAddress, sameAddress } from './addressParts'
 
 const apartment = (a: string) => `דירה ${a}`
-const building = (type: string) => (type === 'Building' ? 'בנין' : 'בית פרטי')
+const building = (type: string) => (type === 'Building' ? 'בניין' : 'בית פרטי')
 const herzl = { ...emptyAddress(), city: 'חיפה', street: 'הרצל', houseNumber: '12', apartment: '5' }
 
 describe('formatAddress', () => {
   it('adds the building type after the apartment when it was chosen', () => {
-    expect(formatAddress({ ...herzl, buildingType: 'Building' }, apartment, building)).toBe('הרצל 12, דירה 5, בנין, חיפה')
+    expect(formatAddress({ ...herzl, buildingType: 'Building' }, apartment, building)).toBe('הרצל 12, דירה 5, בניין, חיפה')
     expect(formatAddress({ ...herzl, apartment: '', buildingType: 'PrivateHouse' }, apartment, building)).toBe('הרצל 12, בית פרטי, חיפה')
   })
 
   it('adds an office, and "other" with the text the client wrote', () => {
-    const label = (type: string) => ({ Building: 'בנין', PrivateHouse: 'בית פרטי', Office: 'משרד', Other: 'אחר' })[type] ?? ''
+    const label = (type: string) => ({ Building: 'בניין', PrivateHouse: 'בית פרטי', Office: 'משרד', Other: 'אחר' })[type] ?? ''
     expect(formatAddress({ ...herzl, apartment: '', buildingType: 'Office' }, apartment, label)).toBe('הרצל 12, משרד, חיפה')
     expect(formatAddress({ ...herzl, apartment: '', buildingType: 'Other', buildingOther: ' חנות, קומה 2 ' }, apartment, label)).toBe('הרצל 12, אחר: חנות קומה 2, חיפה')
     expect(formatAddress({ ...herzl, apartment: '', buildingType: 'Other', buildingOther: '' }, apartment, label)).toBe('הרצל 12, אחר, חיפה')

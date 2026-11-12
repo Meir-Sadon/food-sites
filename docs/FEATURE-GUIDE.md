@@ -9,6 +9,7 @@
 - `feature-guide/guide.css` and `guide.js` are shared by every page (language switch, search, lightbox, print). `feature-guide/img/` holds the screenshots as `.webp` files named by what they show.
 - One topic per file keeps two features built at the same time from conflicting: each edits its own topic file and adds one line to the index. Add screenshots as new files (give them new names), never as base64 inside the HTML.
 - A new topic: add `feature-guide/<topic>.html` (copy the head, top bar, hero, `aside` and the script tag of an existing one), a card in the index, and its name in the list above.
+- The admin shows the guide too (button **מדריך יכולות** in the admin bar): the production image runs `scripts/build-feature-guide.mjs`, which joins everything into one file served at `/api/admin/guide` to a signed-in admin. It takes every `.html` in `feature-guide/`, so keep the structure of the existing pages (the `<header class="hero…">` block, the `<dialog id="lightbox">`, ids `search`, `count`, `no-results`).
 - Opening the files from disk must work (no server, no network): use relative links only.
 
 ## Maintenance

@@ -101,9 +101,11 @@ describe('route plan', () => {
   })
 
   it('leaves the building type out of the Waze link', () => {
-    const address = navigationAddress('הרצל 12, דירה 5, בנין, אשקלון', 'דירה', ['בנין', 'בית פרטי'])
+    const address = navigationAddress('הרצל 12, דירה 5, בניין, אשקלון', 'דירה', ['בניין', 'בית פרטי'])
     expect(address).toBe('הרצל 12, אשקלון')
-    expect(navigationAddress('הרצל 12, בית פרטי, אשקלון', 'דירה', ['בנין', 'בית פרטי'])).toBe('הרצל 12, אשקלון')
+    expect(navigationAddress('הרצל 12, דירה 5, בניין, אשקלון', 'דירה', ['בניין'])).toBe('הרצל 12, אשקלון')
+    expect(navigationAddress('הרצל 12, דירה 5, בנין, אשקלון', 'דירה', ['בניין'])).toBe('הרצל 12, אשקלון')
+    expect(navigationAddress('הרצל 12, בית פרטי, אשקלון', 'דירה', ['בניין', 'בית פרטי'])).toBe('הרצל 12, אשקלון')
     expect(navigationAddress('הרצל 12, אחר: חנות פרחים, אשקלון', 'דירה', ['משרד', 'אחר'])).toBe('הרצל 12, אשקלון')
   })
 
