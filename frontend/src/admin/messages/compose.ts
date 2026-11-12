@@ -5,7 +5,7 @@ import { formatMoney } from '../../order/format'
 import { formatDate } from '../format'
 
 /** The placeholders a template's text may use, filled from the order. */
-export const PLACEHOLDERS = ['{order}', '{date}', '{total}'] as const
+export const PLACEHOLDERS = ['{order}', '{date}', '{total}', '{cancelReason}'] as const
 
 /** The client's first name, which every message starts with. */
 export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? ''
@@ -15,7 +15,12 @@ export const reviewUrl = (token: string, origin = window.location.origin) => `${
 
 /** The message as sent: the client's first name, the template's text with the order's details, then the review link. */
 export function composeMessage(template: MessageTemplate, order: AdminOrder, link: string | null): string {
-  const text = template.text
+  const reason = order.cancelReason?.trim() ?? ''
+  // A line that uses {cancelReason} is left out when the order has no reason, so no empty "reason: " line is sent.
+  const lines = template.text.split('\n').filter((line) => reason !== '' || !line.includes('{cancelReason}'))
+  const text = lines
+    .join('\n')
+    .replaceAll('{cancelReason}', reason)
     .replaceAll('{order}', String(order.id))
     .replaceAll('{date}', formatDate(order.supplyDate))
     .replaceAll('{total}', formatMoney(order.total))

@@ -39,6 +39,12 @@ describe('Composing a message', () => {
     expect(composeMessage(feedback, order(), 'https://x/r/abc')).toBe('דנה,\nנשמח לשמוע איך היה:\nhttps://x/r/abc')
   })
 
+  it('fills the cancel reason and leaves its line out when there is none', () => {
+    const cancelled: MessageTemplate = { id: 3, name: 'בוטלה', text: 'ההזמנה {order} בוטלה.\nסיבה: {cancelReason}\nאפשר לכתוב לנו.', includeReviewLink: false, forStatus: 'Cancelled' }
+    expect(composeMessage(cancelled, order({ status: 'Cancelled', cancelReason: 'חסר במלאי' }), null)).toBe('דנה,\nההזמנה 7 בוטלה.\nסיבה: חסר במלאי\nאפשר לכתוב לנו.')
+    expect(composeMessage(cancelled, order({ status: 'Cancelled', cancelReason: ' ' }), null)).toBe('דנה,\nההזמנה 7 בוטלה.\nאפשר לכתוב לנו.')
+  })
+
   it('opens a chat with the client in international format', () => {
     expect(whatsAppUrl('050-123-4567', 'שלום')).toBe(`https://wa.me/972501234567?text=${encodeURIComponent('שלום')}`)
     expect(whatsAppUrl('12', 'שלום')).toBeNull()
