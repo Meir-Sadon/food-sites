@@ -13,7 +13,8 @@
     "reviews": true,
     "advancedDishes": true,
     "priceLists": true,
-    "phoneAlerts": true
+    "phoneAlerts": true,
+    "cardPayments": true
   },
   "seed": ["../_shared/seed/drinks.json"]
 }
