@@ -92,3 +92,9 @@ This repo started as a copy of `kuskus-shel-ima` (history imported) and is being
 - Tests: vitest + Testing Library in jsdom. Page tests render the whole app at a route with `renderAt(path)` (`test/render.tsx`) and stub the network with `fakeApi({ 'METHOD /regex/path': handler })` (`test/fakeApi.ts`), which throws on any unexpected request; `adminSession` and `invalid(...)` are helpers, sample menu data is in `test/catalogData.ts`. Tests sit next to the feature (`*.test.tsx`).
 
 A feature typically touches: entity + migration + snapshot, controller DTO/validation, backend test, `api/*.ts` types, the component, `he.json`, `test/catalogData.ts`, a frontend test, and the feature guide (`docs/food-sites-feature-guide.html`, both languages and a screenshot).
+
+## Feature guide in the admin
+
+- The guide's source is one file per topic (`docs/feature-guide/`, see `docs/FEATURE-GUIDE.md`). `scripts/build-feature-guide.mjs` joins the index, the topics, the CSS, the script and the screenshots into one HTML file; the Dockerfiles (root and `backend/`) run it in its own `guide` stage (rebuilt only when `docs/` changes) and copy the result to `/app/guide/feature-guide.html`. `.dockerignore` lets only the guide files of `docs/` into the build context.
+- `GuideController` (`GET /api/admin/guide`, owner and master admin, not public) returns that file with a CSP that sandboxes it (no network, no site cookies or storage) and 404 `{ code: "guideUnavailable" }` when it was not built (a plain `dotnet run`). `Guide:Path` overrides the location (tests). The admin top bar has a plain link to it that opens in a new tab, so the session cookie goes along.
+- A new topic file needs no change here: the builder takes every `.html` in `docs/feature-guide/`. `check-feature-guide.mjs` runs the builder, so a broken guide fails CI.

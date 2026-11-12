@@ -54,6 +54,11 @@ try {
       if (!ids.some(([id, n]) => id === m[1] && n === name)) throw new Error(`${name}: broken section link ${m[1]}`)
     }
   }
+  // The production image builds the single-file guide from these files; make sure it still builds and holds every topic.
+  const { buildGuide } = await import('./build-feature-guide.mjs')
+  const single = buildGuide(root)
+  for (const f of chapterFiles) if (!single.includes(`id="page-${f.slice(0, -5)}"`)) throw new Error(`The single-file guide misses ${f}`)
+  if (/<img\b[^>]*\bsrc="img\//.test(single)) throw new Error('The single-file guide still has an image link')
   if (check) {
     console.log(`Feature guide structure OK: ${ids.length} sections in ${chapterFiles.length} topic files plus the index; Hebrew/English; no network resources. Content review remains a separate task.`)
   } else {
