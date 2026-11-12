@@ -126,6 +126,9 @@ export function OrderPage() {
 
   const [state, setState] = useState<OrderState>(emptyOrder)
   const submitRef = useRef<HTMLButtonElement>(null)
+  const goingToPayment = useRef(false)
+  // The clearing company's page, shown over the order form while the client pays.
+  const [payUrl, setPayUrl] = useState<string | null>(null)
   // Bumped by a quick fill: once the filled order renders, the page scrolls to the submit button.
   const [quickFills, setQuickFills] = useState(0)
   // How the order got its dishes besides the client's own choosing; the entry pop-ups' conditions read it.
@@ -335,7 +338,10 @@ export function OrderPage() {
   })
   useEffect(() => {
     if (!dirty) return
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    const warn = (event: BeforeUnloadEvent) => {
+      // Going to the payment page on purpose is not "closing the tab".
+      if (!goingToPayment.current) event.preventDefault()
+    }
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
@@ -732,15 +738,18 @@ export function OrderPage() {
         ...(acceptTopUp ? { acceptMinimumTopUp: true } : {}),
         ...(tip > 0 ? { tip } : {}),
       })
+      // A credit card order is paid on the clearing company's page. Until it is paid the order page keeps what the client
+      // filled (a client who comes back unpaid finds it as it was); the card return page clears it once paid.
+      if (result.payUrl) {
+        leaving = true
+        goingToPayment.current = true
+        saveDraft(state)
+        setPayUrl(result.payUrl)
+        return
+      }
       clearDraft()
       serverCart.sent()
       trackUsage('OrderSubmitted')
-      // A credit card order is paid on the clearing company's page; the purchase is reported when the client comes back paid.
-      if (result.payUrl) {
-        leaving = true
-        window.location.assign(result.payUrl)
-        return
-      }
       trackMarketing({ name: 'Purchase', orderId: result.id, value: result.total })
       setConfirmation(result)
       setRemember(rememberOffer(result.id, normalizedPhone))
@@ -1264,6 +1273,38 @@ export function OrderPage() {
         />
       )}
 
+      {payUrl && (
+        <Modal
+          title={t('order.cardModal.title')}
+          wide
+          onClose={() => {
+            setPayUrl(null)
+            goingToPayment.current = false
+            setSubmitting(false)
+          }}
+        >
+          <iframe className="card-frame" src={payUrl} title={t('order.cardModal.title')} allow="payment" />
+          <p className="hint">
+            {t('order.cardModal.hint')}{' '}
+            <a href={payUrl} target="_top">
+              {t('order.cardModal.fullPage')}
+            </a>
+          </p>
+          <div className="modal__actions">
+            <button
+              type="button"
+              className="button-quiet"
+              onClick={() => {
+                setPayUrl(null)
+                goingToPayment.current = false
+                setSubmitting(false)
+              }}
+            >
+              {t('order.cardModal.back')}
+            </button>
+          </div>
+        </Modal>
+      )}
       {finishOpen && (
         <Modal title={t('order.finish.title')} onClose={() => setFinishOpen(false)}>
           <p>{t('order.finish.text', { total: formatMoney(total) })}</p>

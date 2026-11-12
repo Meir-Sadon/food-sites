@@ -5,6 +5,7 @@ import { cardPaymentsApi } from '../api/site'
 import { useSite } from '../site/useSite'
 import { formatMoney } from '../order/format'
 import { trackMarketing } from '../tracking/marketing'
+import { clearDraft } from '../order/draft'
 
 const ATTEMPTS = 10
 const WAIT_MS = 3000
@@ -22,6 +23,11 @@ export function CardReturnPage() {
   const [state, setState] = useState<{ phase: 'checking' | 'paid' | 'unpaid'; total?: number }>({ phase: 'checking' })
   const reported = useRef(false)
 
+  // The payment page may be shown in a frame over the order form: the result is then shown on the whole page.
+  useEffect(() => {
+    if (window.top && window.top !== window.self) window.top.location.replace(window.location.href)
+  }, [])
+
   useEffect(() => {
     if (!order || !sig) {
       setState({ phase: 'unpaid' })
@@ -34,6 +40,8 @@ export function CardReturnPage() {
         if (cancelled) return
         if (status.paid) {
           setState({ phase: 'paid', total: status.total })
+          // The order page held what the client filled while the payment was open; it is an order now.
+          clearDraft()
           if (!reported.current) {
             reported.current = true
             trackMarketing({ name: 'Purchase', orderId: order, value: status.total })

@@ -30,7 +30,7 @@ public class CardSettlement(AppDbContext db, ICardGateway gateway, OrderNotifier
         }
 
         // Only the call that flips IsPaid goes on to send the messages, so a callback and the return page cannot both do it.
-        var claimed = await db.Orders.Where(o => o.Id == order.Id && !o.IsPaid).ExecuteUpdateAsync(set => set
+        var claimed = await db.Orders.IgnoreQueryFilters().Where(o => o.Id == order.Id && !o.IsPaid).ExecuteUpdateAsync(set => set
             .SetProperty(o => o.IsPaid, true)
             .SetProperty(o => o.PaidWith, (PaidWith?)PaidWith.CreditCard)
             .SetProperty(o => o.CardPaymentId, charge.PaymentId ?? paymentId)
@@ -38,6 +38,9 @@ public class CardSettlement(AppDbContext db, ICardGateway gateway, OrderNotifier
             .SetProperty(o => o.PaymentComment, charge.Installments > 1 ? $"אשראי, {charge.Installments} תשלומים" : "אשראי"), ct);
         if (claimed == 0)
             return true;
+
+        if (order.UserId is { } userId)
+            await db.SavedCarts.Where(c => c.UserId == userId).ExecuteDeleteAsync(CancellationToken.None);
 
         order.IsPaid = true;
         order.PaidWith = PaidWith.CreditCard;

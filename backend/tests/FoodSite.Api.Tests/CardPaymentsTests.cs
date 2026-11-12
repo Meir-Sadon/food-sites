@@ -72,7 +72,7 @@ public sealed class CardPaymentsTests(PostgresFixture postgres) : IAsyncLifetime
     private async Task<Order> OrderAsync(int id)
     {
         await using var db = _factory.CreateDbContext();
-        return await db.Orders.AsNoTracking().SingleAsync(o => o.Id == id);
+        return await db.Orders.IgnoreQueryFilters().AsNoTracking().SingleAsync(o => o.Id == id);
     }
 
     [Fact]
@@ -118,6 +118,19 @@ public sealed class CardPaymentsTests(PostgresFixture postgres) : IAsyncLifetime
         Assert.Equal("12345", order.CardConfirmation);
         Assert.Single(_factory.WhatsApp.MessagesTo(ClientPhone));
         Assert.Contains(_factory.WhatsApp.MessagesTo(ClientPhone), m => m.Contains("התשלום בכרטיס אשראי"));
+    }
+
+    [Fact]
+    public async Task UnpaidCardOrderStaysOutOfTheAdminListUntilPaid()
+    {
+        var admin = await _factory.CreateAdminClientAsync();
+        var id = (await Place().Read<ConfirmationDto>()).Id;
+        Assert.DoesNotContain(await admin.GetAsync("/api/admin/orders").Read<List<FoodSite.Api.Controllers.Admin.OrdersAdminController.OrderDto>>(), o => o.Id == id);
+
+        _factory.Cards.Charges["P1"] = new CardCharge("P1", 70m, "12345", 1);
+        Assert.Equal(HttpStatusCode.OK, (await Callback(id, Sig(id), Paid("P1"))).StatusCode);
+
+        Assert.Contains(await admin.GetAsync("/api/admin/orders").Read<List<FoodSite.Api.Controllers.Admin.OrdersAdminController.OrderDto>>(), o => o.Id == id);
     }
 
     [Fact]

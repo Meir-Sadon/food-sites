@@ -29,7 +29,7 @@ public class CardPaymentsController(AppDbContext db, CardLinks links, CardSettle
     {
         if (!links.IsValid(order, sig))
             return NotFound();
-        var found = await db.Orders.Include(o => o.Items).SingleOrDefaultAsync(o => o.Id == order, ct);
+        var found = await db.Orders.IgnoreQueryFilters().Include(o => o.Items).SingleOrDefaultAsync(o => o.Id == order, ct);
         if (found is null)
             return NotFound();
 
@@ -74,7 +74,7 @@ public class CardPaymentsController(AppDbContext db, CardLinks links, CardSettle
     {
         if (!links.IsValid(order, sig))
             return NotFound();
-        var found = await db.Orders.Include(o => o.Items).SingleOrDefaultAsync(o => o.Id == order && o.PaymentMethod == PaymentMethod.CreditCard, ct);
+        var found = await db.Orders.IgnoreQueryFilters().Include(o => o.Items).SingleOrDefaultAsync(o => o.Id == order && o.PaymentMethod == PaymentMethod.CreditCard, ct);
         if (found is null)
             return NotFound();
         var paid = found.IsPaid;

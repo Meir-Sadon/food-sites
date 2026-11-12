@@ -295,7 +295,7 @@ public class OrdersController(
                 await db.SaveChangesAsync(CancellationToken.None);
                 return Invalid(nameof(input.PaymentMethod), "cardPaymentFailed");
             }
-            await RemoveSavedCartAsync(ct);
+            // The saved cart stays until the payment is confirmed (CardSettlement), so a client who comes back unpaid still has it.
             await db.SaveChangesAsync(ct);
         }
         else
