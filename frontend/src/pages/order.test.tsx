@@ -855,25 +855,22 @@ describe('Order page', () => {
     expect(screen.queryByRole('radio', { name: 'כרטיס אשראי' })).not.toBeInTheDocument()
   })
 
-  it('sends a credit card order and leaves for the clearing company page without the order dialog', async () => {
-    const assign = vi.fn()
-    const original = window.location
-    Object.defineProperty(window, 'location', { configurable: true, value: { ...original, assign } })
-    try {
-      const { api, user } = await openOrderPage({
-        'GET /api/site': () => site({ cardEnabled: true }),
-        'POST /api/orders': () => ({ ...confirmation, paymentMethod: 'CreditCard', payUrl: 'https://pay.example.test/page/7' }),
-      })
-      await user.click(screen.getByRole('radio', { name: 'כרטיס אשראי' }))
-      expect(screen.getByText(/תועברו לעמוד תשלום מאובטח/)).toBeInTheDocument()
-      await fillAndSubmit(user)
+  it('sends a credit card order and shows the clearing company page over the form, without the order dialog', async () => {
+    const { api, user } = await openOrderPage({
+      'GET /api/site': () => site({ cardEnabled: true }),
+      'POST /api/orders': () => ({ ...confirmation, paymentMethod: 'CreditCard', payUrl: 'https://pay.example.test/page/7' }),
+    })
+    await user.click(screen.getByRole('radio', { name: 'כרטיס אשראי' }))
+    expect(screen.getByText(/ייפתח עמוד תשלום מאובטח/)).toBeInTheDocument()
+    await fillAndSubmit(user)
 
-      expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ paymentMethod: 'CreditCard' })
-      await vi.waitFor(() => expect(assign).toHaveBeenCalledWith('https://pay.example.test/page/7'))
-      expect(screen.queryByRole('dialog', { name: 'ההזמנה התקבלה' })).not.toBeInTheDocument()
-    } finally {
-      Object.defineProperty(window, 'location', { configurable: true, value: original })
-    }
+    expect(api.sent('POST', '/api/orders')[0].body).toMatchObject({ paymentMethod: 'CreditCard' })
+    const dialog = await screen.findByRole('dialog', { name: 'תשלום בכרטיס אשראי' })
+    expect(within(dialog).getByTitle('תשלום בכרטיס אשראי')).toHaveAttribute('src', 'https://pay.example.test/page/7')
+    expect(screen.queryByRole('dialog', { name: 'ההזמנה התקבלה' })).not.toBeInTheDocument()
+    // Going back to the form leaves it as it was, ready to send again.
+    await user.click(within(dialog).getByRole('button', { name: 'חזרה לעריכת ההזמנה' }))
+    expect(screen.queryByRole('dialog', { name: 'תשלום בכרטיס אשראי' })).not.toBeInTheDocument()
   })
 
   it('offers only the payment services the admin switched on', async () => {

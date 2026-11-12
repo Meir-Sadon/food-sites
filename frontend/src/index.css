@@ -1753,6 +1753,13 @@ label {
   margin: 0;
 }
 
+.card-frame {
+  display: block;
+  width: 100%;
+  height: min(70vh, 640px);
+  border: 0;
+}
+
 .modal__actions {
   margin-block-start: 0.75rem;
 }

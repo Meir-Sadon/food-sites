@@ -122,6 +122,8 @@ export function OrderPage() {
   const [state, setState] = useState<OrderState>(emptyOrder)
   const submitRef = useRef<HTMLButtonElement>(null)
   const goingToPayment = useRef(false)
+  // The clearing company's page, shown over the order form while the client pays.
+  const [payUrl, setPayUrl] = useState<string | null>(null)
   // Bumped by a quick fill: once the filled order renders, the page scrolls to the submit button.
   const [quickFills, setQuickFills] = useState(0)
   // How the order got its dishes besides the client's own choosing; the entry pop-ups' conditions read it.
@@ -713,7 +715,7 @@ export function OrderPage() {
         leaving = true
         goingToPayment.current = true
         saveDraft(state)
-        window.location.assign(result.payUrl)
+        setPayUrl(result.payUrl)
         return
       }
       clearDraft()
@@ -1242,6 +1244,38 @@ export function OrderPage() {
         />
       )}
 
+      {payUrl && (
+        <Modal
+          title={t('order.cardModal.title')}
+          wide
+          onClose={() => {
+            setPayUrl(null)
+            goingToPayment.current = false
+            setSubmitting(false)
+          }}
+        >
+          <iframe className="card-frame" src={payUrl} title={t('order.cardModal.title')} allow="payment" />
+          <p className="hint">
+            {t('order.cardModal.hint')}{' '}
+            <a href={payUrl} target="_top">
+              {t('order.cardModal.fullPage')}
+            </a>
+          </p>
+          <div className="modal__actions">
+            <button
+              type="button"
+              className="button-quiet"
+              onClick={() => {
+                setPayUrl(null)
+                goingToPayment.current = false
+                setSubmitting(false)
+              }}
+            >
+              {t('order.cardModal.back')}
+            </button>
+          </div>
+        </Modal>
+      )}
       {finishOpen && (
         <Modal title={t('order.finish.title')} onClose={() => setFinishOpen(false)}>
           <p>{t('order.finish.text', { total: formatMoney(total) })}</p>

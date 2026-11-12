@@ -23,6 +23,11 @@ export function CardReturnPage() {
   const [state, setState] = useState<{ phase: 'checking' | 'paid' | 'unpaid'; total?: number }>({ phase: 'checking' })
   const reported = useRef(false)
 
+  // The payment page may be shown in a frame over the order form: the result is then shown on the whole page.
+  useEffect(() => {
+    if (window.top && window.top !== window.self) window.top.location.replace(window.location.href)
+  }, [])
+
   useEffect(() => {
     if (!order || !sig) {
       setState({ phase: 'unpaid' })
