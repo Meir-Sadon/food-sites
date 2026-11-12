@@ -193,6 +193,21 @@ public class PublicController(AppDbContext db, SiteClock clock, FeatureFlags fea
             banner);
     }
 
+    public record GuestOfferDto(bool Available, int? MaxOrders);
+
+    /// <summary>
+    /// Whether to offer a guest to sign up before sending the order: price lists are on, there is no session, and a price list
+    /// would give a new client a lower price. Always "not available" for a logged-in client.
+    /// </summary>
+    [HttpGet("guest-offer")]
+    public async Task<GuestOfferDto> GetGuestOffer(CancellationToken ct)
+    {
+        if (!await features.IsEnabledAsync(Features.PriceLists, ct) || await SessionUserIdAsync() is not null)
+            return new GuestOfferDto(false, null);
+        var offer = await PriceBook.NewClientOfferAsync(db, clock.UtcNow(), clock.Today(), ct);
+        return new GuestOfferDto(offer.Available, offer.MaxOrders);
+    }
+
     [HttpGet("menu")]
     public async Task<MenuDto> GetMenu()
     {
