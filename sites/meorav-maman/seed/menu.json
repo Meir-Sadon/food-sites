@@ -1,0 +1,5000 @@
+{
+ "categories": [
+  {
+   "name": "בבאגט",
+   "dishes": [
+    {
+     "name": "אשכי הודו בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 65,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-turkey.jpg"
+     ]
+    },
+    {
+     "name": "פרגיות בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 55,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-pargiyot.jpg"
+     ]
+    },
+    {
+     "name": "לבבות בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 52,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-hearts.jpg"
+     ]
+    },
+    {
+     "name": "כבד עוף בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 52,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-liver.jpg"
+     ]
+    },
+    {
+     "name": "חזה עוף בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 52,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-chicken.jpg"
+     ]
+    },
+    {
+     "name": "מעורב בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 52,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-mixed.jpg"
+     ]
+    },
+    {
+     "name": "קבב בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 52,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-kebab.jpg"
+     ]
+    },
+    {
+     "name": "שניצל בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 45,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-schnitzel.jpg"
+     ]
+    },
+    {
+     "name": "טונה בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-tuna.jpg"
+     ]
+    },
+    {
+     "name": "שקשוקה בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/baguette-shakshuka.jpg"
+     ]
+    },
+    {
+     "name": "חביתת ירק בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "חביתה בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "נקניקיות מרגז בבאגט",
+     "sellBy": "Units",
+     "unitPrice": 52,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "בפיתה",
+   "dishes": [
+    {
+     "name": "שניצל בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 40,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/pita-schnitzel.jpg"
+     ]
+    },
+    {
+     "name": "קבב בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 50,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/pita-kebab.jpg"
+     ]
+    },
+    {
+     "name": "מעורב בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 50,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/pita-mixed.jpg"
+     ]
+    },
+    {
+     "name": "חזה עוף בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 50,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/pita-chicken.jpg"
+     ]
+    },
+    {
+     "name": "פרגיות בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 50,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/pita-pargiyot.jpg"
+     ]
+    },
+    {
+     "name": "חביתה בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "חביתת ירק בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "שקשוקה בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "לבבות בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 50,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "אשכי הודו בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 58,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "טונה בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "כבד עוף בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 50,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "פסטל תפו\"א בפיתה",
+     "sellBy": "Units",
+     "unitPrice": 30,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "לאפה",
+   "dishes": [
+    {
+     "name": "מעורב בלאפה",
+     "sellBy": "Units",
+     "unitPrice": 57,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "קבב בלאפה",
+     "sellBy": "Units",
+     "unitPrice": 57,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "חזה עוף בלאפה",
+     "sellBy": "Units",
+     "unitPrice": 57,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "לבבות בלאפה",
+     "sellBy": "Units",
+     "unitPrice": 57,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "כבד עוף בלאפה",
+     "sellBy": "Units",
+     "unitPrice": 57,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "פרגיות בלאפה",
+     "sellBy": "Units",
+     "unitPrice": 57,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "שניצל בלאפה",
+     "sellBy": "Units",
+     "unitPrice": 50,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    },
+    {
+     "name": "נקניקיות מרגז בלאפה",
+     "sellBy": "Units",
+     "unitPrice": 57,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "ממרחים"
+      },
+      {
+       "name": "סלטים בתוך המנה"
+      },
+      {
+       "name": "תוספות מחוץ למנה",
+       "maxUnits": 4
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "ממרחים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חצילים",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "סלטים בתוך המנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "מלפפון חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חמוצי הבית",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שפיקה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "כרוב לבן חמוץ",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "תוספות מחוץ למנה",
+       "isCheckbox": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "בחמגשית וצלחת",
+   "dishes": [
+    {
+     "name": "פרגיות בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 65,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/plate-pargiyot.jpg"
+     ],
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "חזה עוף בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 65,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/plate-chicken.jpg"
+     ],
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "מעורב בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 65,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/plate-mixed.jpg"
+     ],
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "קבב בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 65,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "images": [
+      "https://res.cloudinary.com/zt7wzpn4/image/upload/meorav-maman/dishes/plate-kebab.jpg"
+     ],
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "אשכי הודו בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 75,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "לבבות בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 65,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "כבד עוף בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 65,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "שניצל בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 55,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "נקניקיות מרגז בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 65,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "שקשוקה בחמגשית",
+     "sellBy": "Units",
+     "unitPrice": 40,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "בחר/י את התוספת",
+       "kind": "SingleChoice",
+       "choices": [
+        "אורז",
+        "לביבות תפוח אדמה"
+       ],
+       "isRequired": true
+      },
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ],
+     "description": "מגיע עם תוספת לבחירה (אורז או לביבות תפו\"א), סלטים לפי בחירה ובגט או פיתה."
+    },
+    {
+     "name": "מעורב בחמגשית עם אורז וסלטים",
+     "sellBy": "Units",
+     "unitPrice": 85,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "description": "מעורב, מוגש עם אורז וסלטים.",
+     "addOnGroups": [
+      {
+       "name": "סלטים"
+      },
+      {
+       "name": "תוספת"
+      }
+     ],
+     "addOns": [
+      {
+       "dish": "חומוס",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "חריף",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "טחינה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "סלט ירקות",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "גזר מוחמץ",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "לימון כבוש",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "פלפל שיפקה",
+       "price": 0,
+       "group": "סלטים",
+       "isCheckbox": true
+      },
+      {
+       "dish": "תוספת בצל מטוגן",
+       "price": 0,
+       "group": "תוספת",
+       "isCheckbox": true
+      }
+     ],
+     "questions": [
+      {
+       "text": "סוג הלחם",
+       "kind": "SingleChoice",
+       "choices": [
+        "בגט",
+        "פיתה"
+       ],
+       "isRequired": false
+      }
+     ]
+    },
+    {
+     "name": "חמגשית מעורב בלבד",
+     "sellBy": "Units",
+     "unitPrice": 85,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "description": "מעורב, חזה עוף, קבב, לבבות, פרגיות."
+    },
+    {
+     "name": "חמגשית חזה עוף בלבד",
+     "sellBy": "Units",
+     "unitPrice": 85,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "חמגשית לבבות בלבד",
+     "sellBy": "Units",
+     "unitPrice": 85,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "חמגשית קבב בלבד",
+     "sellBy": "Units",
+     "unitPrice": 85,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "description": "10 קציצות קבב."
+    },
+    {
+     "name": "חמגשית שניצל בלבד",
+     "sellBy": "Units",
+     "unitPrice": 55,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "חמגשית פרגיות בלבד",
+     "sellBy": "Units",
+     "unitPrice": 87,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    }
+   ]
+  },
+  {
+   "name": "תוספות",
+   "dishes": [
+    {
+     "name": "חמגשית אורז בלבד",
+     "sellBy": "Units",
+     "unitPrice": 25,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "חמגשית סלטים",
+     "sellBy": "Units",
+     "unitPrice": 25,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "שניצלונים לנישנוש",
+     "sellBy": "Units",
+     "unitPrice": 35,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "שניצל נישנוש",
+     "sellBy": "Units",
+     "unitPrice": 32,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פסטל תפו\"א",
+     "sellBy": "Units",
+     "unitPrice": 3,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "ביצת שקשוקה",
+     "sellBy": "Units",
+     "unitPrice": 5,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "תוספת אשכי הודו",
+     "sellBy": "Units",
+     "unitPrice": 25,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "description": "בתוך הבגט או הפיתה."
+    },
+    {
+     "name": "תוספת בגט או פיתה",
+     "sellBy": "Units",
+     "unitPrice": 3,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "כדורי פירה",
+     "sellBy": "Units",
+     "unitPrice": 20,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "טבעות בצל",
+     "sellBy": "Units",
+     "unitPrice": 20,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    }
+   ]
+  },
+  {
+   "name": "שתייה",
+   "dishes": [
+    {
+     "name": "קולה פחית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "קולה זירו פחית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פאנטה פחית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "ספרייט פחית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "ספרייט זירו פחית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פנטה תות פחית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "קולה בקבוק",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "קולה זירו בקבוק",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "קולה זכוכית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "זירו זכוכית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "קולה 1.5 ליטר",
+     "sellBy": "Units",
+     "unitPrice": 15,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "קולה זירו 1.5 ליטר",
+     "sellBy": "Units",
+     "unitPrice": 15,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "מים בטעם תפוח 1.5 ליטר",
+     "sellBy": "Units",
+     "unitPrice": 15,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "מים בטעם אפרסק 1.5 ליטר",
+     "sellBy": "Units",
+     "unitPrice": 15,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "מים בטעם ענבים 1.5 ליטר",
+     "sellBy": "Units",
+     "unitPrice": 15,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פיוזטי 1.5 ליטר",
+     "sellBy": "Units",
+     "unitPrice": 15,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "מים מינרליים",
+     "sellBy": "Units",
+     "unitPrice": 8,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "סודה",
+     "sellBy": "Units",
+     "unitPrice": 8,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פיוזטי",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פריגת ענבים זכוכית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פריגת תפוזים זכוכית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פריגת אשכוליות זכוכית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "פריגת לימונענע זכוכית",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "בירה שחורה",
+     "sellBy": "Units",
+     "unitPrice": 10,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    },
+    {
+     "name": "בירה קרלסברג חצי ליטר",
+     "sellBy": "Units",
+     "unitPrice": 15,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1
+    }
+   ]
+  },
+  {
+   "name": "תוספות לבחירה",
+   "dishes": [
+    {
+     "name": "חומוס",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "חריף",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "טחינה",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "סלט ירקות",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "גזר",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "לימון כבוש",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "חצילים",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "מלפפון חמוץ",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "חמוצי הבית",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "פלפל שפיקה",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "כרוב לבן חמוץ",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "גזר מוחמץ",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "פלפל שיפקה",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    },
+    {
+     "name": "תוספת בצל מטוגן",
+     "sellBy": "Units",
+     "unitPrice": 0,
+     "minAmount": 1,
+     "maxAmount": 10,
+     "amountStep": 1,
+     "isAddOnOnly": true
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "meorav-maman",
+  "timeZone": "Asia/Jerusalem",
+  "language": "he",
+  "serviceCities": "אשקלון",
+  "emoji": "🥙",
+  "whatsApp": {
+    "orderConfirmationTemplate": "meorav_maman_order_confirmation",
+    "newOrderTemplate": "meorav_maman_new_order"
+  },
+  "features": {
+    "favorites": true,
+    "reviews": true,
+    "advancedDishes": true,
+    "priceLists": true,
+    "phoneAlerts": true
+  },
+  "settings": {
+    "contactName": "מעורב ממן",
+    "contactPhone": "08-675-0348",
+    "contactAddress": "צה״ל 2, אשקלון",
+    "contactOpeningHours": "עד 20:30",
+    "deliveryAreaText": "משלוחים באשקלון",
+    "deliveryFeeText": "משלוח 22 ₪, ללא מינימום הזמנה",
+    "kashrutText": "המסעדה כשרה, הכשרות באחריות המסעדה בלבד",
+    "backgroundImageUrl": "https://res.cloudinary.com/zt7wzpn4/image/upload/v1794511197/meorav-maman/background/background-1.jpg"
+  },
+  "seed": [
+    "seed/menu.json"
+  ]
+}

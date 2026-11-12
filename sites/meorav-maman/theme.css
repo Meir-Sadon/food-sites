@@ -1,0 +1,20 @@
+/* The site's colour palette: grill red and charcoal with a golden accent on a warm cream page (a stand-in until the business gives its own colours). Every theme variable the shared CSS uses (--color-*, --gradient-hero) is defined here. */
+:root {
+  --color-bg: #fbf4ea;
+  --color-surface: #ffffff;
+  --color-text: #251a14;
+  --color-muted: #6a5648;
+  --color-accent: #a8321d;
+  --color-accent-hover: #86271a;
+  --color-accent-contrast: #ffffff;
+  --color-gold: #d9a441;
+  --color-border: #ead9c3;
+  --color-error: #b42318;
+  --color-success: #2f6b3a;
+  --color-soft: #f6e7d2;
+  --color-shadow: #251a14;
+  --color-highlight: var(--color-gold);
+  --color-badge: rgb(217 164 65 / 0.22);
+  --color-badge-text: #7a4a0c;
+  --gradient-hero: linear-gradient(135deg, #2b1a12 0%, #86271a 60%, var(--color-gold) 160%);
+}
