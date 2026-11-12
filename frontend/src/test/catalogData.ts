@@ -139,6 +139,7 @@ export const site = (patch: Partial<Site> = {}): Site => ({
   spacing: 'standard',
   tileGroups: 'framed',
   imageSize: 'small',
+  cardEnabled: false,
   rectPicture: 'end',
   mobileCards: 'standard',
   deliveryPricing: 'simple',

@@ -9,11 +9,14 @@ public class RequireRequestHeaderMiddleware(RequestDelegate next)
 {
     public const string HeaderName = "X-Food-Site-Request";
 
+    /// <summary>Invoice4U's server calls this after a card payment; it cannot send the header, and the call is signed instead.</summary>
+    private static readonly PathString CardCallback = new("/api/payments/card/callback");
+
     public Task InvokeAsync(HttpContext context)
     {
         var request = context.Request;
         var safe = HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method) || HttpMethods.IsOptions(request.Method);
-        if (safe || !request.Path.StartsWithSegments("/api") || request.Headers.ContainsKey(HeaderName))
+        if (safe || !request.Path.StartsWithSegments("/api") || request.Path.StartsWithSegments(CardCallback) || request.Headers.ContainsKey(HeaderName))
             return next(context);
 
         context.Response.StatusCode = StatusCodes.Status400BadRequest;

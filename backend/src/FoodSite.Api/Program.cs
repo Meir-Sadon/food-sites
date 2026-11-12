@@ -97,6 +97,15 @@ else if (mailOptions?.IsConfigured == true)
 else
     builder.Services.AddSingleton<FoodSite.Api.Mail.IMailer, FoodSite.Api.Mail.NoopMailer>();
 builder.Services.AddScoped<FoodSite.Api.Mail.OwnerNotifier>();
+builder.Services.AddScoped<FoodSite.Api.Orders.OrderNotifier>();
+// Credit card payment through the business's own Invoice4U account once Invoice4U__ApiKey is set (and the cardPayments feature is on).
+builder.Services.Configure<FoodSite.Api.Payments.Invoice4UOptions>(config.GetSection(FoodSite.Api.Payments.Invoice4UOptions.Section));
+if (config.GetSection(FoodSite.Api.Payments.Invoice4UOptions.Section).Get<FoodSite.Api.Payments.Invoice4UOptions>()?.IsConfigured == true)
+    builder.Services.AddHttpClient<FoodSite.Api.Payments.ICardGateway, FoodSite.Api.Payments.Invoice4UGateway>(c => c.Timeout = TimeSpan.FromSeconds(20));
+else
+    builder.Services.AddSingleton<FoodSite.Api.Payments.ICardGateway, FoodSite.Api.Payments.UnconfiguredCardGateway>();
+builder.Services.AddSingleton<FoodSite.Api.Payments.CardLinks>();
+builder.Services.AddScoped<FoodSite.Api.Payments.CardSettlement>();
 // Phone alerts for new orders go out through Pushover once Pushover__AppToken is set; without it nothing is sent.
 builder.Services.Configure<FoodSite.Api.Push.PushoverOptions>(config.GetSection(FoodSite.Api.Push.PushoverOptions.Section));
 if (config.GetSection(FoodSite.Api.Push.PushoverOptions.Section).Get<FoodSite.Api.Push.PushoverOptions>()?.IsConfigured == true)

@@ -78,6 +78,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// <summary>Records every order reported to Meta instead of sending it.</summary>
     public CapturingMetaSender Meta { get; } = new();
 
+    /// <summary>Stands in for Invoice4U in every test.</summary>
+    public FakeCardGateway Cards { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         foreach (var (key, value) in _settings)
@@ -92,6 +95,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<FoodSite.Api.Marketing.IMetaConversionsSender>(Meta);
             services.AddSingleton<IAddressGeocoder>(new FakeGeocoder());
             services.AddSingleton<IGoogleTokenVerifier>(new FakeGoogleVerifier());
+            services.AddSingleton<FoodSite.Api.Payments.ICardGateway>(Cards);
         });
     }
 

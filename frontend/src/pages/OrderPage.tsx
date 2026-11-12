@@ -686,6 +686,7 @@ export function OrderPage() {
     }
 
     setSubmitting(true)
+    let leaving = false
     try {
       const result = await ordersApi.create({
         phone: normalizedPhone,
@@ -705,6 +706,12 @@ export function OrderPage() {
       clearDraft()
       serverCart.sent()
       trackUsage('OrderSubmitted')
+      // A credit card order is paid on the clearing company's page; the purchase is reported when the client comes back paid.
+      if (result.payUrl) {
+        leaving = true
+        window.location.assign(result.payUrl)
+        return
+      }
       trackMarketing({ name: 'Purchase', orderId: result.id, value: result.total })
       setConfirmation(result)
       setRemember(rememberOffer(result.id, normalizedPhone))
@@ -720,7 +727,8 @@ export function OrderPage() {
       if (addressFirst && Object.keys(fieldErrors).some((field) => CONTACT_FIELDS.includes(field) || field === 'fulfillmentmethod')) setAddressDone(false)
       setSubmitError(errorMessage(err))
     } finally {
-      setSubmitting(false)
+      // Leaving for the payment page: the button stays busy so the order cannot be sent twice.
+      if (!leaving) setSubmitting(false)
     }
   }
 
@@ -1084,6 +1092,12 @@ export function OrderPage() {
                         />
                         {t('order.payOnDelivery')}
                       </label>
+                      {site.cardEnabled && (
+                        <label className="checkbox">
+                          <input type="radio" name="payment" checked={payment === 'CreditCard'} onChange={() => change({ payment: 'CreditCard' })} />
+                          {t(paymentKey('CreditCard'))}
+                        </label>
+                      )}
                       {transfers.map((method) => (
                         <label key={method} className="checkbox">
                           <input
@@ -1097,6 +1111,7 @@ export function OrderPage() {
                       ))}
                     </div>
                     {isTransfer(payment) && <p className="hint">{t('order.transferHint', { service: t(paymentKey(payment)) })}</p>}
+                    {payment === 'CreditCard' && <p className="hint">{t('order.cardHint')}</p>}
                     <FieldError errors={errors} field="paymentMethod" id="order-payment-error" />
                   </fieldset>
                   {payment === 'OnDelivery' && <p className="pay-note">{t('order.payOnDeliveryNote')}</p>}

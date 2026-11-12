@@ -864,6 +864,15 @@ namespace FoodSite.Api.Data.Migrations
                     b.Property<TimeOnly?>("CapacityHour")
                         .HasColumnType("time without time zone");
 
+                    b.Property<string>("CardConfirmation")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CardPaymentId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CardTraceId")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 

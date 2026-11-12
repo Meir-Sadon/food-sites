@@ -13,7 +13,7 @@ export interface Contact {
 }
 
 /** Behaviour not every business wants (FoodSite.Api `Features`): on in the site's site.json, or by the console. */
-export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts' | 'bannerAnimation'
+export type Feature = 'recommendations' | 'favorites' | 'reviews' | 'advancedDishes' | 'priceLists' | 'phoneAlerts' | 'bannerAnimation' | 'cardPayments'
 
 /** The site's look (FoodSite.Api `SiteStyles`): fonts, shapes and layout. Colours stay in the site's theme.css. */
 export type SiteStyle = 'classic' | 'street' | 'tiles' | 'rect'
@@ -158,6 +158,8 @@ export interface Site {
   /** Only the tiles style uses it. */
   tileGroups: TileGroups
   imageSize: ImageSize
+  /** The client may pay by credit card on the clearing company's page (feature on and the business has its key). */
+  cardEnabled: boolean
   rectPicture: RectPicture
   mobileCards: MobileCards
   /** `zones`: the delivery fee comes from the zones the admin drew, worked out from the address. */
@@ -368,7 +370,7 @@ export interface Menu {
 
 export type Fulfillment = 'Delivery' | 'Pickup'
 /** `Transfer` is the older combined Bit / PayBox choice; new orders use `Bit` or `PayBox`. */
-export type Payment = 'OnDelivery' | 'Transfer' | 'Bit' | 'PayBox'
+export type Payment = 'OnDelivery' | 'Transfer' | 'Bit' | 'PayBox' | 'CreditCard'
 
 /** An add-on of an ordered unit; slot says which offer of it under the dish (left out for the first). */
 export interface AddOnLineInput {
@@ -428,6 +430,8 @@ export interface Confirmation {
   paymentPhone: string | null
   /** The owner's Bit / PayBox payment-request link for the chosen service, if they set one. */
   paymentLink?: string | null
+  /** For a credit card order: the clearing company's payment page the client is sent to; the order counts once it is paid. */
+  payUrl?: string | null
   /** A delivery outside the service city: it waits for the admin and holds no quantity yet. */
   needsReview: boolean
   items: {
@@ -499,6 +503,16 @@ export const deliveryApi = {
 
 export const ordersApi = {
   create: (input: OrderInput) => apiJson<Confirmation>('/api/orders', send('POST', input)),
+}
+
+export interface CardStatus {
+  paid: boolean
+  total: number
+}
+
+export const cardPaymentsApi = {
+  /** Whether a credit card order is paid; the server also asks the clearing company, in case its call never came. */
+  status: (order: number, sig: string) => apiJson<CardStatus>(`/api/payments/card/status?order=${order}&sig=${encodeURIComponent(sig)}`),
 }
 
 export const contactsApi = {
